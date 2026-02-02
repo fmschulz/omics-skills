@@ -22,8 +22,8 @@ fi
 AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
 
-# Specific agent files (not all .md files)
-AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md")
+# Specific agent files (in subdirectories)
+AGENT_FILES=("omics-scientist/omics-scientist.md" "science-writer/science-writer.md" "dataviz-artist/dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
@@ -79,7 +79,8 @@ install_agents() {
 
     for agent in "${AGENT_FILES[@]}"; do
         agent_path="$AGENTS_DIR/$agent"
-        target="$target_dir/$agent"
+        basename=$(basename "$agent")
+        target="$target_dir/$basename"
 
         if [ ! -f "$agent_path" ]; then
             echo -e "  ${RED}✗${NC} $agent not found"
@@ -87,10 +88,10 @@ install_agents() {
         fi
 
         if [ -L "$target" ]; then
-            echo "  Updating symlink: $agent"
+            echo "  Updating symlink: $basename"
             rm "$target"
         elif [ -f "$target" ]; then
-            echo -e "  ${YELLOW}Warning: $agent exists (backing up)${NC}"
+            echo -e "  ${YELLOW}Warning: $basename exists (backing up)${NC}"
             mv "$target" "$target.bak"
         fi
 
@@ -100,7 +101,7 @@ install_agents() {
             cp "$agent_path" "$target"
         fi
 
-        echo -e "  ${GREEN}✓${NC} $agent"
+        echo -e "  ${GREEN}✓${NC} $basename"
     done
 }
 

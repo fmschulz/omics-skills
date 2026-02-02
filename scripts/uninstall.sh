@@ -12,8 +12,17 @@ NC='\033[0m' # No Color
 
 # Directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_DIR="$SCRIPT_DIR/agents"
-SKILLS_DIR="$SCRIPT_DIR/skills"
+# If running from scripts/ directory, go up one level
+if [[ "$(basename "$SCRIPT_DIR")" == "scripts" ]]; then
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+else
+    REPO_ROOT="$SCRIPT_DIR"
+fi
+AGENTS_DIR="$REPO_ROOT/agents"
+SKILLS_DIR="$REPO_ROOT/skills"
+
+# Specific agent files (in subdirectories)
+AGENT_FILES=("omics-scientist/omics-scientist.md" "science-writer/science-writer.md" "dataviz-artist/dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
@@ -63,7 +72,7 @@ uninstall_from_claude() {
     echo -e "${BLUE}Uninstalling from Claude Code...${NC}"
 
     # Remove agents
-    for agent in "$AGENTS_DIR"/*.md; do
+    for agent in "${AGENT_FILES[@]}"; do
         basename=$(basename "$agent")
         target="$CLAUDE_AGENTS_DIR/$basename"
         if [ -L "$target" ] || [ -f "$target" ]; then
@@ -98,7 +107,7 @@ uninstall_from_codex() {
     echo -e "${BLUE}Uninstalling from Codex CLI...${NC}"
 
     # Remove agents
-    for agent in "$AGENTS_DIR"/*.md; do
+    for agent in "${AGENT_FILES[@]}"; do
         basename=$(basename "$agent")
         target="$CODEX_AGENTS_DIR/$basename"
         if [ -L "$target" ] || [ -f "$target" ]; then

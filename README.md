@@ -285,13 +285,25 @@ DataViz Artist Agent
 ```
 omics-skills/
 ├── agents/                          # 3 expert agent personas
-│   ├── omics-scientist.md          # Bioinformatics workflows
-│   ├── science-writer.md           # Manuscript writing
-│   ├── dataviz-artist.md           # Visualization design
-│   ├── ARCHITECTURE.md             # Agent design principles
+│   ├── omics-scientist/
+│   │   └── omics-scientist.md      # Bioinformatics workflows
+│   ├── science-writer/
+│   │   ├── science-writer.md       # Manuscript writing
+│   │   ├── EXAMPLES.md
+│   │   ├── INDEX.md
+│   │   ├── QUICK_REFERENCE.md
+│   │   └── README.md
+│   ├── dataviz-artist/
+│   │   ├── dataviz-artist.md       # Visualization design
+│   │   ├── EXAMPLES.md
+│   │   ├── INDEX.md
+│   │   ├── QUICK_REFERENCE.md
+│   │   └── README.md
+│   ├── ARCHITECTURE.md             # Agent design principles (shared)
+│   ├── BIO-LOGIC_INTEGRATION.md    # Shared documentation
 │   └── README.md                   # Agent documentation
 │
-└── skills/                          # 21 specialized skills
+└── skills/                          # 20 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
