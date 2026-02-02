@@ -40,6 +40,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Build phylogenetic trees
 - Conduct comparative genomics
 - Analyze viral sequences or protein structures
+- Query JGI databases for metadata discovery and data retrieval (GOLD, IMG, Mycocosm, Phytozome)
 
 **Core Skills (15):**
 - `bio-logic` — Scientific reasoning and hypothesis formation
@@ -56,7 +57,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - `bio-stats-ml-reporting` — Statistical analysis and ML model training
 - `bio-workflow-methods-docwriter` — Generate Methods sections from pipelines
 - `bio-prefect-dask-nextflow` — Workflow orchestration
-- `jgi-lakehouse` — Query JGI's GOLD, IMG, and Phytozome databases via Dremio
+- `jgi-lakehouse` — Metadata discovery and data retrieval from JGI's GOLD, IMG, Mycocosm, and Phytozome databases via Dremio SQL
 
 ---
 

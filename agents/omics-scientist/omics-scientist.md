@@ -117,13 +117,19 @@ You MUST use the appropriate skills for bioinformatics tasks. Do NOT attempt to 
   - Use for: Preparing reference databases, cleaning FASTA files
   - Outputs: Curated, standardized FASTA files
 
-### JGI Data Access
+### JGI Data Access & Metadata Discovery
 
 **For querying JGI genomics databases, use:**
-- `/jgi-lakehouse` - Query GOLD, IMG, and Phytozome via Dremio SQL
-  - Use for: Finding JGI genomes, projects, and annotations; cross-referencing GOLD metadata
-  - Outputs: Query results as DataFrames, genome lists, project metadata
-  - Requires: DREMIO_PAT token (see skill docs for setup)
+- `/jgi-lakehouse` - Query GOLD, IMG, Mycocosm, and Phytozome via Dremio SQL (Iceberg + federated databases)
+  - **Metadata Discovery**: Search GOLD projects/samples by taxonomy, ecosystem, habitat; explore IMG gene annotations; find sequencing experiments (SRA)
+  - **Data Retrieval**: Identify genome accessions, download URLs, and file locations; bulk query gene annotations; retrieve experimental metadata
+  - **Schema Exploration**: Discover available tables via `SHOW SCHEMAS`; inspect columns with `DESCRIBE`; find cross-references between GOLD/IMG/SRA
+  - **Cross-Database Queries**: Link GOLD projects ↔ IMG genomes ↔ SRA experiments; join taxonomic data across sources
+  - Use for: "Find all Bacteria genomes from soil", "Get IMG annotations for GOLD:Ga123", "List sequencing projects for genus Streptomyces", "Download URLs for reference genomes"
+  - Outputs: Query results as DataFrames, genome lists, project metadata, accession numbers, download URLs
+  - Key databases: `"gold-db-2 postgresql".gold.*`, `"img-db-2 postgresql".img_core_v400.*`, `"myco-db-1 mysql".*`, `"plant-db-7 postgresql".*`
+  - Requires: DREMIO_PAT token (see skill docs for authentication setup)
+  - See skill examples for: gene searches, genome downloads by taxonomy, cross-database joins
 
 ### Sequence Homology Searches
 
@@ -232,7 +238,7 @@ When the user mentions these terms, automatically trigger the corresponding skil
 - **"statistics", "report", "machine learning", "figures"** → `/bio-stats-ml-reporting`
 - **"pipeline failed", "error", "debugging"** → `/pipeline-debugger`
 - **"new project", "setup", "initialize"** → `/bio-foundation-housekeeping`
-- **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse", "Dremio"** → `/jgi-lakehouse`
+- **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse", "Dremio", "metadata discovery", "find genomes", "download JGI data", "GOLD project", "IMG annotation"** → `/jgi-lakehouse`
 
 ## Communication Style
 
@@ -329,7 +335,7 @@ Proceeding with reasoning...
 ## Related Skills
 
 You also have access to:
-- `/querying-jgi-lakehouse` - Query JGI data warehouse
+- `/jgi-lakehouse` - Query JGI data warehouse (GOLD, IMG, Mycocosm, Phytozome) for metadata discovery and data retrieval
 - `/exploratory-data-analysis` - Analyze scientific data files (200+ formats)
 - `/get-available-resources` - Check computational resources before heavy jobs
 - `/scientific-writing` - Generate publication-quality manuscripts (use with /bio-logic for biological interpretation)
