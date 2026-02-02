@@ -4,12 +4,14 @@
 
 A curated collection of domain-expert agents and battle-tested skills for computational biology workflows. Compatible with **Claude Code** and **Codex CLI**.
 
-[![Install](https://img.shields.io/badge/Install-Quick%20Start-blue)](#installation)
-[![Agents](https://img.shields.io/badge/Agents-3-green)](#the-three-agents)
-[![Skills](https://img.shields.io/badge/Skills-20-green)](#agent--skills-mapping)
-[![Docs](https://img.shields.io/badge/Docs-Complete-blue)](INSTALL.md)
+[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-Compatible-blue)](https://agentskills.io)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green)](https://code.claude.com)
+[![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Agents](https://img.shields.io/badge/Agents-3-blue)](#the-three-agents)
+[![Skills](https://img.shields.io/badge/Skills-20-blue)](#agent--skills-mapping)
 
-**Quick Links:** [Installation](#installation) • [Agents](#the-three-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Full Install Guide](INSTALL.md)
+**Quick Links:** [Installation](#installation) • [Agents](#the-three-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
 ---
 
@@ -410,8 +412,20 @@ To add skills or modify agents:
 
 ## License
 
-Skills and agents are provided as reference implementations. Check individual tool licenses in skill documentation.
+MIT License - see [LICENSE](LICENSE) file for details.
+
+Skills and agents are provided as reference implementations. Individual bioinformatics tools referenced in skills have their own licenses.
 
 ---
 
 **Built for researchers, by researchers** • Emphasizes reproducibility, quality, and scientific rigor
+
+---
+
+## Distribution
+
+Want to share these skills with the community? See **[DISTRIBUTION.md](DISTRIBUTION.md)** for:
+- How to submit to Anthropic and OpenAI official repositories
+- Auto-indexing by SkillsMP and SkillHub marketplaces
+- Community outreach strategies
+- Making your repository discoverable
