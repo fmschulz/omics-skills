@@ -9,8 +9,8 @@ AGENTS_DIR := $(CURDIR)/agents
 SKILLS_DIR := $(CURDIR)/skills
 SCRIPTS_DIR := $(CURDIR)/scripts
 
-# Specific agent files (in subdirectories)
-AGENT_FILES := omics-scientist/omics-scientist.md science-writer/science-writer.md dataviz-artist/dataviz-artist.md
+# Specific agent files (flattened in agents/ directory)
+AGENT_FILES := omics-scientist.md science-writer.md dataviz-artist.md
 
 # Installation targets
 CLAUDE_HOME := $(HOME)/.claude
