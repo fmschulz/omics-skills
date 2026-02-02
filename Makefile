@@ -282,17 +282,23 @@ status: ## Show installation status
 	@echo "$(YELLOW)Claude Code:$(NC)"
 	@echo "  Agents directory: $(CLAUDE_AGENTS_DIR)"
 	@if [ -d $(CLAUDE_AGENTS_DIR) ]; then \
-		count=$$(ls -1 $(CLAUDE_AGENTS_DIR)/*.md 2>/dev/null | wc -l); \
-		echo "  Installed agents: $$count/3"; \
-		for agent in omics-scientist science-writer dataviz-artist; do \
-			if [ -f $(CLAUDE_AGENTS_DIR)/$$agent.md ] || [ -L $(CLAUDE_AGENTS_DIR)/$$agent.md ]; then \
-				if [ -L $(CLAUDE_AGENTS_DIR)/$$agent.md ]; then \
-					echo "    $(GREEN)✓$(NC) $$agent.md (symlink)"; \
+		total=$$(ls -1 $(CLAUDE_AGENTS_DIR)/*.md 2>/dev/null | wc -l); \
+		installed=0; \
+		for agent in $(AGENT_FILES); do \
+			if [ -f $(CLAUDE_AGENTS_DIR)/$$agent ] || [ -L $(CLAUDE_AGENTS_DIR)/$$agent ]; then \
+				installed=$$((installed + 1)); \
+			fi; \
+		done; \
+		echo "  Omics-skills agents: $$installed/3 installed ($$total total in directory)"; \
+		for agent in $(AGENT_FILES); do \
+			if [ -f $(CLAUDE_AGENTS_DIR)/$$agent ] || [ -L $(CLAUDE_AGENTS_DIR)/$$agent ]; then \
+				if [ -L $(CLAUDE_AGENTS_DIR)/$$agent ]; then \
+					echo "    $(GREEN)✓$(NC) $$agent (symlink)"; \
 				else \
-					echo "    $(GREEN)✓$(NC) $$agent.md (copy)"; \
+					echo "    $(GREEN)✓$(NC) $$agent (copy)"; \
 				fi; \
 			else \
-				echo "    $(RED)✗$(NC) $$agent.md"; \
+				echo "    $(RED)✗$(NC) $$agent"; \
 			fi; \
 		done; \
 	else \
@@ -301,8 +307,17 @@ status: ## Show installation status
 	@echo ""
 	@echo "  Skills directory: $(CLAUDE_SKILLS_DIR)"
 	@if [ -d $(CLAUDE_SKILLS_DIR) ]; then \
-		count=$$(ls -1d $(CLAUDE_SKILLS_DIR)/*/ 2>/dev/null | wc -l); \
-		echo "  Installed skills: $$count/20"; \
+		total=$$(find $(CLAUDE_SKILLS_DIR) -mindepth 1 -maxdepth 1 \( -type d -o -type l \) 2>/dev/null | wc -l); \
+		installed=0; \
+		for skill in $(SKILLS_DIR)/*; do \
+			if [ -d $$skill ]; then \
+				basename=$$(basename $$skill); \
+				if [ -d $(CLAUDE_SKILLS_DIR)/$$basename ] || [ -L $(CLAUDE_SKILLS_DIR)/$$basename ]; then \
+					installed=$$((installed + 1)); \
+				fi; \
+			fi; \
+		done; \
+		echo "  Omics-skills skills: $$installed/20 installed ($$total total in directory)"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
@@ -310,16 +325,31 @@ status: ## Show installation status
 	@echo "$(YELLOW)Codex CLI:$(NC)"
 	@echo "  Agents directory: $(CODEX_AGENTS_DIR)"
 	@if [ -d $(CODEX_AGENTS_DIR) ]; then \
-		count=$$(ls -1 $(CODEX_AGENTS_DIR)/*.md 2>/dev/null | wc -l); \
-		echo "  Installed agents: $$count/3"; \
+		total=$$(ls -1 $(CODEX_AGENTS_DIR)/*.md 2>/dev/null | wc -l); \
+		installed=0; \
+		for agent in $(AGENT_FILES); do \
+			if [ -f $(CODEX_AGENTS_DIR)/$$agent ] || [ -L $(CODEX_AGENTS_DIR)/$$agent ]; then \
+				installed=$$((installed + 1)); \
+			fi; \
+		done; \
+		echo "  Omics-skills agents: $$installed/3 installed ($$total total in directory)"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
 	@echo ""
 	@echo "  Skills directory: $(CODEX_SKILLS_DIR)"
 	@if [ -d $(CODEX_SKILLS_DIR) ]; then \
-		count=$$(ls -1d $(CODEX_SKILLS_DIR)/*/ 2>/dev/null | wc -l); \
-		echo "  Installed skills: $$count/20"; \
+		total=$$(find $(CODEX_SKILLS_DIR) -mindepth 1 -maxdepth 1 \( -type d -o -type l \) 2>/dev/null | wc -l); \
+		installed=0; \
+		for skill in $(SKILLS_DIR)/*; do \
+			if [ -d $$skill ]; then \
+				basename=$$(basename $$skill); \
+				if [ -d $(CODEX_SKILLS_DIR)/$$basename ] || [ -L $(CODEX_SKILLS_DIR)/$$basename ]; then \
+					installed=$$((installed + 1)); \
+				fi; \
+			fi; \
+		done; \
+		echo "  Omics-skills skills: $$installed/20 installed ($$total total in directory)"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
