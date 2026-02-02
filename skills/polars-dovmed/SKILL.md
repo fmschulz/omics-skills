@@ -29,10 +29,20 @@ Provides access to a remote API hosting 2.4M+ scientific papers from PubMed Cent
 
 ### Getting Your API Key
 
-**First, check for a saved API key:**
+**Check for a saved API key in this order:**
 
-1. Look for a `.env` file in the skill directory (e.g., `~/.claude/skills/polars-dovmed/.env`)
-2. If found, read the `POLARS_DOVMED_API_KEY` value and use it
+1. **Environment variable** (highest priority):
+   - Check if `POLARS_DOVMED_API_KEY` environment variable is set
+   - Use: `os.environ.get("POLARS_DOVMED_API_KEY")`
+
+2. **Secure config location** (recommended):
+   - Check `~/.config/polars-dovmed/.env`
+   - Read `POLARS_DOVMED_API_KEY` value if file exists
+   - This is where the installer saves keys (outside skill directory for security)
+
+3. **Legacy location** (for backward compatibility, but warn user):
+   - Check skill directory `.env` (e.g., `~/.claude/skills/polars-dovmed/.env`)
+   - If found, warn: "API key found in skill directory. For security, move to ~/.config/polars-dovmed/.env"
 
 **If no saved key exists, ask the user:**
 
@@ -46,11 +56,17 @@ To use polars-dovmed, I need your API key. If you don't have one:
 Please provide your API key, or I can help you draft a request email.
 ```
 
-**After receiving the key from the user, optionally offer to save it:**
+**After receiving the key from the user, save it securely:**
 ```
-Would you like me to save this API key for future use?
-If yes, I'll save it to ~/.claude/skills/polars-dovmed/.env
+I'll save your API key to ~/.config/polars-dovmed/.env (outside the skill directory for security).
+This prevents accidental commits to version control.
 ```
+
+Then create `~/.config/polars-dovmed/.env` with:
+```
+POLARS_DOVMED_API_KEY=<user's key>
+```
+And set permissions to 600 (read/write for owner only).
 
 Once you have the API key, use it in all requests via the `X-API-Key` header.
 
@@ -124,13 +140,17 @@ response = httpx.post(
     "https://api.newlineages.com/api/get_paper_details",
     headers={"X-API-Key": "your_api_key_here"},
     json={
-        "paper_ids": ["PMC7654321"],
+        "pmc_ids": ["PMC7654321"],  # Note: use pmc_ids, not paper_ids
         "include_full_text": True
     },
     timeout=120.0
 )
 results = response.json()
 ```
+
+**Parameters:**
+- `pmc_ids`: List of PMC IDs to retrieve (use `pmc_ids`, NOT `paper_ids`)
+- `include_full_text`: Whether to include full paper text (boolean)
 
 **Returns:** Full metadata including title, authors, abstract, journal, DOI, publication date, and optionally full paper text
 
@@ -169,6 +189,11 @@ usage = response.json()
 **Returns:** Your API key usage statistics (tier, total queries, hourly limit, current hour usage)
 
 ### 5. Advanced Literature Scan (Agent-Generated Patterns)
+
+> **⚠️ CAUTION: This endpoint is prone to 524 Cloudflare timeouts** due to complex server-side processing exceeding Cloudflare's ~100s limit. **Recommended approach:**
+> 1. **Start with `/api/search_literature`** using OR syntax (e.g., "Mirusviricota OR mirusvirus")
+> 2. Only use this advanced endpoint for focused queries with limited scope
+> 3. If you get 524 errors, fall back to simple search
 
 **For AI agents: Generate structured patterns yourself, then send them to this endpoint.**
 
@@ -427,13 +452,43 @@ elif response.status_code == 401:
     print("API key issue. Please verify your key.")
 ```
 
+## Recommended Search Strategy
+
+**Always start with the simple search endpoint** (`/api/search_literature`) before trying advanced search:
+
+1. **First attempt**: Use `/api/search_literature` with OR syntax
+   ```python
+   {"query": "Mirusviricota OR mirusvirus", "max_results": 50}
+   ```
+   - Fast and reliable (rarely times out)
+   - Returns full text in results for local parsing
+   - Use `max_results`: 20-100 for quick searches
+
+2. **If more filtering needed**: Parse results locally in Python
+   - Extract host information, taxonomic groups, etc. from `full_text` field
+   - More reliable than server-side advanced filtering
+
+3. **Only use advanced search** (`/api/scan_literature_advanced`) when:
+   - You need regex pattern extraction (GenBank accessions, etc.)
+   - Simple search returns too many irrelevant results
+   - **Expect potential 524 timeouts** - have fallback ready
+
+**Why this order?** The advanced endpoint performs complex multi-pattern matching across 2.4M+ papers, which can exceed Cloudflare's proxy timeout (~100s) even when the client timeout is higher.
+
 ## Search Tips
 
 **Query construction:**
 - Combine specific terms: "CRISPR-Cas9 thermophilic archaea Sulfolobus"
 - Include organism/gene/method names for precision
-- AND is implicit between terms
+- AND is implicit between terms (all terms must be present)
+- Use OR to find papers with ANY of the terms: "Mirusviricota OR Mirusvirus"
+- Combine AND and OR: "CRISPR OR Cas9 archaea" finds papers with (CRISPR + archaea) OR (Cas9 + archaea)
 - Use scientific terminology
+
+**OR syntax examples:**
+- "Mirusviricota OR Mirusvirus" → papers mentioning either term
+- "bacteriophage OR phage" → finds papers using either naming convention
+- "HIV OR AIDS OR retrovirus" → comprehensive search across related terms
 
 **Database coverage:**
 - 2.4M+ papers from PubMed Central Open Access
@@ -472,8 +527,9 @@ All API endpoints return standard HTTP status codes:
 - `429 Too Many Requests` - Rate limit exceeded (API key or IP)
 
 **Server error codes:**
-- `500 Internal Server Error` - Server-side processing error
+- `500 Internal Server Error` - Server-side processing error (check parameter names match API spec)
 - `504 Gateway Timeout` - Query took too long (increase timeout to 300s or reduce max_results)
+- `524 A Timeout Occurred` - Cloudflare-specific: origin server exceeded Cloudflare's ~100s limit. This commonly affects `/api/scan_literature_advanced`. **Workaround:** Use simpler `/api/search_literature` endpoint instead, or reduce query complexity.
 
 **Example error handling:**
 ```python
@@ -493,10 +549,15 @@ except httpx.HTTPStatusError as e:
         print("Rate limit exceeded. Wait before retrying.")
     elif e.response.status_code == 401:
         print("API key missing or invalid.")
+    elif e.response.status_code == 524:
+        # Cloudflare timeout - server took too long
+        print("524 Cloudflare timeout. Try simpler /api/search_literature endpoint.")
+    elif e.response.status_code == 500:
+        print("Server error. Check parameter names (e.g., use pmc_ids not paper_ids).")
     else:
         print(f"HTTP error: {e}")
 except httpx.TimeoutException:
-    print("Request timed out. Try increasing timeout to 300s or reducing max_results.")
+    print("Client timeout. Try increasing timeout to 300s or reducing max_results.")
 except Exception as e:
     print(f"Unexpected error: {e}")
 ```
@@ -526,7 +587,15 @@ except Exception as e:
 
 **Slow searches:** Reduce max_results, simplify query terms
 
-**Timeout errors:** Increase timeout to 300s (5 minutes), or reduce max_results
+**504 Timeout errors:** Increase client timeout to 300s, or reduce max_results
+
+**524 Cloudflare timeout (advanced search):**
+- This is a **server-side** timeout (Cloudflare's ~100s limit), not fixable by increasing client timeout
+- **Solution:** Switch to `/api/search_literature` with OR syntax, then filter results locally
+- The advanced endpoint works best for narrow, focused queries
+
+**500 Internal Server Error on get_paper_details:**
+- Check parameter name: use `pmc_ids`, not `paper_ids`
 
 **Rate limit errors:** See "Rate Limits" and "Error Handling" sections above
 
