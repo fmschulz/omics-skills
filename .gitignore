@@ -1,0 +1,50 @@
+# Backup files
+*.bak
+*.backup
+*~
+
+# Hidden files (except git)
+.DS_Store
+._.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local development
+.env
+.env.local
+*.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp

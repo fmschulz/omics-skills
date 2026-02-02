@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# Omics Skills Uninstaller
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Directories
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENTS_DIR="$SCRIPT_DIR/agents"
+SKILLS_DIR="$SCRIPT_DIR/skills"
+
+CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+CODEX_AGENTS_DIR="$HOME/.codex/agents"
+CODEX_SKILLS_DIR="$HOME/.codex/skills"
+
+# Parse arguments
+UNINSTALL_TARGET="both"
+KEEP_BACKUPS=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --claude)
+            UNINSTALL_TARGET="claude"
+            shift
+            ;;
+        --codex)
+            UNINSTALL_TARGET="codex"
+            shift
+            ;;
+        --keep-backups)
+            KEEP_BACKUPS=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --claude         Uninstall from Claude Code only"
+            echo "  --codex          Uninstall from Codex CLI only"
+            echo "  --keep-backups   Keep backup files (.bak)"
+            echo "  --help           Show this help message"
+            echo ""
+            echo "Default: Uninstall from both platforms and remove backups"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Functions
+uninstall_from_claude() {
+    echo -e "${BLUE}Uninstalling from Claude Code...${NC}"
+
+    # Remove agents
+    for agent in "$AGENTS_DIR"/*.md; do
+        basename=$(basename "$agent")
+        target="$CLAUDE_AGENTS_DIR/$basename"
+        if [ -L "$target" ] || [ -f "$target" ]; then
+            rm "$target"
+            echo -e "  ${GREEN}✓${NC} Removed agent: $basename"
+        fi
+    done
+
+    # Remove skills
+    for skill in "$SKILLS_DIR"/*; do
+        if [ -d "$skill" ]; then
+            basename=$(basename "$skill")
+            target="$CLAUDE_SKILLS_DIR/$basename"
+            if [ -L "$target" ] || [ -d "$target" ]; then
+                rm -rf "$target"
+                echo -e "  ${GREEN}✓${NC} Removed skill: $basename"
+            fi
+        fi
+    done
+
+    # Remove backups if requested
+    if [ "$KEEP_BACKUPS" = false ]; then
+        find "$CLAUDE_AGENTS_DIR" -name "*.bak" -delete 2>/dev/null || true
+        find "$CLAUDE_SKILLS_DIR" -name "*.bak" -exec rm -rf {} + 2>/dev/null || true
+        echo -e "  ${GREEN}✓${NC} Removed backup files"
+    fi
+
+    echo -e "${GREEN}✓ Claude Code uninstalled${NC}"
+}
+
+uninstall_from_codex() {
+    echo -e "${BLUE}Uninstalling from Codex CLI...${NC}"
+
+    # Remove agents
+    for agent in "$AGENTS_DIR"/*.md; do
+        basename=$(basename "$agent")
+        target="$CODEX_AGENTS_DIR/$basename"
+        if [ -L "$target" ] || [ -f "$target" ]; then
+            rm "$target"
+            echo -e "  ${GREEN}✓${NC} Removed agent: $basename"
+        fi
+    done
+
+    # Remove skills
+    for skill in "$SKILLS_DIR"/*; do
+        if [ -d "$skill" ]; then
+            basename=$(basename "$skill")
+            target="$CODEX_SKILLS_DIR/$basename"
+            if [ -L "$target" ] || [ -d "$target" ]; then
+                rm -rf "$target"
+                echo -e "  ${GREEN}✓${NC} Removed skill: $basename"
+            fi
+        fi
+    done
+
+    # Remove backups if requested
+    if [ "$KEEP_BACKUPS" = false ]; then
+        find "$CODEX_AGENTS_DIR" -name "*.bak" -delete 2>/dev/null || true
+        find "$CODEX_SKILLS_DIR" -name "*.bak" -exec rm -rf {} + 2>/dev/null || true
+        echo -e "  ${GREEN}✓${NC} Removed backup files"
+    fi
+
+    echo -e "${GREEN}✓ Codex CLI uninstalled${NC}"
+}
+
+# Main
+echo -e "${BLUE}╔═══════════════════════════════════╗${NC}"
+echo -e "${BLUE}║   Omics Skills Uninstaller        ║${NC}"
+echo -e "${BLUE}╚═══════════════════════════════════╝${NC}"
+echo ""
+
+# Confirm uninstallation
+echo -e "${YELLOW}This will remove omics-skills agents and skills.${NC}"
+echo -e "${YELLOW}Are you sure you want to continue? [y/N]${NC}"
+read -r confirmation
+
+if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
+    echo -e "${BLUE}Uninstallation cancelled.${NC}"
+    exit 0
+fi
+
+echo ""
+
+# Uninstall based on target
+if [ "$UNINSTALL_TARGET" = "both" ] || [ "$UNINSTALL_TARGET" = "claude" ]; then
+    uninstall_from_claude
+    echo ""
+fi
+
+if [ "$UNINSTALL_TARGET" = "both" ] || [ "$UNINSTALL_TARGET" = "codex" ]; then
+    uninstall_from_codex
+    echo ""
+fi
+
+echo -e "${GREEN}✓ Uninstallation complete!${NC}"
+
+if [ "$KEEP_BACKUPS" = true ]; then
+    echo ""
+    echo -e "${YELLOW}Note: Backup files (.bak) were preserved${NC}"
+    echo "  To remove them later, run: make clean"
+fi
