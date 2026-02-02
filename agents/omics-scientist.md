@@ -117,6 +117,14 @@ You MUST use the appropriate skills for bioinformatics tasks. Do NOT attempt to 
   - Use for: Preparing reference databases, cleaning FASTA files
   - Outputs: Curated, standardized FASTA files
 
+### JGI Data Access
+
+**For querying JGI genomics databases, use:**
+- `/jgi-lakehouse` - Query GOLD, IMG, and Phytozome via Dremio SQL
+  - Use for: Finding JGI genomes, projects, and annotations; cross-referencing GOLD metadata
+  - Outputs: Query results as DataFrames, genome lists, project metadata
+  - Requires: DREMIO_PAT token (see skill docs for setup)
+
 ### Sequence Homology Searches
 
 **For HMM and sequence similarity searches, use:**
@@ -194,6 +202,9 @@ START
   ├─ Database Management?
   │   └─> /fasta-database-curator
   │
+  ├─ Need JGI Data (GOLD/IMG/Phytozome)?
+  │   └─> /jgi-lakehouse
+  │
   └─ Pipeline Failed?
       └─> /pipeline-debugger
 ```
@@ -221,6 +232,7 @@ When the user mentions these terms, automatically trigger the corresponding skil
 - **"statistics", "report", "machine learning", "figures"** → `/bio-stats-ml-reporting`
 - **"pipeline failed", "error", "debugging"** → `/pipeline-debugger`
 - **"new project", "setup", "initialize"** → `/bio-foundation-housekeeping`
+- **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse", "Dremio"** → `/jgi-lakehouse`
 
 ## Communication Style
 

@@ -9,7 +9,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-3-blue)](#the-three-agents)
-[![Skills](https://img.shields.io/badge/Skills-20-blue)](#agent--skills-mapping)
+[![Skills](https://img.shields.io/badge/Skills-21-blue)](#agent--skills-mapping)
 
 **Quick Links:** [Installation](#installation) • [Agents](#the-three-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
@@ -17,7 +17,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**3 Expert Agents** that orchestrate **20 specialized skills** for end-to-end omics analysis, scientific communication, and data visualization.
+**3 Expert Agents** that orchestrate **21 specialized skills** for end-to-end omics analysis, scientific communication, and data visualization.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -41,7 +41,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Conduct comparative genomics
 - Analyze viral sequences or protein structures
 
-**Core Skills (14):**
+**Core Skills (15):**
 - `bio-logic` — Scientific reasoning and hypothesis formation
 - `bio-foundation-housekeeping` — Project scaffolding with reproducible environments
 - `bio-reads-qc-mapping` — Read QC, trimming, and mapping
@@ -56,6 +56,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - `bio-stats-ml-reporting` — Statistical analysis and ML model training
 - `bio-workflow-methods-docwriter` — Generate Methods sections from pipelines
 - `bio-prefect-dask-nextflow` — Workflow orchestration
+- `jgi-lakehouse` — Query JGI's GOLD, IMG, and Phytozome databases via Dremio
 
 ---
 
@@ -126,7 +127,7 @@ make status
 
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
-- **Skills** → `~/.claude/skills/` and `~/.codex/skills/` (20 directories)
+- **Skills** → `~/.claude/skills/` and `~/.codex/skills/` (21 directories)
 
 **Examples:**
 ```bash
@@ -181,7 +182,7 @@ make test  # Run validation tests
 ┌────────────────────────┐
 │   Omics Scientist      │
 ├────────────────────────┤
-│ 14 bio-* skills        │
+│ 15 bio-* skills        │
 │ Focus: Workflows       │
 └────────────────────────┘
          │
@@ -198,7 +199,8 @@ make test  # Run validation tests
          ├──> bio-viromics
          ├──> bio-stats-ml-reporting
          ├──> bio-workflow-methods-docwriter
-         └──> bio-prefect-dask-nextflow
+         ├──> bio-prefect-dask-nextflow
+         └──> jgi-lakehouse (GOLD/IMG/Phytozome)
 
 ┌────────────────────────┐
 │   Science Writer       │
@@ -289,7 +291,7 @@ omics-skills/
 │   ├── ARCHITECTURE.md             # Agent design principles
 │   └── README.md                   # Agent documentation
 │
-└── skills/                          # 20 specialized skills
+└── skills/                          # 21 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
@@ -304,6 +306,7 @@ omics-skills/
     ├── bio-stats-ml-reporting/
     ├── bio-workflow-methods-docwriter/
     ├── bio-prefect-dask-nextflow/
+    ├── jgi-lakehouse/              # Query JGI GOLD/IMG/Phytozome
     ├── polars-dovmed/              # PubMed Central search
     ├── science-writing/            # Manuscript generation
     ├── agent-browser/              # Web automation
@@ -459,10 +462,10 @@ make install > install.log  # Colors disabled automatically
 
 Installation shows progress counters:
 ```
-Progress: 0/20 skills
-  [1/20] ✓ agent-browser
-  [2/20] ✓ beautiful-data-viz
+Progress: 0/21 skills
+  [1/21] ✓ agent-browser
+  [2/21] ✓ beautiful-data-viz
   ...
-  [20/20] ✓ science-writing
-Completed: 20/20 skills installed
+  [21/21] ✓ science-writing
+Completed: 21/21 skills installed
 ```
