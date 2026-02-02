@@ -289,9 +289,13 @@ omics-skills/
 │   ├── omics-scientist.md          # Bioinformatics workflows
 │   ├── science-writer.md           # Manuscript writing
 │   ├── dataviz-artist.md           # Visualization design
-│   ├── ARCHITECTURE.md             # Agent design principles (shared)
-│   ├── BIO-LOGIC_INTEGRATION.md    # Shared documentation
-│   └── README.md                   # Agent documentation
+│   └── docs/                        # Shared agent documentation
+│       ├── ARCHITECTURE.md         # Agent design principles
+│       ├── BIO-LOGIC_INTEGRATION.md
+│       ├── EXAMPLES.md
+│       ├── INDEX.md
+│       ├── QUICK_REFERENCE.md
+│       └── README.md
 │
 └── skills/                          # 20 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
