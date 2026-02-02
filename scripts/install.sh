@@ -13,8 +13,17 @@ NC='\033[0m' # No Color
 
 # Directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_DIR="$SCRIPT_DIR/agents"
-SKILLS_DIR="$SCRIPT_DIR/skills"
+# If running from scripts/ directory, go up one level
+if [[ "$(basename "$SCRIPT_DIR")" == "scripts" ]]; then
+    REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+else
+    REPO_ROOT="$SCRIPT_DIR"
+fi
+AGENTS_DIR="$REPO_ROOT/agents"
+SKILLS_DIR="$REPO_ROOT/skills"
+
+# Specific agent files (not all .md files)
+AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
@@ -68,25 +77,30 @@ install_agents() {
     echo -e "${BLUE}Installing agents to $platform...${NC}"
     mkdir -p "$target_dir"
 
-    for agent in "$AGENTS_DIR"/*.md; do
-        basename=$(basename "$agent")
-        target="$target_dir/$basename"
+    for agent in "${AGENT_FILES[@]}"; do
+        agent_path="$AGENTS_DIR/$agent"
+        target="$target_dir/$agent"
+
+        if [ ! -f "$agent_path" ]; then
+            echo -e "  ${RED}✗${NC} $agent not found"
+            continue
+        fi
 
         if [ -L "$target" ]; then
-            echo "  Updating symlink: $basename"
+            echo "  Updating symlink: $agent"
             rm "$target"
         elif [ -f "$target" ]; then
-            echo -e "  ${YELLOW}Warning: $basename exists (backing up)${NC}"
+            echo -e "  ${YELLOW}Warning: $agent exists (backing up)${NC}"
             mv "$target" "$target.bak"
         fi
 
         if [ "$INSTALL_METHOD" = "symlink" ]; then
-            ln -sf "$agent" "$target"
+            ln -sf "$agent_path" "$target"
         else
-            cp "$agent" "$target"
+            cp "$agent_path" "$target"
         fi
 
-        echo -e "  ${GREEN}✓${NC} $basename"
+        echo -e "  ${GREEN}✓${NC} $agent"
     done
 }
 
@@ -234,4 +248,4 @@ echo "  2. Or use in Codex:"
 echo "     codex --system-prompt ~/.codex/agents/omics-scientist.md"
 echo ""
 echo -e "${YELLOW}Tip:${NC} Use symlinks (default) to always have the latest updates"
-echo "     Updates: cd $(basename "$SCRIPT_DIR") && git pull && ./install.sh"
+echo "     Updates: cd $(basename "$REPO_ROOT") && git pull && ./install.sh"
