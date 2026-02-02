@@ -25,12 +25,28 @@ CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
 # Use INSTALL_METHOD=copy for copying instead of symlinking
 INSTALL_METHOD ?= symlink
 
-# Colors for output
-GREEN := \033[0;32m
-YELLOW := \033[0;33m
-BLUE := \033[0;34m
-RED := \033[0;31m
-NC := \033[0m # No Color
+# Colors for output (disabled if NO_COLOR is set or not a TTY)
+ifeq ($(NO_COLOR),)
+  ifeq ($(shell test -t 1 && echo 1),1)
+    GREEN := \033[0;32m
+    YELLOW := \033[0;33m
+    BLUE := \033[0;34m
+    RED := \033[0;31m
+    NC := \033[0m
+  else
+    GREEN :=
+    YELLOW :=
+    BLUE :=
+    RED :=
+    NC :=
+  endif
+else
+  GREEN :=
+  YELLOW :=
+  BLUE :=
+  RED :=
+  NC :=
+endif
 
 ##@ General
 
@@ -98,36 +114,45 @@ endif
 install-claude-skills: ## Install skills to Claude Code
 	@echo "$(BLUE)Installing skills to Claude Code...$(NC)"
 	@mkdir -p $(CLAUDE_SKILLS_DIR)
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	echo "Progress: 0/$$total skills"
 ifeq ($(INSTALL_METHOD),symlink)
-	@for skill in $(SKILLS_DIR)/*; do \
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
+			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
 			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ]; then \
-				echo "  Updating symlink: $$basename"; \
 				rm $$target; \
 			elif [ -d $$target ]; then \
-				echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			ln -sf $$skill $$target; \
-			echo "  $(GREEN)✓$(NC) $$basename"; \
+			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
 		fi; \
 	done
 else
-	@for skill in $(SKILLS_DIR)/*; do \
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
+			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
 			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
 			if [ -d $$target ]; then \
-				echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			cp -r $$skill $$target; \
-			echo "  $(GREEN)✓$(NC) $$basename"; \
+			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
 		fi; \
 	done
 endif
+	@echo "Completed: 20/20 skills installed"
 
 install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
@@ -170,36 +195,45 @@ endif
 install-codex-skills: ## Install skills to Codex CLI
 	@echo "$(BLUE)Installing skills to Codex CLI...$(NC)"
 	@mkdir -p $(CODEX_SKILLS_DIR)
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	echo "Progress: 0/$$total skills"
 ifeq ($(INSTALL_METHOD),symlink)
-	@for skill in $(SKILLS_DIR)/*; do \
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
+			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
 			target=$(CODEX_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ]; then \
-				echo "  Updating symlink: $$basename"; \
 				rm $$target; \
 			elif [ -d $$target ]; then \
-				echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			ln -sf $$skill $$target; \
-			echo "  $(GREEN)✓$(NC) $$basename"; \
+			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
 		fi; \
 	done
 else
-	@for skill in $(SKILLS_DIR)/*; do \
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
+			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
 			target=$(CODEX_SKILLS_DIR)/$$basename; \
 			if [ -d $$target ]; then \
-				echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			cp -r $$skill $$target; \
-			echo "  $(GREEN)✓$(NC) $$basename"; \
+			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
 		fi; \
 	done
 endif
+	@echo "Completed: 20/20 skills installed"
 
 ##@ Dependencies
 

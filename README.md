@@ -429,3 +429,29 @@ Want to share these skills with the community? See **[DISTRIBUTION.md](DISTRIBUT
 - Auto-indexing by SkillsMP and SkillHub marketplaces
 - Community outreach strategies
 - Making your repository discoverable
+
+## Troubleshooting
+
+### Colors Not Showing
+
+If ANSI colors don't display on your system:
+
+```bash
+# Disable colors explicitly
+make install NO_COLOR=1
+
+# Colors are automatically disabled for non-TTY (pipes, redirects)
+make install > install.log  # Colors disabled automatically
+```
+
+### Progress Display
+
+Installation shows progress counters:
+```
+Progress: 0/20 skills
+  [1/20] ✓ agent-browser
+  [2/20] ✓ beautiful-data-viz
+  ...
+  [20/20] ✓ science-writing
+Completed: 20/20 skills installed
+```
