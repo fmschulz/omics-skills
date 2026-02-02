@@ -9,6 +9,9 @@ AGENTS_DIR := $(CURDIR)/agents
 SKILLS_DIR := $(CURDIR)/skills
 SCRIPTS_DIR := $(CURDIR)/scripts
 
+# Specific agent files (not all .md files in agents/)
+AGENT_FILES := omics-scientist.md science-writer.md dataviz-artist.md
+
 # Installation targets
 CLAUDE_HOME := $(HOME)/.claude
 CLAUDE_AGENTS_DIR := $(CLAUDE_HOME)/agents
@@ -58,29 +61,37 @@ install-claude-agents: ## Install agents to Claude Code
 	@echo "$(BLUE)Installing agents to Claude Code...$(NC)"
 	@mkdir -p $(CLAUDE_AGENTS_DIR)
 ifeq ($(INSTALL_METHOD),symlink)
-	@for agent in $(AGENTS_DIR)/*.md; do \
-		basename=$$(basename $$agent); \
-		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
+	@for agent in $(AGENT_FILES); do \
+		agent_path=$(AGENTS_DIR)/$$agent; \
+		target=$(CLAUDE_AGENTS_DIR)/$$agent; \
+		if [ ! -f $$agent_path ]; then \
+			echo "  $(RED)✗$(NC) $$agent not found"; \
+			continue; \
+		fi; \
 		if [ -L $$target ]; then \
-			echo "  Updating symlink: $$basename"; \
+			echo "  Updating symlink: $$agent"; \
 			rm $$target; \
 		elif [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+			echo "  $(YELLOW)Warning: $$agent exists (backing up)$(NC)"; \
 			mv $$target $$target.bak; \
 		fi; \
-		ln -sf $$agent $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
+		ln -sf $$agent_path $$target; \
+		echo "  $(GREEN)✓$(NC) $$agent"; \
 	done
 else
-	@for agent in $(AGENTS_DIR)/*.md; do \
-		basename=$$(basename $$agent); \
-		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
+	@for agent in $(AGENT_FILES); do \
+		agent_path=$(AGENTS_DIR)/$$agent; \
+		target=$(CLAUDE_AGENTS_DIR)/$$agent; \
+		if [ ! -f $$agent_path ]; then \
+			echo "  $(RED)✗$(NC) $$agent not found"; \
+			continue; \
+		fi; \
 		if [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+			echo "  $(YELLOW)Warning: $$agent exists (backing up)$(NC)"; \
 			cp $$target $$target.bak; \
 		fi; \
-		cp $$agent $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
+		cp $$agent_path $$target; \
+		echo "  $(GREEN)✓$(NC) $$agent"; \
 	done
 endif
 
@@ -122,29 +133,37 @@ install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
 	@mkdir -p $(CODEX_AGENTS_DIR)
 ifeq ($(INSTALL_METHOD),symlink)
-	@for agent in $(AGENTS_DIR)/*.md; do \
-		basename=$$(basename $$agent); \
-		target=$(CODEX_AGENTS_DIR)/$$basename; \
+	@for agent in $(AGENT_FILES); do \
+		agent_path=$(AGENTS_DIR)/$$agent; \
+		target=$(CODEX_AGENTS_DIR)/$$agent; \
+		if [ ! -f $$agent_path ]; then \
+			echo "  $(RED)✗$(NC) $$agent not found"; \
+			continue; \
+		fi; \
 		if [ -L $$target ]; then \
-			echo "  Updating symlink: $$basename"; \
+			echo "  Updating symlink: $$agent"; \
 			rm $$target; \
 		elif [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+			echo "  $(YELLOW)Warning: $$agent exists (backing up)$(NC)"; \
 			mv $$target $$target.bak; \
 		fi; \
-		ln -sf $$agent $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
+		ln -sf $$agent_path $$target; \
+		echo "  $(GREEN)✓$(NC) $$agent"; \
 	done
 else
-	@for agent in $(AGENTS_DIR)/*.md; do \
-		basename=$$(basename $$agent); \
-		target=$(CODEX_AGENTS_DIR)/$$basename; \
+	@for agent in $(AGENT_FILES); do \
+		agent_path=$(AGENTS_DIR)/$$agent; \
+		target=$(CODEX_AGENTS_DIR)/$$agent; \
+		if [ ! -f $$agent_path ]; then \
+			echo "  $(RED)✗$(NC) $$agent not found"; \
+			continue; \
+		fi; \
 		if [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
+			echo "  $(YELLOW)Warning: $$agent exists (backing up)$(NC)"; \
 			cp $$target $$target.bak; \
 		fi; \
-		cp $$agent $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
+		cp $$agent_path $$target; \
+		echo "  $(GREEN)✓$(NC) $$agent"; \
 	done
 endif
 
@@ -215,12 +234,11 @@ uninstall: uninstall-claude uninstall-codex ## Uninstall from both platforms
 
 uninstall-claude: ## Uninstall from Claude Code
 	@echo "$(BLUE)Uninstalling from Claude Code...$(NC)"
-	@for agent in $(AGENTS_DIR)/*.md; do \
-		basename=$$(basename $$agent); \
-		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
+	@for agent in $(AGENT_FILES); do \
+		target=$(CLAUDE_AGENTS_DIR)/$$agent; \
 		if [ -L $$target ] || [ -f $$target ]; then \
 			rm $$target; \
-			echo "  $(GREEN)✓$(NC) Removed $$basename"; \
+			echo "  $(GREEN)✓$(NC) Removed $$agent"; \
 		fi; \
 	done
 	@for skill in $(SKILLS_DIR)/*; do \
@@ -237,12 +255,11 @@ uninstall-claude: ## Uninstall from Claude Code
 
 uninstall-codex: ## Uninstall from Codex CLI
 	@echo "$(BLUE)Uninstalling from Codex CLI...$(NC)"
-	@for agent in $(AGENTS_DIR)/*.md; do \
-		basename=$$(basename $$agent); \
-		target=$(CODEX_AGENTS_DIR)/$$basename; \
+	@for agent in $(AGENT_FILES); do \
+		target=$(CODEX_AGENTS_DIR)/$$agent; \
 		if [ -L $$target ] || [ -f $$target ]; then \
 			rm $$target; \
-			echo "  $(GREEN)✓$(NC) Removed $$basename"; \
+			echo "  $(GREEN)✓$(NC) Removed $$agent"; \
 		fi; \
 	done
 	@for skill in $(SKILLS_DIR)/*; do \
