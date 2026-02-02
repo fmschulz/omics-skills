@@ -119,11 +119,22 @@ make status
 - `make status` - Check what's installed
 - `make help` - View all options
 
+**Installation options:**
+- **Method**: Use `INSTALL_METHOD=copy` for copies instead of symlinks (default: symlink)
+- **Verbosity**: Use `VERBOSE=1` to show each file being installed (default: compact progress)
+- **Color**: Use `NO_COLOR=1` to disable colors (auto-detected for non-TTY)
+
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
 - **Skills** → `~/.claude/skills/` and `~/.codex/skills/` (20 directories)
-- **Symlinks** by default (auto-updates with `git pull`)
-- Use `make install INSTALL_METHOD=copy` for copies instead
+
+**Examples:**
+```bash
+make install                           # Default: symlinks, compact output
+make install VERBOSE=1                 # Show each file being installed
+make install INSTALL_METHOD=copy       # Copy files instead of symlinks
+make install NO_COLOR=1                # Disable colors
+```
 
 > 📖 **[Complete Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, manual installation, and advanced options. Shell scripts available in `scripts/` for Makefile-free installation.
 

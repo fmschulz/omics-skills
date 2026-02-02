@@ -25,6 +25,11 @@ CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
 # Use INSTALL_METHOD=copy for copying instead of symlinking
 INSTALL_METHOD ?= symlink
 
+# Verbosity control
+# Use VERBOSE=1 to show each file being installed/uninstalled
+# Default is compact progress display
+VERBOSE ?= 0
+
 # Colors for output (disabled if NO_COLOR is set or not a TTY)
 ifeq ($(NO_COLOR),)
   ifeq ($(shell test -t 1 && echo 1),1)
@@ -54,7 +59,17 @@ help: ## Display this help
 	@echo "$(BLUE)Omics Skills Installer$(NC)"
 	@echo ""
 	@echo "Usage:"
-	@echo "  make <target>"
+	@echo "  make <target> [OPTIONS]"
+	@echo ""
+	@echo "Options:"
+	@echo "  INSTALL_METHOD=copy    Copy files instead of creating symlinks"
+	@echo "  VERBOSE=1              Show each file being installed/uninstalled"
+	@echo "  NO_COLOR=1             Disable colored output"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make install                      # Install with default settings"
+	@echo "  make install VERBOSE=1            # Show detailed progress"
+	@echo "  make install INSTALL_METHOD=copy  # Copy files instead of symlinks"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "\n"} \
 		/^[a-zA-Z_-]+:.*?##/ { printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2 } \
@@ -114,9 +129,6 @@ endif
 install-claude-skills: ## Install skills to Claude Code
 	@echo "$(BLUE)Installing skills to Claude Code...$(NC)"
 	@mkdir -p $(CLAUDE_SKILLS_DIR)
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
-	current=0; \
-	echo "Progress: 0/$$total skills"
 ifeq ($(INSTALL_METHOD),symlink)
 	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
 	current=0; \
@@ -128,13 +140,21 @@ ifeq ($(INSTALL_METHOD),symlink)
 			if [ -L $$target ]; then \
 				rm $$target; \
 			elif [ -d $$target ]; then \
-				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			ln -sf $$skill $$target; \
-			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			if [ "$(VERBOSE)" = "1" ]; then \
+				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			else \
+				printf "\r  Progress: $$current/$$total skills"; \
+			fi; \
 		fi; \
-	done
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
+	fi
 else
 	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
 	current=0; \
@@ -144,15 +164,22 @@ else
 			basename=$$(basename $$skill); \
 			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
 			if [ -d $$target ]; then \
-				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			cp -r $$skill $$target; \
-			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			if [ "$(VERBOSE)" = "1" ]; then \
+				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			else \
+				printf "\r  Progress: $$current/$$total skills"; \
+			fi; \
 		fi; \
-	done
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
+	fi
 endif
-	@echo "Completed: 20/20 skills installed"
 
 install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
@@ -195,9 +222,6 @@ endif
 install-codex-skills: ## Install skills to Codex CLI
 	@echo "$(BLUE)Installing skills to Codex CLI...$(NC)"
 	@mkdir -p $(CODEX_SKILLS_DIR)
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
-	current=0; \
-	echo "Progress: 0/$$total skills"
 ifeq ($(INSTALL_METHOD),symlink)
 	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
 	current=0; \
@@ -209,13 +233,21 @@ ifeq ($(INSTALL_METHOD),symlink)
 			if [ -L $$target ]; then \
 				rm $$target; \
 			elif [ -d $$target ]; then \
-				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			ln -sf $$skill $$target; \
-			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			if [ "$(VERBOSE)" = "1" ]; then \
+				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			else \
+				printf "\r  Progress: $$current/$$total skills"; \
+			fi; \
 		fi; \
-	done
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
+	fi
 else
 	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
 	current=0; \
@@ -225,15 +257,22 @@ else
 			basename=$$(basename $$skill); \
 			target=$(CODEX_SKILLS_DIR)/$$basename; \
 			if [ -d $$target ]; then \
-				echo "  [$$current/$$total] $(YELLOW)Warning:$(NC) $$basename exists (backing up)"; \
 				mv $$target $$target.bak; \
 			fi; \
 			cp -r $$skill $$target; \
-			echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			if [ "$(VERBOSE)" = "1" ]; then \
+				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
+			else \
+				printf "\r  Progress: $$current/$$total skills"; \
+			fi; \
 		fi; \
-	done
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
+	fi
 endif
-	@echo "Completed: 20/20 skills installed"
 
 ##@ Dependencies
 
@@ -268,44 +307,90 @@ uninstall: uninstall-claude uninstall-codex ## Uninstall from both platforms
 
 uninstall-claude: ## Uninstall from Claude Code
 	@echo "$(BLUE)Uninstalling from Claude Code...$(NC)"
-	@for agent in $(AGENT_FILES); do \
+	@current=0; \
+	for agent in $(AGENT_FILES); do \
 		target=$(CLAUDE_AGENTS_DIR)/$$agent; \
 		if [ -L $$target ] || [ -f $$target ]; then \
+			current=$$((current + 1)); \
 			rm $$target; \
-			echo "  $(GREEN)✓$(NC) Removed $$agent"; \
+			if [ "$(VERBOSE)" = "1" ]; then \
+				echo "  [$$current/3] $(GREEN)✓$(NC) Removed $$agent"; \
+			else \
+				printf "\r  Agents: $$current/3"; \
+			fi; \
 		fi; \
-	done
-	@for skill in $(SKILLS_DIR)/*; do \
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Removed: $$current/3 agents\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$current/3 agents"; \
+	fi
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
 			basename=$$(basename $$skill); \
 			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ] || [ -d $$target ]; then \
+				current=$$((current + 1)); \
 				rm -rf $$target; \
-				echo "  $(GREEN)✓$(NC) Removed $$basename"; \
+				if [ "$(VERBOSE)" = "1" ]; then \
+					echo "  [$$current/$$total] $(GREEN)✓$(NC) Removed $$basename"; \
+				else \
+					printf "\r  Skills: $$current/$$total"; \
+				fi; \
 			fi; \
 		fi; \
-	done
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Removed: $$current/$$total skills\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$current/$$total skills"; \
+	fi
 	@echo "$(GREEN)✓ Claude Code uninstalled$(NC)"
 
 uninstall-codex: ## Uninstall from Codex CLI
 	@echo "$(BLUE)Uninstalling from Codex CLI...$(NC)"
-	@for agent in $(AGENT_FILES); do \
+	@current=0; \
+	for agent in $(AGENT_FILES); do \
 		target=$(CODEX_AGENTS_DIR)/$$agent; \
 		if [ -L $$target ] || [ -f $$target ]; then \
+			current=$$((current + 1)); \
 			rm $$target; \
-			echo "  $(GREEN)✓$(NC) Removed $$agent"; \
+			if [ "$(VERBOSE)" = "1" ]; then \
+				echo "  [$$current/3] $(GREEN)✓$(NC) Removed $$agent"; \
+			else \
+				printf "\r  Agents: $$current/3"; \
+			fi; \
 		fi; \
-	done
-	@for skill in $(SKILLS_DIR)/*; do \
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Removed: $$current/3 agents\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$current/3 agents"; \
+	fi
+	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	current=0; \
+	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
 			basename=$$(basename $$skill); \
 			target=$(CODEX_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ] || [ -d $$target ]; then \
+				current=$$((current + 1)); \
 				rm -rf $$target; \
-				echo "  $(GREEN)✓$(NC) Removed $$basename"; \
+				if [ "$(VERBOSE)" = "1" ]; then \
+					echo "  [$$current/$$total] $(GREEN)✓$(NC) Removed $$basename"; \
+				else \
+					printf "\r  Skills: $$current/$$total"; \
+				fi; \
 			fi; \
 		fi; \
-	done
+	done; \
+	if [ "$(VERBOSE)" != "1" ]; then \
+		printf "\r  $(GREEN)✓$(NC) Removed: $$current/$$total skills\n"; \
+	else \
+		echo "  $(GREEN)✓$(NC) Completed: $$current/$$total skills"; \
+	fi
 	@echo "$(GREEN)✓ Codex CLI uninstalled$(NC)"
 
 ##@ Status
