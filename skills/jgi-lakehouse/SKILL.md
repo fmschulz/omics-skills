@@ -1,142 +1,180 @@
 ---
 name: jgi-lakehouse
-description: Queries and explores the JGI Lakehouse (Dremio + Iceberg) using safe SQL patterns via REST API. Use when working with JGI genomics data, GOLD projects, IMG annotations, or when the user mentions Dremio, Lakehouse, or needs schema discovery.
+description: Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG, Mycocosm, Phytozome. Downloads genome files from JGI filesystem using IMG taxon OIDs. Use when working with JGI data, GOLD projects, IMG annotations, or downloading microbial genomes.
 ---
 
 # JGI Lakehouse Skill
 
-## TL;DR for Agents
+## Quick Start
 
-**What is it?** JGI's unified data warehouse with genomics data from GOLD, IMG, Mycocosm, Phytozome.
+**What is it?** JGI's unified data warehouse (651 tables) + filesystem access to genome files.
 
-**SQL Dialect:** ANSI SQL (not PostgreSQL). Key differences:
+**Two data access methods:**
+1. **Lakehouse (Dremio)** → Metadata, annotations, taxonomy (no sequences)
+2. **JGI Filesystem** → Actual genome files (FNA, FAA, GFF) via taxon OID
+
+**SQL Dialect:** ANSI SQL (not PostgreSQL)
 - Use `CAST(x AS type)` not `::`
 - Use `REGEXP_LIKE()` not `~`
 - Identifiers with dashes need double quotes: `"gold-db-2 postgresql"`
 
-**Quick Start:**
 ```sql
--- Discover
-SHOW SCHEMAS IN "gold-db-2 postgresql";
-DESCRIBE "gold-db-2 postgresql".gold.project;
-
--- Query (always use LIMIT!)
-SELECT gold_id, project_name, ecosystem
-FROM "gold-db-2 postgresql".gold.project
-WHERE is_public = 'Yes'
-LIMIT 100;
+-- Quick test
+SELECT gold_id, project_name FROM "gold-db-2 postgresql".gold.project
+WHERE is_public = 'Yes' LIMIT 5;
 ```
-
-**Key Sources:** `"gold-db-2 postgresql".gold.*` (projects, samples, taxonomy), `"img-db-2 postgresql".img_core_v400.*` (genes, annotations), `"myco-db-1 mysql".<organism>.*` (fungi), `"plant-db-7 postgresql".*` (plants)
-
-**Docs:** `docs/sql-quick-reference.md` (syntax), `docs/data-catalog.md` (all tables)
 
 ---
 
-## When to use
-- User asks for data in the JGI Lakehouse, Dremio SQL, Iceberg time travel, or dataset discovery.
-- User needs safe query patterns, schema inspection, or performance guidance (reflections, VDS).
+## When to Use
 
-## Core context
-- Instance: https://lakehouse.jgi.lbl.gov
-- Engine: Dremio (ANSI SQL, not PostgreSQL)
-- Storage: Iceberg tables on object storage + federated PostgreSQL/MySQL sources
-- Spaces: Phytozome, Mycocosm, JDP, IMG, GOLD
+- Query JGI genomics metadata (GOLD, IMG, Mycocosm, Phytozome)
+- Find genomes by taxonomy, ecosystem, or phenotype
+- Download microbial genomes with IMG taxon OIDs
+- Cross-reference GOLD projects with IMG annotations
 
-## Operational rules (must follow)
-1. Prefer VDS (views) over physical tables.
-2. Never run SELECT * without a LIMIT (default 100).
-3. Always inspect schema before complex joins.
-4. If performance issues arise, check reflections and recommend the right type.
-5. Use Iceberg time travel syntax for historical questions.
+---
 
-## Expected tools
-These tool interfaces should be registered in your agent runtime. See `references/tools.json` for a starter schema.
-- list_catalogs(): list available spaces/schemas
-- describe_table(table_path: string): return columns and types
-- execute_lakehouse_query(sql_query: string): run SQL over Arrow Flight
+## Data Access: Lakehouse vs Filesystem
 
-## Query workflow
-1. **Read `examples/` FIRST** - contains working patterns with documented pitfalls
-2. Check `docs/data-catalog.md` for table/column reference
-3. If not documented, discover via `SHOW SCHEMAS`, `DESCRIBE`
-4. Write minimal SQL with LIMIT and explicit columns
-5. Return results plus the SQL used
+| Need | Source | Access Method |
+|------|--------|---------------|
+| Metadata (taxonomy, projects) | Lakehouse | SQL via REST API |
+| Gene annotations (COG, Pfam, KO) | Lakehouse | SQL via REST API |
+| **Genome sequences (FNA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |
+| **Protein sequences (FAA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |
+| Metagenome proteins only | Lakehouse | `numg-iceberg.faa` table |
 
-## Examples (MUST READ for complex queries)
+**Critical insight:** The Lakehouse is a METADATA warehouse. Genome sequences must be accessed from the JGI filesystem or downloaded from NCBI.
 
-**Before writing joins or cross-database queries, read these:**
+---
 
-| Example | When to Use |
-|---------|-------------|
-| `examples/01-find-16s-rrna-genes.md` | Gene searches by taxonomy |
-| `examples/02-download-genomes-by-taxonomy.md` | Getting genome sequences |
-| `examples/03-cross-database-joins.md` | **Any GOLD↔IMG↔SRA joins** |
+## Key Data Sources
 
-### Critical Pitfalls (from examples)
+| Source | Path | Contents |
+|--------|------|----------|
+| GOLD | `"gold-db-2 postgresql".gold.*` | Projects, studies, samples, taxonomy |
+| IMG | `"img-db-2 postgresql".img_core_v400.*` | Taxons, genes, annotations (244 tables) |
+| Portal | `"portal-db-1".portal.*` | Download tracking, file paths |
+| Mycocosm | `"myco-db-1 mysql".<organism>.*` | Fungal genomes (2,711 schemas) |
+| Phytozome | `"plant-db-7 postgresql".*` | Plant genomics |
+| NUMG | `"numg-iceberg"."numg-iceberg".*` | Metagenome proteins, Pfam hits |
+
+**Full table catalog:** See [docs/data-catalog.md](docs/data-catalog.md)
+
+---
+
+## Downloading Genomes with IMG Taxon OIDs
+
+### Option 1: JGI Filesystem (Fastest)
+
+```bash
+# Genome packages are at:
+/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/{taxon_oid}.tar.gz
+
+# Example: Copy and extract
+cp /clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/8136918376.tar.gz .
+tar -xzf 8136918376.tar.gz
+```
+
+**Package contents:**
+- `{taxon_oid}.fna` - Genome assembly
+- `{taxon_oid}.genes.faa` - Protein sequences
+- `{taxon_oid}.genes.fna` - Gene nucleotide sequences
+- `{taxon_oid}.gff` - GFF annotations
+- `{taxon_oid}.cog.tab.txt` - COG annotations
+- `{taxon_oid}.pfam.tab.txt` - Pfam annotations
+- `{taxon_oid}.ko.tab.txt` - KEGG KO annotations
+
+### Option 2: Query Lakehouse + Download from NCBI
+
+```sql
+-- Get NCBI accessions for download
+SELECT assembly_accession, organism_name, assembly_level, genome_size
+FROM "gold-db-2 postgresql".gold.ncbi_assembly
+WHERE assembly_level = 'Complete Genome' AND group_ = 'bacteria'
+LIMIT 10;
+```
+
+```bash
+# Download via NCBI datasets CLI
+datasets download genome accession GCA_000219355.1 \
+    --include genome,gff3,protein --filename genome.zip
+```
+
+**Detailed workflow:** See [examples/04-download-img-genomes.md](examples/04-download-img-genomes.md)
+
+---
+
+## Common Queries
+
+### Find Bacterial Isolate Genomes
+```sql
+SELECT taxon_oid, taxon_display_name, phylum, genus, species
+FROM "img-db-2 postgresql".img_core_v400.taxon
+WHERE domain = 'Bacteria'
+  AND genome_type = 'isolate'
+  AND is_public = 'Yes'
+  AND seq_status = 'Finished'
+LIMIT 100;
+```
+
+### Link GOLD Project to IMG Taxon
+```sql
+SELECT t.taxon_oid, t.taxon_display_name, t.sequencing_gold_id
+FROM "img-db-2 postgresql".img_core_v400.taxon t
+WHERE t.sequencing_gold_id IS NOT NULL
+LIMIT 50;
+```
+
+### Find Genomes with File Paths (Portal)
+```sql
+SELECT taxonOid, filePath
+FROM "portal-db-1".portal.downloadRequestFiles
+WHERE taxonOid IS NOT NULL
+  AND filePath LIKE '%.tar.gz'
+LIMIT 20;
+```
+
+---
+
+## Critical Pitfalls
 
 | Wrong | Correct |
 |-------|---------|
+| Join `ncbi_assembly` on `project_id` | `ncbi_assembly` has no `project_id`; use `bioproject` or `biosample` |
 | `project.ecosystem` | Join `study` via `master_study_id` |
-| `rnaseq_experiment.experiment_id` | `exp_oid` |
-| `sra_experiment_v2.platform` | `library_instrument` |
-| `WHERE family = 'X'` | `LIKE '%X%'` on display name |
-| Get sequences from Lakehouse | Download from NCBI |
+| `SHOW SCHEMAS IN "source"` | Works, but some syntax errors in older Dremio |
+| Get sequences from Lakehouse | Download from filesystem or NCBI |
+| `sra_experiment_v2.platform` | Use `library_instrument` |
 
-## Implementation guidance
-- Use Arrow Flight (pyarrow.flight) with a bearer token.
-- Read Dremio token from DREMIO_PAT environment variable.
-- Do not log secrets or tokens.
-- If query fails, return a structured error with next steps.
+---
 
 ## Authentication
 
-Token stored in `DREMIO_PAT` environment variable (30-hour lifetime).
-
-**Quick setup:**
 ```bash
-./scripts/get_dremio_token.sh username password > ~/.secrets/dremio_pat
-chmod 600 ~/.secrets/dremio_pat
 export DREMIO_PAT=$(cat ~/.secrets/dremio_pat)
 ```
 
-See `docs/authentication.md` for full setup guide.
+Token setup: See [docs/authentication.md](docs/authentication.md)
 
-## Dremio REST API (v3)
-- Base URL: https://lakehouse.jgi.lbl.gov/api/v3 (all API paths are relative to /api/v3).
-- Auth: Use Authorization: Bearer <dremioAccessToken>. Tokens can be OAuth or PAT; username/password tokens require the v2 login API and are internal-only.
-- Submit SQL: POST /api/v3/sql with {"sql": "...", "context": ["Space","Folder"], "references": {...}}. Response includes a job id.
-- Job results: GET /api/v3/job/{id}/results?limit=...&offset=... (default limit 100, max 500). Use rowCount from the response to page through all rows.
-- Other endpoints: Some list APIs use pageToken rather than limit/offset; preserve all other query params when using pageToken.
+---
 
-## Paging and bulk download
-- To download large result sets, loop GET job results with limit=500 and offset+=500 until offset >= rowCount.
-- If the result set is very large, prefer filtering and projecting in SQL to reduce transfer size before paging.
+## API Access
 
-## Time travel patterns
-- AT TIMESTAMP 'YYYY-MM-DD HH:MM:SS'
-- AT SNAPSHOT '123456'
+**REST API Base:** `http://lakehouse-1.jgi.lbl.gov:9047/api/v3`
 
-## Usage Examples
-
-### Python API (use scripts/rest_client.py)
 ```python
+# Use scripts/rest_client.py
 from rest_client import query
-results = query("SELECT gold_id, study_name FROM \"gold-db-2 postgresql\".gold.study LIMIT 10")
-for row in results:
-    print(row)
+results = query("SELECT * FROM ... LIMIT 10")
 ```
 
-### Available Scripts
-- `scripts/rest_client.py` - REST API client with `query()` and `show_schemas()` functions
-- `scripts/get_dremio_token.sh` - Token generation
+---
 
 ## Documentation
-- `docs/sql-quick-reference.md` - Dremio SQL syntax, differences from PostgreSQL, time travel
-- `docs/data-catalog.md` - Complete catalog of all tables and schemas
-- `docs/authentication.md` - Token generation details
 
-## References
-- Claude skill best practices: see `references/skill-best-practices.md`
-- Lakehouse notes derived from internal JGI slides and tooling notes
-- Dremio API docs: https://docs.dremio.com/current/reference/api/
+- [docs/data-catalog.md](docs/data-catalog.md) - Complete table inventory (651 tables)
+- [docs/sql-quick-reference.md](docs/sql-quick-reference.md) - Dremio SQL syntax
+- [examples/04-download-img-genomes.md](examples/04-download-img-genomes.md) - Download with taxon OIDs
+- [scripts/download_img_genomes.py](scripts/download_img_genomes.py) - Automated download script

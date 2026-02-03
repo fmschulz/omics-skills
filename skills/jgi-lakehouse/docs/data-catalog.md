@@ -2,7 +2,9 @@
 
 Complete map of available data sources in the JGI Dremio Lakehouse.
 
-**Last Updated**: 2025-01-27
+**Last Updated**: 2025-02-02
+
+**Total Tables**: 651
 
 ---
 
@@ -22,6 +24,31 @@ Complete map of available data sources in the JGI Dremio Lakehouse.
 | Proteomics data | IMG-DB-2 | `"img-db-2 postgresql".img_proteome.*` |
 | SRA experiments | GOLD | `"gold-db-2 postgresql".gold.sra_*` |
 | Protein families (Pfam) | IMG Space | `IMG.pfam_hits` |
+| **File paths for downloads** | Portal | `"portal-db-1".portal.downloadRequestFiles` |
+| **IMG taxon OID mapping** | Portal | `"portal-db-1".portal.imgTaxonOids` |
+
+---
+
+## Table Counts by Source
+
+| Source | Tables | Description |
+|--------|--------|-------------|
+| `img-db-2.img_core_v400` | 244 | Core IMG data |
+| `portal-db-1.portal` | 87 | Portal data, file paths |
+| `img-db-2.img_ext` | 84 | Extended annotations |
+| `img-db-2.img_gold` | 72 | GOLD integration |
+| `portal-db-1.dataSubmission` | 26 | Data submissions |
+| `portal-db-1.JGIPortal` | 18 | Projects, resources |
+| `img-db-1.abc` | 18 | Biosynthetic clusters |
+| `img-db-2.img_proteome` | 15 | Proteomics |
+| `portal-db-1.PAAF` | 11 | Authentication |
+| `img-db-2.img_rnaseq` | 11 | RNAseq |
+| `img-db-2.img_methylome` | 10 | Methylation |
+| `img-db-2.img_i_taxon` | 8 | Taxon history |
+| `portal-db-1.visualization` | 7 | Visualization |
+| `img-db-1.img` | 5 | Core taxon data |
+| `IMG Space` | 3 | Pre-computed views |
+| `numg-iceberg` | 2 | Metagenome proteins |
 
 ---
 
@@ -318,6 +345,51 @@ JGI Data Portal operational database.
 - `genomeadmin_audit` - Genome administration logs
 - `alignmentDbs` - Alignment database registry
 - `blastDbs_current` - BLAST database registry
+- **`downloadRequestFiles`** - Links taxon OIDs to file paths on JGI filesystem
+- **`imgTaxonOids`** - IMG taxon OID mappings
+
+### File Path Tables (Critical for Downloads)
+
+These tables map IMG taxon OIDs to actual file paths on the JGI filesystem.
+
+#### downloadRequestFiles
+
+Links download requests to actual file paths. Key columns:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `taxonOid` | BIGINT | IMG taxon OID |
+| `filePath` | VARCHAR | Path to file on JGI filesystem |
+| `fileType` | VARCHAR | Type of file (faa, fna, gff, etc.) |
+| `fileSize` | BIGINT | File size in bytes |
+
+#### imgTaxonOids
+
+Maps IMG taxon OIDs to other identifiers:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `taxonOid` | BIGINT | IMG taxon OID |
+| `goldId` | VARCHAR | GOLD project ID |
+| `ncbiTaxId` | INTEGER | NCBI taxonomy ID |
+
+### JGI Filesystem Paths
+
+Genome data is stored on the JGI filesystem at these locations:
+
+| Path Pattern | Content |
+|--------------|---------|
+| `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/{taxon_oid}.tar.gz` | Genome packages |
+| `/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/` | Per-taxon data directories |
+
+Genome tar.gz packages typically contain:
+- `*.fna` - Nucleotide sequences (contigs/scaffolds)
+- `*.genes.fna` - Gene nucleotide sequences
+- `*.faa` - Protein sequences
+- `*.gff` - Gene annotations
+- `*.cog.txt` - COG assignments
+- `*.pfam.txt` - Pfam annotations
+- `*.ko.txt` - KEGG Orthology assignments
 
 ### Key Tables in JGIPortal
 
@@ -325,6 +397,34 @@ JGI Data Portal operational database.
 - `ProjectContacts` - Project contact information
 - `ProjectProposals` - Linked proposals
 - `ProjectResources` - Associated resources
+
+### Example Queries
+
+```sql
+-- Find file paths for a specific taxon OID
+SELECT taxonOid, filePath, fileType
+FROM "portal-db-1".portal.downloadRequestFiles
+WHERE taxonOid = 2728369577
+LIMIT 10;
+
+-- Get IMG taxon OIDs with GOLD IDs
+SELECT taxonOid, goldId
+FROM "portal-db-1".portal.imgTaxonOids
+WHERE goldId IS NOT NULL
+LIMIT 100;
+
+-- Join portal with IMG to find downloadable genomes
+SELECT
+    t.taxon_oid,
+    t.taxon_display_name,
+    f.filePath,
+    f.fileType
+FROM "img-db-2 postgresql".img_core_v400.taxon t
+JOIN "portal-db-1".portal.downloadRequestFiles f
+    ON t.taxon_oid = f.taxonOid
+WHERE t.domain = 'Bacteria'
+LIMIT 50;
+```
 
 ---
 
@@ -448,3 +548,65 @@ WHERE is_public = 'Yes'
 - `Ga*` - Analysis Project
 - `Gb*` - Biosample
 - `Go*` - Organism
+
+---
+
+## Genome Download Workflow
+
+The Lakehouse contains **metadata only** - actual genome sequences are on the JGI filesystem.
+
+### Two-Step Process
+
+1. **Query Lakehouse** for taxon OIDs and metadata
+2. **Access JGI Filesystem** for actual sequence files
+
+### Step 1: Find Genomes with IMG Taxon OIDs
+
+```sql
+-- Find bacterial isolate genomes with taxon OIDs
+SELECT
+    t.taxon_oid,
+    t.taxon_display_name,
+    t.domain,
+    t.phylum,
+    t.ir_class,
+    t.ir_order,
+    t.family,
+    t.genus,
+    t.species,
+    t.seq_status,
+    t.genome_type
+FROM "img-db-2 postgresql".img_core_v400.taxon t
+WHERE t.domain = 'Bacteria'
+  AND t.genome_type = 'isolate'
+  AND t.is_public = 'Yes'
+LIMIT 10;
+```
+
+### Step 2: Access Files on JGI Filesystem
+
+```bash
+# Check if genome package exists
+TAXON_OID=2728369577
+ls -la /clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/${TAXON_OID}.tar.gz
+
+# Extract to working directory
+tar -xzf /clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/${TAXON_OID}.tar.gz -C ./genomes/
+
+# Or access per-taxon directory directly
+ls /clusterfs/jgi/img_merfs-ro/img_web_data_merfs/${TAXON_OID}/
+```
+
+### Automated Download Script
+
+See `scripts/download_img_genomes.py` for a complete workflow that:
+1. Queries Lakehouse for genomes matching criteria
+2. Checks file availability on JGI filesystem
+3. Copies/extracts genome packages to working directory
+
+### Important Notes
+
+- **Lakehouse access requires** `DREMIO_PAT` environment variable
+- **Filesystem access requires** JGI cluster account with appropriate permissions
+- **numg-iceberg tables** contain metagenome proteins only, not isolate genomes
+- **Genome packages** are tar.gz archives with sequences, annotations, and functional assignments

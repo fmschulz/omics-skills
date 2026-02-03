@@ -76,6 +76,26 @@ bash explore_gold_database.sh > gold_catalog.txt
 - Row counts
 - Sample data
 
+### `download_img_genomes.py`
+Download genomes with IMG taxon OIDs from JGI filesystem.
+
+**Usage:**
+```bash
+export DREMIO_PAT=$(cat ~/.secrets/dremio_pat)
+python download_img_genomes.py --domain Bacteria --limit 5 --output ./genomes
+```
+
+**Features:**
+- Queries Lakehouse for genomes matching criteria
+- Checks file availability on JGI filesystem
+- Downloads/extracts genome packages
+- Returns metadata with taxon OIDs
+
+**Requirements:**
+- DREMIO_PAT environment variable
+- JGI cluster account with filesystem access
+- Access to `/clusterfs/jgi/img_merfs-ro/`
+
 ## Authentication Setup
 
 ### 1. Generate Token (from LBNL server)
