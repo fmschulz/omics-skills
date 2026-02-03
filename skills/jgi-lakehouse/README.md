@@ -162,4 +162,3 @@ schema = query("DESCRIBE GOLD.PROJECT")
 
 - **Skill docs**: `SKILL.md`
 - **Dremio API**: https://docs.dremio.com/
-- **Admin contact**: Georg Rath (JGI Slack)
