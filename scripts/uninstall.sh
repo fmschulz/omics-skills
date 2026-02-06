@@ -21,13 +21,12 @@ fi
 AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
 
-# Specific agent files (in subdirectories)
-AGENT_FILES=("omics-scientist/omics-scientist.md" "science-writer/science-writer.md" "dataviz-artist/dataviz-artist.md")
+# Specific agent files
+AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
-CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"
-CODEX_SKILLS_DIR="$HOME/.codex/skills"
+AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 
 # Parse arguments
 UNINSTALL_TARGET="both"
@@ -81,22 +80,9 @@ uninstall_from_claude() {
         fi
     done
 
-    # Remove skills
-    for skill in "$SKILLS_DIR"/*; do
-        if [ -d "$skill" ]; then
-            basename=$(basename "$skill")
-            target="$CLAUDE_SKILLS_DIR/$basename"
-            if [ -L "$target" ] || [ -d "$target" ]; then
-                rm -rf "$target"
-                echo -e "  ${GREEN}✓${NC} Removed skill: $basename"
-            fi
-        fi
-    done
-
     # Remove backups if requested
     if [ "$KEEP_BACKUPS" = false ]; then
         find "$CLAUDE_AGENTS_DIR" -name "*.bak" -delete 2>/dev/null || true
-        find "$CLAUDE_SKILLS_DIR" -name "*.bak" -exec rm -rf {} + 2>/dev/null || true
         echo -e "  ${GREEN}✓${NC} Removed backup files"
     fi
 
@@ -116,11 +102,22 @@ uninstall_from_codex() {
         fi
     done
 
-    # Remove skills
+    # Remove backups if requested
+    if [ "$KEEP_BACKUPS" = false ]; then
+        find "$CODEX_AGENTS_DIR" -name "*.bak" -delete 2>/dev/null || true
+        echo -e "  ${GREEN}✓${NC} Removed backup files"
+    fi
+
+    echo -e "${GREEN}✓ Codex CLI uninstalled${NC}"
+}
+
+uninstall_skills() {
+    echo -e "${BLUE}Removing shared skills...${NC}"
+
     for skill in "$SKILLS_DIR"/*; do
         if [ -d "$skill" ]; then
             basename=$(basename "$skill")
-            target="$CODEX_SKILLS_DIR/$basename"
+            target="$AGENTS_SKILLS_DIR/$basename"
             if [ -L "$target" ] || [ -d "$target" ]; then
                 rm -rf "$target"
                 echo -e "  ${GREEN}✓${NC} Removed skill: $basename"
@@ -128,14 +125,10 @@ uninstall_from_codex() {
         fi
     done
 
-    # Remove backups if requested
     if [ "$KEEP_BACKUPS" = false ]; then
-        find "$CODEX_AGENTS_DIR" -name "*.bak" -delete 2>/dev/null || true
-        find "$CODEX_SKILLS_DIR" -name "*.bak" -exec rm -rf {} + 2>/dev/null || true
+        find "$AGENTS_SKILLS_DIR" -name "*.bak" -exec rm -rf {} + 2>/dev/null || true
         echo -e "  ${GREEN}✓${NC} Removed backup files"
     fi
-
-    echo -e "${GREEN}✓ Codex CLI uninstalled${NC}"
 }
 
 # Main
@@ -145,7 +138,13 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 # Confirm uninstallation
-echo -e "${YELLOW}This will remove omics-skills agents and skills.${NC}"
+if [ "$UNINSTALL_TARGET" = "both" ]; then
+    echo -e "${YELLOW}This will remove omics-skills agents and shared skills.${NC}"
+elif [ "$UNINSTALL_TARGET" = "claude" ]; then
+    echo -e "${YELLOW}This will remove omics-skills Claude agents only.${NC}"
+else
+    echo -e "${YELLOW}This will remove omics-skills Codex agents only.${NC}"
+fi
 echo -e "${YELLOW}Are you sure you want to continue? [y/N]${NC}"
 read -r confirmation
 
@@ -164,6 +163,11 @@ fi
 
 if [ "$UNINSTALL_TARGET" = "both" ] || [ "$UNINSTALL_TARGET" = "codex" ]; then
     uninstall_from_codex
+    echo ""
+fi
+
+if [ "$UNINSTALL_TARGET" = "both" ]; then
+    uninstall_skills
     echo ""
 fi
 

@@ -5,78 +5,67 @@ description: Build marker gene alignments and phylogenetic trees.
 
 # Bio Phylogenomics
 
-## When to use
-- Build marker gene alignments and phylogenetic trees.
+Build marker gene alignments and phylogenetic trees.
 
-## Prerequisites
-- Tools installed via pixi (see pixi.toml).
+## Instructions
+
+1. Extract marker genes or SSU rRNA sequences.
+2. Align and trim sequences using project-standard workflows.
+3. Build ML trees with bootstraps:
+4. Standard accuracy: Use IQ-TREE (comprehensive model selection, publication-quality)
+5. Fast mode: Use IQ-TREE -fast (exploratory analysis, large datasets >10K sequences)
+6. Very large datasets: Use VeryFastTree (>100K sequences, ultra-fast)
+7. Post-process trees with ETE Toolkit:
+8. Calculate tree statistics (branch lengths, distances, topology metrics)
+9. Root, prune, or collapse nodes as needed
+10. Filter by bootstrap support values
+11. Add taxonomic or trait annotations
+12. Generate publication-quality visualizations
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Run workflow | Follow the steps in this skill and capture outputs. |
+| Validate inputs | Confirm required inputs and reference data exist. |
+| Review outputs | Inspect reports and QC gates before proceeding. |
+| Tool docs | See `docs/README.md`. |
+| References | - See ../bio-skills-references.md |
+
+## Input Requirements
+
+Prerequisites:
+- Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
 - Marker gene set or alignments available.
-
-## Inputs
+Inputs:
 - markers.faa (marker genes) or alignments.fasta
 
-## Outputs
+## Output
+
 - results/bio-phylogenomics/alignments/
 - results/bio-phylogenomics/trees/
 - results/bio-phylogenomics/phylo_report.md
 - results/bio-phylogenomics/logs/
 
-## Steps
-1. Extract marker genes or SSU rRNA sequences.
-2. Align and trim sequences using project-standard workflows.
-3. Build ML trees with bootstraps:
-   - Standard accuracy: Use IQ-TREE (comprehensive model selection, publication-quality)
-   - Fast mode: Use IQ-TREE -fast (exploratory analysis, large datasets >10K sequences)
-   - Very large datasets: Use VeryFastTree (>100K sequences, ultra-fast)
-4. Post-process trees with ETE Toolkit:
-   - Calculate tree statistics (branch lengths, distances, topology metrics)
-   - Root, prune, or collapse nodes as needed
-   - Filter by bootstrap support values
-   - Add taxonomic or trait annotations
-   - Generate publication-quality visualizations
+## Quality Gates
 
-## QC gates
-- Alignment length and missingness meet project thresholds.
-- Bootstrap support summary meets project thresholds.
-- On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Alignment length and missingness meet project thresholds.
+- [ ] Bootstrap support summary meets project thresholds.
+- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Verify markers.faa is non-empty and aligned sequences are consistent.
 
-## Validation
-- Verify markers.faa is non-empty and aligned sequences are consistent.
+## Examples
 
-## Tools
-- iqtree v3.0.1 (standard mode and -fast mode for rapid inference)
-- veryfasttree v4.0+ (ultra-fast tree inference for massive datasets)
-- ete3/ete4 (ETE Toolkit for tree processing, statistics, and visualization)
+### Example 1: Expected input layout
 
-## Tool Selection Workflow
+```text
+markers.faa (marker genes) or alignments.fasta
+```
 
-### Tree Inference
-Choose tree inference tool based on dataset size and accuracy requirements:
+## Troubleshooting
 
-| Dataset Size | Accuracy Required | Recommended Tool |
-|-------------|-------------------|------------------|
-| <1K sequences | High (publication) | IQ-TREE standard |
-| <1K sequences | Medium (exploratory) | IQ-TREE -fast |
-| 1K-10K sequences | High (publication) | IQ-TREE standard |
-| 1K-10K sequences | Medium (exploratory) | IQ-TREE -fast |
-| 10K-100K sequences | High | IQ-TREE standard |
-| 10K-100K sequences | Medium/Fast | IQ-TREE -fast |
-| >100K sequences | Any | VeryFastTree |
+**Issue**: Missing inputs or reference databases
+**Solution**: Verify paths and permissions before running the workflow.
 
-### Post-Tree Processing
-Use ETE Toolkit for all tree post-processing tasks:
-- Tree statistics and metrics
-- Tree manipulation (rooting, pruning, filtering)
-- Taxonomic annotation
-- Visualization and figure generation
-
-## Paper summaries (2023-2025)
-- summaries/ (include example use cases and tool settings used)
-
-## Tool documentation
-- [IQ-TREE](docs/iqtree.html) - Maximum likelihood phylogenetic inference with model selection
-- [VeryFastTree](docs/veryfasttree.html) - Ultra-fast approximate maximum likelihood trees
-- [ETE Toolkit](docs/ete-toolkit.html) - Tree manipulation, statistics, and visualization
-
-## References
-- See ../bio-skills-references.md
+**Issue**: Low-quality results or failed QC gates
+**Solution**: Review reports, adjust parameters, and re-run the affected step.

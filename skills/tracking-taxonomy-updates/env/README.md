@@ -48,7 +48,7 @@ Follow the official Pixi install instructions for your OS.
 ### Create the environment
 From this Skill directory:
 ```bash
-cd .claude/skills/tracking-taxonomy-updates/env
+cd ~/.agents/skills/tracking-taxonomy-updates/env
 pixi install
 ```
 

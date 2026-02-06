@@ -5,19 +5,37 @@ description: Initialize a bioinformatics project scaffold with reproducible envi
 
 # Bio Foundation Housekeeping
 
-## When to use
-- Initialize a bioinformatics project scaffold with reproducible environments, schemas, and data cataloging. Use for new projects or repo setup.
+Initialize a bioinformatics project scaffold with reproducible environments, schemas, and data cataloging. Use for new projects or repo setup.
 
-## Prerequisites
-- Tools installed via pixi (see pixi.toml).
+## Instructions
+
+1. Create standard directory layout (data/, results/, schemas/, workflows/, src/, notebooks/).
+2. Initialize Pixi workspace and lockfile; define tasks.
+3. Define LinkML schemas and generate Pydantic models.
+4. Create DuckDB catalog and register parquet tables.
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Run workflow | Follow the steps in this skill and capture outputs. |
+| Validate inputs | Confirm required inputs and reference data exist. |
+| Review outputs | Inspect reports and QC gates before proceeding. |
+| Tool docs | See `docs/README.md`. |
+| References | - See ../bio-skills-references.md |
+
+## Input Requirements
+
+Prerequisites:
+- Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
 - Target project root is writable.
-
-## Inputs
+Inputs:
 - project root (path)
 - metadata schema requirements
 - workflow engine preference (optional)
 
-## Outputs
+## Output
+
 - pixi.toml
 - pixi.lock
 - schemas/
@@ -25,36 +43,29 @@ description: Initialize a bioinformatics project scaffold with reproducible envi
 - results/bio-foundation-housekeeping/report.md
 - results/bio-foundation-housekeeping/logs/
 
-## Steps
-1. Create standard directory layout (data/, results/, schemas/, workflows/, src/, notebooks/).
-2. Initialize Pixi workspace and lockfile; define tasks.
-3. Define LinkML schemas and generate Pydantic models.
-4. Create DuckDB catalog and register parquet tables.
+## Quality Gates
 
-## QC gates
-- Schema generation succeeds and models are importable.
-- pixi.lock is created and consistent with pixi.toml.
-- DuckDB catalog is readable.
-- On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Schema generation succeeds and models are importable.
+- [ ] pixi.lock is created and consistent with pixi.toml.
+- [ ] DuckDB catalog is readable.
+- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Verify project root exists and is writable.
+- [ ] Validate generated schemas against expected fields.
 
-## Validation
-- Verify project root exists and is writable.
-- Validate generated schemas against expected fields.
+## Examples
 
-## Tools
-- pixi v0.43.0
-- linkml v1.9.6
-- pydantic v2.12.5
-- duckdb v1.4.3
+### Example 1: Expected input layout
 
-## Paper summaries (2023-2025)
-- summaries/ (include example use cases and tool settings used)
+```text
+project root (path)
+metadata schema requirements
+workflow engine preference (optional)
+```
 
-## Tool documentation
-- [Pixi](docs/pixi.html) - Package and environment management
-- [LinkML](docs/linkml.html) - Data modeling and schema generation
-- [Pydantic](docs/pydantic.html) - Data validation using Python type hints
-- [DuckDB](docs/duckdb.html) - In-process analytical database
+## Troubleshooting
 
-## References
-- See ../bio-skills-references.md
+**Issue**: Missing inputs or reference databases
+**Solution**: Verify paths and permissions before running the workflow.
+
+**Issue**: Low-quality results or failed QC gates
+**Solution**: Review reports, adjust parameters, and re-run the affected step.

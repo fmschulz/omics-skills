@@ -22,17 +22,16 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
 | Reads | Genome assembly | `/bio-assembly-qc` |
 | Metagenome assembly | MAGs (bins) | `/bio-binning-qc` |
 | Contigs/genomes | Gene sequences | `/bio-gene-calling` |
-| Gene sequences | Function + taxonomy | `/bio-annotation-taxonomy` |
+| Gene sequences | Function + taxonomy | `/bio-annotation` |
 | Sequences/genomes | Phylogenetic tree | `/bio-phylogenomics` |
 | Multiple genomes | Pangenome analysis | `/bio-protein-clustering-pangenome` |
 | Protein sequences | 3D structures | `/bio-structure-annotation` |
 | Contigs | Viral sequences | `/bio-viromics` |
-| 16S/18S sequences | rRNA phylogeny | `/ssu-sequence-analysis` |
-| Protein sequences | HMM/homology hits | `/hmm-mmseqs-workflow` |
-| Messy FASTA files | Clean database | `/fasta-database-curator` |
-| Reads | Filtered/stats | `/bb-skill` |
 | Results | Statistical report | `/bio-stats-ml-reporting` |
-| Error logs | Diagnosis | `/pipeline-debugger` |
+| JGI metadata | Project/taxon discovery | `/jgi-lakehouse` |
+| Taxonomy updates | Versioned changes | `/tracking-taxonomy-updates` |
+| Workflow design | Orchestration plan | `/bio-prefect-dask-nextflow` |
+| Workflow methods | Methods + run docs | `/bio-workflow-methods-docwriter` |
 | Nothing yet | Project setup | `/bio-foundation-housekeeping` |
 
 ## Keyword Triggers
@@ -44,17 +43,16 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
 | "assemble", "contigs", "N50", "QUAST" | `/bio-assembly-qc` |
 | "binning", "MAGs", "CheckM" | `/bio-binning-qc` |
 | "gene calling", "ORF", "Prodigal" | `/bio-gene-calling` |
-| "annotate", "BLAST", "KEGG", "taxonomy" | `/bio-annotation-taxonomy` |
+| "annotate", "BLAST", "KEGG", "taxonomy" | `/bio-annotation` |
 | "phylogeny", "tree", "alignment" | `/bio-phylogenomics` |
-| "16S", "18S", "rRNA" | `/ssu-sequence-analysis` |
 | "pangenome", "orthologs", "core genome" | `/bio-protein-clustering-pangenome` |
 | "AlphaFold", "structure", "PDB" | `/bio-structure-annotation` |
 | "viral", "phage", "VirSorter" | `/bio-viromics` |
-| "HMM", "MMseqs2", "protein family" | `/hmm-mmseqs-workflow` |
-| "deduplicate", "clean FASTA" | `/fasta-database-curator` |
-| "BBMap", "dedupe", "k-mer" | `/bb-skill` |
 | "report", "statistics", "figures" | `/bio-stats-ml-reporting` |
-| "failed", "error", "debug" | `/pipeline-debugger` |
+| "JGI", "GOLD", "IMG", "Phytozome", "lakehouse" | `/jgi-lakehouse` |
+| "taxonomy updates", "GTDB", "ICTV" | `/tracking-taxonomy-updates` |
+| "Nextflow", "Prefect", "Dask", "pipeline design" | `/bio-prefect-dask-nextflow` |
+| "document workflow", "methods section" | `/bio-workflow-methods-docwriter` |
 | "new project", "setup" | `/bio-foundation-housekeeping` |
 
 ## Quality Gates
@@ -83,7 +81,7 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
   ↓
 /bio-gene-calling (Contigs → Genes)
   ↓
-/bio-annotation-taxonomy (Genes → Functions)
+/bio-annotation (Genes → Functions)
   ↓
 /bio-phylogenomics (Genome → Tree)
   ↓
@@ -106,7 +104,7 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
   ↓
 /bio-gene-calling (MAGs → Genes)
   ↓
-/bio-annotation-taxonomy (Genes → Functions)
+/bio-annotation (Genes → Functions)
   ↓
 /bio-phylogenomics (MAGs → Tree)
   ↓
@@ -123,7 +121,7 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
   ↓
 /bio-gene-calling (Viral contigs → Genes)
   ↓
-/bio-annotation-taxonomy (Genes → VOGs)
+/bio-annotation (Genes → VOGs)
   ↓
 /bio-phylogenomics (Viral genes → Tree)
   ↓
@@ -138,7 +136,7 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
   ↓
 /bio-phylogenomics (Core genes → Tree)
   ↓
-/bio-annotation-taxonomy (Accessory genes → Functions)
+/bio-annotation (Accessory genes → Functions)
   ↓
 /bio-stats-ml-reporting (Pangenome → Report)
 ```
@@ -147,9 +145,9 @@ Proteins?  → Annotation/Structure → Phylogeny → bio-logic → Report
 ```bash
 /bio-structure-annotation (Proteins → PDB)
   ↓
-/hmm-mmseqs-workflow (Proteins → Homologs)
+/bio-annotation (Proteins → Domains)
   ↓
-/bio-annotation-taxonomy (optional, complementary)
+/bio-annotation (optional, complementary)
   ↓
 /bio-stats-ml-reporting (Structures → Report)
 ```
@@ -181,13 +179,13 @@ IF user_says("I have proteins") AND wants("structure")
   THEN start_with(/bio-structure-annotation)
 
 IF user_says("I have proteins") AND wants("function")
-  THEN start_with(/bio-annotation-taxonomy)
+  THEN start_with(/bio-annotation)
 
 IF user_says("I have genomes") AND wants("compare")
   THEN start_with(/bio-protein-clustering-pangenome)
 
 IF user_says("failed") OR "error" OR "debug"
-  THEN start_with(/pipeline-debugger)
+  THEN review logs, validate inputs, and retry with adjusted parameters
 
 IF user_says("new project")
   THEN start_with(/bio-foundation-housekeeping)
@@ -279,25 +277,18 @@ Small = <1Gbp total data, Large = >10Gbp or >100 genomes
 | `.pdf` | Figures | Reporting |
 | `.pdb` | Protein structure | Structure prediction |
 
-## When to Use `/get-available-resources`
-
-Before starting:
-- Large metagenome assembly (>100GB reads)
-- Hundreds of genome annotations
-- Structure prediction batch jobs
-- GTDB-Tk (needs 320GB RAM)
-- Long phylogenies (>1000 sequences)
-
 ## Integration with Other Omics Tools
 
 | Task | Primary Skill | Secondary Skill |
 |------|---------------|-----------------|
-| Get JGI reference data | `/querying-jgi-lakehouse` | Then bio-* skills |
-| Explore complex result files | `/exploratory-data-analysis` | After bio-* skills |
-| Write manuscript | `/scientific-writing` | After `/bio-stats-ml-reporting` |
-| Literature review | `/literature-review` | Before starting |
-| Statistical tests | `/statistical-analysis` | With `/bio-stats-ml-reporting` |
-| Custom plots | `/matplotlib` | After `/bio-stats-ml-reporting` |
+| Get JGI reference data | `/jgi-lakehouse` | Then bio-* skills |
+| Document workflow | `/bio-workflow-methods-docwriter` | After pipeline runs |
+| Track taxonomy updates | `/tracking-taxonomy-updates` | Before assignment decisions |
+| Write manuscript | `/science-writing` | After `/bio-stats-ml-reporting` |
+| Literature discovery | `/polars-dovmed` | Before starting |
+| Custom plots | `/beautiful-data-viz` | After `/bio-stats-ml-reporting` |
+| Dashboards | `/plotly-dashboard-skill` | After analysis |
+| Notebooks | `/notebook-ai-agents-skill` | Marimo-first reproducible EDA |
 
 ## Agent Invocation
 
@@ -311,6 +302,11 @@ claude --agent omics-scientist
 
 # Option 3: In conversation
 @agents/omics-scientist [your request]
+```
+
+**Shared skills location**
+```bash
+ls -la ~/.agents/skills/
 ```
 
 ## Remember
@@ -349,4 +345,3 @@ claude --agent omics-scientist
 - "Why E. coli genes in my archaeal MAG?" → `/bio-logic`
 - "How to explain this phylogenetic placement?" → `/bio-logic`
 - "Is this contamination or real?" → `/bio-logic`
-

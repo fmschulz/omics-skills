@@ -51,7 +51,6 @@ WHERE t.taxon_display_name LIKE '%Rhodobacter%'
 **Solution:** Lakehouse contains **metadata only**. To get sequences:
 1. Use `gene_oid` with IMG/M web interface: `https://img.jgi.doe.gov/cgi-bin/m/main.cgi?section=GeneDetail&gene_oid={gene_oid}`
 2. Download genome and extract by coordinates (`start_coord`, `end_coord`, `strand`)
-3. Use `locus_tag` to query NCBI GenBank
 
 ### 3. Filter for Full-Length 16S
 ```sql

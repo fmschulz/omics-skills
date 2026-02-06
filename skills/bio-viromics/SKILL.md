@@ -5,18 +5,35 @@ description: Detect, classify, and QC viral contigs.
 
 # Bio Viromics
 
-## When to use
-- Detect, classify, and QC viral contigs.
+Detect, classify, and QC viral contigs.
 
-## Prerequisites
-- Tools installed via pixi (see pixi.toml).
-- Reference DB root: /media/shared-expansion/db/ (wsu; override per machine branch).
+## Instructions
+
+1. Run virus detection (geNomad).
+2. Run CheckV for completeness/contamination.
+3. Assign taxonomy and cluster genomes (vConTACT3 for hierarchical classification and gene-sharing network analysis).
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Run workflow | Follow the steps in this skill and capture outputs. |
+| Validate inputs | Confirm required inputs and reference data exist. |
+| Review outputs | Inspect reports and QC gates before proceeding. |
+| Tool docs | See `docs/README.md`. |
+| References | - See ../bio-skills-references.md |
+
+## Input Requirements
+
+Prerequisites:
+- Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
+- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU).
 - Input contigs are available.
-
-## Inputs
+Inputs:
 - contigs.fasta
 
-## Outputs
+## Output
+
 - results/bio-viromics/viral_contigs.fasta
 - results/bio-viromics/checkv_results/
 - results/bio-viromics/vcontact3_results/
@@ -25,34 +42,26 @@ description: Detect, classify, and QC viral contigs.
 - results/bio-viromics/viromics_report.md
 - results/bio-viromics/logs/
 
-## Steps
-1. Run virus detection (geNomad).
-2. Run CheckV for completeness/contamination.
-3. Assign taxonomy and cluster genomes (vConTACT3 for hierarchical classification and gene-sharing network analysis).
+## Quality Gates
 
-## QC gates
-- CheckV quality thresholds meet project standards.
-- Contamination flags are below thresholds.
-- On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] CheckV quality thresholds meet project standards.
+- [ ] Contamination flags are below thresholds.
+- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Verify contigs.fasta is non-empty.
+- [ ] Verify viral reference DBs exist under the reference root.
 
-## Validation
-- Verify contigs.fasta is non-empty.
-- Verify viral reference DBs exist under the reference root.
+## Examples
 
-## Tools
-- genomad v1.11.2
-- checkv v1.0.3
-- vcontact3 v3.0.1
-- gvclass v1.2.0 (internal build tag)
+### Example 1: Expected input layout
 
-## Paper summaries (2023-2025)
-- summaries/ (include example use cases and tool settings used)
+```text
+contigs.fasta
+```
 
-## Tool documentation
-- [geNomad](docs/genomad.html) - Viral sequence identification and classification
-- [CheckV](docs/checkv.html) - Viral genome quality assessment
-- [vConTACT3](docs/vcontact3.html) - Viral taxonomy and clustering via gene-sharing networks
-- [GVClass](docs/gvclass.html) - Giant virus classification
+## Troubleshooting
 
-## References
-- See ../bio-skills-references.md
+**Issue**: Missing inputs or reference databases
+**Solution**: Verify paths and permissions before running the workflow.
+
+**Issue**: Low-quality results or failed QC gates
+**Solution**: Review reports, adjust parameters, and re-run the affected step.

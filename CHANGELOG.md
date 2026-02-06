@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Three expert agents** orchestrating 20 specialized skills:
+- **Three expert agents** orchestrating 22 specialized skills:
   - `omics-scientist.md` - Bioinformatics workflows (14 bio-* skills)
   - `science-writer.md` - Scientific writing and literature (5 skills)
   - `dataviz-artist.md` - Data visualization (5 skills)
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial repository structure
 - 3 expert agents
-- 20 specialized skills
+- 22 specialized skills
 - Complete installation system
 - Comprehensive documentation
 

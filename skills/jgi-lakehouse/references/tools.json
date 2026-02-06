@@ -23,7 +23,7 @@
   },
   {
     "name": "execute_lakehouse_query",
-    "description": "Execute SQL via Arrow Flight and return results as JSON.",
+    "description": "Execute SQL via REST API and return results as JSON.",
     "input_schema": {
       "type": "object",
       "properties": {

@@ -85,36 +85,40 @@ scripts/test-install.sh
 
 ### Method 3: Manual Installation
 
+**Shared skills (used by Claude and Codex):**
+```bash
+# Create directories
+mkdir -p ~/.agents/skills
+
+# Install skills (using symlinks)
+for skill in $(pwd)/skills/*; do
+    ln -sf "$skill" ~/.agents/skills/$(basename "$skill")
+done
+```
+
 **For Claude Code:**
 ```bash
 # Create directories
-mkdir -p ~/.claude/agents ~/.claude/skills
+mkdir -p ~/.claude/agents
 
 # Install agents (using symlinks)
 ln -sf $(pwd)/agents/omics-scientist.md ~/.claude/agents/
 ln -sf $(pwd)/agents/science-writer.md ~/.claude/agents/
 ln -sf $(pwd)/agents/dataviz-artist.md ~/.claude/agents/
 
-# Install skills (using symlinks)
-for skill in $(pwd)/skills/*; do
-    ln -sf "$skill" ~/.claude/skills/$(basename "$skill")
-done
+# Link shared skills
+ln -sfn ~/.agents/skills ~/.claude/skills
 ```
 
 **For Codex CLI:**
 ```bash
 # Create directories
-mkdir -p ~/.codex/agents ~/.codex/skills
+mkdir -p ~/.codex/agents
 
 # Install agents (using symlinks)
 ln -sf $(pwd)/agents/omics-scientist.md ~/.codex/agents/
 ln -sf $(pwd)/agents/science-writer.md ~/.codex/agents/
 ln -sf $(pwd)/agents/dataviz-artist.md ~/.codex/agents/
-
-# Install skills (using symlinks)
-for skill in $(pwd)/skills/*; do
-    ln -sf "$skill" ~/.codex/skills/$(basename "$skill")
-done
 ```
 
 ---
@@ -174,7 +178,7 @@ After installation, you'll have:
 │   └── dataviz-artist.md           → (symlink/copy)
 └── skills/
     ├── bio-logic/                  → (symlink/copy)
-    └── ... (19 more skills)
+    └── ... (21 more skills)
 ```
 
 ### Agents Installed (3)
@@ -182,7 +186,7 @@ After installation, you'll have:
 2. **science-writer.md** - Scientific writing
 3. **dataviz-artist.md** - Data visualization
 
-### Skills Installed (20)
+### Skills Installed (22)
 1. bio-logic
 2. bio-foundation-housekeeping
 3. bio-reads-qc-mapping
@@ -197,13 +201,14 @@ After installation, you'll have:
 12. bio-stats-ml-reporting
 13. bio-workflow-methods-docwriter
 14. bio-prefect-dask-nextflow
-15. polars-dovmed
-16. science-writing
-17. agent-browser
-18. jupyter_notebook_ai_agents_skill
-19. beautiful-data-viz
-20. plotly-dashboard-skill
-21. exploratory-data-analysis
+15. jgi-lakehouse
+16. tracking-taxonomy-updates
+17. polars-dovmed
+18. science-writing
+19. agent-browser
+20. notebook-ai-agents-skill
+21. beautiful-data-viz
+22. plotly-dashboard-skill
 
 ---
 
@@ -220,22 +225,25 @@ make status
 ```
 Installation Status
 
+Shared Skills:
+  Skills directory: /home/user/.agents/skills
+  Omics-skills skills: 22/22 installed (69 total in directory)
+
 Claude Code:
   Agents directory: /home/user/.claude/agents
-  Installed agents: 3/3
+  Omics-skills agents: 3/3 installed (20 total in directory)
     ✓ omics-scientist.md (symlink)
     ✓ science-writer.md (symlink)
     ✓ dataviz-artist.md (symlink)
 
   Skills directory: /home/user/.claude/skills
-  Installed skills: 20/20
+  Linked to: /home/user/.agents/skills
 
 Codex CLI:
   Agents directory: /home/user/.codex/agents
-  Installed agents: 3/3
+  Omics-skills agents: 3/3 installed (9 total in directory)
 
-  Skills directory: /home/user/.codex/skills
-  Installed skills: 20/20
+  Skills directory: /home/user/.agents/skills (shared)
 ```
 
 ### Validate Installation
@@ -256,11 +264,12 @@ ls -la ~/.claude/agents/science-writer.md
 ls -la ~/.claude/agents/dataviz-artist.md
 
 # Check skills
-ls -la ~/.claude/skills/bio-logic/
-ls -la ~/.claude/skills/science-writing/
+ls -la ~/.agents/skills/bio-logic/
+ls -la ~/.agents/skills/science-writing/
 
 # Check if symlinks (should show -> pointing to source)
 file ~/.claude/agents/omics-scientist.md
+ls -la ~/.claude/skills
 ```
 
 ---
@@ -385,7 +394,7 @@ make install INSTALL_METHOD=copy
 
 Check that skills directory exists and contains the skills:
 ```bash
-ls -la ~/.claude/skills/
+ls -la ~/.agents/skills/
 ```
 
 Verify Claude Code can access the directory:
@@ -399,6 +408,7 @@ The installer backs up existing files with `.bak` extension:
 ```bash
 # Your original files are saved as:
 ~/.claude/agents/omics-scientist.md.bak
+~/.agents/skills/bio-logic.bak
 ```
 
 To restore:
@@ -470,13 +480,14 @@ rm ~/.claude/agents/science-writer.md
 rm ~/.claude/agents/dataviz-artist.md
 
 # Remove skills
-rm -rf ~/.claude/skills/bio-logic
-rm -rf ~/.claude/skills/bio-foundation-housekeeping
+rm -rf ~/.agents/skills/bio-logic
+rm -rf ~/.agents/skills/bio-foundation-housekeeping
 # ... repeat for all skills
 
 # Or remove entire directories (if you only have omics-skills)
-rm -rf ~/.claude/agents ~/.claude/skills
-rm -rf ~/.codex/agents ~/.codex/skills
+rm -rf ~/.claude/agents ~/.codex/agents
+rm -rf ~/.agents/skills
+rm -f ~/.claude/skills
 ```
 
 ---
@@ -493,8 +504,8 @@ make install-claude-agents
 make install-codex-agents
 
 # Install only skills
-make install-claude-skills
-make install-codex-skills
+make install-skills
+make link-claude-skills
 ```
 
 ### Custom Installation Locations
@@ -503,7 +514,8 @@ Edit the Makefile to change installation directories:
 
 ```makefile
 CLAUDE_AGENTS_DIR := /custom/path/agents
-CLAUDE_SKILLS_DIR := /custom/path/skills
+CLAUDE_SKILLS_DIR := /custom/path/skills-link
+AGENTS_SKILLS_DIR := /custom/path/skills
 ```
 
 ### Multiple Installations

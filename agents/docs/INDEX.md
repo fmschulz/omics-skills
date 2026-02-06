@@ -4,7 +4,7 @@
 
 **To use the agent:**
 ```bash
-claude --agent /home/fschulz/dev/omics-skills/agents/omics-scientist.md
+claude --agent /path/to/omics-skills/agents/omics-scientist.md
 ```
 
 ## Documentation Files
@@ -107,20 +107,20 @@ The **bio-logic** skill is now deeply integrated for scientific reasoning:
 7. Alternative explanations
 8. Confound identification
 
-### 16 Bioinformatics Skills
+### 14 Bioinformatics Skills
 
 | Category | Skills |
 |----------|--------|
-| **Foundation** | bio-foundation-housekeeping, fasta-database-curator |
-| **Processing** | bio-reads-qc-mapping, bb-skill |
+| **Foundation** | bio-foundation-housekeeping |
+| **Processing** | bio-reads-qc-mapping |
 | **Assembly** | bio-assembly-qc |
 | **Binning** | bio-binning-qc |
 | **Genes** | bio-gene-calling |
-| **Annotation** | bio-annotation-taxonomy, bio-structure-annotation |
-| **Analysis** | bio-phylogenomics, ssu-sequence-analysis, bio-protein-clustering-pangenome |
-| **Specialized** | bio-viromics, hmm-mmseqs-workflow |
-| **Reporting** | bio-stats-ml-reporting |
-| **Debug** | pipeline-debugger |
+| **Annotation** | bio-annotation, bio-structure-annotation |
+| **Analysis** | bio-phylogenomics, bio-protein-clustering-pangenome |
+| **Specialized** | bio-viromics |
+| **Reporting** | bio-stats-ml-reporting, bio-workflow-methods-docwriter |
+| **Orchestration** | bio-prefect-dask-nextflow |
 
 ## Workflow Patterns
 

@@ -51,7 +51,7 @@ I'll perform a complete bacterial genome workflow:
    - tRNA/rRNA prediction
 
 5. Functional Annotation & Taxonomy
-   → /bio-annotation-taxonomy
+   → /bio-annotation
    - DIAMOND against UniProt
    - KEGG/COG functional categories
    - GTDB-Tk for taxonomy placement
@@ -147,7 +147,7 @@ Perfect! I'll perform MAG recovery and characterization:
    - Prodigal for each HQ MAG
 
 3. Functional Annotation
-   → /bio-annotation-taxonomy
+   → /bio-annotation
    - Annotate genes in all MAGs
    - GTDB-Tk for taxonomy
    - KEGG metabolic reconstruction
@@ -244,7 +244,7 @@ Great! I'll perform comprehensive viral metagenome analysis:
    - Specialized viral gene callers
 
 3. Functional Annotation
-   → /bio-annotation-taxonomy
+   → /bio-annotation
    - DIAMOND against viral protein databases
    - VOG (Viral Orthologous Groups)
    - Identify AMGs (auxiliary metabolic genes)
@@ -289,23 +289,14 @@ You: I have a 16S rRNA sequence from a novel Actinobacteria isolate. Where does 
      place phylogenetically?
 
 Omics Scientist:
-I'll perform comprehensive SSU rRNA phylogenetic analysis:
+I'll place your 16S sequence using phylogenomic alignment and tree building:
 
-→ /ssu-sequence-analysis
-This specialized skill will:
+→ /bio-phylogenomics
+This will:
 1. Validate your 16S sequence quality
-2. Search against SILVA/RDP databases
-3. Identify closest cultivated relatives
-4. Build a phylogenetic tree with reference sequences
-5. Calculate phylogenetic distance to known taxa
-6. Assess if this represents a novel species/genus
-
-This skill handles the complete workflow including:
-- Sequence quality filtering
-- Multiple alignment with references
-- Tree building (IQ-TREE with bootstrap)
-- Taxonomic assignment
-- Novelty assessment
+2. Align against reference sequences
+3. Build a phylogenetic tree with bootstrap support
+4. Report closest neighbors and novelty signals
 
 Processing your sequence...
 ```
@@ -355,15 +346,15 @@ I'll perform comprehensive outbreak comparative genomics:
    - Identifies outbreak cluster
 
 4. Functional Annotation
-   → /bio-annotation-taxonomy
+   → /bio-annotation
    - Annotate all genes
-   - Focus on virulence factors (VFDB)
-   - Antimicrobial resistance genes (AMRFinder)
+   - Focus on virulence-associated families
+   - Antimicrobial resistance genes (as available)
 
-5. HMM-based Virulence Screening
-   → /hmm-mmseqs-workflow
-   - Search against virulence gene HMMs
-   - Identify pathogenicity islands
+5. Domain-based Screening
+   → /bio-annotation
+   - Pfam/InterPro domain scans
+   - Identify pathogenicity-related domains
 
 6. Comparative Report
    → /bio-stats-ml-reporting
@@ -411,12 +402,12 @@ Absolutely! I'll use structure-based annotation for these hypothetical proteins:
    - Functional inference from structure
 
 3. Complementary Sequence Analysis
-   → /hmm-mmseqs-workflow
-   - Sensitive HMM searches (HHpred)
-   - Distant homology detection
+   → /bio-annotation
+   - Domain-based annotation (InterPro/Pfam)
+   - Distant homology hints from profile matches
 
 4. Domain Architecture
-   → /bio-annotation-taxonomy
+   → /bio-annotation
    - Pfam domain annotation
    - Conserved domain database search
 
@@ -443,10 +434,7 @@ Your previous metagenomic analysis failed during the binning step.
 You: My binning job failed with this error: [error log]. Can you help?
 
 Omics Scientist:
-I'll diagnose the pipeline failure:
-
-→ /pipeline-debugger
-This will:
+I'll diagnose the pipeline failure by reviewing logs and inputs:
 1. Parse the error logs
 2. Trace the error through pipeline phases
 3. Identify the root cause
@@ -464,50 +452,27 @@ Analyzing your error log...
 
 ---
 
-## Example 8: Database Preparation for Custom Analysis
+## Example 8: Taxonomy Update Scan
 
 ### Scenario
-You need to create a curated protein database for homology searches.
-
-### Input Files
-```
-data/
-├── downloaded_sequences.fasta
-├── custom_sequences.fasta
-└── reference_set.fasta
-```
+You need the most recent GTDB and NCBI taxonomy changes and their pipeline impact.
 
 ### Conversation
 
 ```
-You: I have protein sequences from multiple sources that need to be combined,
-     deduplicated, and standardized into a reference database.
+You: What changed recently in GTDB vs NCBI taxonomy, and will it break my pipeline?
 
 Omics Scientist:
-Perfect! I'll curate a clean reference database:
+I'll run a versioned update scan:
 
-→ /fasta-database-curator
+→ /tracking-taxonomy-updates
 This will:
-1. Validate FASTA format of all input files
-2. Standardize headers (remove special characters)
-3. Deduplicate sequences (100% identity)
-4. Remove sequences with ambiguous residues
-5. Length filtering (optional)
-6. Sort sequences by length
-7. Generate database statistics
-8. Format for BLAST/DIAMOND
+1. Pull authoritative release notes
+2. Summarize changes with dates and IDs
+3. Flag taxid merges/deletions and naming changes
+4. Provide action items for pipeline compatibility
 
-Additional processing:
-→ /bio-annotation-taxonomy
-- Annotate sequences if not already annotated
-- Add taxonomic lineage to headers
-
-Final database will be ready for:
-- BLAST searches
-- DIAMOND alignment
-- HMM profile building
-
-Creating curated database...
+Compiling a versioned summary now...
 ```
 
 ---
@@ -551,7 +516,7 @@ Evidence: Multiple independent samples, isolation confirmation, functional valid
 **Recommended Next Steps:**
 1. /bio-binning-qc refinement (check contamination metrics)
 2. /bio-phylogenomics (nif gene phylogeny + whole genome tree)
-3. /bio-annotation-taxonomy (examine genomic context of nif genes)
+3. /bio-annotation (examine genomic context of nif genes)
 4. /bio-logic (synthesize evidence, rank hypotheses by likelihood)
 
 Based on reasoning, most likely explanations in order:
@@ -735,12 +700,9 @@ This will guide the optimal sequencing strategy.
 
 | Task | Primary Skill | Follow-up Skills |
 |------|--------------|------------------|
-| Bacterial genome from reads | bio-reads-qc-mapping | assembly-qc → gene-calling → annotation-taxonomy |
-| MAG recovery | bio-binning-qc | gene-calling → annotation-taxonomy → phylogenomics |
-| Viral metagenomics | bio-viromics | gene-calling → annotation-taxonomy |
-| 16S phylogeny | ssu-sequence-analysis | - |
+| Bacterial genome from reads | bio-reads-qc-mapping | assembly-qc → gene-calling → bio-annotation |
+| MAG recovery | bio-binning-qc | gene-calling → bio-annotation → phylogenomics |
+| Viral metagenomics | bio-viromics | gene-calling → bio-annotation |
+| 16S phylogeny | bio-phylogenomics | - |
 | Comparative genomics | bio-protein-clustering-pangenome | phylogenomics → stats-ml-reporting |
-| Structure prediction | bio-structure-annotation | annotation-taxonomy |
-| Database curation | fasta-database-curator | annotation-taxonomy |
-| Pipeline debugging | pipeline-debugger | (re-run failed step) |
-
+| Structure prediction | bio-structure-annotation | bio-annotation |

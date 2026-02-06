@@ -51,7 +51,7 @@ When starting a Claude Code session, specify the agent:
 
 ```bash
 cd /path/to/your/omics/project
-claude --agent /home/fschulz/dev/omics-skills/agents/omics-scientist.md
+claude --agent /path/to/omics-skills/agents/omics-scientist.md
 ```
 
 ### Method 2: Copy to User Agents Directory
@@ -80,31 +80,32 @@ I need to assemble, bin, and annotate MAGs.
 
 ## Agent Capabilities
 
-The omics-scientist agent has access to all bio-* skills:
+The omics-scientist agent has access to the full skill set in this repository:
 
 | Skill | Purpose | Inputs | Outputs |
 |-------|---------|--------|---------|
-| `bio-logic` | **Scientific reasoning** | Questions, data, results | Hypotheses, interpretations, designs |
-| `polars-dovmed` | **Literature search** | Search queries | PMC papers, DOIs, metadata |
-| `science-writing` | **Manuscript writing** | Outline, citations | Publication-ready text |
-| `bio-workflow-methods-docwriter` | **Methods documentation** | Pipeline artifacts | METHODS.md, workflow summary |
-| `agent-browser` | **Web automation** | URLs, targets | Screenshots, scraped data |
+| `bio-logic` | Scientific reasoning | Questions, data, results | Hypotheses, interpretations, designs |
 | `bio-foundation-housekeeping` | Project setup | Project name | Scaffold, environments, schemas |
 | `bio-reads-qc-mapping` | Read processing | FASTQ files | QC reports, BAM, coverage |
 | `bio-assembly-qc` | Genome assembly | Reads | Contigs, assembly QC |
 | `bio-binning-qc` | MAG recovery | Contigs + reads | Binned genomes, QC metrics |
 | `bio-gene-calling` | Gene prediction | Contigs/genomes | Gene sequences, GFF |
-| `bio-annotation-taxonomy` | Functional annotation | Gene sequences | Annotations, taxonomy |
+| `bio-annotation` | Functional annotation | Gene sequences | Annotations, taxonomy inference |
 | `bio-phylogenomics` | Phylogenetic analysis | Sequences/genomes | Alignments, trees |
 | `bio-protein-clustering-pangenome` | Comparative genomics | Multiple genomes | Orthogroups, pangenome |
 | `bio-structure-annotation` | Structure prediction | Protein sequences | PDB files, annotations |
 | `bio-viromics` | Viral analysis | Contigs | Viral sequences, taxonomy |
-| `ssu-sequence-analysis` | 16S/18S analysis | rRNA sequences | Phylogenetic placement |
-| `fasta-database-curator` | Database management | FASTA files | Curated databases |
-| `hmm-mmseqs-workflow` | Homology searches | Sequences | HMM hits, clusters |
-| `bb-skill` | BBTools operations | Reads | Filtered/processed reads |
 | `bio-stats-ml-reporting` | Analysis & reporting | Results | Reports, models, figures |
-| `pipeline-debugger` | Troubleshooting | Logs | Diagnostics, fixes |
+| `bio-workflow-methods-docwriter` | Methods documentation | Pipeline artifacts | METHODS.md, workflow summary |
+| `bio-prefect-dask-nextflow` | Workflow orchestration | Pipeline requirements | Runnable scaffold |
+| `jgi-lakehouse` | JGI metadata access | Query parameters | Project/taxon metadata |
+| `tracking-taxonomy-updates` | Taxonomy reconciliation | Scope + sources | Versioned updates |
+| `polars-dovmed` | Literature search | Search queries | PMC papers, DOIs, metadata |
+| `science-writing` | Manuscript writing | Outline, citations | Publication-ready text |
+| `agent-browser` | Web automation | URLs, targets | Screenshots, scraped data |
+| `notebook-ai-agents-skill` | Notebooks | Data + goals | Marimo-first notebooks |
+| `beautiful-data-viz` | Figures | Data | Publication-ready charts |
+| `plotly-dashboard-skill` | Dashboards | Data + requirements | Interactive apps |
 
 ## Example Workflows
 
@@ -120,7 +121,7 @@ Agent:
 2. /bio-reads-qc-mapping (QC + assess coverage)
 3. /bio-assembly-qc (assemble genome)
 4. /bio-gene-calling (predict genes)
-5. /bio-annotation-taxonomy (functional annotation + GTDB taxonomy)
+5. /bio-annotation (functional annotation + GTDB taxonomy)
 6. /bio-phylogenomics (place in Pseudomonas tree)
 7. /bio-logic (interpret placement, metabolic capacity, evolutionary insights)
 8. /bio-stats-ml-reporting (generate final report)
@@ -136,7 +137,7 @@ Agent:
 0. /bio-logic (design binning strategy, define quality thresholds)
 1. /bio-binning-qc (bin contigs, refine, QC)
 2. /bio-gene-calling (call genes in HQ MAGs)
-3. /bio-annotation-taxonomy (annotate MAGs, assign taxonomy)
+3. /bio-annotation (annotate MAGs, assign taxonomy)
 4. /bio-phylogenomics (phylogenetic placement)
 5. /bio-logic (interpret MAG ecology, metabolic roles, novelty)
 6. /bio-protein-clustering-pangenome (compare MAGs, build pangenome)
@@ -151,7 +152,7 @@ User: I have a viral metagenome assembly. Find and characterize viral contigs.
 Agent:
 1. /bio-viromics (identify viral contigs, classify)
 2. /bio-gene-calling (call viral genes)
-3. /bio-annotation-taxonomy (annotate viral proteins)
+3. /bio-annotation (annotate viral proteins)
 4. /bio-phylogenomics (viral phylogeny)
 5. /bio-stats-ml-reporting (viral diversity report)
 ```
@@ -165,7 +166,7 @@ Agent:
 1. /bio-gene-calling (ensure consistent gene calls)
 2. /bio-protein-clustering-pangenome (cluster orthologs, pangenome matrix)
 3. /bio-phylogenomics (core genome phylogeny)
-4. /bio-annotation-taxonomy (annotate accessory genes)
+4. /bio-annotation (annotate accessory genes)
 5. /bio-stats-ml-reporting (pangenome statistics, figures)
 ```
 
@@ -178,7 +179,7 @@ The agent can orchestrate parallel skill execution for independent steps:
 ```
 User: I have 10 bacterial genomes that need annotation.
 
-Agent: [Launches 10 parallel /bio-annotation-taxonomy skills]
+Agent: [Launches 10 parallel /bio-annotation skills]
 ```
 
 ### Quality Gate Enforcement
@@ -193,7 +194,7 @@ The agent automatically validates quality at each step:
 If quality gates fail, the agent will:
 1. Alert you to the issue
 2. Suggest remediation steps
-3. Use `/pipeline-debugger` if needed
+3. Re-check inputs and logs before retrying
 
 ### Reproducibility
 
@@ -207,13 +208,15 @@ All skills used by the agent enforce:
 
 The omics-scientist agent can seamlessly integrate with:
 
-- `/querying-jgi-lakehouse` - Fetch reference data from JGI
-- `/exploratory-data-analysis` - Explore complex result files
-- `/scientific-writing` - Generate manuscripts from results
-- `/citation-management` - Manage references
-- `/literature-review` - Background research
-- `/statistical-analysis` - Advanced statistics
-- `/matplotlib` - Custom visualizations
+- `/jgi-lakehouse` - Fetch reference data from JGI
+- `/bio-workflow-methods-docwriter` - Document workflow runs
+- `/tracking-taxonomy-updates` - Reconcile taxonomy updates
+- `/science-writing` - Generate manuscripts from results
+- `/polars-dovmed` - Literature discovery
+- `/agent-browser` - Web data retrieval
+- `/beautiful-data-viz` - Publication figures
+- `/plotly-dashboard-skill` - Interactive dashboards
+- `/notebook-ai-agents-skill` - Marimo-first analysis notebooks (Jupyter legacy)
 
 ## Tips
 
@@ -231,7 +234,7 @@ The omics-scientist agent can seamlessly integrate with:
 A: Be specific with keywords (see keyword mapping in agent file). For reasoning/interpretation, use words like "why", "how", "explain", "interpret"
 
 **Q: Pipeline failed mid-workflow?**
-A: Agent will automatically invoke `/pipeline-debugger`
+A: Agent will review logs and suggest fixes
 
 **Q: Need custom parameters?**
 A: Explicitly request them - agent will pass to skill
@@ -253,4 +256,3 @@ For issues with:
 - **Agent behavior**: Edit `omics-scientist.md` system prompt
 - **Skill execution**: Refer to skill-specific documentation
 - **Claude Code**: See https://github.com/anthropics/claude-code
-

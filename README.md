@@ -9,7 +9,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-3-blue)](#the-three-agents)
-[![Skills](https://img.shields.io/badge/Skills-21-blue)](#agent--skills-mapping)
+[![Skills](https://img.shields.io/badge/Skills-22-blue)](#agent--skills-mapping)
 
 **Quick Links:** [Installation](#installation) • [Agents](#the-three-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
@@ -17,7 +17,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**3 Expert Agents** that orchestrate **21 specialized skills** for end-to-end omics analysis, scientific communication, and data visualization.
+**3 Expert Agents** that orchestrate **22 specialized skills** for end-to-end omics analysis, scientific communication, and data visualization.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -42,7 +42,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Analyze viral sequences or protein structures
 - Query JGI databases for metadata discovery and data retrieval (GOLD, IMG, Mycocosm, Phytozome)
 
-**Core Skills (15):**
+**Core Skills (16):**
 - `bio-logic` — Scientific reasoning and hypothesis formation
 - `bio-foundation-housekeeping` — Project scaffolding with reproducible environments
 - `bio-reads-qc-mapping` — Read QC, trimming, and mapping
@@ -58,6 +58,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - `bio-workflow-methods-docwriter` — Generate Methods sections from pipelines
 - `bio-prefect-dask-nextflow` — Workflow orchestration
 - `jgi-lakehouse` — Metadata discovery and data retrieval from JGI's GOLD, IMG, Mycocosm, and Phytozome databases via Dremio SQL
+- `tracking-taxonomy-updates` — Track and reconcile taxonomy updates across NCBI/GTDB/ICTV
 
 ---
 
@@ -72,7 +73,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Document computational workflows for Methods sections
 - Review manuscripts for rigor and clarity
 
-**Core Skills (5):**
+**Core Skills (4):**
 - `bio-logic` — Evaluate methodology, assess evidence, critique claims
 - `polars-dovmed` — Search 2.4M+ PubMed Central papers
 - `science-writing` — Publication-quality manuscripts with DOI validation
@@ -92,11 +93,10 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Ensure reproducibility with documented workflows
 
 **Core Skills (5):**
-- `jupyter_notebook_ai_agents_skill` — Reproducible analysis notebooks with KISS structure
+- `notebook-ai-agents-skill` — Marimo-first analysis notebooks with KISS structure
 - `beautiful-data-viz` — Publication-quality matplotlib/seaborn plots
 - `plotly-dashboard-skill` — Production-ready Plotly Dash dashboards
 - `agent-browser` — Web scraping and screenshot capture
-- `exploratory-data-analysis` — Analyze 200+ scientific file formats
 
 ---
 
@@ -128,7 +128,8 @@ make status
 
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
-- **Skills** → `~/.claude/skills/` and `~/.codex/skills/` (21 directories)
+- **Skills** → `~/.agents/skills/` (22 directories)
+- **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 
 **Examples:**
 ```bash
@@ -183,7 +184,7 @@ make test  # Run validation tests
 ┌────────────────────────┐
 │   Omics Scientist      │
 ├────────────────────────┤
-│ 15 bio-* skills        │
+│ 16 skills (14 bio-*)   │
 │ Focus: Workflows       │
 └────────────────────────┘
          │
@@ -201,7 +202,8 @@ make test  # Run validation tests
          ├──> bio-stats-ml-reporting
          ├──> bio-workflow-methods-docwriter
          ├──> bio-prefect-dask-nextflow
-         └──> jgi-lakehouse (GOLD/IMG/Phytozome)
+         ├──> jgi-lakehouse (GOLD/IMG/Phytozome)
+         └──> tracking-taxonomy-updates
 
 ┌────────────────────────┐
 │   Science Writer       │
@@ -219,14 +221,13 @@ make test  # Run validation tests
 ┌────────────────────────┐
 │   DataViz Artist       │
 ├────────────────────────┤
-│ 5 visualization skills │
+│ 4 visualization skills │
 │ Focus: Presentation    │
 └────────────────────────┘
          │
-         ├──> jupyter_notebook_ai_agents_skill
+         ├──> notebook-ai-agents-skill
          ├──> beautiful-data-viz
          ├──> plotly-dashboard-skill
-         ├──> exploratory-data-analysis
          └──> agent-browser
 ```
 
@@ -251,7 +252,7 @@ Science Writer Agent
   10. polars-dovmed → Find supporting literature
 
 DataViz Artist Agent
-  11. jupyter_notebook_ai_agents_skill → Create analysis notebook
+  11. notebook-ai-agents-skill → Create Marimo notebook
   12. beautiful-data-viz → Publication figures
 ```
 
@@ -264,7 +265,7 @@ Science Writer Agent
 
 DataViz Artist Agent
   4. beautiful-data-viz → Create summary figures
-  5. jupyter_notebook_ai_agents_skill → Document analysis
+  5. notebook-ai-agents-skill → Document analysis (Marimo)
 ```
 
 ### Interactive Dashboard for MAG Explorer
@@ -297,7 +298,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 20 specialized skills
+└── skills/                          # 22 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
@@ -316,10 +317,10 @@ omics-skills/
     ├── polars-dovmed/              # PubMed Central search
     ├── science-writing/            # Manuscript generation
     ├── agent-browser/              # Web automation
-    ├── jupyter_notebook_ai_agents_skill/
+    ├── notebook-ai-agents-skill/
     ├── beautiful-data-viz/
     ├── plotly-dashboard-skill/
-    └── exploratory-data-analysis/
+    └── tracking-taxonomy-updates/
 ```
 
 ---
@@ -468,10 +469,10 @@ make install > install.log  # Colors disabled automatically
 
 Installation shows progress counters:
 ```
-Progress: 0/21 skills
-  [1/21] ✓ agent-browser
-  [2/21] ✓ beautiful-data-viz
+Progress: 0/22 skills
+  [1/22] ✓ agent-browser
+  [2/22] ✓ beautiful-data-viz
   ...
-  [21/21] ✓ science-writing
-Completed: 21/21 skills installed
+  [22/22] ✓ science-writing
+Completed: 22/22 skills installed
 ```

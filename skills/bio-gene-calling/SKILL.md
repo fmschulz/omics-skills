@@ -5,53 +5,60 @@ description: Call genes and annotate basic features for prokaryotes, viruses, an
 
 # Bio Gene Calling
 
-## When to use
-- Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.
+Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.
 
-## Prerequisites
-- Tools installed via pixi (see pixi.toml).
+## Instructions
+
+1. Select gene caller by organism class.
+2. Run gene calling and produce GFF/FAA/FNA.
+3. Detect tRNAs/rRNAs if requested.
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Run workflow | Follow the steps in this skill and capture outputs. |
+| Validate inputs | Confirm required inputs and reference data exist. |
+| Review outputs | Inspect reports and QC gates before proceeding. |
+| Tool docs | See `docs/README.md`. |
+| References | - See ../bio-skills-references.md |
+
+## Input Requirements
+
+Prerequisites:
+- Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
 - Input contigs or bins are available.
-
-## Inputs
+Inputs:
 - contigs.fasta or bins/*.fasta
 
-## Outputs
+## Output
+
 - results/bio-gene-calling/genes.gff3
 - results/bio-gene-calling/proteins.faa
 - results/bio-gene-calling/cds.fna
 - results/bio-gene-calling/gene_metrics.tsv
 - results/bio-gene-calling/logs/
 
-## Steps
-1. Select gene caller by organism class.
-2. Run gene calling and produce GFF/FAA/FNA.
-3. Detect tRNAs/rRNAs if requested.
+## Quality Gates
 
-## QC gates
-- Gene count sanity checks pass.
-- Start/stop codon checks pass.
-- On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Gene count sanity checks pass.
+- [ ] Start/stop codon checks pass.
+- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Verify contigs are non-empty and DNA alphabet.
+- [ ] Verify outputs contain expected feature types.
 
-## Validation
-- Verify contigs are non-empty and DNA alphabet.
-- Verify outputs contain expected feature types.
+## Examples
 
-## Tools
-- pyrodigal v3.7.0
-- prodigal-gv v2.11.0
-- braker v3.0.8
-- augustus v3.5.0
-- trnascan-se v2.0.12
+### Example 1: Expected input layout
 
-## Paper summaries (2023-2025)
-- summaries/ (include example use cases and tool settings used)
+```text
+contigs.fasta or bins/*.fasta
+```
 
-## Tool documentation
-- [Pyrodigal](docs/pyrodigal.html) - Fast prokaryotic gene prediction
-- [Prodigal-gv](docs/prodigal-gv.html) - Gene prediction for giant viruses
-- [BRAKER](docs/braker.html) - Eukaryotic gene prediction pipeline
-- [AUGUSTUS](docs/augustus.html) - Eukaryotic gene prediction
-- [tRNAscan-SE](docs/trnascan-se.html) - Transfer RNA gene detection
+## Troubleshooting
 
-## References
-- See ../bio-skills-references.md
+**Issue**: Missing inputs or reference databases
+**Solution**: Verify paths and permissions before running the workflow.
+
+**Issue**: Low-quality results or failed QC gates
+**Solution**: Review reports, adjust parameters, and re-run the affected step.

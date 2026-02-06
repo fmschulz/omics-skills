@@ -5,62 +5,66 @@ description: Perform metagenomic binning, refinement, and QC with completeness/c
 
 # Bio Binning QC
 
-## When to use
-- Perform metagenomic binning, refinement, and QC with completeness/contamination checks.
+Perform metagenomic binning, refinement, and QC with completeness/contamination checks.
 
-## Prerequisites
-- Tools installed via pixi (see pixi.toml).
-- Reference DB root: /media/shared-expansion/db/ (wsu; override per machine branch).
+## Instructions
+
+1. Compute depth/coverage per sample.
+2. Run multiple binners (MetaBAT2, SemiBin2, QuickBin).
+3. Classify bins by domain (bacteria/archaea vs eukaryotes).
+4. Run domain-specific QC:
+5. CheckM2 for bacterial and archaeal bins
+6. EukCC for eukaryotic bins
+7. GUNC for contamination detection (all domains).
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Run workflow | Follow the steps in this skill and capture outputs. |
+| Validate inputs | Confirm required inputs and reference data exist. |
+| Review outputs | Inspect reports and QC gates before proceeding. |
+| Tool docs | See `docs/README.md`. |
+| References | - See ../bio-skills-references.md |
+
+## Input Requirements
+
+Prerequisites:
+- Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
+- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU).
 - Coverage/depth tables or reads available to compute coverage.
-
-## Inputs
+Inputs:
 - contigs.fasta
 - coverage.tsv (per-sample depth table)
 
-## Outputs
+## Output
+
 - results/bio-binning-qc/bins/
 - results/bio-binning-qc/bin_metrics.tsv
 - results/bio-binning-qc/bin_qc_report.html
 - results/bio-binning-qc/logs/
 
-## Steps
-1. Compute depth/coverage per sample.
-2. Run multiple binners (MetaBAT2, SemiBin2, QuickBin).
-3. Classify bins by domain (bacteria/archaea vs eukaryotes).
-4. Run domain-specific QC:
-   - CheckM2 for bacterial and archaeal bins
-   - EukCC for eukaryotic bins
-   - GUNC for contamination detection (all domains).
+## Quality Gates
 
-## QC gates
-- Completeness and contamination meet project thresholds.
-- Chimera and contamination flags are below thresholds.
-- On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Completeness and contamination meet project thresholds.
+- [ ] Chimera and contamination flags are below thresholds.
+- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Verify contigs.fasta and coverage.tsv are non-empty.
+- [ ] Verify reference DBs for QC tools exist under the reference root.
 
-## Validation
-- Verify contigs.fasta and coverage.tsv are non-empty.
-- Verify reference DBs for QC tools exist under the reference root.
+## Examples
 
-## Tools
-- coverm v0.7.0 (coverage computation)
-- metabat2 v2.18 (binning)
-- semibin2 v2.2.1 (binning)
-- bbtools (quickbin) v39.52 (binning)
-- checkm2 v1.0.2 (QC for bacteria/archaea)
-- eukcc v2.x (QC for eukaryotes)
-- gunc v1.0.6 (contamination detection)
+### Example 1: Expected input layout
 
-## Paper summaries (2023-2025)
-- summaries/ (include example use cases and tool settings used)
+```text
+contigs.fasta
+coverage.tsv (per-sample depth table)
+```
 
-## Tool documentation
-- [CoverM](docs/coverm.html) - Coverage and depth calculation
-- [MetaBAT2](docs/metabat2.html) - Metagenomic binning
-- [SemiBin2](docs/semibin2.html) - Deep learning-based metagenomic binning
-- [QuickBin](docs/quickbin.html) - Fast binning with BBTools
-- [CheckM2](docs/checkm2.html) - Quality assessment for bacterial and archaeal genomes
-- [EukCC](docs/eukcc.html) - Quality assessment for eukaryotic genomes
-- [GUNC](docs/gunc.html) - Detection of chimerism and contamination
+## Troubleshooting
 
-## References
-- See ../bio-skills-references.md
+**Issue**: Missing inputs or reference databases
+**Solution**: Verify paths and permissions before running the workflow.
+
+**Issue**: Low-quality results or failed QC gates
+**Solution**: Review reports, adjust parameters, and re-run the affected step.

@@ -74,11 +74,10 @@ Added **4 detailed examples** showing bio-logic usage:
 
 ### 8. Related Skills
 Marked skills that **complement bio-logic**:
-- `/scientific-writing` - "use with /bio-logic for biological interpretation"
-- `/literature-review` - "use with /bio-logic to synthesize findings"
-- `/statistical-analysis` - "use with /bio-logic for interpretation"
-- `/scientific-critical-thinking` - "complements /bio-logic"
-- `/peer-review` - "use with /bio-logic for critique"
+- `/science-writing` - "use with /bio-logic for biological interpretation"
+- `/polars-dovmed` - "use with /bio-logic to synthesize findings"
+- `/bio-stats-ml-reporting` - "use with /bio-logic for interpretation"
+- `/bio-workflow-methods-docwriter` - "use with /bio-logic for methods documentation"
 
 ### 9. Remember Section
 Added as **first critical rule**:
@@ -293,7 +292,7 @@ This requires scientific reasoning. Let me evaluate hypotheses:
 Recommended investigation order:
 1. /bio-binning-qc (check contamination metrics)
 2. /bio-phylogenomics (gene phylogeny)
-3. /bio-annotation-taxonomy (re-annotate with strict parameters)
+3. /bio-annotation (re-annotate with strict parameters)
 4. /bio-logic (synthesize evidence, rank hypotheses)
 
 [Reasoned, hypothesis-driven response]
@@ -310,4 +309,3 @@ The bio-logic skill is now **deeply embedded** as the cognitive foundation of th
 - **Evaluates** evidence critically
 
 This transforms the agent from a technical tool executor into a **scientific reasoning partner**.
-

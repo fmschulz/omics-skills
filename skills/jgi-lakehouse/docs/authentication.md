@@ -45,28 +45,24 @@ source ~/.bashrc  # or source ~/.zshrc
 ```
 
 ### 5. Verify Access
-Test the token:
+Test the token (from LBNL network or SSH tunnel):
 
 ```bash
 python3 << 'EOF'
 import os
-import pyarrow.flight as flight
+import sys
+
+sys.path.insert(0, "scripts")
+from rest_client import show_schemas
 
 token = os.getenv("DREMIO_PAT")
 if not token:
     token = open(os.path.expanduser("~/.secrets/dremio_pat")).read().strip()
+    os.environ["DREMIO_PAT"] = token
 
-client = flight.FlightClient("grpc+tls://lakehouse.jgi.lbl.gov:443")
-headers = [(b"authorization", f"Bearer {token}".encode("utf-8"))]
-options = flight.FlightCallOptions(headers=headers)
-
-# Test query
-info = client.get_flight_info(
-    flight.FlightDescriptor.for_command("SHOW SCHEMAS"),
-    options
-)
+schemas = show_schemas()
 print("✓ Successfully connected to JGI Lakehouse!")
-print(f"Available schemas: {info}")
+print(f"Schema count: {len(schemas)}")
 EOF
 ```
 

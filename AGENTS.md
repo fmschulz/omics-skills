@@ -6,11 +6,11 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A curated collection of **3 expert agents** and **20 specialized skills** for bioinformatics, scientific writing, and data visualization. Compatible with **Claude Code** and **Codex CLI**.
+A curated collection of **3 expert agents** and **22 specialized skills** for bioinformatics, scientific writing, and data visualization. Compatible with **Claude Code** and **Codex CLI**.
 
 **Structure:**
 - `agents/` - 3 agent personas that orchestrate skills
-- `skills/` - 20 specialized skills for omics workflows
+- `skills/` - 22 specialized skills for omics workflows
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 
@@ -42,9 +42,10 @@ skills/
 - **Skill prefixes**:
   - `bio-*` - Bioinformatics workflows
   - `science-writing`, `polars-dovmed`, `agent-browser` - Writing/research
-  - `beautiful-data-viz`, `plotly-dashboard-skill`, `jupyter_notebook_ai_agents_skill` - Visualization
+- `beautiful-data-viz`, `plotly-dashboard-skill`, `notebook-ai-agents-skill` - Visualization (Marimo-first notebooks)
 - **SKILL.md**: Always uppercase, always this exact filename
-- **Documentation**: markdown files in `docs/`, lowercase with hyphens
+- **SKILL frontmatter `name`**: lowercase letters/numbers and hyphens only, no consecutive hyphens, <=64 chars, and must match the directory name
+- **Documentation**: markdown files in `docs/`; prefer lowercase with hyphens, `README.md` acceptable for overviews
 
 ### SKILL.md Format
 
@@ -101,7 +102,7 @@ command --option input.txt > output.txt
 
 Skills are loaded on-demand. To minimize context usage:
 
-- **Keep SKILL.md under 800 lines** - put detailed docs in `docs/` directory
+- **Keep SKILL.md under 500 lines** - put detailed docs in `docs/` directory
 - **Write specific descriptions** - helps agents know when to activate the skill
 - **Use progressive disclosure** - reference `docs/`, `summaries/`, `references/` files
 - **Separate concerns** - tool docs in `docs/`, literature in `summaries/`, examples in `examples/`
@@ -365,7 +366,8 @@ scripts/install.sh  # Alternative to Makefile
 ### What Gets Installed
 
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
-- **Skills** → `~/.claude/skills/` and `~/.codex/skills/` (20 directories)
+- **Skills** → `~/.agents/skills/` (22 directories)
+- **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Symlinks** by default (auto-updates with `git pull`)
 
 ---
@@ -506,7 +508,7 @@ make install
 | Skill directory | kebab-case with prefix | `bio-reads-qc-mapping` |
 | Agent file | kebab-case | `omics-scientist.md` |
 | SKILL.md | UPPERCASE | `SKILL.md` |
-| Documentation | lowercase, .md | `docs/tool-name.md` |
+| Documentation | lowercase-hyphen .md preferred; `README.md` allowed | `docs/tool-name.md` |
 | Summaries | YYYY-title.md | `summaries/2024-paper-name.md` |
 | Scripts | kebab-case.sh | `scripts/install.sh` |
 | Root docs | UPPERCASE | `README.md`, `INSTALL.md` |

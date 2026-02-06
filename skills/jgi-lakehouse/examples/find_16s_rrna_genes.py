@@ -203,9 +203,6 @@ The Lakehouse contains metadata only. To get sequences:
    - Get scaffold_oid from gene record
    - Download genome FASTA from IMG
    - Extract region: start_coord to end_coord on strand
-
-3. NCBI lookup by locus_tag:
-   Use the locus_tag field to find in GenBank
 """)
 
     # Example gene for reference

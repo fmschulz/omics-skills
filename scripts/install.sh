@@ -22,13 +22,13 @@ fi
 AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
 
-# Specific agent files (in subdirectories)
-AGENT_FILES=("omics-scientist/omics-scientist.md" "science-writer/science-writer.md" "dataviz-artist/dataviz-artist.md")
+# Specific agent files
+AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
-CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"
-CODEX_SKILLS_DIR="$HOME/.codex/skills"
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 
 # Installation method (symlink by default, use --copy to copy files)
 INSTALL_METHOD="symlink"
@@ -136,6 +136,27 @@ install_skills() {
     done
 }
 
+link_claude_skills() {
+    echo -e "${BLUE}Linking Claude skills to $AGENTS_SKILLS_DIR...${NC}"
+    mkdir -p "$HOME/.claude"
+
+    if [ -L "$CLAUDE_SKILLS_DIR" ]; then
+        ln -sfn "$AGENTS_SKILLS_DIR" "$CLAUDE_SKILLS_DIR"
+    elif [ -e "$CLAUDE_SKILLS_DIR" ]; then
+        backup="$CLAUDE_SKILLS_DIR.bak"
+        if [ -e "$backup" ]; then
+            backup="$CLAUDE_SKILLS_DIR.bak.$(date +%s)"
+        fi
+        mv "$CLAUDE_SKILLS_DIR" "$backup"
+        ln -sfn "$AGENTS_SKILLS_DIR" "$CLAUDE_SKILLS_DIR"
+        echo -e "  ${YELLOW}Backed up existing skills to $backup${NC}"
+    else
+        ln -sfn "$AGENTS_SKILLS_DIR" "$CLAUDE_SKILLS_DIR"
+    fi
+
+    echo -e "  ${GREEN}✓${NC} $CLAUDE_SKILLS_DIR -> $AGENTS_SKILLS_DIR"
+}
+
 check_deps() {
     echo -e "${BLUE}Checking dependencies...${NC}"
 
@@ -164,7 +185,18 @@ check_deps() {
 show_status() {
     echo -e "${BLUE}Installation Status${NC}"
     echo ""
+    skills_total=$(find "$SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
 
+    echo -e "${YELLOW}Shared Skills:${NC}"
+    echo "  Skills directory: $AGENTS_SKILLS_DIR"
+    if [ -d "$AGENTS_SKILLS_DIR" ]; then
+        count=$(find -L "$AGENTS_SKILLS_DIR" -maxdepth 1 -type d -o -type l 2>/dev/null | tail -n +2 | wc -l)
+        echo "  Installed skills: $count/$skills_total"
+    else
+        echo -e "  ${RED}Not installed${NC}"
+    fi
+
+    echo ""
     echo -e "${YELLOW}Claude Code:${NC}"
     echo "  Agents directory: $CLAUDE_AGENTS_DIR"
     if [ -d "$CLAUDE_AGENTS_DIR" ]; then
@@ -175,9 +207,10 @@ show_status() {
     fi
 
     echo "  Skills directory: $CLAUDE_SKILLS_DIR"
-    if [ -d "$CLAUDE_SKILLS_DIR" ]; then
-        count=$(find "$CLAUDE_SKILLS_DIR" -maxdepth 1 -type d -o -type l 2>/dev/null | tail -n +2 | wc -l)
-        echo "  Installed skills: $count/20"
+    if [ -L "$CLAUDE_SKILLS_DIR" ]; then
+        echo "  Linked to: $(readlink "$CLAUDE_SKILLS_DIR")"
+    elif [ -d "$CLAUDE_SKILLS_DIR" ]; then
+        echo -e "  ${YELLOW}Warning: skills directory is not a symlink${NC}"
     else
         echo -e "  ${RED}Not installed${NC}"
     fi
@@ -192,13 +225,7 @@ show_status() {
         echo -e "  ${RED}Not installed${NC}"
     fi
 
-    echo "  Skills directory: $CODEX_SKILLS_DIR"
-    if [ -d "$CODEX_SKILLS_DIR" ]; then
-        count=$(find "$CODEX_SKILLS_DIR" -maxdepth 1 -type d -o -type l 2>/dev/null | tail -n +2 | wc -l)
-        echo "  Installed skills: $count/20"
-    else
-        echo -e "  ${RED}Not installed${NC}"
-    fi
+    echo "  Skills directory: $AGENTS_SKILLS_DIR (shared)"
 }
 
 # Main installation
@@ -219,17 +246,20 @@ fi
 echo ""
 
 # Install based on target
+install_skills "$AGENTS_SKILLS_DIR" "Shared skills"
+echo ""
+
 if [ "$INSTALL_TARGET" = "both" ] || [ "$INSTALL_TARGET" = "claude" ]; then
     install_agents "$CLAUDE_AGENTS_DIR" "Claude Code"
-    install_skills "$CLAUDE_SKILLS_DIR" "Claude Code"
+    link_claude_skills
     echo -e "${GREEN}✓ Claude Code installation complete${NC}"
     echo ""
 fi
 
 if [ "$INSTALL_TARGET" = "both" ] || [ "$INSTALL_TARGET" = "codex" ]; then
     install_agents "$CODEX_AGENTS_DIR" "Codex CLI"
-    install_skills "$CODEX_SKILLS_DIR" "Codex CLI"
     echo -e "${GREEN}✓ Codex CLI installation complete${NC}"
+    echo "  Skills are shared from $AGENTS_SKILLS_DIR"
     echo ""
 fi
 

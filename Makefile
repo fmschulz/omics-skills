@@ -2,7 +2,8 @@
 # Installs agents and skills for Claude Code and Codex CLI
 
 .PHONY: help install install-claude install-codex install-agents install-skills \
-        uninstall uninstall-claude uninstall-codex status check-deps clean test
+        install-claude-skills install-codex-skills link-claude-skills uninstall \
+        uninstall-claude uninstall-codex uninstall-skills status check-deps clean test
 
 # Directories
 AGENTS_DIR := $(CURDIR)/agents
@@ -17,9 +18,11 @@ CLAUDE_HOME := $(HOME)/.claude
 CLAUDE_AGENTS_DIR := $(CLAUDE_HOME)/agents
 CLAUDE_SKILLS_DIR := $(CLAUDE_HOME)/skills
 
+AGENTS_HOME := $(HOME)/.agents
+AGENTS_SKILLS_DIR := $(AGENTS_HOME)/skills
+
 CODEX_HOME := $(HOME)/.codex
 CODEX_AGENTS_DIR := $(CODEX_HOME)/agents
-CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
 
 # Installation method (symlink or copy)
 # Use INSTALL_METHOD=copy for copying instead of symlinking
@@ -82,11 +85,12 @@ install: check-deps install-claude install-codex ## Install for both Claude Code
 	@echo ""
 	@$(MAKE) --no-print-directory status
 
-install-claude: install-claude-agents install-claude-skills ## Install for Claude Code only
+install-claude: install-skills install-claude-agents link-claude-skills ## Install for Claude Code only
 	@echo "$(GREEN)✓ Claude Code installation complete$(NC)"
 
-install-codex: install-codex-agents install-codex-skills ## Install for Codex CLI only
+install-codex: install-skills install-codex-agents ## Install for Codex CLI only
 	@echo "$(GREEN)✓ Codex CLI installation complete$(NC)"
+	@echo "  Skills are shared from $(AGENTS_SKILLS_DIR)"
 
 install-claude-agents: ## Install agents to Claude Code
 	@echo "$(BLUE)Installing agents to Claude Code...$(NC)"
@@ -128,9 +132,9 @@ else
 	done
 endif
 
-install-claude-skills: ## Install skills to Claude Code
-	@echo "$(BLUE)Installing skills to Claude Code...$(NC)"
-	@mkdir -p $(CLAUDE_SKILLS_DIR)
+install-skills: ## Install skills to ~/.agents/skills
+	@echo "$(BLUE)Installing skills to $(AGENTS_SKILLS_DIR)...$(NC)"
+	@mkdir -p $(AGENTS_SKILLS_DIR)
 ifeq ($(INSTALL_METHOD),symlink)
 	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
 	current=0; \
@@ -138,7 +142,7 @@ ifeq ($(INSTALL_METHOD),symlink)
 		if [ -d $$skill ]; then \
 			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
-			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
+			target=$(AGENTS_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ]; then \
 				rm $$target; \
 			elif [ -d $$target ]; then \
@@ -164,7 +168,7 @@ else
 		if [ -d $$skill ]; then \
 			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
-			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
+			target=$(AGENTS_SKILLS_DIR)/$$basename; \
 			if [ -d $$target ]; then \
 				mv $$target $$target.bak; \
 			fi; \
@@ -182,6 +186,26 @@ else
 		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
 	fi
 endif
+
+install-claude-skills: install-skills link-claude-skills ## Backwards-compatible target
+
+link-claude-skills: ## Link Claude skills dir to ~/.agents/skills
+	@echo "$(BLUE)Linking Claude skills to $(AGENTS_SKILLS_DIR)...$(NC)"
+	@mkdir -p $(CLAUDE_HOME)
+	@if [ -L $(CLAUDE_SKILLS_DIR) ]; then \
+		ln -sfn $(AGENTS_SKILLS_DIR) $(CLAUDE_SKILLS_DIR); \
+	elif [ -e $(CLAUDE_SKILLS_DIR) ]; then \
+		backup=$(CLAUDE_SKILLS_DIR).bak; \
+		if [ -e $$backup ]; then \
+			backup=$(CLAUDE_SKILLS_DIR).bak.$$(date +%s); \
+		fi; \
+		mv $(CLAUDE_SKILLS_DIR) $$backup; \
+		ln -sfn $(AGENTS_SKILLS_DIR) $(CLAUDE_SKILLS_DIR); \
+		echo "  $(YELLOW)Backed up existing skills to $$backup$(NC)"; \
+	else \
+		ln -sfn $(AGENTS_SKILLS_DIR) $(CLAUDE_SKILLS_DIR); \
+	fi
+	@echo "  $(GREEN)✓$(NC) $(CLAUDE_SKILLS_DIR) -> $(AGENTS_SKILLS_DIR)"
 
 install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
@@ -223,60 +247,8 @@ else
 	done
 endif
 
-install-codex-skills: ## Install skills to Codex CLI
-	@echo "$(BLUE)Installing skills to Codex CLI...$(NC)"
-	@mkdir -p $(CODEX_SKILLS_DIR)
-ifeq ($(INSTALL_METHOD),symlink)
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
-	current=0; \
-	for skill in $(SKILLS_DIR)/*; do \
-		if [ -d $$skill ]; then \
-			current=$$((current + 1)); \
-			basename=$$(basename $$skill); \
-			target=$(CODEX_SKILLS_DIR)/$$basename; \
-			if [ -L $$target ]; then \
-				rm $$target; \
-			elif [ -d $$target ]; then \
-				mv $$target $$target.bak; \
-			fi; \
-			ln -sf $$skill $$target; \
-			if [ "$(VERBOSE)" = "1" ]; then \
-				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
-			else \
-				printf "\r  Progress: $$current/$$total skills"; \
-			fi; \
-		fi; \
-	done; \
-	if [ "$(VERBOSE)" != "1" ]; then \
-		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
-	else \
-		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
-	fi
-else
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
-	current=0; \
-	for skill in $(SKILLS_DIR)/*; do \
-		if [ -d $$skill ]; then \
-			current=$$((current + 1)); \
-			basename=$$(basename $$skill); \
-			target=$(CODEX_SKILLS_DIR)/$$basename; \
-			if [ -d $$target ]; then \
-				mv $$target $$target.bak; \
-			fi; \
-			cp -r $$skill $$target; \
-			if [ "$(VERBOSE)" = "1" ]; then \
-				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
-			else \
-				printf "\r  Progress: $$current/$$total skills"; \
-			fi; \
-		fi; \
-	done; \
-	if [ "$(VERBOSE)" != "1" ]; then \
-		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
-	else \
-		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
-	fi
-endif
+install-codex-skills: ## Backwards-compatible no-op
+	@echo "$(BLUE)Codex CLI uses shared skills from $(AGENTS_SKILLS_DIR)$(NC)"
 
 ##@ Dependencies
 
@@ -306,7 +278,7 @@ install-python-deps: ## Install Python dependencies for skills
 
 ##@ Uninstallation
 
-uninstall: uninstall-claude uninstall-codex ## Uninstall from both platforms
+uninstall: uninstall-claude uninstall-codex uninstall-skills ## Uninstall from both platforms
 	@echo "$(GREEN)✓ Uninstallation complete$(NC)"
 
 uninstall-claude: ## Uninstall from Claude Code
@@ -329,28 +301,6 @@ uninstall-claude: ## Uninstall from Claude Code
 		printf "\r  $(GREEN)✓$(NC) Removed: $$current/3 agents\n"; \
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$current/3 agents"; \
-	fi
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
-	current=0; \
-	for skill in $(SKILLS_DIR)/*; do \
-		if [ -d $$skill ]; then \
-			basename=$$(basename $$skill); \
-			target=$(CLAUDE_SKILLS_DIR)/$$basename; \
-			if [ -L $$target ] || [ -d $$target ]; then \
-				current=$$((current + 1)); \
-				rm -rf $$target; \
-				if [ "$(VERBOSE)" = "1" ]; then \
-					echo "  [$$current/$$total] $(GREEN)✓$(NC) Removed $$basename"; \
-				else \
-					printf "\r  Skills: $$current/$$total"; \
-				fi; \
-			fi; \
-		fi; \
-	done; \
-	if [ "$(VERBOSE)" != "1" ]; then \
-		printf "\r  $(GREEN)✓$(NC) Removed: $$current/$$total skills\n"; \
-	else \
-		echo "  $(GREEN)✓$(NC) Completed: $$current/$$total skills"; \
 	fi
 	@echo "$(GREEN)✓ Claude Code uninstalled$(NC)"
 
@@ -375,12 +325,16 @@ uninstall-codex: ## Uninstall from Codex CLI
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$current/3 agents"; \
 	fi
+	@echo "$(GREEN)✓ Codex CLI uninstalled$(NC)"
+
+uninstall-skills: ## Remove omics-skills from ~/.agents/skills
+	@echo "$(BLUE)Uninstalling skills from $(AGENTS_SKILLS_DIR)...$(NC)"
 	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
 	current=0; \
 	for skill in $(SKILLS_DIR)/*; do \
 		if [ -d $$skill ]; then \
 			basename=$$(basename $$skill); \
-			target=$(CODEX_SKILLS_DIR)/$$basename; \
+			target=$(AGENTS_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ] || [ -d $$target ]; then \
 				current=$$((current + 1)); \
 				rm -rf $$target; \
@@ -397,18 +351,37 @@ uninstall-codex: ## Uninstall from Codex CLI
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$current/$$total skills"; \
 	fi
-	@echo "$(GREEN)✓ Codex CLI uninstalled$(NC)"
 
 ##@ Status
 
 status: ## Show installation status
 	@echo "$(BLUE)Installation Status$(NC)"
 	@echo ""
+	@echo "$(YELLOW)Shared Skills:$(NC)"
+	@echo "  Skills directory: $(AGENTS_SKILLS_DIR)"
+	@if [ -d $(AGENTS_SKILLS_DIR) ]; then \
+		total=$$(find -L $(AGENTS_SKILLS_DIR) -mindepth 1 -maxdepth 1 \( -type d -o -type l \) 2>/dev/null | wc -l); \
+		installed=0; \
+		skills_total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l); \
+		for skill in $(SKILLS_DIR)/*; do \
+			if [ -d $$skill ]; then \
+				basename=$$(basename $$skill); \
+				if [ -d $(AGENTS_SKILLS_DIR)/$$basename ] || [ -L $(AGENTS_SKILLS_DIR)/$$basename ]; then \
+					installed=$$((installed + 1)); \
+				fi; \
+			fi; \
+		done; \
+		echo "  Omics-skills skills: $$installed/$$skills_total installed ($$total total in directory)"; \
+	else \
+		echo "  $(RED)Not installed$(NC)"; \
+	fi
+	@echo ""
 	@echo "$(YELLOW)Claude Code:$(NC)"
 	@echo "  Agents directory: $(CLAUDE_AGENTS_DIR)"
 	@if [ -d $(CLAUDE_AGENTS_DIR) ]; then \
 		total=$$(ls -1 $(CLAUDE_AGENTS_DIR)/*.md 2>/dev/null | wc -l); \
 		installed=0; \
+		skills_total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l); \
 		for agent in $(AGENT_FILES); do \
 			basename=$$(basename $$agent); \
 			if [ -f $(CLAUDE_AGENTS_DIR)/$$basename ] || [ -L $(CLAUDE_AGENTS_DIR)/$$basename ]; then \
@@ -433,18 +406,10 @@ status: ## Show installation status
 	fi
 	@echo ""
 	@echo "  Skills directory: $(CLAUDE_SKILLS_DIR)"
-	@if [ -d $(CLAUDE_SKILLS_DIR) ]; then \
-		total=$$(find $(CLAUDE_SKILLS_DIR) -mindepth 1 -maxdepth 1 \( -type d -o -type l \) 2>/dev/null | wc -l); \
-		installed=0; \
-		for skill in $(SKILLS_DIR)/*; do \
-			if [ -d $$skill ]; then \
-				basename=$$(basename $$skill); \
-				if [ -d $(CLAUDE_SKILLS_DIR)/$$basename ] || [ -L $(CLAUDE_SKILLS_DIR)/$$basename ]; then \
-					installed=$$((installed + 1)); \
-				fi; \
-			fi; \
-		done; \
-		echo "  Omics-skills skills: $$installed/20 installed ($$total total in directory)"; \
+	@if [ -L $(CLAUDE_SKILLS_DIR) ]; then \
+		echo "  Linked to: $$(readlink $(CLAUDE_SKILLS_DIR))"; \
+	elif [ -d $(CLAUDE_SKILLS_DIR) ]; then \
+		echo "  $(YELLOW)Warning: skills directory is not a symlink$(NC)"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
@@ -454,6 +419,7 @@ status: ## Show installation status
 	@if [ -d $(CODEX_AGENTS_DIR) ]; then \
 		total=$$(ls -1 $(CODEX_AGENTS_DIR)/*.md 2>/dev/null | wc -l); \
 		installed=0; \
+		skills_total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l); \
 		for agent in $(AGENT_FILES); do \
 			basename=$$(basename $$agent); \
 			if [ -f $(CODEX_AGENTS_DIR)/$$basename ] || [ -L $(CODEX_AGENTS_DIR)/$$basename ]; then \
@@ -465,22 +431,7 @@ status: ## Show installation status
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
 	@echo ""
-	@echo "  Skills directory: $(CODEX_SKILLS_DIR)"
-	@if [ -d $(CODEX_SKILLS_DIR) ]; then \
-		total=$$(find $(CODEX_SKILLS_DIR) -mindepth 1 -maxdepth 1 \( -type d -o -type l \) 2>/dev/null | wc -l); \
-		installed=0; \
-		for skill in $(SKILLS_DIR)/*; do \
-			if [ -d $$skill ]; then \
-				basename=$$(basename $$skill); \
-				if [ -d $(CODEX_SKILLS_DIR)/$$basename ] || [ -L $(CODEX_SKILLS_DIR)/$$basename ]; then \
-					installed=$$((installed + 1)); \
-				fi; \
-			fi; \
-		done; \
-		echo "  Omics-skills skills: $$installed/20 installed ($$total total in directory)"; \
-	else \
-		echo "  $(RED)Not installed$(NC)"; \
-	fi
+	@echo "  Skills directory: $(AGENTS_SKILLS_DIR) (shared)"
 
 ##@ Testing
 
@@ -492,9 +443,8 @@ test: ## Test repository structure and installation
 clean: ## Remove backup files
 	@echo "$(BLUE)Cleaning backup files...$(NC)"
 	@find $(CLAUDE_AGENTS_DIR) -name "*.bak" -delete 2>/dev/null || true
-	@find $(CLAUDE_SKILLS_DIR) -name "*.bak" -delete 2>/dev/null || true
+	@find $(AGENTS_SKILLS_DIR) -name "*.bak" -delete 2>/dev/null || true
 	@find $(CODEX_AGENTS_DIR) -name "*.bak" -delete 2>/dev/null || true
-	@find $(CODEX_SKILLS_DIR) -name "*.bak" -delete 2>/dev/null || true
 	@echo "$(GREEN)✓ Backup files removed$(NC)"
 
 update: ## Update symlinks (if using symlink method)
@@ -515,8 +465,8 @@ validate: ## Validate installation
 		fi; \
 	done; \
 	for skill in bio-logic bio-foundation-housekeeping bio-reads-qc-mapping; do \
-		if ! [ -d $(CLAUDE_SKILLS_DIR)/$$skill ]; then \
-			echo "  $(RED)✗$(NC) Missing: $$skill in Claude Code"; \
+		if ! [ -d $(AGENTS_SKILLS_DIR)/$$skill ]; then \
+			echo "  $(RED)✗$(NC) Missing: $$skill in shared skills"; \
 			errors=$$((errors + 1)); \
 		fi; \
 	done; \

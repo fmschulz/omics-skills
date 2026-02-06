@@ -47,19 +47,6 @@ results = query(
 - DREMIO_PAT environment variable
 - LBNL network access (or SSH tunnel)
 
-### `flight_client.py`
-Arrow Flight client for high-performance data access.
-
-**Usage:**
-```python
-from flight_client import list_catalogs, execute_lakehouse_query
-
-schemas = list_catalogs()
-results = execute_lakehouse_query("SELECT * FROM GOLD.PROJECT LIMIT 10")
-```
-
-**Status:** ⚠️ Currently unavailable (pyarrow flight library issue)
-
 ### `explore_gold_database.sh`
 Comprehensive GOLD database exploration script.
 
@@ -102,7 +89,7 @@ python download_img_genomes.py --domain Bacteria --limit 5 --output ./genomes
 
 ```bash
 ssh <lbnl-server>
-cd ~/.agents/skills/querying-jgi-lakehouse/scripts
+cd ~/.agents/skills/jgi-lakehouse/scripts
 ./get_dremio_token.sh username password
 ```
 
@@ -134,13 +121,6 @@ http://lakehouse-1.jgi.lbl.gov:9047/api/v3
 ```
 https://lakehouse.jgi.lbl.gov/api/v3
 ❌ Blocked by Cloudflare Access
-```
-
-**Arrow Flight**
-```
-grpc+tls://lakehouse.jgi.lbl.gov:443 (or port 32010)
-✅ Accessible from anywhere
-⚠️ Needs pyarrow flight support
 ```
 
 ## Using REST API

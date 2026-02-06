@@ -5,50 +5,60 @@ description: Aggregate results, train ML models, and produce reports with valida
 
 # Bio Stats ML Reporting
 
-## When to use
-- Aggregate results, train ML models, and produce reports with validated references.
+Aggregate results, train ML models, and produce reports with validated references.
 
-## Prerequisites
-- Tools installed via pixi (see pixi.toml).
+## Instructions
+
+1. Join outputs in DuckDB and build feature tables.
+2. Train baseline models and evaluate with cross-validation.
+3. Generate reports and validate references.
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Run workflow | Follow the steps in this skill and capture outputs. |
+| Validate inputs | Confirm required inputs and reference data exist. |
+| Review outputs | Inspect reports and QC gates before proceeding. |
+| Tool docs | See `docs/README.md`. |
+| References | - See ../bio-skills-references.md |
+
+## Input Requirements
+
+Prerequisites:
+- Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
 - Results tables and metadata are available.
-
-## Inputs
+Inputs:
 - results/*.parquet or results/*.tsv
 - metadata.tsv
 
-## Outputs
+## Output
+
 - results/bio-stats-ml-reporting/models/
 - results/bio-stats-ml-reporting/metrics.tsv
 - results/bio-stats-ml-reporting/report.md
 - results/bio-stats-ml-reporting/logs/
 
-## Steps
-1. Join outputs in DuckDB and build feature tables.
-2. Train baseline models and evaluate with cross-validation.
-3. Generate reports and validate references.
+## Quality Gates
 
-## QC gates
-- Model performance sanity checks pass.
-- Reference validation passes.
-- On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Model performance sanity checks pass.
+- [ ] Reference validation passes.
+- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] Verify input tables are readable and schema-consistent.
 
-## Validation
-- Verify input tables are readable and schema-consistent.
+## Examples
 
-## Tools
-- duckdb v1.4.3
-- scikit-learn v1.8.0
-- xgboost v3.1.3
-- crossrefapi v1.7.0
+### Example 1: Expected input layout
 
-## Paper summaries (2023-2025)
-- summaries/ (include example use cases and tool settings used)
+```text
+results/*.parquet or results/*.tsv
+metadata.tsv
+```
 
-## Tool documentation
-- [DuckDB](docs/duckdb.md) - In-process analytical database for data aggregation
-- [scikit-learn](docs/scikit-learn.html) - Machine learning library
-- [XGBoost](docs/xgboost.html) - Gradient boosting framework
-- [Crossref API](docs/crossref.html) - Reference validation and metadata retrieval
+## Troubleshooting
 
-## References
-- See ../bio-skills-references.md
+**Issue**: Missing inputs or reference databases
+**Solution**: Verify paths and permissions before running the workflow.
+
+**Issue**: Low-quality results or failed QC gates
+**Solution**: Review reports, adjust parameters, and re-run the affected step.

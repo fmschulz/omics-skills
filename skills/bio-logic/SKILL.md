@@ -1,32 +1,19 @@
 ---
 name: bio-logic
-description: Evaluates scientific research rigor using systematic frameworks. Assesses methodology, statistics, biases, and evidence quality. Use when reviewing papers, critiquing claims, designing studies, rating evidence strength (GRADE/Cochrane ROB), checking study design, statistical critique, or risk of bias assessment.
+description: Evaluate scientific rigor, methods, biases, and evidence quality for claims, papers, and study designs.
 ---
 
 # Bio-Logic: Scientific Reasoning Evaluation
 
+Use structured frameworks to evaluate scientific claims, methodology, and evidence strength.
+
 ## Instructions
 
-1. **Identify the task** using Quick Reference below
-2. **Use the appropriate framework** from this file or references
-3. **Adapt depth to context** - use full checklists for thorough reviews, key items for quick assessments
-4. **Structure output** using the Output Format template
+1. Identify the task (claim assessment, paper critique, study design review).
+2. Apply the relevant checklist below.
+3. Structure output using the provided format.
 
-## Quick Reference
-
-Navigate to the right tool for your task:
-
-| Task | Location |
-|------|----------|
-| Review a paper | [Critique Checklist](#critique-checklist) below |
-| Evaluate a claim | [Claim Assessment](#claim-assessment) below |
-| Assess evidence strength | [references/evidence.md](references/evidence.md) |
-| Identify biases | [references/biases.md](references/biases.md) |
-| Spot statistical errors | [references/stats.md](references/stats.md) |
-| Detect logical fallacies | [references/fallacies.md](references/fallacies.md) |
-| Design/review a study | [references/design.md](references/design.md) |
-
-## Critique Checklist
+### Critique Checklist
 
 Use relevant sections based on the review scope. Skip items not applicable to the study type.
 
@@ -58,16 +45,12 @@ Use relevant sections based on the review scope. Skip items not applicable to th
 - [ ] Subgroups analyzed without preregistration
 ```
 
-## Claim Assessment
+### Claim Assessment
 
-For any scientific claim:
-
-1. **Identify claim type**: Causal, associational, or descriptive?
-2. **Match evidence to claim**: Does study design support this claim type?
-3. **Check logical connection**: Do conclusions follow from data?
-4. **Evaluate proportionality**: Is confidence matched to evidence strength?
-
-**Causal claims require**: Temporal precedence + covariation + alternative explanations ruled out (ideally experimental manipulation).
+1. Identify claim type (causal, associational, descriptive).
+2. Match evidence to claim type.
+3. Check logical connection between data and conclusion.
+4. Ensure confidence matches evidence strength.
 
 **Claim strength ladder**:
 | Language | Requires |
@@ -77,9 +60,7 @@ For any scientific claim:
 | "Associated with" | Observational, no causal claim |
 | "May" / "Might" | Preliminary or hypothesis-generating |
 
-## Output Format
-
-Structure critiques as:
+### Output Format
 
 ```markdown
 ## Summary
@@ -104,6 +85,35 @@ Structure critiques as:
 ## Bottom Line
 [What can/cannot be concluded from this evidence]
 ```
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Review a paper | Use the Critique Checklist below |
+| Evaluate a claim | Use Claim Assessment steps |
+| Assess evidence strength | See `references/evidence.md` |
+| Identify biases | See `references/biases.md` |
+| Statistical errors | See `references/stats.md` |
+| Logical fallacies | See `references/fallacies.md` |
+| Study design review | See `references/design.md` |
+
+## Input Requirements
+
+- Manuscript or study summary
+- Claim statements to evaluate
+- Methods and results (as available)
+
+## Output
+
+- Structured critique with strengths, concerns, and evidence rating
+- Clear recommendation on claim strength and limitations
+
+## Quality Gates
+
+- [ ] Claim type matches evidence type
+- [ ] Key methodological risks are identified
+- [ ] Evidence rating is justified with concrete issues
 
 ## Examples
 
@@ -140,22 +150,12 @@ Suggestive but not conclusive due to differential attrition.
 
 **Input**: "This study proves that coffee prevents Alzheimer's"
 
-**Assessment**: Claim uses causal language ("prevents") but if based on observational data, this is a correlation→causation fallacy. Would need RCT or strong observational evidence (large effect, dose-response, controlled confounds) to support causal claim. Appropriate language: "Coffee consumption is associated with lower Alzheimer's risk."
+**Assessment**: If based on observational data, this is a correlation→causation error. Appropriate language: "Coffee consumption is associated with lower Alzheimer's risk."
 
-## Principles
+## Troubleshooting
 
-1. **Be constructive** - Identify strengths, suggest improvements
-2. **Be specific** - Quote problematic statements, cite specific issues
-3. **Be proportionate** - Match criticism severity to impact on conclusions
-4. **Be consistent** - Same standards regardless of whether you agree with findings
-5. **Distinguish** - Data vs interpretation, correlation vs causation, statistical vs practical significance
+**Issue**: Insufficient methods details
+**Solution**: Request missing design/statistics information before rating evidence.
 
-## Reference Materials
-
-Detailed frameworks for specific evaluation tasks:
-
-- **[references/evidence.md](references/evidence.md)** - GRADE system, evidence hierarchy, validity types, Bradford Hill criteria
-- **[references/biases.md](references/biases.md)** - Bias taxonomy with detection strategies
-- **[references/stats.md](references/stats.md)** - Statistical pitfalls and correct interpretations
-- **[references/fallacies.md](references/fallacies.md)** - Logical fallacies in scientific arguments
-- **[references/design.md](references/design.md)** - Experimental design checklist
+**Issue**: Conflicting results across studies
+**Solution**: Report uncertainty and suggest stronger study designs for resolution.

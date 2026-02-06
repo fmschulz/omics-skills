@@ -324,7 +324,7 @@ User Input
         │
         ├─ "binning", "MAGs" ────────────► /bio-binning-qc
         │
-        ├─ "annotate", "function" ───────► /bio-annotation-taxonomy
+        ├─ "annotate", "function" ───────► /bio-annotation
         │
         ├─ "phylogeny", "tree" ──────────► /bio-phylogenomics
         │
@@ -434,7 +434,7 @@ bio-assembly-qc    Direct Mapping
                │
         ┌──────┴──────────────┐
         ▼                     ▼
-bio-annotation-taxonomy  bio-structure-annotation
+bio-annotation  bio-structure-annotation
         │                     │
         ├─────────────────────┤
         │                     │

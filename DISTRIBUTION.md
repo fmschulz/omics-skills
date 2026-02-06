@@ -124,7 +124,7 @@ The [Agent Skills open standard](https://agentskills.io/specification) (released
 
 2. **Complete Repository Description:**
    ```
-   3 expert agents and 20 specialized skills for bioinformatics,
+   3 expert agents and 22 specialized skills for bioinformatics,
    scientific writing, and data visualization. Compatible with
    Claude Code and Codex CLI.
    ```
@@ -229,7 +229,7 @@ Marketplaces look for:
      - `bio-logic` (universal reasoning skill)
      - `science-writing` (manuscript generation)
      - `beautiful-data-viz` (publication figures)
-     - `jupyter_notebook_ai_agents_skill` (reproducible notebooks)
+     - `notebook-ai-agents-skill` (Marimo-first notebooks)
      - `bio-reads-qc-mapping` (sequencing data QC)
    - Add to `skills/` directory
    - Submit pull request with description
@@ -308,7 +308,7 @@ Marketplaces look for:
 This skill is part of the omics-skills collection available at:
 https://github.com/fmschulz/omics-skills
 
-The collection includes 20 specialized skills and 3 expert agents for
+The collection includes 22 specialized skills and 3 expert agents for
 computational biology workflows.
 ```
 
@@ -321,7 +321,7 @@ I've created a comprehensive collection of Agent Skills for computational biolog
 
 **What it includes:**
 - 3 expert agents (omics-scientist, science-writer, dataviz-artist)
-- 20 specialized skills (reads QC, assembly, annotation, phylogenomics, etc.)
+- 22 specialized skills (reads QC, assembly, annotation, phylogenomics, etc.)
 - Complete installation system (one-command install)
 - Works with Claude Code and Codex CLI
 

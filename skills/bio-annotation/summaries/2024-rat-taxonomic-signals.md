@@ -1,7 +1,7 @@
 ---
 schema: ../../bio-paper-schema.yaml
 type: PaperSummary
-skill: bio-annotation-taxonomy
+skill: bio-annotation
 title: "Integrating taxonomic signals from MAGs and contigs improves read annotation and taxonomic profiling of metagenomes"
 year: 2024
 journal: "Nature Communications"

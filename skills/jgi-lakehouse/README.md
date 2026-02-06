@@ -1,6 +1,6 @@
 # JGI Lakehouse Skill
 
-Query and explore the JGI Lakehouse (Dremio + Apache Iceberg) using safe SQL patterns and Arrow Flight.
+Query and explore the JGI Lakehouse (Dremio + Apache Iceberg) using safe SQL patterns.
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ Query and explore the JGI Lakehouse (Dremio + Apache Iceberg) using safe SQL pat
 ```bash
 # Generate token from LBNL server (one-time)
 ssh <lbnl-server>
-cd ~/.agents/skills/querying-jgi-lakehouse/scripts
+cd ~/.agents/skills/jgi-lakehouse/scripts
 ./get_dremio_token.sh username password
 
 # Store token (on your workstation)
@@ -40,7 +40,7 @@ bash scripts/explore_gold_database.sh > catalog.txt
 
 ```python
 import sys
-sys.path.append('~/.agents/skills/querying-jgi-lakehouse/scripts')
+sys.path.append('~/.agents/skills/jgi-lakehouse/scripts')
 
 from rest_client import query
 
@@ -64,7 +64,6 @@ results = query(
 ├── scripts/
 │   ├── get_dremio_token.sh        # Token generation
 │   ├── rest_client.py             # REST API client
-│   ├── flight_client.py           # Arrow Flight client
 │   ├── explore_gold_database.sh   # GOLD exploration (bash)
 │   └── README.md                  # Scripts documentation
 │
@@ -72,8 +71,9 @@ results = query(
 │   └── explore_database.py        # Interactive database explorer
 │
 ├── docs/
-│   ├── setup_guide.md             # Setup instructions
 │   ├── authentication.md          # Token setup
+│   ├── data-catalog.md            # Table catalog
+│   ├── sql-quick-reference.md     # SQL syntax cheatsheet
 │   └── explore_gold.md            # GOLD exploration guide
 │
 └── references/
@@ -89,10 +89,6 @@ results = query(
 **Internal HTTP Endpoint** (`http://lakehouse-1.jgi.lbl.gov:9047`)
 - ✅ Direct API access with token
 - ⚠️ Only accessible from LBNL network
-
-**Arrow Flight Port** (`lakehouse.jgi.lbl.gov:32010`)
-- ✅ Accessible from anywhere
-- ⚠️ Requires pyarrow with flight support
 
 ## Available Databases
 
@@ -155,10 +151,8 @@ schema = query("DESCRIBE GOLD.PROJECT")
 **"Token expired"**
 → Regenerate token (30 hour lifetime).
 
-**"PyArrow flight not available"**
-→ Install: `pip install pyarrow --force-reinstall`
-
 ## Support
 
 - **Skill docs**: `SKILL.md`
 - **Dremio API**: https://docs.dremio.com/
+- **Admin contact**: Georg Rath (JGI Slack)

@@ -1,62 +1,55 @@
 ---
 name: bio-workflow-methods-docwriter
-description: Generate reproducible bioinformatics/data-science Methods + run documentation from workflow run artifacts (Nextflow/Snakemake/CWL), including a top-of-doc workflow summary, exact executed commands, tool versions, parameters, QC, and outputs.
+description: Generate reproducible Methods documentation from workflow run artifacts (Nextflow/Snakemake/CWL), including exact commands, versions, parameters, QC gates, and outputs.
 ---
 
 # Bio Workflow Methods Docwriter
 
-Create **publication-ready Methods + internal run documentation** for a *specific executed* bioinformatics or data science workflow run.
+Create publication-ready Methods and run documentation from real workflow artifacts.
 
-## When to use
-Use this Skill when you need to document:
-- **exact workflow flow + steps that actually ran**
-- **tool + reference versions** (and/or container image digests)
-- **key parameters + QC gates**
-- **outputs and how to reproduce the run**
+## Instructions
 
-## Hard rules (reliability)
-- **Never invent** commands, tool versions, reference versions, or dataset accessions.
-- If an item is missing from evidence, write **`NOT CAPTURED`** and add a **“How to capture next time”** note.
-- Prefer **verbatim command scripts** from the workflow engine (e.g., Nextflow `.command.sh`) over paraphrases.
-- Keep user data private: redact tokens, credentials, and PHI.
+1. Collect the workflow evidence package (logs, configs, version files).
+2. Build `run_manifest.yaml` strictly from evidence.
+3. Validate the manifest against the schema.
+4. Draft `METHODS.md` with a concise workflow summary at the top.
+5. Verify QC gates and reproducibility details are captured.
 
-## Inputs (evidence package)
-Ask for (or locate) an *evidence package* folder containing:
-- Workflow engine artifacts (Nextflow/Snakemake/CWL)
-- Pipeline config + params
-- Software version artifacts (e.g., nf-core `software_versions.yml`, conda env export, container digest)
-- Run logs + QC reports
+## Quick Reference
 
-See: `reference/evidence-checklist.md`
+| Task | Action |
+|------|--------|
+| Evidence checklist | See `reference/evidence-checklist.md` |
+| Manifest schema | `schemas/run-manifest.schema.json` |
+| Validate manifest | `python scripts/validate_run_manifest.py run_manifest.yaml` |
+| Examples | See `examples/` |
 
-## Output artifacts (always produce all 3)
-1. **Workflow Summary** (top of doc): 5–12 lines, plain language + step bullets.
-2. **Methods & Run Documentation** (`METHODS.md`): detailed, step-by-step.
-3. **Machine-readable Run Manifest** (`run_manifest.yaml`): exact run metadata & steps (validate).
+## Input Requirements
 
-Schema + validator:
-- Schema: `schemas/run-manifest.schema.json`
-- Validate: `python scripts/validate_run_manifest.py run_manifest.yaml`
+- Workflow artifacts (Nextflow/Snakemake/CWL logs and configs)
+- Tool version records or container digests
+- QC reports and output manifests
 
-Optional structured literature record (only if asked):
-- `PaperSummary` record using `schemas/bio-paper-schema.yaml`
+## Output
 
-## Workflow
-Copy this checklist into your working notes and check off as you go:
+- `METHODS.md` (workflow summary + detailed steps)
+- `run_manifest.yaml` (machine-readable run manifest)
 
-- [ ] 1) Inventory evidence files (log what you have / what is missing)
-- [ ] 2) Build `run_manifest.yaml` from evidence (no guessing)
-- [ ] 3) Validate manifest (fix schema errors)
-- [ ] 4) Draft `METHODS.md` (summary first, then detailed steps)
-- [ ] 5) Run quality gates (versions, parameters, QC, outputs, reproducibility command)
+## Quality Gates
 
-### Quality gates (must pass)
-- Every major step has: purpose • inputs • outputs • command (or NOT CAPTURED) • tool+version (or NOT CAPTURED)
-- Reproduction section includes: pinned pipeline revision • container/conda info • full run command • params/config paths
-- “Workflow Summary” appears at the very top
+- [ ] No invented commands, versions, or parameters
+- [ ] Every step has inputs, outputs, and versions captured
+- [ ] Workflow summary appears at top of `METHODS.md`
 
-## Quick examples (triggers)
-- “Write the Methods section for this Nextflow run directory, include exact commands and versions.”
-- “Document this Snakemake pipeline run with a workflow summary at the top and a reproducibility appendix.”
-- “Summarize this paper’s protocol into the PaperSummary schema.”
+## Examples
 
+### Example 1: Validate a manifest
+
+```bash
+python scripts/validate_run_manifest.py run_manifest.yaml
+```
+
+## Troubleshooting
+
+**Issue**: Missing tool versions in logs
+**Solution**: Mark as `NOT CAPTURED` and add a note on how to capture next time.
