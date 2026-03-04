@@ -6,7 +6,7 @@ user-invocable: true
 
 # polars-dovmed
 
-Full-text search across 2.4M+ PMC Open Access papers for literature discovery and extraction tasks.
+Search across 2.4M+ PMC Open Access papers for literature discovery and extraction tasks.
 
 ## Instructions
 
@@ -21,18 +21,23 @@ Full-text search across 2.4M+ PMC Open Access papers for literature discovery an
 |------|--------|
 | API key | `POLARS_DOVMED_API_KEY` in env or `~/.config/polars-dovmed/.env` |
 | Base URL | `https://api.newlineages.com` |
+| Search endpoint | `POST /api/search_literature` |
 | Rate limit | 100 queries/hour |
 
 ## Input Requirements
 
 - API key (`POLARS_DOVMED_API_KEY`)
 - Search query and filters (year, journal, organism, etc.)
+- Optional `fast_mode`:
+  - `false` (default): full-text search (`title`, `abstract_text`, `abstract`, `full_text`)
+  - `true`: abstract-only search (`abstract_text`, `abstract`)
 
 ## Output
 
 - Paper lists with metadata (PMC ID, DOI, title, year)
 - Matched text snippets
 - Extracted entities (genes, accessions, terms)
+- Mode metadata (`search_mode`, `searched_columns`)
 
 ## Quality Gates
 
@@ -49,9 +54,14 @@ import httpx
 
 headers = {"X-API-Key": "YOUR_KEY"}
 resp = httpx.post(
-    "https://api.newlineages.com/search",
+    "https://api.newlineages.com/api/search_literature",
     headers=headers,
-    json={"query": "CRISPR archaea", "limit": 10},
+    json={
+        "query": "CRISPR archaea",
+        "max_results": 10,
+        "extract_matches": False,
+        "fast_mode": False,  # set True for abstract-only
+    },
 )
 print(resp.json())
 ```
@@ -63,3 +73,6 @@ print(resp.json())
 
 **Issue**: 429 Rate limited
 **Solution**: Wait for quota reset or reduce request frequency.
+
+**Issue**: Fast mode returns too few results
+**Solution**: Retry with `fast_mode=false` to include full text.
