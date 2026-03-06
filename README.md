@@ -9,7 +9,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-3-blue)](#the-three-agents)
-[![Skills](https://img.shields.io/badge/Skills-22-blue)](#agent--skills-mapping)
+[![Skills](https://img.shields.io/badge/Skills-24-blue)](#agent--skills-mapping)
 
 **Quick Links:** [Installation](#installation) • [Agents](#the-three-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
@@ -17,7 +17,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**3 Expert Agents** that orchestrate **22 specialized skills** for end-to-end omics analysis, scientific communication, and data visualization.
+**3 Expert Agents** that orchestrate **24 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -128,7 +128,7 @@ make status
 
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
-- **Skills** → `~/.agents/skills/` (22 directories)
+- **Skills** → `~/.agents/skills/` (24 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 
 **Examples:**
@@ -298,7 +298,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 22 specialized skills
+└── skills/                          # 24 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
@@ -315,8 +315,10 @@ omics-skills/
     ├── bio-prefect-dask-nextflow/
     ├── jgi-lakehouse/              # Query JGI GOLD/IMG/Phytozome
     ├── polars-dovmed/              # PubMed Central search
+    ├── proposal-review/            # Decision-ready proposal review
     ├── science-writing/            # Manuscript generation
     ├── agent-browser/              # Web automation
+    ├── get-api-docs/               # Current API docs via chub
     ├── notebook-ai-agents-skill/
     ├── beautiful-data-viz/
     ├── plotly-dashboard-skill/
@@ -469,10 +471,10 @@ make install > install.log  # Colors disabled automatically
 
 Installation shows progress counters:
 ```
-Progress: 0/22 skills
-  [1/22] ✓ agent-browser
-  [2/22] ✓ beautiful-data-viz
+Progress: 0/24 skills
+  [1/24] ✓ agent-browser
+  [2/24] ✓ beautiful-data-viz
   ...
-  [22/22] ✓ science-writing
-Completed: 22/22 skills installed
+  [24/24] ✓ tracking-taxonomy-updates
+Completed: 24/24 skills installed
 ```
