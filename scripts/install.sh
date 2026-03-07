@@ -188,7 +188,7 @@ install_codex_tools() {
     cat > "$CODEXLOOP_LAUNCHER" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-export PYTHONPATH="$REPO_ROOT\${PYTHONPATH:+:\$PYTHONPATH}"
+export PYTHONPATH="\$HOME/.codex/skills\${PYTHONPATH:+:\$PYTHONPATH}"
 exec python3 -m codexloop "\$@"
 EOF
     chmod +x "$CODEXLOOP_LAUNCHER"

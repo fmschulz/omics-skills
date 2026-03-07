@@ -10,7 +10,8 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
+PYTHONPATH_ROOT = REPO_ROOT / "skills"
 
 
 def git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -136,7 +137,7 @@ class CodexLoopCLITest(unittest.TestCase):
 
         self.env = os.environ.copy()
         self.env["PATH"] = f"{self.bin_dir}:{self.env['PATH']}"
-        self.env["PYTHONPATH"] = str(REPO_ROOT)
+        self.env["PYTHONPATH"] = str(PYTHONPATH_ROOT)
 
     def tearDown(self) -> None:
         self.tmpdir.cleanup()

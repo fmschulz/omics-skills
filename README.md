@@ -212,11 +212,12 @@ make test  # Run validation tests
 
 ## CodexLoop Harness
 
-CodexLoop is not just a skill prompt. The top-level `codexloop/` directory in this repository is the actual Python package that implements the harness logic. The installed launcher `~/.codex/bin/codexloop` runs `python -m codexloop`, so the package needs to stay in the repository.
+CodexLoop is not just a skill prompt. The runtime now lives inside [skills/codexloop](/home/fschulz/dev/omics-skills/skills/codexloop), alongside the `SKILL.md` instructions. The installed launcher `~/.codex/bin/codexloop` imports the runtime from the installed skill directory at `~/.codex/skills`, so it no longer depends on this repository checkout staying on `PYTHONPATH`.
 
 **Global install-time pieces**
 - `~/.codex/bin/codexloop` - reusable launcher
 - `~/.codex/skills/codexloop` - reusable skill instructions
+- `~/.codex/skills/codexloop/*.py` - installed CodexLoop runtime
 - `~/.codex/agents/codexloop.md` - dedicated CodexLoop agent file
 
 **Project-local runtime pieces**
@@ -232,6 +233,11 @@ CodexLoop is not just a skill prompt. The top-level `codexloop/` directory in th
 2. Generates the project-local scaffold if it does not exist.
 3. Creates hidden runtime config in `.codexloop/`.
 4. Creates visible planning and memory files in the project itself.
+
+**Why the runtime is inside the skill**
+- The skill and the code now install together.
+- An AI agent can locate both the instructions and the implementation in the same installed directory.
+- `make install` produces a self-contained CodexLoop setup under `~/.codex`, instead of relying on this repo’s top-level package layout.
 
 **Typical workflow**
 ```bash

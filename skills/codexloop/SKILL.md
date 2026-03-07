@@ -7,6 +7,8 @@ description: Run a Codex-native planning and implementation loop with docs/plans
 
 Use `codexloop` when a task needs a durable execution harness rather than a single Codex turn.
 
+The runtime implementation is co-located with this skill directory. After installation, the launcher `~/.codex/bin/codexloop` imports the Python module from `~/.codex/skills/codexloop/`.
+
 ## Instructions
 
 1. Confirm the global launcher exists at `~/.codex/bin/codexloop`.

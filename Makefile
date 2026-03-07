@@ -234,7 +234,7 @@ link-codex-skills: ## Link Codex skills dir to ~/.agents/skills
 install-codex-tools: ## Install codexloop launcher to ~/.codex/bin
 	@echo "$(BLUE)Installing CodexLoop launcher...$(NC)"
 	@mkdir -p $(CODEX_BIN_DIR)
-	@printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'export PYTHONPATH="$(CURDIR)$${PYTHONPATH:+:$$PYTHONPATH}"' 'exec python3 -m codexloop "$$@"' > $(CODEXLOOP_LAUNCHER)
+	@printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'export PYTHONPATH="$$HOME/.codex/skills$${PYTHONPATH:+:$$PYTHONPATH}"' 'exec python3 -m codexloop "$$@"' > $(CODEXLOOP_LAUNCHER)
 	@chmod +x $(CODEXLOOP_LAUNCHER)
 	@echo "  $(GREEN)✓$(NC) $(CODEXLOOP_LAUNCHER)"
 	@if echo ":$$PATH:" | grep -q ":$(CODEX_BIN_DIR):"; then \

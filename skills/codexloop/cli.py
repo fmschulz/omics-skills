@@ -1213,7 +1213,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="python -m codexloop")
+    parser = argparse.ArgumentParser(prog="codexloop")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser("init", help="Scaffold .codexloop in a target repo")
