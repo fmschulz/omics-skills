@@ -8,16 +8,16 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green)](https://code.claude.com)
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-3-blue)](#the-three-agents)
-[![Skills](https://img.shields.io/badge/Skills-24-blue)](#agent--skills-mapping)
+[![Agents](https://img.shields.io/badge/Agents-4-blue)](#the-four-agents)
+[![Skills](https://img.shields.io/badge/Skills-25-blue)](#agent--skills-mapping)
 
-**Quick Links:** [Installation](#installation) • [Agents](#the-three-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
+**Quick Links:** [Installation](#installation) • [Agents](#the-four-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
 ---
 
 ## What This Repository Provides
 
-**3 Expert Agents** that orchestrate **24 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
+**4 Expert Agents** that orchestrate **25 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -27,7 +27,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ---
 
-## The Three Agents
+## The Four Agents
 
 ### 🧬 Omics Scientist
 **Expert computational biologist** for genomics, metagenomics, and phylogenomics workflows.
@@ -100,6 +100,21 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ---
 
+### 🔁 CodexLoop
+**Plan-driven implementation harness agent** for long-running coding work that needs durable progress tracking, resumable execution, and failure memory.
+
+**Use when you need to:**
+- Turn a repository plan into an explicit implementation backlog
+- Keep progress visible in `docs/plans/`
+- Record solved failure patterns in `MEMORY.md`
+- Run Codex iteratively until tests and doctor checks pass
+- Resume interrupted execution without losing task state
+
+**Core Skill (1):**
+- `codexloop` — Codex-native orchestration harness with docs/plans tracking, `MEMORY.md`, task worktrees, and resumable execution
+
+---
+
 ## Installation
 
 ```bash
@@ -127,9 +142,11 @@ make status
 - **Color**: Use `NO_COLOR=1` to disable colors (auto-detected for non-TTY)
 
 **What gets installed:**
-- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
-- **Skills** → `~/.agents/skills/` (24 directories)
+- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
+- **Skills** → `~/.agents/skills/` (25 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
+- **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
+- **CodexLoop launcher** → `~/.codex/bin/codexloop`
 
 **Examples:**
 ```bash
@@ -150,6 +167,7 @@ make install NO_COLOR=1                # Disable colors
 ```bash
 # After installation, invoke an agent
 claude --agent omics-scientist
+claude --agent codexloop
 
 # Or specify other agents
 claude --agent science-writer
@@ -168,13 +186,69 @@ codex --system-prompt ~/.codex/agents/omics-scientist.md
 
 # Or add to Codex config
 codex config set default_agent ~/.codex/agents/omics-scientist.md
+
+# Or use the global CodexLoop harness
+~/.codex/bin/codexloop init /path/to/project
+~/.codex/bin/codexloop plan --repo /path/to/project
+~/.codex/bin/codexloop run --repo /path/to/project
 ```
+
+If your Codex environment supports loading agent files from `~/.codex/agents`, the dedicated agent file is `~/.codex/agents/codexloop.md`.
+
+`init` generates the project-local scaffold:
+- `.codexloop/config.json`
+- `.codexloop/doctor.sh`
+- `docs/plans/implementation-plan.md`
+- `docs/plans/CODEXLOOP_AGENT.md`
+- `MEMORY.md`
 
 **Verify installation:**
 ```bash
 make status
 make test  # Run validation tests
 ```
+
+---
+
+## CodexLoop Harness
+
+CodexLoop is not just a skill prompt. The top-level `codexloop/` directory in this repository is the actual Python package that implements the harness logic. The installed launcher `~/.codex/bin/codexloop` runs `python -m codexloop`, so the package needs to stay in the repository.
+
+**Global install-time pieces**
+- `~/.codex/bin/codexloop` - reusable launcher
+- `~/.codex/skills/codexloop` - reusable skill instructions
+- `~/.codex/agents/codexloop.md` - dedicated CodexLoop agent file
+
+**Project-local runtime pieces**
+- `docs/plans/implementation-plan.md` - source plan
+- `docs/plans/CODEXLOOP_AGENT.md` - per-project agent instructions
+- `docs/plans/active/*.md` - live progress tracking
+- `docs/plans/completed/*.md` - finished run records
+- `MEMORY.md` - resolved failure memory
+- `.codexloop/` - runtime state, task backlog, event logs, worktrees
+
+**What `codexloop init` does**
+1. Detects the target Git repository.
+2. Generates the project-local scaffold if it does not exist.
+3. Creates hidden runtime config in `.codexloop/`.
+4. Creates visible planning and memory files in the project itself.
+
+**Typical workflow**
+```bash
+cd /path/to/project
+codexloop init .
+$EDITOR docs/plans/implementation-plan.md
+$EDITOR .codexloop/doctor.sh
+codexloop plan --repo .
+codexloop run --repo .
+```
+
+**Execution model**
+- Planning uses Codex structured output to produce a task backlog.
+- Each task runs in its own Git worktree and branch.
+- The active plan and `MEMORY.md` are fed back into later Codex turns.
+- Verification failures trigger another Codex turn automatically until the task passes or the retry budget is exhausted.
+- `codexloop resume --repo .` restarts the loop from saved state when human intervention is needed.
 
 ---
 
@@ -286,10 +360,11 @@ DataViz Artist Agent
 
 ```
 omics-skills/
-├── agents/                          # 3 expert agent personas
+├── agents/                          # 4 expert agent personas
 │   ├── omics-scientist.md          # Bioinformatics workflows
 │   ├── science-writer.md           # Manuscript writing
 │   ├── dataviz-artist.md           # Visualization design
+│   ├── codexloop.md                # Plan-driven CodexLoop harness
 │   └── docs/                        # Shared agent documentation
 │       ├── ARCHITECTURE.md         # Agent design principles
 │       ├── BIO-LOGIC_INTEGRATION.md
@@ -298,7 +373,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 24 specialized skills
+└── skills/                          # 25 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/

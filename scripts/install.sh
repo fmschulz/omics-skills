@@ -23,10 +23,14 @@ AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
 
 # Specific agent files
-AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md")
+AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
+AGENT_COUNT=${#AGENT_FILES[@]}
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"
+CODEX_SKILLS_DIR="$HOME/.codex/skills"
+CODEX_BIN_DIR="$HOME/.codex/bin"
+CODEXLOOP_LAUNCHER="$CODEX_BIN_DIR/codexloop"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 
@@ -157,6 +161,45 @@ link_claude_skills() {
     echo -e "  ${GREEN}✓${NC} $CLAUDE_SKILLS_DIR -> $AGENTS_SKILLS_DIR"
 }
 
+link_codex_skills() {
+    echo -e "${BLUE}Linking Codex skills to $AGENTS_SKILLS_DIR...${NC}"
+    mkdir -p "$HOME/.codex"
+
+    if [ -L "$CODEX_SKILLS_DIR" ]; then
+        ln -sfn "$AGENTS_SKILLS_DIR" "$CODEX_SKILLS_DIR"
+    elif [ -e "$CODEX_SKILLS_DIR" ]; then
+        backup="$CODEX_SKILLS_DIR.bak"
+        if [ -e "$backup" ]; then
+            backup="$CODEX_SKILLS_DIR.bak.$(date +%s)"
+        fi
+        mv "$CODEX_SKILLS_DIR" "$backup"
+        ln -sfn "$AGENTS_SKILLS_DIR" "$CODEX_SKILLS_DIR"
+        echo -e "  ${YELLOW}Backed up existing Codex skills to $backup${NC}"
+    else
+        ln -sfn "$AGENTS_SKILLS_DIR" "$CODEX_SKILLS_DIR"
+    fi
+
+    echo -e "  ${GREEN}✓${NC} $CODEX_SKILLS_DIR -> $AGENTS_SKILLS_DIR"
+}
+
+install_codex_tools() {
+    echo -e "${BLUE}Installing CodexLoop launcher...${NC}"
+    mkdir -p "$CODEX_BIN_DIR"
+    cat > "$CODEXLOOP_LAUNCHER" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="$REPO_ROOT\${PYTHONPATH:+:\$PYTHONPATH}"
+exec python3 -m codexloop "\$@"
+EOF
+    chmod +x "$CODEXLOOP_LAUNCHER"
+    echo -e "  ${GREEN}✓${NC} $CODEXLOOP_LAUNCHER"
+    if [[ ":$PATH:" == *":$CODEX_BIN_DIR:"* ]]; then
+        echo -e "  ${GREEN}✓${NC} $CODEX_BIN_DIR is on PATH"
+    else
+        echo -e "  ${YELLOW}Note:${NC} add $CODEX_BIN_DIR to PATH or call $CODEXLOOP_LAUNCHER directly"
+    fi
+}
+
 check_deps() {
     echo -e "${BLUE}Checking dependencies...${NC}"
 
@@ -201,7 +244,7 @@ show_status() {
     echo "  Agents directory: $CLAUDE_AGENTS_DIR"
     if [ -d "$CLAUDE_AGENTS_DIR" ]; then
         count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l)
-        echo "  Installed agents: $count/3"
+        echo "  Installed agents: $count/$AGENT_COUNT"
     else
         echo -e "  ${RED}Not installed${NC}"
     fi
@@ -220,12 +263,26 @@ show_status() {
     echo "  Agents directory: $CODEX_AGENTS_DIR"
     if [ -d "$CODEX_AGENTS_DIR" ]; then
         count=$(find "$CODEX_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l)
-        echo "  Installed agents: $count/3"
+        echo "  Installed agents: $count/$AGENT_COUNT"
     else
         echo -e "  ${RED}Not installed${NC}"
     fi
 
-    echo "  Skills directory: $AGENTS_SKILLS_DIR (shared)"
+    echo "  Skills directory: $CODEX_SKILLS_DIR"
+    if [ -L "$CODEX_SKILLS_DIR" ]; then
+        echo "  Linked to: $(readlink "$CODEX_SKILLS_DIR")"
+    elif [ -d "$CODEX_SKILLS_DIR" ]; then
+        echo -e "  ${YELLOW}Warning: Codex skills directory is not a symlink${NC}"
+    else
+        echo -e "  ${RED}Not installed${NC}"
+    fi
+
+    echo "  CodexLoop launcher: $CODEXLOOP_LAUNCHER"
+    if [ -x "$CODEXLOOP_LAUNCHER" ]; then
+        echo -e "  ${GREEN}✓${NC} Installed"
+    else
+        echo -e "  ${RED}Not installed${NC}"
+    fi
 }
 
 # Main installation
@@ -258,8 +315,11 @@ fi
 
 if [ "$INSTALL_TARGET" = "both" ] || [ "$INSTALL_TARGET" = "codex" ]; then
     install_agents "$CODEX_AGENTS_DIR" "Codex CLI"
+    link_codex_skills
+    install_codex_tools
     echo -e "${GREEN}✓ Codex CLI installation complete${NC}"
-    echo "  Skills are shared from $AGENTS_SKILLS_DIR"
+    echo "  Skills linked at $CODEX_SKILLS_DIR"
+    echo "  CodexLoop launcher: $CODEXLOOP_LAUNCHER"
     echo ""
 fi
 
@@ -274,9 +334,11 @@ echo "  1. Invoke an agent:"
 echo "     claude --agent omics-scientist"
 echo "     claude --agent science-writer"
 echo "     claude --agent dataviz-artist"
+echo "     claude --agent codexloop"
 echo ""
 echo "  2. Or use in Codex:"
 echo "     codex --system-prompt ~/.codex/agents/omics-scientist.md"
+echo "     ~/.codex/bin/codexloop init /path/to/repo"
 echo ""
 echo -e "${YELLOW}Tip:${NC} Use symlinks (default) to always have the latest updates"
 echo "     Updates: cd $(basename "$REPO_ROOT") && git pull && ./install.sh"

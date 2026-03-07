@@ -2,8 +2,9 @@
 # Installs agents and skills for Claude Code and Codex CLI
 
 .PHONY: help install install-claude install-codex install-agents install-skills \
-        install-claude-skills install-codex-skills link-claude-skills uninstall \
-        uninstall-claude uninstall-codex uninstall-skills status check-deps clean test
+        install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
+        install-codex-tools uninstall uninstall-claude uninstall-codex uninstall-skills \
+        status check-deps clean test
 
 # Directories
 AGENTS_DIR := $(CURDIR)/agents
@@ -11,7 +12,8 @@ SKILLS_DIR := $(CURDIR)/skills
 SCRIPTS_DIR := $(CURDIR)/scripts
 
 # Specific agent files (flattened in agents/ directory)
-AGENT_FILES := omics-scientist.md science-writer.md dataviz-artist.md
+AGENT_FILES := omics-scientist.md science-writer.md dataviz-artist.md codexloop.md
+AGENT_COUNT := $(words $(AGENT_FILES))
 
 # Installation targets
 CLAUDE_HOME := $(HOME)/.claude
@@ -23,6 +25,9 @@ AGENTS_SKILLS_DIR := $(AGENTS_HOME)/skills
 
 CODEX_HOME := $(HOME)/.codex
 CODEX_AGENTS_DIR := $(CODEX_HOME)/agents
+CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
+CODEX_BIN_DIR := $(CODEX_HOME)/bin
+CODEXLOOP_LAUNCHER := $(CODEX_BIN_DIR)/codexloop
 
 # Installation method (symlink or copy)
 # Use INSTALL_METHOD=copy for copying instead of symlinking
@@ -88,9 +93,10 @@ install: check-deps install-claude install-codex ## Install for both Claude Code
 install-claude: install-skills install-claude-agents link-claude-skills ## Install for Claude Code only
 	@echo "$(GREEN)✓ Claude Code installation complete$(NC)"
 
-install-codex: install-skills install-codex-agents ## Install for Codex CLI only
+install-codex: install-skills install-codex-agents link-codex-skills install-codex-tools ## Install for Codex CLI only
 	@echo "$(GREEN)✓ Codex CLI installation complete$(NC)"
-	@echo "  Skills are shared from $(AGENTS_SKILLS_DIR)"
+	@echo "  Skills linked at $(CODEX_SKILLS_DIR)"
+	@echo "  CodexLoop launcher: $(CODEXLOOP_LAUNCHER)"
 
 install-claude-agents: ## Install agents to Claude Code
 	@echo "$(BLUE)Installing agents to Claude Code...$(NC)"
@@ -207,6 +213,36 @@ link-claude-skills: ## Link Claude skills dir to ~/.agents/skills
 	fi
 	@echo "  $(GREEN)✓$(NC) $(CLAUDE_SKILLS_DIR) -> $(AGENTS_SKILLS_DIR)"
 
+link-codex-skills: ## Link Codex skills dir to ~/.agents/skills
+	@echo "$(BLUE)Linking Codex skills to $(AGENTS_SKILLS_DIR)...$(NC)"
+	@mkdir -p $(CODEX_HOME)
+	@if [ -L $(CODEX_SKILLS_DIR) ]; then \
+		ln -sfn $(AGENTS_SKILLS_DIR) $(CODEX_SKILLS_DIR); \
+	elif [ -e $(CODEX_SKILLS_DIR) ]; then \
+		backup=$(CODEX_SKILLS_DIR).bak; \
+		if [ -e $$backup ]; then \
+			backup=$(CODEX_SKILLS_DIR).bak.$$(date +%s); \
+		fi; \
+		mv $(CODEX_SKILLS_DIR) $$backup; \
+		ln -sfn $(AGENTS_SKILLS_DIR) $(CODEX_SKILLS_DIR); \
+		echo "  $(YELLOW)Backed up existing Codex skills to $$backup$(NC)"; \
+	else \
+		ln -sfn $(AGENTS_SKILLS_DIR) $(CODEX_SKILLS_DIR); \
+	fi
+	@echo "  $(GREEN)✓$(NC) $(CODEX_SKILLS_DIR) -> $(AGENTS_SKILLS_DIR)"
+
+install-codex-tools: ## Install codexloop launcher to ~/.codex/bin
+	@echo "$(BLUE)Installing CodexLoop launcher...$(NC)"
+	@mkdir -p $(CODEX_BIN_DIR)
+	@printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'export PYTHONPATH="$(CURDIR)$${PYTHONPATH:+:$$PYTHONPATH}"' 'exec python3 -m codexloop "$$@"' > $(CODEXLOOP_LAUNCHER)
+	@chmod +x $(CODEXLOOP_LAUNCHER)
+	@echo "  $(GREEN)✓$(NC) $(CODEXLOOP_LAUNCHER)"
+	@if echo ":$$PATH:" | grep -q ":$(CODEX_BIN_DIR):"; then \
+		echo "  $(GREEN)✓$(NC) $(CODEX_BIN_DIR) is on PATH"; \
+	else \
+		echo "  $(YELLOW)Note: add $(CODEX_BIN_DIR) to PATH or call $(CODEXLOOP_LAUNCHER) directly$(NC)"; \
+	fi
+
 install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
 	@mkdir -p $(CODEX_AGENTS_DIR)
@@ -247,8 +283,8 @@ else
 	done
 endif
 
-install-codex-skills: ## Backwards-compatible no-op
-	@echo "$(BLUE)Codex CLI uses shared skills from $(AGENTS_SKILLS_DIR)$(NC)"
+install-codex-skills: ## Backwards-compatible target
+	@$(MAKE) --no-print-directory link-codex-skills
 
 ##@ Dependencies
 
@@ -291,16 +327,16 @@ uninstall-claude: ## Uninstall from Claude Code
 			current=$$((current + 1)); \
 			rm $$target; \
 			if [ "$(VERBOSE)" = "1" ]; then \
-				echo "  [$$current/3] $(GREEN)✓$(NC) Removed $$basename"; \
+				echo "  [$$current/$(AGENT_COUNT)] $(GREEN)✓$(NC) Removed $$basename"; \
 			else \
-				printf "\r  Agents: $$current/3"; \
+				printf "\r  Agents: $$current/$(AGENT_COUNT)"; \
 			fi; \
 		fi; \
 	done; \
 	if [ "$(VERBOSE)" != "1" ]; then \
-		printf "\r  $(GREEN)✓$(NC) Removed: $$current/3 agents\n"; \
+		printf "\r  $(GREEN)✓$(NC) Removed: $$current/$(AGENT_COUNT) agents\n"; \
 	else \
-		echo "  $(GREEN)✓$(NC) Completed: $$current/3 agents"; \
+		echo "  $(GREEN)✓$(NC) Completed: $$current/$(AGENT_COUNT) agents"; \
 	fi
 	@echo "$(GREEN)✓ Claude Code uninstalled$(NC)"
 
@@ -314,16 +350,24 @@ uninstall-codex: ## Uninstall from Codex CLI
 			current=$$((current + 1)); \
 			rm $$target; \
 			if [ "$(VERBOSE)" = "1" ]; then \
-				echo "  [$$current/3] $(GREEN)✓$(NC) Removed $$basename"; \
+				echo "  [$$current/$(AGENT_COUNT)] $(GREEN)✓$(NC) Removed $$basename"; \
 			else \
-				printf "\r  Agents: $$current/3"; \
+				printf "\r  Agents: $$current/$(AGENT_COUNT)"; \
 			fi; \
 		fi; \
 	done; \
 	if [ "$(VERBOSE)" != "1" ]; then \
-		printf "\r  $(GREEN)✓$(NC) Removed: $$current/3 agents\n"; \
+		printf "\r  $(GREEN)✓$(NC) Removed: $$current/$(AGENT_COUNT) agents\n"; \
 	else \
-		echo "  $(GREEN)✓$(NC) Completed: $$current/3 agents"; \
+		echo "  $(GREEN)✓$(NC) Completed: $$current/$(AGENT_COUNT) agents"; \
+	fi
+	@if [ -f $(CODEXLOOP_LAUNCHER) ] || [ -L $(CODEXLOOP_LAUNCHER) ]; then \
+		rm $(CODEXLOOP_LAUNCHER); \
+		echo "  $(GREEN)✓$(NC) Removed $(CODEXLOOP_LAUNCHER)"; \
+	fi
+	@if [ -L $(CODEX_SKILLS_DIR) ]; then \
+		rm $(CODEX_SKILLS_DIR); \
+		echo "  $(GREEN)✓$(NC) Removed $(CODEX_SKILLS_DIR) symlink"; \
 	fi
 	@echo "$(GREEN)✓ Codex CLI uninstalled$(NC)"
 
@@ -388,7 +432,7 @@ status: ## Show installation status
 				installed=$$((installed + 1)); \
 			fi; \
 		done; \
-		echo "  Omics-skills agents: $$installed/3 installed ($$total total in directory)"; \
+		echo "  Omics-skills agents: $$installed/$(AGENT_COUNT) installed ($$total total in directory)"; \
 		for agent in $(AGENT_FILES); do \
 			basename=$$(basename $$agent); \
 			if [ -f $(CLAUDE_AGENTS_DIR)/$$basename ] || [ -L $(CLAUDE_AGENTS_DIR)/$$basename ]; then \
@@ -426,12 +470,26 @@ status: ## Show installation status
 				installed=$$((installed + 1)); \
 			fi; \
 		done; \
-		echo "  Omics-skills agents: $$installed/3 installed ($$total total in directory)"; \
+		echo "  Omics-skills agents: $$installed/$(AGENT_COUNT) installed ($$total total in directory)"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
 	@echo ""
-	@echo "  Skills directory: $(AGENTS_SKILLS_DIR) (shared)"
+	@echo "  Skills directory: $(CODEX_SKILLS_DIR)"
+	@if [ -L $(CODEX_SKILLS_DIR) ]; then \
+		echo "  Linked to: $$(readlink $(CODEX_SKILLS_DIR))"; \
+	elif [ -d $(CODEX_SKILLS_DIR) ]; then \
+		echo "  $(YELLOW)Warning: Codex skills directory is not a symlink$(NC)"; \
+	else \
+		echo "  $(RED)Not installed$(NC)"; \
+	fi
+	@echo ""
+	@echo "  CodexLoop launcher: $(CODEXLOOP_LAUNCHER)"
+	@if [ -x $(CODEXLOOP_LAUNCHER) ]; then \
+		echo "  $(GREEN)✓$(NC) Installed"; \
+	else \
+		echo "  $(RED)Not installed$(NC)"; \
+	fi
 
 ##@ Testing
 
@@ -458,7 +516,7 @@ endif
 validate: ## Validate installation
 	@echo "$(BLUE)Validating installation...$(NC)"
 	@errors=0; \
-	for agent in omics-scientist science-writer dataviz-artist; do \
+	for agent in omics-scientist science-writer dataviz-artist codexloop; do \
 		if ! [ -f $(CLAUDE_AGENTS_DIR)/$$agent.md ]; then \
 			echo "  $(RED)✗$(NC) Missing: $$agent.md in Claude Code"; \
 			errors=$$((errors + 1)); \

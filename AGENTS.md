@@ -6,11 +6,11 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A curated collection of **3 expert agents** and **24 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
+A curated collection of **4 expert agents** and **25 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
 
 **Structure:**
-- `agents/` - 3 agent personas that orchestrate skills
-- `skills/` - 24 specialized skills for omics workflows and agent tooling
+- `agents/` - 4 agent personas that orchestrate skills
+- `skills/` - 25 specialized skills for omics workflows and agent tooling
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 
@@ -209,10 +209,11 @@ Guidelines for how to communicate with users
 ### Naming Conventions
 
 - **Agent files**: kebab-case (e.g., `omics-scientist.md`, `science-writer.md`)
-- **Three agents**:
+- **Four agents**:
   - `omics-scientist.md` - Bioinformatics workflows (14 bio-* skills)
   - `science-writer.md` - Scientific writing (5 writing skills)
   - `dataviz-artist.md` - Visualization (5 viz skills)
+  - `codexloop.md` - Plan-driven implementation harness for CodexLoop runs
 
 ### Agent Design Principles
 
@@ -319,6 +320,7 @@ make install INSTALL_METHOD=copy
 - `omics-scientist.md` - Bioinformatics workflows
 - `science-writer.md` - Manuscript writing, literature review
 - `dataviz-artist.md` - Visualization, notebooks, dashboards
+- `codexloop.md` - Plan-driven implementation harness
 
 ### 2. Edit Agent File
 
@@ -365,9 +367,10 @@ scripts/install.sh  # Alternative to Makefile
 
 ### What Gets Installed
 
-- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (3 files)
-- **Skills** → `~/.agents/skills/` (24 directories)
+- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
+- **Skills** → `~/.agents/skills/` (25 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
+- **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **Symlinks** by default (auto-updates with `git pull`)
 
 ---
@@ -457,7 +460,7 @@ bio-reads-qc-mapping → bio-assembly-qc → bio-gene-calling → bio-annotation
 
 Some skills are used across all agents:
 
-- `bio-logic` - Scientific reasoning (used by all 3 agents)
+- `bio-logic` - Scientific reasoning (used by the science agents)
 
 ### Pattern 3: Terminal Skills
 
