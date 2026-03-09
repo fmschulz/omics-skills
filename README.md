@@ -212,7 +212,7 @@ make test  # Run validation tests
 
 ## CodexLoop Harness
 
-CodexLoop is not just a skill prompt. The runtime now lives inside [skills/codexloop](/home/fschulz/dev/omics-skills/skills/codexloop), alongside the `SKILL.md` instructions. The installed launcher `~/.codex/bin/codexloop` imports the runtime from the installed skill directory at `~/.codex/skills`, so it no longer depends on this repository checkout staying on `PYTHONPATH`.
+CodexLoop is not just a skill prompt. The runtime now lives inside [skills/codexloop](skills/codexloop), alongside the `SKILL.md` instructions. The installed launcher `~/.codex/bin/codexloop` imports the runtime from the installed skill directory at `~/.codex/skills`, so it no longer depends on this repository checkout staying on `PYTHONPATH`.
 
 **Global install-time pieces**
 - `~/.codex/bin/codexloop` - reusable launcher
