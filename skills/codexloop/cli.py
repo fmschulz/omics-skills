@@ -507,7 +507,12 @@ def infer_priority(title: str) -> int:
 
 def heuristic_tasks_from_plan(repo_root: Path, config: dict[str, Any], plan_text: str) -> list[dict[str, Any]]:
     sections = parse_markdown_sections(plan_text)
-    candidates = [section for section in sections if section["level"] == 3]
+    priority_candidates = [
+        section
+        for section in sections
+        if section["level"] == 3 and re.match(r"^P\d+\s*:", section["title"], re.IGNORECASE)
+    ]
+    candidates = priority_candidates or [section for section in sections if section["level"] == 3]
     if not candidates:
         excluded = {
             "objective",
