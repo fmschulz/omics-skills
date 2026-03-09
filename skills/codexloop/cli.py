@@ -199,6 +199,7 @@ def default_config(repo_root: Path) -> dict[str, Any]:
         "doctor_command": f"./{DOCTOR_PATH.as_posix()}",
         "bootstrap_commands": [],
         "planner_model": None,
+        "planner_timeout_seconds": 60,
         "worker_model": None,
         "max_attempts_per_task": 5,
         "codex_bin": os.environ.get("CODEXLOOP_CODEX_BIN", "codex"),
@@ -712,6 +713,7 @@ def stream_codex(
         with event_log_path.open("w", encoding="utf-8") as event_log:
             for line in proc.stdout:
                 event_log.write(line)
+                event_log.flush()
                 try:
                     payload = json.loads(line)
                 except json.JSONDecodeError:
@@ -720,9 +722,14 @@ def stream_codex(
                     discovered_session_id = str(payload["thread_id"])
 
     reader = threading.Thread(target=pump_stdout, daemon=True)
-    proc.stdin.write(prompt)
-    proc.stdin.close()
     reader.start()
+    try:
+        proc.stdin.write(prompt)
+        if not prompt.endswith("\n"):
+            proc.stdin.write("\n")
+        proc.stdin.flush()
+    finally:
+        proc.stdin.close()
     try:
         return_code = proc.wait(timeout=timeout_seconds)
     except subprocess.TimeoutExpired:
@@ -1366,7 +1373,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         model=args.model or config.get("planner_model"),
         output_schema=SCHEMA_PATH,
         ephemeral=True,
-        timeout_seconds=int(config.get("planner_timeout_seconds") or 180),
+        timeout_seconds=int(config.get("planner_timeout_seconds") or 60),
     )
     if return_code == 0 and last_message.exists():
         payload = parse_json_file(last_message)
@@ -1376,6 +1383,11 @@ def cmd_plan(args: argparse.Namespace) -> int:
     backlog_path = save_tasks(repo_root, tasks, plan_path)
     if return_code == 0 and last_message.exists():
         print(f"Wrote {len(tasks)} tasks to {backlog_path}")
+    elif return_code == 124:
+        print(
+            f"Wrote {len(tasks)} tasks to {backlog_path} using planner fallback "
+            f"after timeout ({int(config.get('planner_timeout_seconds') or 60)}s)"
+        )
     else:
         print(f"Wrote {len(tasks)} tasks to {backlog_path} using planner fallback")
     return 0

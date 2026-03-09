@@ -47,6 +47,7 @@ def write_fake_codex(bin_dir: Path) -> Path:
             session_id = None
             mode = "task"
             empty_output = os.environ.get("CODEXLOOP_FAKE_EMPTY_OUTPUT") == "1"
+            noisy_stdout = os.environ.get("CODEXLOOP_FAKE_NOISY_STDOUT") == "1"
 
             i = 0
             while i < len(args):
@@ -72,6 +73,11 @@ def write_fake_codex(bin_dir: Path) -> Path:
                     i += 2
                     continue
                 i += 1
+
+            if noisy_stdout:
+                for _ in range(1024):
+                    sys.stdout.write("noise-before-stdin\\n")
+                sys.stdout.flush()
 
             prompt = sys.stdin.read()
             cwd = Path.cwd()
@@ -270,6 +276,24 @@ class CodexLoopCLITest(unittest.TestCase):
             check=True,
         )
         self.assertIn("planner fallback", result.stdout)
+        backlog = json.loads((self.repo / ".codexloop" / "tasks" / "backlog.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(backlog["tasks"]), 1)
+
+    def test_plan_handles_stdout_before_stdin_is_fully_consumed(self) -> None:
+        self.run_cli("init", str(self.repo))
+        self.configure_repo(max_attempts_per_task=1)
+
+        env = self.env.copy()
+        env["CODEXLOOP_FAKE_NOISY_STDOUT"] = "1"
+        result = subprocess.run(
+            ["python3", "-m", "codexloop", "plan", "--repo", str(self.repo)],
+            cwd=str(REPO_ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        self.assertIn("Wrote 1 tasks", result.stdout)
         backlog = json.loads((self.repo / ".codexloop" / "tasks" / "backlog.json").read_text(encoding="utf-8"))
         self.assertEqual(len(backlog["tasks"]), 1)
 
