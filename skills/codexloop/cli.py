@@ -8,6 +8,7 @@ import shlex
 import subprocess
 import sys
 import textwrap
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,14 @@ COMPLETED_PLANS_DIR = PLANS_DIR / "completed"
 PLAN_INPUT_PATH = PLANS_DIR / "implementation-plan.md"
 AGENT_PROMPT_PATH = PLANS_DIR / "CODEXLOOP_AGENT.md"
 MEMORY_PATH = Path("MEMORY.md")
+PLANNER_EXCLUDED_NAMES = {
+    ".git",
+    ".venv",
+    ".cache",
+    ".pytest_cache",
+    "__pycache__",
+    "node_modules",
+}
 
 
 class CodexLoopError(RuntimeError):
@@ -301,7 +310,12 @@ def init_repo(repo_root: Path, *, force: bool = False) -> None:
     )
 
 
-def build_planner_prompt(repo_root: Path, config: dict[str, Any], plan_text: str) -> str:
+def build_planner_prompt(
+    repo_root: Path,
+    config: dict[str, Any],
+    plan_text: str,
+    repo_context: str,
+) -> str:
     return textwrap.dedent(
         f"""\
         You are the planning phase of codexloop.
@@ -319,11 +333,20 @@ def build_planner_prompt(repo_root: Path, config: dict[str, Any], plan_text: str
         - Prefer narrow, surgical tasks over broad refactors.
         - Assume the execution harness will keep an active plan in `docs/plans/active/` and a reusable `MEMORY.md`.
         - Return JSON only matching the provided schema.
+        - Use the curated repository context below as authoritative.
+        - Do not run shell commands or inspect additional files unless the provided context is clearly insufficient.
+        - Avoid broad repo scans. Do not recursively inspect `.git`, `.venv`, `.cache`, `.pytest_cache`, `.codexloop/runs`, or `.codexloop/worktrees`.
+        - Do not read large generated JSON artifacts unless they are explicitly included in the curated context.
 
         Implementation plan:
         <implementation-plan>
         {plan_text}
         </implementation-plan>
+
+        Curated repository context:
+        <repo-context>
+        {repo_context}
+        </repo-context>
         """
     )
 
@@ -412,6 +435,139 @@ def save_tasks(repo_root: Path, tasks: list[dict[str, Any]], source_plan: Path) 
     return backlog_path
 
 
+def parse_markdown_sections(plan_text: str) -> list[dict[str, Any]]:
+    sections: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in plan_text.splitlines():
+        match = re.match(r"^(#{2,3})\s+(.*\S)\s*$", line)
+        if match:
+            if current is not None:
+                current["body"] = "\n".join(current["lines"]).strip()
+                sections.append(current)
+            current = {
+                "level": len(match.group(1)),
+                "title": match.group(2).strip(),
+                "lines": [],
+            }
+            continue
+        if current is not None:
+            current["lines"].append(line)
+    if current is not None:
+        current["body"] = "\n".join(current["lines"]).strip()
+        sections.append(current)
+    return sections
+
+
+def extract_first_paragraph(body: str) -> str:
+    paragraphs = [chunk.strip() for chunk in re.split(r"\n\s*\n", body) if chunk.strip()]
+    for paragraph in paragraphs:
+        if not paragraph.startswith("-"):
+            return paragraph.replace("\n", " ").strip()
+    return paragraphs[0].replace("\n", " ").strip() if paragraphs else ""
+
+
+def extract_backtick_paths(text: str) -> list[str]:
+    values = []
+    for match in re.findall(r"`([^`]+)`", text):
+        value = match.strip()
+        if not value or value.startswith("http"):
+            continue
+        if "/" in value or value.endswith(".json") or value.endswith(".md") or value.endswith(".py") or value.endswith(".sh"):
+            values.append(value)
+    return dedupe_strings(values)
+
+
+def extract_section_bullets(body: str, heading: str) -> list[str]:
+    capture = False
+    values: list[str] = []
+    wanted = heading.lower().rstrip(":")
+    for raw_line in body.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if capture and values:
+                break
+            continue
+        if re.match(r"^#{2,3}\s+", line):
+            break
+        if line.lower().rstrip(":") == wanted:
+            capture = True
+            continue
+        if capture and line.startswith("- "):
+            values.append(line[2:].strip())
+            continue
+        if capture and values:
+            break
+    return dedupe_strings(values)
+
+
+def infer_priority(title: str) -> int:
+    match = re.match(r"^P(\d+)\s*:", title, re.IGNORECASE)
+    return int(match.group(1)) if match else 0
+
+
+def heuristic_tasks_from_plan(repo_root: Path, config: dict[str, Any], plan_text: str) -> list[dict[str, Any]]:
+    sections = parse_markdown_sections(plan_text)
+    candidates = [section for section in sections if section["level"] == 3]
+    if not candidates:
+        excluded = {
+            "objective",
+            "constraints",
+            "non-goals",
+            "success criteria",
+            "verification",
+            "current assets",
+            "github-inspired working model",
+            "branch and reporting conventions",
+        }
+        candidates = [
+            section
+            for section in sections
+            if section["level"] == 2 and section["title"].strip().lower() not in excluded
+        ]
+    if not candidates:
+        raise CodexLoopError("Planner fallback could not derive any task sections from the implementation plan.")
+
+    tasks: list[dict[str, Any]] = []
+    for index, section in enumerate(candidates, start=1):
+        title = section["title"].strip()
+        body = section.get("body", "")
+        summary = extract_first_paragraph(body) or title
+        files_to_edit = extract_backtick_paths(body)
+        acceptance = extract_section_bullets(body, "Acceptance")
+        notes = [line[2:].strip() for line in body.splitlines() if line.strip().startswith("- ")]
+        verification = []
+        doctor = str(config.get("doctor_command") or "").strip()
+        if doctor:
+            verification.append(doctor)
+        if not acceptance and files_to_edit:
+            acceptance = [f"{path} is updated consistently with the section goals." for path in files_to_edit[:3]]
+        task = {
+            "id": f"{index:03d}",
+            "slug": slugify(title),
+            "title": title,
+            "summary": summary,
+            "dependencies": [],
+            "files_to_edit": dedupe_strings(files_to_edit),
+            "acceptance_criteria": dedupe_strings(acceptance or notes[:3]),
+            "verification": dedupe_strings(verification),
+            "implementation_notes": dedupe_strings(notes[:5]),
+            "_priority": infer_priority(title),
+        }
+        tasks.append(task)
+
+    for task in tasks:
+        priority = int(task.pop("_priority", 0))
+        if priority <= 0:
+            continue
+        task["dependencies"] = [
+            other["id"]
+            for other in tasks
+            if other["id"] != task["id"] and int(infer_priority(other["title"])) < priority
+        ]
+
+    return tasks
+
+
 def load_backlog(repo_root: Path, backlog_path: Path | None = None) -> tuple[Path, list[dict[str, Any]]]:
     path = backlog_path or repo_root / TASKS_DIR / "backlog.json"
     payload = parse_json_file(path)
@@ -435,6 +591,70 @@ def read_context_path(repo_root: Path, relative_path: str | Path, *, limit: int 
     return truncate_text(path.read_text(encoding="utf-8"), limit)
 
 
+def list_relative_entries(path: Path, *, repo_root: Path, limit: int = 40) -> list[str]:
+    if not path.exists():
+        return []
+    entries: list[str] = []
+    for child in sorted(path.iterdir(), key=lambda item: item.name):
+        if child.name in PLANNER_EXCLUDED_NAMES:
+            continue
+        suffix = "/" if child.is_dir() else ""
+        entries.append(f"{safe_relpath(child, repo_root)}{suffix}")
+        if len(entries) >= limit:
+            break
+    return entries
+
+
+def format_bullets(title: str, values: list[str]) -> str:
+    if not values:
+        return f"### {title}\n- none\n"
+    return "### " + title + "\n" + "\n".join(f"- {value}" for value in values) + "\n"
+
+
+def collect_planner_context(repo_root: Path, config: dict[str, Any], plan_path: Path) -> str:
+    top_level = list_relative_entries(repo_root, repo_root=repo_root, limit=60)
+    docs_plans = list_relative_entries(repo_root / PLANS_DIR, repo_root=repo_root, limit=40)
+    processed_data = list_relative_entries(repo_root / "data" / "processed", repo_root=repo_root, limit=40)
+    configs = list_relative_entries(repo_root / "configs", repo_root=repo_root, limit=40)
+    scripts = list_relative_entries(repo_root / "scripts", repo_root=repo_root, limit=60)
+    tasks = list_relative_entries(repo_root / "tasks", repo_root=repo_root, limit=40)
+
+    snippets: list[str] = []
+    for relative_path in [
+        CONFIG_PATH,
+        DOCTOR_PATH,
+        Path("scripts/doctor.sh"),
+        Path("docs/index.md"),
+        Path("docs/results/README.md"),
+        Path("configs/autoresearch_campaigns.json"),
+    ]:
+        content = read_context_path(repo_root, relative_path, limit=4000)
+        if not content:
+            continue
+        snippets.append(
+            f"### File: {safe_relpath(repo_root / relative_path, repo_root)}\n"
+            f"```text\n{content}\n```"
+        )
+
+    git_status = git_status_porcelain(repo_root).strip() or "clean"
+
+    sections = [
+        format_bullets("Top-Level Entries", top_level),
+        format_bullets("Plan Files", docs_plans),
+        format_bullets("Config Files", configs),
+        format_bullets("Scripts", scripts),
+        format_bullets("Tasks", tasks),
+        format_bullets("Processed Data", processed_data),
+        "### Git Status\n"
+        f"- {truncate_text(git_status, 1000)}\n",
+        "### Plan Input Path\n"
+        f"- {safe_relpath(plan_path, repo_root)}\n",
+    ]
+    if snippets:
+        sections.append("## Curated File Snippets\n\n" + "\n\n".join(snippets) + "\n")
+    return "\n".join(sections).strip()
+
+
 def stream_codex(
     *,
     config: dict[str, Any],
@@ -446,6 +666,7 @@ def stream_codex(
     session_id: str | None = None,
     output_schema: Path | None = None,
     ephemeral: bool = False,
+    timeout_seconds: int | None = None,
 ) -> tuple[int, str | None]:
     last_message_path.parent.mkdir(parents=True, exist_ok=True)
     event_log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -480,19 +701,30 @@ def stream_codex(
         raise CodexLoopError("Failed to start codex subprocess.")
 
     discovered_session_id = session_id
-    with event_log_path.open("w", encoding="utf-8") as event_log:
-        proc.stdin.write(prompt)
-        proc.stdin.close()
-        for line in proc.stdout:
-            event_log.write(line)
-            try:
-                payload = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if payload.get("type") == "thread.started" and payload.get("thread_id"):
-                discovered_session_id = str(payload["thread_id"])
 
-    return_code = proc.wait()
+    def pump_stdout() -> None:
+        nonlocal discovered_session_id
+        with event_log_path.open("w", encoding="utf-8") as event_log:
+            for line in proc.stdout:
+                event_log.write(line)
+                try:
+                    payload = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if payload.get("type") == "thread.started" and payload.get("thread_id"):
+                    discovered_session_id = str(payload["thread_id"])
+
+    reader = threading.Thread(target=pump_stdout, daemon=True)
+    proc.stdin.write(prompt)
+    proc.stdin.close()
+    reader.start()
+    try:
+        return_code = proc.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        reader.join(timeout=1)
+        return 124, discovered_session_id
+    reader.join(timeout=1)
     return return_code, discovered_session_id
 
 
@@ -1112,7 +1344,8 @@ def cmd_plan(args: argparse.Namespace) -> int:
     else:
         plan_path = repo_root / PLAN_INPUT_PATH
     plan_text = plan_path.read_text(encoding="utf-8")
-    prompt = build_planner_prompt(repo_root, config, plan_text)
+    repo_context = collect_planner_context(repo_root, config, plan_path)
+    prompt = build_planner_prompt(repo_root, config, plan_text, repo_context)
 
     tmp_dir = repo_root / RUNS_DIR / "_planner"
     tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -1128,14 +1361,18 @@ def cmd_plan(args: argparse.Namespace) -> int:
         model=args.model or config.get("planner_model"),
         output_schema=SCHEMA_PATH,
         ephemeral=True,
+        timeout_seconds=int(config.get("planner_timeout_seconds") or 180),
     )
-    if return_code != 0:
-        raise CodexLoopError(f"Planner failed. See {event_log}")
-
-    payload = parse_json_file(last_message)
-    tasks = normalize_tasks(payload)
+    if return_code == 0 and last_message.exists():
+        payload = parse_json_file(last_message)
+        tasks = normalize_tasks(payload)
+    else:
+        tasks = heuristic_tasks_from_plan(repo_root, config, plan_text)
     backlog_path = save_tasks(repo_root, tasks, plan_path)
-    print(f"Wrote {len(tasks)} tasks to {backlog_path}")
+    if return_code == 0 and last_message.exists():
+        print(f"Wrote {len(tasks)} tasks to {backlog_path}")
+    else:
+        print(f"Wrote {len(tasks)} tasks to {backlog_path} using planner fallback")
     return 0
 
 

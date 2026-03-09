@@ -9,6 +9,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from codexloop.cli import collect_planner_context, default_config
+
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PYTHONPATH_ROOT = REPO_ROOT / "skills"
@@ -44,6 +46,7 @@ def write_fake_codex(bin_dir: Path) -> Path:
             model = None
             session_id = None
             mode = "task"
+            empty_output = os.environ.get("CODEXLOOP_FAKE_EMPTY_OUTPUT") == "1"
 
             i = 0
             while i < len(args):
@@ -77,6 +80,10 @@ def write_fake_codex(bin_dir: Path) -> Path:
                 raise SystemExit("missing --output-last-message")
 
             if output_schema is not None:
+                print(json.dumps({"type": "thread.started", "thread_id": "planner-thread"}))
+                if empty_output:
+                    print(json.dumps({"type": "turn.completed", "usage": {"input_tokens": 1, "cached_input_tokens": 0, "output_tokens": 1}}))
+                    sys.exit(0)
                 payload = {
                     "tasks": [
                         {
@@ -94,7 +101,6 @@ def write_fake_codex(bin_dir: Path) -> Path:
                 }
                 output_last_message.parent.mkdir(parents=True, exist_ok=True)
                 output_last_message.write_text(json.dumps(payload), encoding="utf-8")
-                print(json.dumps({"type": "thread.started", "thread_id": "planner-thread"}))
                 print(json.dumps({"type": "turn.completed", "usage": {"input_tokens": 1, "cached_input_tokens": 0, "output_tokens": 1}}))
                 sys.exit(0)
 
@@ -210,6 +216,62 @@ class CodexLoopCLITest(unittest.TestCase):
         self.assertIn("attempt 1/2 started", completed_text)
         self.assertIn("verification failed", completed_text)
         self.assertIn("merged into", completed_text)
+
+    def test_collect_planner_context_prefers_curated_inputs(self) -> None:
+        self.run_cli("init", str(self.repo))
+        (self.repo / "configs").mkdir(exist_ok=True)
+        (self.repo / "scripts").mkdir(exist_ok=True)
+        (self.repo / "docs" / "results").mkdir(parents=True, exist_ok=True)
+        (self.repo / "configs" / "autoplan.json").write_text('{"campaign":"demo"}\n', encoding="utf-8")
+        (self.repo / "scripts" / "doctor.sh").write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+        (self.repo / "docs" / "results" / "README.md").write_text("# Results\n", encoding="utf-8")
+
+        config = default_config(self.repo)
+        plan_path = self.repo / "docs" / "plans" / "implementation-plan.md"
+        context = collect_planner_context(self.repo, config, plan_path)
+
+        self.assertIn("Top-Level Entries", context)
+        self.assertIn("scripts/doctor.sh", context)
+        self.assertIn("Plan Input Path", context)
+        self.assertNotIn(".git/", context)
+
+    def test_plan_falls_back_when_planner_returns_no_output_file(self) -> None:
+        self.run_cli("init", str(self.repo))
+        self.configure_repo(max_attempts_per_task=1)
+        plan_path = self.repo / "docs" / "plans" / "implementation-plan.md"
+        plan_path.write_text(
+            textwrap.dedent(
+                """\
+                # Implementation Plan
+
+                ## Objective
+
+                Ship a small repo change.
+
+                ### P0: Prepare verification
+
+                Goal:
+                - Create a minimal verification path.
+
+                Acceptance:
+                - `scripts/doctor.sh` exists
+                """
+            ),
+            encoding="utf-8",
+        )
+        env = self.env.copy()
+        env["CODEXLOOP_FAKE_EMPTY_OUTPUT"] = "1"
+        result = subprocess.run(
+            ["python3", "-m", "codexloop", "plan", "--repo", str(self.repo)],
+            cwd=str(REPO_ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        self.assertIn("planner fallback", result.stdout)
+        backlog = json.loads((self.repo / ".codexloop" / "tasks" / "backlog.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(backlog["tasks"]), 1)
 
 
 if __name__ == "__main__":
