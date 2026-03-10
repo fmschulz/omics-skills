@@ -31,7 +31,7 @@ Python REST API client for Dremio.
 from rest_client import query, show_schemas, list_catalogs
 
 # List schemas
-schemas = show_schemas()
+schemas = show_schemas(limit=2000)
 
 # Execute SQL
 results = query("SELECT * FROM GOLD.PROJECT LIMIT 10")
@@ -46,6 +46,21 @@ results = query(
 **Requirements:**
 - DREMIO_PAT environment variable
 - LBNL network access (or SSH tunnel)
+
+**Important behavior:**
+- `rest_client` resolves `DREMIO_PAT` at call time. Set/export token before query calls.
+- `show_schemas()` should use a high limit (for example `2000`) to avoid truncation.
+
+### Arrow Flight Python Example (Optional)
+For a performant Arrow Flight workflow, see:
+
+- `../docs/arrow-flight-python.md`
+
+This includes:
+- venv setup
+- wheel install command
+- `config.yaml` + `example.py`
+- `SELECT 1` connectivity check
 
 ### `explore_gold_database.sh`
 Comprehensive GOLD database exploration script.

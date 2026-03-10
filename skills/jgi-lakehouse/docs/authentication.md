@@ -84,3 +84,26 @@ export DREMIO_HOST=localhost
 - Token file permissions are 600 (read/write owner only)
 - Rotate tokens periodically (every 90 days recommended)
 - Revoke tokens from Dremio UI if compromised
+
+## Operational Pitfalls (Important)
+
+### 1. Set `DREMIO_PAT` before importing `rest_client`
+
+If your script does:
+
+```python
+from rest_client import query
+os.environ["DREMIO_PAT"] = token
+```
+
+you may get auth failures depending on client version. Always set token first:
+
+```python
+os.environ["DREMIO_PAT"] = token
+from rest_client import query
+```
+
+### 2. Token lifetime depends on how token was created
+
+- **Dremio UI PAT**: configurable expiration (often longer)
+- **`get_dremio_token.sh` (`/apiv2/login`)**: short-lived token (~30 hours)

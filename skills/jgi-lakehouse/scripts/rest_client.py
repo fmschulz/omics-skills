@@ -13,19 +13,28 @@ from typing import Dict, List, Any, Optional
 DREMIO_HOST = os.getenv("DREMIO_HOST", "lakehouse-1.jgi.lbl.gov")
 DREMIO_PORT = os.getenv("DREMIO_PORT", "9047")
 DREMIO_BASE_URL = f"http://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
-DREMIO_TOKEN = os.getenv("DREMIO_PAT")
 
 # Default timeout for job polling (seconds)
 DEFAULT_JOB_TIMEOUT = 300
 
 
+def _get_token() -> str:
+    """
+    Resolve token at call time.
+
+    This avoids stale-token bugs when users set DREMIO_PAT after importing
+    this module.
+    """
+    token = os.getenv("DREMIO_PAT")
+    if not token:
+        raise ValueError("DREMIO_PAT environment variable not set")
+    return token
+
+
 def _get_headers() -> Dict[str, str]:
     """Get headers for API requests"""
-    if not DREMIO_TOKEN:
-        raise ValueError("DREMIO_PAT environment variable not set")
-
     return {
-        "Authorization": f"Bearer {DREMIO_TOKEN}",
+        "Authorization": f"Bearer {_get_token()}",
         "Content-Type": "application/json"
     }
 
@@ -235,9 +244,15 @@ def get_catalog_item(path: str) -> Dict[str, Any]:
     return response.json()
 
 
-def show_schemas() -> List[str]:
-    """Convenience method to show all schemas"""
-    results = query("SHOW SCHEMAS")
+def show_schemas(limit: int = 2000) -> List[str]:
+    """
+    Convenience method to show all schemas.
+
+    Args:
+        limit: Max rows fetched from SHOW SCHEMAS.
+               Use a value >100 to avoid truncation.
+    """
+    results = query("SHOW SCHEMAS", limit=limit)
     return [row.get("SCHEMA_NAME") for row in results if row.get("SCHEMA_NAME")]
 
 
@@ -248,13 +263,14 @@ if __name__ == "__main__":
     print("Dremio REST API Client Test")
     print("=" * 60)
 
-    if not DREMIO_TOKEN:
+    token = os.getenv("DREMIO_PAT")
+    if not token:
         print("ERROR: DREMIO_PAT environment variable not set")
         print("Run: export DREMIO_PAT=$(cat ~/.secrets/dremio_pat)")
         sys.exit(1)
 
     print(f"Endpoint: {DREMIO_BASE_URL}")
-    print(f"Token: {DREMIO_TOKEN[:20]}...")
+    print(f"Token: {token[:20]}...")
     print()
 
     try:

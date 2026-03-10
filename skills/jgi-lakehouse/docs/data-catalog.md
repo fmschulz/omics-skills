@@ -71,7 +71,11 @@ Complete map of available data sources in the JGI Dremio Lakehouse.
 |--------|------|-------------|
 | `numg-iceberg` | Iceberg/S3 | NUMG data (faa, gene2pfam) |
 | `Samples` | Iceberg/S3 | Sample metadata |
-| `IMG` | Space | Pre-computed views (gene_feature, pfam_hits) |
+| `IMG` | Space | Pre-computed views (status can vary by backing object health) |
+
+> Operational note: `IMG.gene_feature` has been observed to fail with
+> backing-object errors in some environments. Use
+> `"img-db-2 postgresql".img_core_v400.*` tables as the reliable fallback.
 
 ---
 
@@ -460,6 +464,19 @@ Modern columnar storage for large-scale genomics data.
 | `faa` | Protein sequences (FAA format) |
 | `gene2pfam` | Gene to Pfam mappings |
 
+### Table Schemas (practical subset)
+
+`faa`:
+- `oid` - metagenome/sample grouping identifier
+- `gene_oid` - gene/protein identifier
+- `faa` - amino acid sequence
+
+`gene2pfam`:
+- `oid`, `gene_oid`
+- `pfam`
+- `evalue`, `bit_score`, `align_length`
+- `query_start`, `query_end`, `subj_start`, `subj_end`
+
 ### Features
 - Supports time travel queries
 - Efficient columnar storage
@@ -474,6 +491,20 @@ SELECT * FROM "numg-iceberg"."numg-iceberg".gene2pfam LIMIT 100;
 -- Time travel (if snapshots exist)
 SELECT * FROM "numg-iceberg"."numg-iceberg".gene2pfam
 AT TIMESTAMP '2025-01-01 00:00:00'
+LIMIT 100;
+
+-- Join Pfam hits to amino acid sequences
+SELECT
+  p.oid,
+  p.gene_oid,
+  p.pfam,
+  p.evalue,
+  f.faa
+FROM "numg-iceberg"."numg-iceberg".gene2pfam p
+JOIN "numg-iceberg"."numg-iceberg".faa f
+  ON p.oid = f.oid
+ AND p.gene_oid = f.gene_oid
+WHERE p.pfam = 'pfam00001'
 LIMIT 100;
 ```
 

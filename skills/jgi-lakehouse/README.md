@@ -54,6 +54,17 @@ results = query(
 )
 ```
 
+### 4. Optional: Arrow Flight (Python)
+
+```bash
+python3 -m venv venv
+. venv/bin/activate
+pip install \
+  https://github.com/dremio-hub/arrow-flight-client-examples/releases/download/dremio-flight-python-v1.1.0/dremio_flight-1.1.0-py3-none-any.whl
+```
+
+See `docs/arrow-flight-python.md` for full setup, config, and test query.
+
 ## File Structure
 
 ```
@@ -71,9 +82,9 @@ results = query(
 │   └── explore_database.py        # Interactive database explorer
 │
 ├── docs/
+│   ├── setup_guide.md             # Setup instructions
 │   ├── authentication.md          # Token setup
-│   ├── data-catalog.md            # Table catalog
-│   ├── sql-quick-reference.md     # SQL syntax cheatsheet
+│   ├── arrow-flight-python.md     # Arrow Flight Python access
 │   └── explore_gold.md            # GOLD exploration guide
 │
 └── references/
@@ -106,10 +117,18 @@ results = query(
 4. Check reflections if performance issues arise
 5. Use Iceberg time travel for historical queries
 
+Additional practical rules:
+- For function IDs in `gene_ko_terms`, include `KO:` prefix (example: `KO:K00025`).
+- For isolate benchmark counts, include `obsolete_flag = 'No'`.
+- If `IMG.gene_feature` view expansion fails, query `img_core_v400` tables directly.
+- For NUMG domain+sequence joins, use both `oid` and `gene_oid` keys.
+
 ## Documentation
 
 - **Setup**: `docs/setup_guide.md`
 - **Authentication**: `docs/authentication.md`
+- **Arrow Flight (Python)**: `docs/arrow-flight-python.md`
+- **NUMG Workflow Example**: `examples/05-query-numg-metagenome-proteins.md`
 - **GOLD Database**: `docs/explore_gold.md`
 - **API Reference**: https://docs.dremio.com/current/reference/api/
 
@@ -118,7 +137,7 @@ results = query(
 ### List Schemas
 ```python
 from rest_client import show_schemas
-schemas = show_schemas()
+schemas = show_schemas(limit=2000)
 ```
 
 ### Query with Time Travel

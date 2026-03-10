@@ -37,7 +37,10 @@ q() {
 
 # Input validation
 if [ $# -eq 0 ]; then
-  # Interactive mode
+  # Interactive mode - will have the option to output the token to a file
+  HOMEPATH=$(readlink -f ~/)
+  OUTFILE=$HOMEPATH"/.secrets/dremio_pat"
+  read -p "Output file where the token will be stored (default: ~/.secrets/dremio_pat, leave empty if you don't want to change): " OUTFILE_CHANGE
   read -p "Username: " USERNAME
   read -sp "Password: " PASSWORD
   echo
@@ -57,6 +60,12 @@ if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
   echo "Error: Username and password cannot be empty" >&2
   exit 1
 fi
+
+if ! [ -z "$OUTFILE_CHANGE"]; then
+  echo "Changing the output file path to $OUTFILE_CHANGE"
+  OUTFILE=$OUTFILE_CHANGE
+fi
+
 
 # Make API request
 TEMP_FILE=$(mktemp)
@@ -93,3 +102,18 @@ fi
 
 # Output token
 echo "$TOKEN"
+
+# Write if in the out file if a path was provided
+if ! [ -z "$OUTFILE" ]; then
+  # fullpath=$(readlink -f "$OUTFILE")
+  # dir=$(dirname $fullpath)
+  dir=$(dirname $OUTFILE)
+  # echo $dir
+  if [ ! -d $dir ] 
+  then
+    echo "creating the dir $dir"
+    mkdir -p $dir
+  fi
+  echo "Exporting the token to $OUTFILE"
+  echo "$TOKEN" > "$OUTFILE"
+fi

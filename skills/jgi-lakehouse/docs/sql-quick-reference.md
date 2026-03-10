@@ -87,6 +87,43 @@ SELECT * FROM TABLE(table_snapshot('"numg-iceberg"."numg-iceberg".gene2pfam'));
 
 ---
 
+## NUMG Protein Patterns
+
+NUMG tables are for metagenome protein workflows.
+
+### Inspect NUMG tables
+```sql
+SHOW TABLES IN "numg-iceberg"."numg-iceberg";
+DESCRIBE "numg-iceberg"."numg-iceberg".faa;
+DESCRIBE "numg-iceberg"."numg-iceberg".gene2pfam;
+```
+
+### Filter Pfam hits
+```sql
+SELECT oid, gene_oid, pfam, evalue
+FROM "numg-iceberg"."numg-iceberg".gene2pfam
+WHERE pfam IN ('pfam00001', 'pfam00004')
+LIMIT 100;
+```
+
+### Join domains to sequences
+```sql
+SELECT p.oid, p.gene_oid, p.pfam, p.evalue, f.faa
+FROM "numg-iceberg"."numg-iceberg".gene2pfam p
+JOIN "numg-iceberg"."numg-iceberg".faa f
+  ON p.oid = f.oid
+ AND p.gene_oid = f.gene_oid
+WHERE p.pfam = 'pfam00001'
+LIMIT 100;
+```
+
+Notes:
+- Join on both `oid` and `gene_oid`.
+- Use exact normalized Pfam IDs (for example `pfam00001`), not case transforms.
+- For isolate genome proteins, use IMG filesystem packages instead of NUMG.
+
+---
+
 ## Data Types
 
 | Category | Types |
@@ -185,6 +222,38 @@ WHERE ecosystem_type = 'Aquatic' AND ecosystem_subtype = 'Marine'
 WHERE ecosystem = 'Host-associated' AND ecosystem_type = 'Human'
 ```
 
+### IMG Function/Domain ID Normalization
+
+When querying IMG function/domain tables, use table-native ID formats:
+
+```sql
+-- KO terms: includes KO: prefix
+WHERE ko_terms = 'KO:K00025'
+
+-- Pfam family accessions are lowercase-style
+WHERE pfam_family = 'pfam00001'
+
+-- TIGR and COG/KOG are direct
+WHERE ext_accession = 'TIGR01642'
+WHERE cog = 'COG1389'
+WHERE kog = 'KOG0001'
+```
+
+Avoid costly case transforms on large annotation tables (for example
+`LOWER(pfam_family)`), prefer exact normalized values.
+
+### Reproducible Isolate Filtering
+
+For benchmark-style isolate queries, include all of:
+
+```sql
+WHERE genome_type = 'isolate'
+  AND is_public = 'Yes'
+  AND obsolete_flag = 'No'
+```
+
+`obsolete_flag` can change final counts materially.
+
 ---
 
 ## Performance Rules
@@ -194,6 +263,7 @@ WHERE ecosystem = 'Host-associated' AND ecosystem_type = 'Human'
 3. **Filter early** - Push predicates to reduce scan
 4. **Use VDS** - Virtual datasets are pre-optimized
 5. **Paginate** - Use `LIMIT n OFFSET m` for large results
+6. **For very large OR queries**, run branch queries separately and union/dedupe client-side if a single monolithic SQL plan fails.
 
 ### Pagination Example
 ```sql
