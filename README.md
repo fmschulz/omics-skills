@@ -17,7 +17,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**4 Expert Agents** that orchestrate **25 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
+**4 Expert Agents** that orchestrate **26 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -143,7 +143,7 @@ make status
 
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
-- **Skills** → `~/.agents/skills/` (25 directories)
+- **Skills** → `~/.agents/skills/` (26 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **CodexLoop launcher** → `~/.codex/bin/codexloop`
@@ -379,7 +379,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 25 specialized skills
+└── skills/                          # 26 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/

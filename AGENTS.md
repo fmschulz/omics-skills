@@ -6,11 +6,11 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A curated collection of **4 expert agents** and **25 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
+A curated collection of **4 expert agents** and **26 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
 
 **Structure:**
 - `agents/` - 4 agent personas that orchestrate skills
-- `skills/` - 25 specialized skills for omics workflows and agent tooling
+- `skills/` - 26 specialized skills for omics workflows and agent tooling
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 
@@ -368,7 +368,7 @@ scripts/install.sh  # Alternative to Makefile
 ### What Gets Installed
 
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
-- **Skills** → `~/.agents/skills/` (25 directories)
+- **Skills** → `~/.agents/skills/` (26 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **Symlinks** by default (auto-updates with `git pull`)
