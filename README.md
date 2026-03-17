@@ -9,7 +9,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-4-blue)](#the-four-agents)
-[![Skills](https://img.shields.io/badge/Skills-25-blue)](#agent--skills-mapping)
+[![Skills](https://img.shields.io/badge/Skills-27-blue)](#agent--skills-mapping)
 
 **Quick Links:** [Installation](#installation) • [Agents](#the-four-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
@@ -17,7 +17,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**4 Expert Agents** that orchestrate **26 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
+**4 Expert Agents** that orchestrate **27 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -29,7 +29,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ## The Four Agents
 
-### 🧬 Omics Scientist
+### Omics Scientist
 **Expert computational biologist** for genomics, metagenomics, and phylogenomics workflows.
 
 **Use when you need to:**
@@ -62,7 +62,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ---
 
-### ✍️ Science Writer
+### Science Writer
 **Expert scientific writer** for publication-quality manuscripts and literature reviews.
 
 **Use when you need to:**
@@ -72,17 +72,19 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Validate citations and format references
 - Document computational workflows for Methods sections
 - Review manuscripts for rigor and clarity
+- Run structured multi-agent manuscript reviews and meta-reviews
 
-**Core Skills (4):**
+**Core Skills (6):**
 - `bio-logic` — Evaluate methodology, assess evidence, critique claims
 - `polars-dovmed` — Search 2.4M+ PubMed Central papers
 - `science-writing` — Publication-quality manuscripts with DOI validation
+- `manuscript-review-council` — Multi-agent manuscript review with editor synthesis
 - `bio-workflow-methods-docwriter` — Reproducible Methods from workflow artifacts
 - `agent-browser` — Web scraping for databases and supplementary materials
 
 ---
 
-### 📊 DataViz Artist
+### DataViz Artist
 **Expert data visualization specialist** for publication-quality figures and interactive dashboards.
 
 **Use when you need to:**
@@ -92,7 +94,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 - Design beautiful, accessible visualizations
 - Ensure reproducibility with documented workflows
 
-**Core Skills (5):**
+**Core Skills (4):**
 - `notebook-ai-agents-skill` — Marimo-first analysis notebooks with KISS structure
 - `beautiful-data-viz` — Publication-quality matplotlib/seaborn plots
 - `plotly-dashboard-skill` — Production-ready Plotly Dash dashboards
@@ -100,7 +102,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ---
 
-### 🔁 CodexLoop
+### CodexLoop
 **Plan-driven implementation harness agent** for long-running coding work that needs durable progress tracking, resumable execution, and failure memory.
 
 **Use when you need to:**
@@ -143,7 +145,7 @@ make status
 
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
-- **Skills** → `~/.agents/skills/` (26 directories)
+- **Skills** → `~/.agents/skills/` (27 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **CodexLoop launcher** → `~/.codex/bin/codexloop`
@@ -156,7 +158,7 @@ make install INSTALL_METHOD=copy       # Copy files instead of symlinks
 make install NO_COLOR=1                # Disable colors
 ```
 
-> 📖 **[Complete Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, manual installation, and advanced options. Shell scripts available in `scripts/` for Makefile-free installation.
+> **[Complete Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, manual installation, and advanced options. Shell scripts available in `scripts/` for Makefile-free installation.
 
 ---
 
@@ -288,13 +290,14 @@ codexloop run --repo .
 ┌────────────────────────┐
 │   Science Writer       │
 ├────────────────────────┤
-│ 5 writing skills       │
+│ 6 writing skills       │
 │ Focus: Communication   │
 └────────────────────────┘
          │
          ├──> bio-logic (evidence evaluation)
          ├──> polars-dovmed (literature search)
          ├──> science-writing (manuscripts)
+         ├──> manuscript-review-council
          ├──> bio-workflow-methods-docwriter
          └──> agent-browser (web research)
 
@@ -379,7 +382,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 26 specialized skills
+└── skills/                          # 27 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
@@ -398,6 +401,7 @@ omics-skills/
     ├── polars-dovmed/              # PubMed Central search
     ├── proposal-review/            # Decision-ready proposal review
     ├── science-writing/            # Manuscript generation
+    ├── manuscript-review-council/  # Multi-agent manuscript review
     ├── agent-browser/              # Web automation
     ├── get-api-docs/               # Current API docs via chub
     ├── notebook-ai-agents-skill/
@@ -441,10 +445,10 @@ All workflows enforce validation checkpoints:
 
 | Platform | Status | Notes |
 |----------|--------|-------|
-| **Claude Code** | ✅ Full support | Primary platform, use `--agent` flag |
-| **Codex CLI** | ✅ Full support | Use `--system-prompt` or config integration |
-| **Claude API** | ✅ Compatible | Load agents as system prompts |
-| **Standalone** | ✅ Reference docs | Skills contain full documentation |
+| **Claude Code** | Full support | Primary platform, use `--agent` flag |
+| **Codex CLI** | Full support | Use `--system-prompt` or config integration |
+| **Claude API** | Compatible | Load agents as system prompts |
+| **Standalone** | Reference docs | Skills contain full documentation |
 
 ---
 
@@ -493,7 +497,7 @@ Each agent includes:
 
 ## Contributing
 
-> 🤖 **[AGENTS.md](AGENTS.md)** - Guidance for AI coding agents working with this repository
+> **[AGENTS.md](AGENTS.md)** - Guidance for AI coding agents working with this repository
 
 To add skills or modify agents:
 1. Read **[AGENTS.md](AGENTS.md)** for detailed guidance
@@ -552,10 +556,10 @@ make install > install.log  # Colors disabled automatically
 
 Installation shows progress counters:
 ```
-Progress: 0/24 skills
-  [1/24] ✓ agent-browser
-  [2/24] ✓ beautiful-data-viz
+Progress: 0/27 skills
+  [1/27] agent-browser
+  [2/27] beautiful-data-viz
   ...
-  [24/24] ✓ tracking-taxonomy-updates
-Completed: 24/24 skills installed
+  [27/27] tracking-taxonomy-updates
+Completed: 27/27 skills installed
 ```
