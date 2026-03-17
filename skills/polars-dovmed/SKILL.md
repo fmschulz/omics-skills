@@ -12,8 +12,8 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 
 1. Load the API key from a secure location.
 2. Pick the endpoint based on query shape:
-   - Use `/api/search_literature` for one concept or a flat synonym query.
-   - Use `/api/scan_literature_advanced` for multi-concept biology searches such as host + symbiont, organism + pathway, or organism + recent-year questions.
+   - Use `/api/search_literature` for one concept, a quoted phrase, or a flat synonym query.
+   - Use `/api/scan_literature_advanced` when you need precise multi-concept logic such as host + symbiont, organism + pathway, or explicit concept grouping.
    - Use `/api/get_paper_details` once you have candidate PMC IDs.
 3. Start with exact taxa or core terms, then broaden with explicit `OR` synonyms.
 4. Inspect the first 5-10 returned titles before trusting the result set.
@@ -41,18 +41,24 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
   - `true`: abstract-only search (`abstract_text`, `abstract`)
 - Do not assume endpoint-level year or journal filters exist unless you have verified the current API syntax.
   - If the user asks for a specific year, treat it as a post-filtering and citation-verification step.
+- On the simple endpoint, `total_found` may be approximate unless the service is configured to compute exact counts.
+  - Treat returned titles as the authoritative signal unless `total_found_is_exact` is `true`.
 
 ## Search Semantics
 
-- Plain multi-word queries are `AND` queries.
+- Plain multi-word queries are literal `AND` queries.
   - `"mirusvirus host"` means papers must match both `mirusvirus` and `host`.
   - This is often too strict for natural-language searches.
+- Quoted phrases are preserved on the simple endpoint.
+  - `"\"giant virus\" OR mimivirus"` preserves the phrase `giant virus` and broadens with `mimivirus`.
+- Single-word literal terms use whole-word matching on the simple endpoint.
+  - This reduces substring noise such as matching `virus` inside unrelated longer tokens.
 - `OR` must be written explicitly to broaden synonyms or alternate taxonomy names.
   - `"Mirusviricota OR mirusvirus"`
   - `"bacteriophage OR phage"`
-  - `"host range OR host specificity"`
-- Mixed queries are grouped by `OR`.
-  - `"CRISPR OR Cas9 archaea"` means `(CRISPR AND archaea) OR (Cas9 AND archaea)`.
+  - `"\"giant virus\" OR giant viruses OR Nucleocytoviricota"`
+- Do not rely on ambiguous flat mixed boolean intent.
+  - If grouping matters, switch to `/api/scan_literature_advanced` instead of assuming how `"A OR B C"` will be parsed.
 - Stop words such as `the`, `a`, `an`, `in`, `of`, `for`, `and`, `to`, `from` are removed.
 - Single high-frequency terms can be noisy.
   - A query like `"CRISPR"` may return low-precision results.
@@ -66,18 +72,19 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 1. Start with the narrowest exact concept that should exist in the literature.
    - Example: `"Holospora OR Caedibacter"`
 2. Broaden with explicit synonym queries when taxonomy or naming drift is likely.
-   - Example: `"Mirusviricota OR mirusvirus OR giant virus"`
-3. If the request combines multiple biological concepts, switch early to `/api/scan_literature_advanced`.
+   - Example: `"Mirusviricota OR mirusvirus OR \"giant virus\""`
+3. If the request combines multiple biological concepts or needs explicit boolean grouping, switch early to `/api/scan_literature_advanced`.
    - Use grouped queries for cases like host + symbiont, organism + pathway, or organism + time window.
 4. Use `/api/get_paper_details` on candidate PMC IDs to inspect abstract/full text and collect citation metadata.
 5. If metadata fields such as `year`, `publication_date`, or `doi` are blank, verify the citation in PubMed or PMC before final output.
 6. If a recent paper is missing from the API but exists in PubMed or PMC, report the gap rather than assuming the literature is absent.
+7. If the simple endpoint reports `total_found_is_exact: false`, do not over-interpret `total_found`.
 
 ## Synonym Query Examples
 
 - `"Mirusviricota OR mirusvirus"`
 - `"bacteriophage OR phage"`
-- `"Nucleocytoviricota OR giant virus"`
+- `"Nucleocytoviricota OR \"giant virus\" OR giant viruses"`
 - `"host range OR host specificity"`
 - `"protist OR microeukaryote"`
 
@@ -85,6 +92,7 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 
 - Recent papers may be partially indexed or missing entirely from this API even when they are already in PubMed or PMC.
 - `get_paper_details` can return blank `year`, `publication_date`, `doi`, or `authors` fields for valid papers.
+- The simple endpoint can return approximate `total_found` counts when exact counting is disabled for performance.
 - When the user asks for "2025 papers", "latest papers", or complete citations:
   - treat API results as discovery, not final authority
   - verify dates and DOI in PubMed or PMC if metadata is incomplete
@@ -96,6 +104,7 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 - Matched text snippets
 - Extracted entities (genes, accessions, terms)
 - Mode metadata (`search_mode`, `searched_columns`)
+- Count metadata (`total_found_is_exact`, when present)
 - Warnings about missing metadata or likely indexing gaps when relevant
 
 ## Quality Gates
@@ -103,13 +112,14 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 - [ ] API key loaded successfully
 - [ ] Chosen endpoint matches the query shape
 - [ ] First 5-10 returned titles match expected scope
+- [ ] If `total_found_is_exact` is false or missing, answer does not overstate the count
 - [ ] Extracted citation fields checked for missing `year`, `publication_date`, `doi`, or `authors`
 - [ ] Recent-year requests verified in PubMed or PMC if API metadata is incomplete
 - [ ] Final answer calls out indexing gaps or low-confidence matches when present
 
 ## Examples
 
-### Example 1: Flat synonym search (Python)
+### Example 1: Flat synonym or phrase search (Python)
 
 ```python
 import httpx
@@ -119,7 +129,7 @@ resp = httpx.post(
     "https://api.newlineages.com/api/search_literature",
     headers=headers,
     json={
-        "query": "Mirusviricota OR mirusvirus OR giant virus",
+        "query": "\"giant virus\" OR giant viruses OR Nucleocytoviricota",
         "max_results": 10,
         "extract_matches": False,
         "fast_mode": False,
@@ -199,6 +209,7 @@ Use this endpoint when:
 - For multi-concept biology searches, prefer the advanced endpoint instead of repeatedly retrying brittle flat queries.
 - If the API is healthy but results look wrong:
   - check whether you accidentally overconstrained the query with implicit `AND`
+  - check whether a quoted phrase or whole-word literal would be better than a loose flat query
   - retry with `OR` across synonyms or taxonomy variants
   - switch to grouped `primary_queries` instead of adding more words to a flat query
   - inspect candidate titles before trusting the set
@@ -219,11 +230,17 @@ Use this endpoint when:
 **Issue**: Multi-word query returns `0` but related papers should exist
 **Solution**: Remember plain space-separated terms are `AND`. Retry with explicit `OR` synonyms, then switch to `/api/scan_literature_advanced` for grouped concepts.
 
+**Issue**: `total_found` equals `returned` on the simple endpoint
+**Solution**: Treat the returned set as authoritative and check `total_found_is_exact`. If exact counting matters, do not overstate the total unless the response marks it exact.
+
 **Issue**: Need host/pathway/accession extraction across several concept groups
 **Solution**: Use `/api/scan_literature_advanced` instead of forcing everything into one `query` string.
 
 **Issue**: Results look topically wrong even though the API returned hits
-**Solution**: Check the first 5-10 titles, reduce single-term queries, and tighten the concept groups before extracting details.
+**Solution**: Check the first 5-10 titles, prefer exact taxa or quoted phrases, reduce single-term queries, and tighten the concept groups before extracting details.
+
+**Issue**: Flat query grouping is ambiguous
+**Solution**: Do not rely on implicit boolean parsing for complex intent. Move the query to `/api/scan_literature_advanced` and spell out the concept groups.
 
 **Issue**: A recent paper appears in PubMed or PMC but not in this API
 **Solution**: Treat this as an indexing gap, cite the external source, and mention that the API missed a relevant paper.
