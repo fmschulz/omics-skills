@@ -39,6 +39,10 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 - Optional `fast_mode`:
   - `false` (default): full-text search (`title`, `abstract_text`, `abstract`, `full_text`)
   - `true`: abstract-only search (`abstract_text`, `abstract`)
+- Optional `match_mode` on `/api/search_literature`:
+  - `literal` (default): case-insensitive literal matching with whole-word behavior for single terms and simple plural expansion
+  - `substring`: case-insensitive partial matching
+  - `regex`: raw regex matching on the simple endpoint; use sparingly
 - Do not assume endpoint-level year or journal filters exist unless you have verified the current API syntax.
   - If the user asks for a specific year, treat it as a post-filtering and citation-verification step.
 - On the simple endpoint, `total_found` may be approximate unless the service is configured to compute exact counts.
@@ -49,10 +53,18 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 - Plain multi-word queries are literal `AND` queries.
   - `"mirusvirus host"` means papers must match both `mirusvirus` and `host`.
   - This is often too strict for natural-language searches.
+- The simple endpoint defaults to `match_mode="literal"`.
+  - This is usually the safest choice for scientific names and exact terms.
 - Quoted phrases are preserved on the simple endpoint.
   - `"\"giant virus\" OR mimivirus"` preserves the phrase `giant virus` and broadens with `mimivirus`.
 - Single-word literal terms use whole-word matching on the simple endpoint.
   - This reduces substring noise such as matching `virus` inside unrelated longer tokens.
+- Literal mode also applies simple plural expansion for single-word terms.
+  - A query term like `virus` can match both `virus` and `viruses`.
+- Use `match_mode="substring"` only when partial matching is intentional.
+  - Example: catching surface forms that differ in ways not covered by the simple plural expansion.
+- Use `match_mode="regex"` only when you really need regex behavior on the simple endpoint.
+  - Otherwise prefer `literal` or move to `/api/scan_literature_advanced`.
 - `OR` must be written explicitly to broaden synonyms or alternate taxonomy names.
   - `"Mirusviricota OR mirusvirus"`
   - `"bacteriophage OR phage"`
@@ -73,12 +85,14 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
    - Example: `"Holospora OR Caedibacter"`
 2. Broaden with explicit synonym queries when taxonomy or naming drift is likely.
    - Example: `"Mirusviricota OR mirusvirus OR \"giant virus\""`
-3. If the request combines multiple biological concepts or needs explicit boolean grouping, switch early to `/api/scan_literature_advanced`.
+3. If recall still looks too low, consider whether `match_mode="substring"` is justified before switching endpoints.
+   - Do this only when partial matching is intentional and you have checked the first titles for noise.
+4. If the request combines multiple biological concepts or needs explicit boolean grouping, switch early to `/api/scan_literature_advanced`.
    - Use grouped queries for cases like host + symbiont, organism + pathway, or organism + time window.
-4. Use `/api/get_paper_details` on candidate PMC IDs to inspect abstract/full text and collect citation metadata.
-5. If metadata fields such as `year`, `publication_date`, or `doi` are blank, verify the citation in PubMed or PMC before final output.
-6. If a recent paper is missing from the API but exists in PubMed or PMC, report the gap rather than assuming the literature is absent.
-7. If the simple endpoint reports `total_found_is_exact: false`, do not over-interpret `total_found`.
+5. Use `/api/get_paper_details` on candidate PMC IDs to inspect abstract/full text and collect citation metadata.
+6. If metadata fields such as `year`, `publication_date`, or `doi` are blank, verify the citation in PubMed or PMC before final output.
+7. If a recent paper is missing from the API but exists in PubMed or PMC, report the gap rather than assuming the literature is absent.
+8. If the simple endpoint reports `total_found_is_exact: false`, do not over-interpret `total_found`.
 
 ## Synonym Query Examples
 
@@ -133,6 +147,7 @@ resp = httpx.post(
         "max_results": 10,
         "extract_matches": False,
         "fast_mode": False,
+        "match_mode": "literal",
     },
 )
 print(resp.json())
@@ -226,6 +241,12 @@ Use this endpoint when:
 
 **Issue**: Fast mode returns too few results
 **Solution**: Retry with `fast_mode=false` to include full text.
+
+**Issue**: Literal mode is too strict and misses expected variants
+**Solution**: First add explicit synonyms or quoted phrases. If partial matching is really intended, retry with `match_mode="substring"` and inspect the first titles for new noise.
+
+**Issue**: Substring mode is noisy
+**Solution**: Go back to `match_mode="literal"` or move the query to `/api/scan_literature_advanced` with explicit grouped concepts.
 
 **Issue**: Multi-word query returns `0` but related papers should exist
 **Solution**: Remember plain space-separated terms are `AND`. Retry with explicit `OR` synonyms, then switch to `/api/scan_literature_advanced` for grouped concepts.
