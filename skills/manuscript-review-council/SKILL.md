@@ -5,7 +5,13 @@ description: Run a multi-agent scientific manuscript review with parallel specia
 
 # Manuscript Review Council
 
-Run a journal-style review council instead of a single blended opinion. This skill distills the reusable workflow patterns in `~/dev/nelli-review` into an instruction-first skill that works in both Codex and Claude Code.
+Run a journal-style review council instead of a single blended opinion. This skill is self-contained and works in both Codex and Claude Code.
+
+The council definition lives in local files:
+- role roster: `references/reviewer-roles.md`
+- workflow and artifact bundle: `references/council-workflow.md`
+- per-reviewer handoff template: `templates/reviewer-brief.md`
+- editor synthesis template: `templates/editor-meta-review.md`
 
 ## Instructions
 
@@ -15,20 +21,25 @@ Run a journal-style review council instead of a single blended opinion. This ski
    - title, abstract, main claims, methods snapshot, and figure or table list
    - user priorities such as novelty, rigor, statistics, reproducibility, or journal fit
    - prior reviews or author response if this is a revision
-3. Normalize the manuscript into a shared packet for every reviewer. At minimum, preserve section boundaries, figure references, and the claims being evaluated. If the source is a PDF or DOCX, extract a sectioned text view before review.
-4. Use the platform's native delegation primitive when available:
+3. Normalize the manuscript into a shared packet for every reviewer. At minimum, preserve section boundaries, figure references, and the claims being evaluated. If the source is a PDF or DOCX, extract a sectioned text view before review. Use `references/council-workflow.md` for the packet contents.
+4. Load the local council definition before delegating:
+   - reviewer roles and activation rules: `references/reviewer-roles.md`
+   - stage flow and artifact bundle: `references/council-workflow.md`
+   - reviewer prompt skeleton: `templates/reviewer-brief.md`
+   - editor synthesis skeleton: `templates/editor-meta-review.md`
+5. Use the platform's native delegation primitive when available:
    - Codex: spawn specialist sub-agents or workers
    - Claude Code: spawn Task agents or equivalent delegated runs
    - If delegation is unavailable, emulate the same reviewer roles sequentially and keep outputs role-separated
-5. Launch these three default reviewers in parallel:
+6. Launch these three default reviewers in parallel:
    - Domain reviewer: novelty, significance, positioning against prior work, and overclaiming
    - Methods and statistics reviewer: design, controls, benchmarks, sample size, figure interpretation, and analysis validity
    - Skeptical reviewer: weakest links, alternate explanations, unsupported causal claims, and missing controls
-6. Add support reviewers only when triggered by the manuscript:
+7. Add support reviewers only when triggered by the manuscript:
    - Reproducibility reviewer for computational papers, code or data availability, workflow clarity, and parameter transparency
    - Ethics or compliance reviewer for human subjects, animal work, privacy, conflicts, dual-use, or citation bias concerns
    - Translational reviewer when the manuscript makes clinical, ecological, or deployment claims that need reality checks
-7. Give every reviewer the same structured contract:
+8. Give every reviewer the same structured contract:
    - one-paragraph summary
    - top strengths
    - major concerns
@@ -37,30 +48,30 @@ Run a journal-style review council instead of a single blended opinion. This ski
    - confidence level
    - provisional recommendation: `accept`, `minor_revision`, `major_revision`, or `reject`
    - direct grounding in manuscript sections, figures, tables, or explicit missing information
-8. Require reviewers to ground criticisms in the manuscript text or in clearly missing information. Do not invent citations, datasets, reviewer expectations, or unstated experiments.
-9. Run a cross-review pass after the first round:
+9. Require reviewers to ground criticisms in the manuscript text or in clearly missing information. Do not invent citations, datasets, reviewer expectations, or unstated experiments.
+10. Run a cross-review pass after the first round:
    - compare disagreements
    - merge duplicate concerns
    - identify the few issues that actually drive the decision
    - separate fatal flaws from fixable revision items
-10. Capture a lightweight artifact bundle even if the user only asked for prose:
+11. Capture a lightweight artifact bundle even if the user only asked for prose:
     - shared review packet
     - reviewer reports
     - disagreement or conflict notes
     - editor meta-review
-11. Write an editor meta-review that includes:
+12. Write an editor meta-review that includes:
    - headline recommendation
    - rationale across novelty, rigor, evidence strength, clarity, reproducibility, and significance
    - ranked major revisions
    - ranked minor revisions
    - questions for the authors
    - a short decision letter or reviewer summary
-12. If outside validation is needed, do targeted spot-checks instead of broad literature review:
+13. If outside validation is needed, do targeted spot-checks instead of broad literature review:
     - use `/polars-dovmed` for claim-specific literature context
     - use `/bio-logic` for evidence-strength and causal-claim stress tests
     - never fabricate supporting papers
-13. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/science-writing` after the council establishes the factual review skeleton.
-14. Preserve provenance in the final deliverable:
+14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/science-writing` after the council establishes the factual review skeleton.
+15. Preserve provenance in the final deliverable:
     - keep per-reviewer notes separate from the editor synthesis
     - point to sections, figures, or tables when possible
     - clearly mark inference versus explicit manuscript statement
@@ -75,6 +86,8 @@ Run a journal-style review council instead of a single blended opinion. This ski
 | Revision assessment | Compare prior critiques to the new draft and label each issue resolved, partial, or unresolved |
 | Fast triage | Use domain reviewer plus skeptic, then write a short editor recommendation |
 | Rebuttal check | Judge whether the author response closes the decision-driving issues |
+| Reviewer definitions | Read `references/reviewer-roles.md` |
+| Stage flow and artifacts | Read `references/council-workflow.md` |
 
 ## Input Requirements
 
