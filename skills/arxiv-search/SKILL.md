@@ -21,12 +21,16 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 4. For exact phrase matching in plain-text mode, add `--phrase`.
 5. For recent-paper discovery, prefer `--sort submittedDate --order descending`, and optionally add `--days N`.
 6. Use `--category <cat>` when the scope should stay narrow, for example `cs.LG`, `cs.AI`, `stat.ML`, or `q-bio.QM`.
-7. Treat arXiv API output as discovery metadata. If exact version, withdrawn status, or human-readable abstract-page details matter, verify the final candidates on arxiv.org before presenting a final answer.
-8. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead.
-9. If the user needs massive bulk harvesting rather than interactive search, the arXiv docs recommend OAI-PMH rather than large search result slices.
-10. Use `scripts/summarize` when the user wants stable local notes for specific arXiv IDs. This writes Markdown files containing paper metadata, abstract, links, and a blank `## Notes` section for follow-up annotation.
-11. Do not rely on server-side `submittedDate:[...]` queries for user-facing workflows. As observed on March 18, 2026 UTC, official arXiv API requests using `submittedDate` returned `HTTP 500` even for the example pattern shown in the arXiv API manual. The bundled CLI therefore applies `--days` as a local filter on returned `published` timestamps instead of sending `submittedDate` to the API.
-12. Respect arXiv API pacing. The official API manual asks clients making repeated requests to incorporate a 3-second delay, and the service can return `HTTP 429 Rate exceeded` when queried too aggressively.
+7. For author-specific requests, do not rely on a single name form.
+   - By default, run the supplied full-name form and an abbreviated-first-name form separately, for example `au:"Peter Nugent"` and `au:"P. Nugent"`.
+   - Present these result sets separately in the final answer instead of silently merging them.
+   - Call out that abbreviated-first-name matches can be ambiguous and may include a different person with the same initial and surname.
+8. Treat arXiv API output as discovery metadata. If exact version, withdrawn status, or human-readable abstract-page details matter, verify the final candidates on arxiv.org before presenting a final answer.
+9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead.
+10. If the user needs massive bulk harvesting rather than interactive search, the arXiv docs recommend OAI-PMH rather than large search result slices.
+11. Use `scripts/summarize` when the user wants stable local notes for specific arXiv IDs. This writes Markdown files containing paper metadata, abstract, links, and a blank `## Notes` section for follow-up annotation.
+12. Do not rely on server-side `submittedDate:[...]` queries for user-facing workflows. As observed on March 18, 2026 UTC, official arXiv API requests using `submittedDate` returned `HTTP 500` even for the example pattern shown in the arXiv API manual. The bundled CLI therefore applies `--days` as a local filter on returned `published` timestamps instead of sending `submittedDate` to the API.
+13. Respect arXiv API pacing. The official API manual asks clients making repeated requests to incorporate a 3-second delay, and the service can return `HTTP 429 Rate exceeded` when queried too aggressively.
 
 ## Quick Reference
 
@@ -37,6 +41,7 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 | Base API | `https://export.arxiv.org/api/query` |
 | Default mode | Plain-text terms compiled to `all:` query terms |
 | Raw query | Pass arXiv syntax directly, e.g. `cat:cs.LG AND ti:diffusion` |
+| Author search | Run full-name and abbreviated-first-name `au:` queries separately, e.g. `au:"Peter Nugent"` and `au:"P. Nugent"` |
 | Exact phrase | Add `--phrase` |
 | Recent submissions | `--sort submittedDate --order descending` |
 | Relative date filter | `--days 30` with local post-filtering |
@@ -69,6 +74,7 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 - When writing raw queries, use official arXiv field prefixes and operators:
   - `ti`, `au`, `abs`, `co`, `jr`, `cat`, `rn`, `all`
   - `AND`, `OR`, `ANDNOT`
+- For author-specific searches, prefer separate raw `au:` queries for the full name and abbreviated-first-name form rather than a single merged query.
 - Avoid `submittedDate:[YYYYMMDDTTTT+TO+YYYYMMDDTTTT]` in routine use until arXiv-side failures are resolved.
 
 ## Output
@@ -103,6 +109,8 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 - [ ] Recent-paper requests use `submittedDate` sorting and/or a date filter
 - [ ] `--days` is understood as a local filter, not a server-side `submittedDate` query
 - [ ] Category-sensitive requests use `--category` or raw `cat:` filters
+- [ ] Author-specific requests check full-name and abbreviated-first-name variants separately
+- [ ] The final answer keeps abbreviated-name matches separate and labels them as potentially ambiguous
 - [ ] Final answer distinguishes arXiv preprints from peer-reviewed literature
 - [ ] Exact metadata claims were verified on arxiv.org when version/date details matter
 - [ ] Repeated calls are paced to avoid `HTTP 429 Rate exceeded`
@@ -139,13 +147,25 @@ skills/arxiv-search/scripts/search "single cell foundation model" 10 \
   --order descending
 ```
 
-### Example 4: Fetch records by arXiv ID
+### Example 4: Author-specific search with separate name variants
+
+```bash
+skills/arxiv-search/scripts/search 'au:"Peter Nugent"' 20 \
+  --sort submittedDate \
+  --order descending
+
+skills/arxiv-search/scripts/search 'au:"P. Nugent"' 20 \
+  --sort submittedDate \
+  --order descending
+```
+
+### Example 5: Fetch records by arXiv ID
 
 ```bash
 skills/arxiv-search/scripts/search --ids 2501.01234,2406.00001
 ```
 
-### Example 5: Build local Markdown summaries from arXiv IDs
+### Example 6: Build local Markdown summaries from arXiv IDs
 
 ```bash
 skills/arxiv-search/scripts/summarize 2501.01234 2406.00001 \
@@ -164,7 +184,10 @@ skills/arxiv-search/scripts/summarize 2501.01234 2406.00001 \
 **Solution**: Use `--sort submittedDate --order descending`, and add `--days N` when you want a recent window. The CLI applies the `--days` cutoff locally to avoid current arXiv API failures on `submittedDate` queries.
 
 **Issue**: Need exact author or title matching  
-**Solution**: Use a raw query with field prefixes such as `au:` and `ti:` rather than plain-text mode.
+**Solution**: Use a raw query with field prefixes such as `au:` and `ti:` rather than plain-text mode. For author searches, run full-name and abbreviated-first-name variants separately and report them separately.
+
+**Issue**: Author search looks fragmented across name variants  
+**Solution**: This is common on arXiv. Check both the full-name form and the abbreviated-first-name form, for example `au:"Peter Nugent"` and `au:"P. Nugent"`, then keep those result sets separate in the final answer because the abbreviated form may be ambiguous.
 
 **Issue**: Need more than an interactive page of results  
 **Solution**: Use `--start` for paging. For very large harvesting jobs, switch to OAI-PMH or bulk metadata workflows instead of pulling huge API slices.

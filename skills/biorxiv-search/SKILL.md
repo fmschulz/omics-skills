@@ -24,8 +24,9 @@ Search bioRxiv through its official API for recent-preprint discovery, date-rang
 6. Use `--category <name>` when the topic should stay narrow.
    - The API accepts the bioRxiv category as a query parameter such as `cell_biology`, `genomics`, or `neuroscience`.
 7. Use `--author` for author-specific requests.
-   - Repeat `--author` for multiple variants when needed, for example `--author "Peter Nugent" --author "P. Nugent"`.
-   - The CLI also expands obvious first-initial variants from the supplied author string.
+   - By default, consider both the supplied full-name form and an abbreviated-first-name form, for example `--author "Peter Nugent"` and `--author "P. Nugent"`.
+   - Do not silently merge these in the final answer. Report full-name matches and abbreviated-first-name matches in separate groups because initials can be ambiguous.
+   - The CLI also expands obvious first-initial variants from the supplied author string, so prefer separate passes or a local partition of returned records by the literal `authors` text when you need clean buckets.
 8. The API paginates 100 records at a time.
    - Increase `--scan-limit` when the query is broad and the first pages do not contain enough matches.
 9. By default, the CLI collapses multiple versions of the same preprint and keeps the latest version for each DOI.
@@ -46,6 +47,7 @@ Search bioRxiv through its official API for recent-preprint discovery, date-rang
 | DOI lookup | `--doi 10.1101/...` |
 | Category filter | `--category cell_biology` |
 | Author filter | `--author "Name"` |
+| Author variant workflow | Check full-name and abbreviated-first-name variants separately; report them separately |
 | Abstract-only filtering | `--fields abstract` |
 | Deduping | latest version per DOI by default |
 | Keep all versions | `--all-versions` |
@@ -91,6 +93,8 @@ Search bioRxiv through its official API for recent-preprint discovery, date-rang
   - `"\"single cell\" atlas"` keeps `single cell` as one phrase and also requires `atlas`.
 - `--fields abstract` restricts keyword filtering to abstracts only.
   - This is the flag to use when the user explicitly cares about abstract matches.
+- Author filters can fragment across name variants.
+  - For person-specific searches, check the full-name form and abbreviated-first-name form separately and keep those buckets separate in the final answer.
 
 ## Output
 
@@ -117,6 +121,7 @@ Search bioRxiv through its official API for recent-preprint discovery, date-rang
 - [ ] The chosen `--scan-limit` is large enough for the query breadth
 - [ ] The selected search fields match the user request, especially when abstract matching matters
 - [ ] Author-specific requests use one or more reasonable name variants
+- [ ] The final answer keeps abbreviated-name matches separate and labels them as potentially ambiguous
 - [ ] The answer does not overstate recall for a broad historical search
 - [ ] Final candidate metadata is verified on bioRxiv when exact citation/version details matter
 
@@ -144,7 +149,7 @@ skills/biorxiv-search/scripts/search "CRISPR screen" 10 \
   --fields abstract
 ```
 
-### Example 4: Author-specific search with name variants
+### Example 4: Author-specific search with separate variant reporting
 
 ```bash
 skills/biorxiv-search/scripts/search "supernova" 20 \
@@ -171,7 +176,7 @@ skills/biorxiv-search/scripts/search --doi 10.1101/682021
 **Solution**: Use `--fields abstract`.
 
 **Issue**: Author search looks incomplete  
-**Solution**: Repeat `--author` with explicit variants such as `"Peter Nugent"` and `"P. Nugent"`. If a middle initial is known, add that too, for example `"Peter E. Nugent"` and `"P. E. Nugent"`.
+**Solution**: Repeat `--author` with explicit variants such as `"Peter Nugent"` and `"P. Nugent"`. If a middle initial is known, add that too, for example `"Peter E. Nugent"` and `"P. E. Nugent"`. Keep these result sets separate in the final answer because abbreviated forms can be ambiguous.
 
 **Issue**: The API returns multiple versions of the same preprint  
 **Solution**: Keep the default deduped output, or pass `--all-versions` if version-level output matters.
