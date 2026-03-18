@@ -112,7 +112,7 @@ The omics-scientist agent has access to the full skill set in this repository:
 | `jgi-lakehouse` | JGI metadata access | Query parameters | Project/taxon metadata |
 | `tracking-taxonomy-updates` | Taxonomy reconciliation | Scope + sources | Versioned updates |
 | `polars-dovmed` | Literature search | Search queries | PMC papers, DOIs, metadata |
-| `science-writing` | Manuscript writing | Outline, citations | Publication-ready text |
+| `scientific-writing` | Manuscript writing | Artifact bundle, citations | Drafts, review notes, revised text |
 | `agent-browser` | Web automation | URLs, targets | Screenshots, scraped data |
 | `notebook-ai-agents-skill` | Notebooks | Data + goals | Marimo-first notebooks |
 | `beautiful-data-viz` | Figures | Data | Publication-ready charts |
@@ -222,7 +222,7 @@ The omics-scientist agent can seamlessly integrate with:
 - `/jgi-lakehouse` - Fetch reference data from JGI
 - `/bio-workflow-methods-docwriter` - Document workflow runs
 - `/tracking-taxonomy-updates` - Reconcile taxonomy updates
-- `/science-writing` - Generate manuscripts from results
+- `/scientific-writing` - Generate manuscripts from results
 - `/polars-dovmed` - Literature discovery
 - `/agent-browser` - Web data retrieval
 - `/beautiful-data-viz` - Publication figures

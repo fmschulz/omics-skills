@@ -74,7 +74,7 @@ Added **4 detailed examples** showing bio-logic usage:
 
 ### 8. Related Skills
 Marked skills that **complement bio-logic**:
-- `/science-writing` - "use with /bio-logic for biological interpretation"
+- `/scientific-writing` - "use with /bio-logic for biological interpretation"
 - `/polars-dovmed` - "use with /bio-logic to synthesize findings"
 - `/bio-stats-ml-reporting` - "use with /bio-logic for interpretation"
 - `/bio-workflow-methods-docwriter` - "use with /bio-logic for methods documentation"

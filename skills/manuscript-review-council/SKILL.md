@@ -70,7 +70,7 @@ The council definition lives in local files:
     - use `/polars-dovmed` for claim-specific literature context
     - use `/bio-logic` for evidence-strength and causal-claim stress tests
     - never fabricate supporting papers
-14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/science-writing` after the council establishes the factual review skeleton.
+14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.
 15. Preserve provenance in the final deliverable:
     - keep per-reviewer notes separate from the editor synthesis
     - point to sections, figures, or tables when possible

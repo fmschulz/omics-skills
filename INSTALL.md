@@ -204,7 +204,7 @@ After installation, you'll have:
 15. jgi-lakehouse
 16. tracking-taxonomy-updates
 17. polars-dovmed
-18. science-writing
+18. scientific-writing
 19. agent-browser
 20. notebook-ai-agents-skill
 21. beautiful-data-viz
@@ -265,7 +265,7 @@ ls -la ~/.claude/agents/dataviz-artist.md
 
 # Check skills
 ls -la ~/.agents/skills/bio-logic/
-ls -la ~/.agents/skills/science-writing/
+ls -la ~/.agents/skills/scientific-writing/
 
 # Check if symlinks (should show -> pointing to source)
 file ~/.claude/agents/omics-scientist.md

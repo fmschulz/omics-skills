@@ -94,6 +94,19 @@ Search across 2.4M+ PMC Open Access papers for literature discovery and extracti
 7. If a recent paper is missing from the API but exists in PubMed or PMC, report the gap rather than assuming the literature is absent.
 8. If the simple endpoint reports `total_found_is_exact: false`, do not over-interpret `total_found`.
 
+## Author Name Queries
+
+- Author-name searches are recall-sensitive because the same author may appear as a full name, an initialed name, or an initialed name with a middle initial.
+- For named-author requests, try explicit `OR` variants instead of trusting one spelling.
+  - Example: `"Peter Nugent" OR "P. Nugent"`
+  - If recall still looks low: `"Peter E. Nugent" OR "P. E. Nugent"`
+- If the middle initial is unknown, start with:
+  - full first name + surname
+  - first initial + surname
+  - Then inspect returned author strings or external citation metadata for a middle initial and rerun with that variant.
+- Treat full-text author-name matching as discovery, not definitive authorship proof.
+- If the user explicitly asks for arXiv author output, use arXiv author metadata directly instead of this PMC-focused API.
+
 ## Synonym Query Examples
 
 - `"Mirusviricota OR mirusvirus"`
@@ -258,7 +271,10 @@ Use this endpoint when:
 **Solution**: Use `/api/scan_literature_advanced` instead of forcing everything into one `query` string.
 
 **Issue**: Results look topically wrong even though the API returned hits
-**Solution**: Check the first 5-10 titles, prefer exact taxa or quoted phrases, reduce single-term queries, and tighten the concept groups before extracting details.
+**Solution**: Inspect the first returned titles and tighten the query with quoted phrases, grouped concepts, or explicit synonym control.
+
+**Issue**: Author search looks incomplete
+**Solution**: Retry with explicit name variants such as `"Peter Nugent" OR "P. Nugent"` and, if needed, `"Peter E. Nugent" OR "P. E. Nugent"`. If the request is specifically for arXiv, switch to arXiv author metadata instead of relying on PMC full text.
 
 **Issue**: Flat query grouping is ambiguous
 **Solution**: Do not rely on implicit boolean parsing for complex intent. Move the query to `/api/scan_literature_advanced` and spell out the concept groups.

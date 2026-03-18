@@ -36,7 +36,7 @@ The [Agent Skills open standard](https://agentskills.io/specification) (released
 
 **What to Submit:**
 - Individual skills (one PR per skill, or related skills together)
-- Start with high-impact skills: `bio-logic`, `science-writing`, `beautiful-data-viz`
+- Start with high-impact skills: `bio-logic`, `scientific-writing`, `beautiful-data-viz`
 - Consider submitting agent-agnostic skills first
 
 #### OpenAI Codex Skills Repository
@@ -227,7 +227,7 @@ Marketplaces look for:
    - Fork [github.com/anthropics/skills](https://github.com/anthropics/skills)
    - Choose 3-5 best skills to submit initially:
      - `bio-logic` (universal reasoning skill)
-     - `science-writing` (manuscript generation)
+     - `scientific-writing` (manuscript generation)
      - `beautiful-data-viz` (publication figures)
      - `notebook-ai-agents-skill` (Marimo-first notebooks)
      - `bio-reads-qc-mapping` (sequencing data QC)

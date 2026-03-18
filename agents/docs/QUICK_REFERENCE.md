@@ -284,7 +284,7 @@ Small = <1Gbp total data, Large = >10Gbp or >100 genomes
 | Get JGI reference data | `/jgi-lakehouse` | Then bio-* skills |
 | Document workflow | `/bio-workflow-methods-docwriter` | After pipeline runs |
 | Track taxonomy updates | `/tracking-taxonomy-updates` | Before assignment decisions |
-| Write manuscript | `/science-writing` | After `/bio-stats-ml-reporting` |
+| Write manuscript | `/scientific-writing` | After `/bio-stats-ml-reporting` |
 | Literature discovery | `/polars-dovmed` | Before starting |
 | Custom plots | `/beautiful-data-viz` | After `/bio-stats-ml-reporting` |
 | Dashboards | `/plotly-dashboard-skill` | After analysis |
