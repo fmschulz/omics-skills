@@ -22,6 +22,7 @@ ERRORS=0
 WARNINGS=0
 SKILLS_TOTAL=$(find "$REPO_ROOT/skills" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
+AGENTS_CATALOG_DIR="$HOME/.agents/omics-skills"
 
 echo -e "${BLUE}╔═══════════════════════════════════╗${NC}"
 echo -e "${BLUE}║   Omics Skills Installation Test  ║${NC}"
@@ -29,7 +30,7 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 # Test 1: Check repository structure
-echo -e "${BLUE}[1/7] Checking repository structure...${NC}"
+echo -e "${BLUE}[1/9] Checking repository structure...${NC}"
 if [ ! -d "$REPO_ROOT/agents" ]; then
     echo -e "  ${RED}✗${NC} agents/ directory missing"
     ERRORS=$((ERRORS + 1))
@@ -45,7 +46,7 @@ else
 fi
 
 # Test 2: Check agent files
-echo -e "\n${BLUE}[2/7] Checking agent files...${NC}"
+echo -e "\n${BLUE}[2/9] Checking agent files...${NC}"
 for agent in omics-scientist science-writer dataviz-artist codexloop; do
     if [ ! -f "$REPO_ROOT/agents/$agent.md" ]; then
         echo -e "  ${RED}✗${NC} $agent.md missing"
@@ -56,8 +57,8 @@ for agent in omics-scientist science-writer dataviz-artist codexloop; do
 done
 
 # Test 3: Check critical skills
-echo -e "\n${BLUE}[3/7] Checking critical skills...${NC}"
-for skill in bio-logic bio-foundation-housekeeping science-writing beautiful-data-viz codexloop; do
+echo -e "\n${BLUE}[3/9] Checking critical skills...${NC}"
+for skill in bio-logic bio-foundation-housekeeping scientific-writing beautiful-data-viz codexloop; do
     if [ ! -d "$REPO_ROOT/skills/$skill" ]; then
         echo -e "  ${RED}✗${NC} $skill/ missing"
         ERRORS=$((ERRORS + 1))
@@ -72,7 +73,7 @@ for skill in bio-logic bio-foundation-housekeeping science-writing beautiful-dat
 done
 
 # Test 4: Validate skill definitions
-echo -e "\n${BLUE}[4/7] Validating skill definitions...${NC}"
+echo -e "\n${BLUE}[4/9] Validating skill definitions...${NC}"
 if ! "$REPO_ROOT/scripts/validate-skills.py" >/dev/null 2>&1; then
     echo -e "  ${RED}✗${NC} Skill validation failed"
     ERRORS=$((ERRORS + 1))
@@ -81,7 +82,7 @@ else
 fi
 
 # Test 5: Check installation scripts
-echo -e "\n${BLUE}[5/7] Checking installation scripts...${NC}"
+echo -e "\n${BLUE}[5/9] Checking installation scripts...${NC}"
 if [ ! -f "$REPO_ROOT/scripts/install.sh" ]; then
     echo -e "  ${RED}✗${NC} scripts/install.sh missing"
     ERRORS=$((ERRORS + 1))
@@ -99,8 +100,52 @@ else
     echo -e "  ${GREEN}✓${NC} Makefile exists"
 fi
 
-# Test 6: Check Claude Code installation (if exists)
-echo -e "\n${BLUE}[6/7] Checking Claude Code installation...${NC}"
+# Test 6: Build skill catalog
+echo -e "\n${BLUE}[6/9] Building skill catalog...${NC}"
+if [ ! -f "$REPO_ROOT/scripts/skill_index.py" ]; then
+    echo -e "  ${RED}✗${NC} scripts/skill_index.py missing"
+    ERRORS=$((ERRORS + 1))
+else
+    tmpdir=$(mktemp -d)
+    if ! python3 "$REPO_ROOT/scripts/skill_index.py" build --repo "$REPO_ROOT" --out "$tmpdir" >/dev/null 2>&1; then
+        echo -e "  ${RED}✗${NC} Catalog build failed"
+        ERRORS=$((ERRORS + 1))
+    else
+        missing_files=0
+        for file in catalog.json relationships.json routing.json; do
+            if [ ! -f "$tmpdir/$file" ]; then
+                echo -e "  ${RED}✗${NC} Missing $file"
+                ERRORS=$((ERRORS + 1))
+                missing_files=$((missing_files + 1))
+            fi
+        done
+        if [ "$missing_files" -eq 0 ]; then
+            echo -e "  ${GREEN}✓${NC} Catalog build succeeded"
+        fi
+    fi
+    rm -rf "$tmpdir"
+fi
+
+# Test 7: Check shared installation (if exists)
+echo -e "\n${BLUE}[7/9] Checking shared installation...${NC}"
+if [ -d "$AGENTS_CATALOG_DIR" ]; then
+    missing_files=0
+    for file in skill_index.py README.md catalog.json relationships.json routing.json; do
+        if [ ! -f "$AGENTS_CATALOG_DIR/$file" ] && [ ! -L "$AGENTS_CATALOG_DIR/$file" ]; then
+            echo -e "  ${YELLOW}⚠${NC} Missing shared catalog file: $file"
+            WARNINGS=$((WARNINGS + 1))
+            missing_files=$((missing_files + 1))
+        fi
+    done
+    if [ "$missing_files" -eq 0 ]; then
+        echo -e "  ${GREEN}✓${NC} Shared catalog installed"
+    fi
+else
+    echo -e "  ${YELLOW}○${NC} Shared catalog directory not found"
+fi
+
+# Test 8: Check Claude Code installation (if exists)
+echo -e "\n${BLUE}[8/9] Checking Claude Code installation...${NC}"
 if [ -d "$HOME/.claude" ]; then
     echo -e "  ${GREEN}✓${NC} Claude Code directory exists"
 
@@ -158,8 +203,8 @@ else
     echo -e "  ${YELLOW}○${NC} Claude Code not installed or not configured"
 fi
 
-# Test 7: Check Codex installation (if exists)
-echo -e "\n${BLUE}[7/7] Checking Codex CLI installation...${NC}"
+# Test 9: Check Codex installation (if exists)
+echo -e "\n${BLUE}[9/9] Checking Codex CLI installation...${NC}"
 if [ -d "$HOME/.codex" ]; then
     echo -e "  ${GREEN}✓${NC} Codex CLI directory exists"
 

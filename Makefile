@@ -3,13 +3,14 @@
 
 .PHONY: help install install-claude install-codex install-agents install-skills \
         install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
-        install-codex-tools uninstall uninstall-claude uninstall-codex uninstall-skills \
-        status check-deps clean test
+        install-codex-tools build-catalog install-catalog uninstall uninstall-claude \
+        uninstall-codex uninstall-skills uninstall-catalog status check-deps clean test
 
 # Directories
 AGENTS_DIR := $(CURDIR)/agents
 SKILLS_DIR := $(CURDIR)/skills
 SCRIPTS_DIR := $(CURDIR)/scripts
+CATALOG_DIR := $(CURDIR)/catalog
 
 # Specific agent files (flattened in agents/ directory)
 AGENT_FILES := omics-scientist.md science-writer.md dataviz-artist.md codexloop.md
@@ -22,6 +23,7 @@ CLAUDE_SKILLS_DIR := $(CLAUDE_HOME)/skills
 
 AGENTS_HOME := $(HOME)/.agents
 AGENTS_SKILLS_DIR := $(AGENTS_HOME)/skills
+AGENTS_CATALOG_DIR := $(AGENTS_HOME)/omics-skills
 
 CODEX_HOME := $(HOME)/.codex
 CODEX_AGENTS_DIR := $(CODEX_HOME)/agents
@@ -90,13 +92,56 @@ install: check-deps install-claude install-codex ## Install for both Claude Code
 	@echo ""
 	@$(MAKE) --no-print-directory status
 
-install-claude: install-skills install-claude-agents link-claude-skills ## Install for Claude Code only
+install-claude: build-catalog install-skills install-catalog install-claude-agents link-claude-skills ## Install for Claude Code only
 	@echo "$(GREEN)✓ Claude Code installation complete$(NC)"
 
-install-codex: install-skills install-codex-agents link-codex-skills install-codex-tools ## Install for Codex CLI only
+install-codex: build-catalog install-skills install-catalog install-codex-agents link-codex-skills install-codex-tools ## Install for Codex CLI only
 	@echo "$(GREEN)✓ Codex CLI installation complete$(NC)"
 	@echo "  Skills linked at $(CODEX_SKILLS_DIR)"
 	@echo "  CodexLoop launcher: $(CODEXLOOP_LAUNCHER)"
+
+build-catalog: ## Build the shared skill catalog files
+	@echo "$(BLUE)Building skill catalog...$(NC)"
+	@mkdir -p $(CATALOG_DIR)
+	@python3 $(SCRIPTS_DIR)/skill_index.py build --repo $(CURDIR) --out $(CATALOG_DIR) >/dev/null
+	@echo "  $(GREEN)✓$(NC) $(CATALOG_DIR)/catalog.json"
+	@echo "  $(GREEN)✓$(NC) $(CATALOG_DIR)/relationships.json"
+	@echo "  $(GREEN)✓$(NC) $(CATALOG_DIR)/routing.json"
+
+install-catalog: ## Install the shared skill catalog to ~/.agents/omics-skills
+	@echo "$(BLUE)Installing skill catalog to $(AGENTS_CATALOG_DIR)...$(NC)"
+	@mkdir -p $(AGENTS_CATALOG_DIR)
+ifeq ($(INSTALL_METHOD),symlink)
+	@for item in skill_index.py README.md catalog.json relationships.json routing.json; do \
+		if [ "$$item" = "skill_index.py" ]; then \
+			src=$(SCRIPTS_DIR)/$$item; \
+		else \
+			src=$(CATALOG_DIR)/$$item; \
+		fi; \
+		target=$(AGENTS_CATALOG_DIR)/$$item; \
+		if [ -L $$target ]; then \
+			rm $$target; \
+		elif [ -e $$target ]; then \
+			rm -rf $$target; \
+		fi; \
+		ln -sf $$src $$target; \
+		echo "  $(GREEN)✓$(NC) $$item"; \
+	done
+else
+	@for item in skill_index.py README.md catalog.json relationships.json routing.json; do \
+		if [ "$$item" = "skill_index.py" ]; then \
+			src=$(SCRIPTS_DIR)/$$item; \
+		else \
+			src=$(CATALOG_DIR)/$$item; \
+		fi; \
+		target=$(AGENTS_CATALOG_DIR)/$$item; \
+		if [ -e $$target ]; then \
+			rm -rf $$target; \
+		fi; \
+		cp $$src $$target; \
+		echo "  $(GREEN)✓$(NC) $$item"; \
+	done
+endif
 
 install-claude-agents: ## Install agents to Claude Code
 	@echo "$(BLUE)Installing agents to Claude Code...$(NC)"
@@ -292,7 +337,7 @@ check-deps: ## Check if required commands are available
 	@echo "$(BLUE)Checking dependencies...$(NC)"
 	@command -v claude >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Claude Code CLI found" || echo "  $(YELLOW)○$(NC) Claude Code CLI not found (install from https://claude.com/claude-code)"
 	@command -v codex >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Codex CLI found" || echo "  $(YELLOW)○$(NC) Codex CLI not found (optional)"
-	@command -v python3 >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Python 3 found" || echo "  $(YELLOW)○$(NC) Python 3 not found (required for some skills)"
+	@command -v python3 >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Python 3 found" || echo "  $(YELLOW)○$(NC) Python 3 not found (required for installation and some skills)"
 	@echo ""
 
 install-python-deps: ## Install Python dependencies for skills
@@ -314,7 +359,7 @@ install-python-deps: ## Install Python dependencies for skills
 
 ##@ Uninstallation
 
-uninstall: uninstall-claude uninstall-codex uninstall-skills ## Uninstall from both platforms
+uninstall: uninstall-claude uninstall-codex uninstall-skills uninstall-catalog ## Uninstall from both platforms
 	@echo "$(GREEN)✓ Uninstallation complete$(NC)"
 
 uninstall-claude: ## Uninstall from Claude Code
@@ -396,6 +441,15 @@ uninstall-skills: ## Remove omics-skills from ~/.agents/skills
 		echo "  $(GREEN)✓$(NC) Completed: $$current/$$total skills"; \
 	fi
 
+uninstall-catalog: ## Remove the shared skill catalog from ~/.agents/omics-skills
+	@echo "$(BLUE)Uninstalling skill catalog from $(AGENTS_CATALOG_DIR)...$(NC)"
+	@if [ -d $(AGENTS_CATALOG_DIR) ]; then \
+		rm -rf $(AGENTS_CATALOG_DIR); \
+		echo "  $(GREEN)✓$(NC) Removed $(AGENTS_CATALOG_DIR)"; \
+	else \
+		echo "  $(YELLOW)○$(NC) Nothing to remove"; \
+	fi
+
 ##@ Status
 
 status: ## Show installation status
@@ -416,6 +470,19 @@ status: ## Show installation status
 			fi; \
 		done; \
 		echo "  Omics-skills skills: $$installed/$$skills_total installed ($$total total in directory)"; \
+	else \
+		echo "  $(RED)Not installed$(NC)"; \
+	fi
+	@echo ""
+	@echo "  Catalog directory: $(AGENTS_CATALOG_DIR)"
+	@if [ -d $(AGENTS_CATALOG_DIR) ]; then \
+		installed=0; \
+		for item in skill_index.py README.md catalog.json relationships.json routing.json; do \
+			if [ -f $(AGENTS_CATALOG_DIR)/$$item ] || [ -L $(AGENTS_CATALOG_DIR)/$$item ]; then \
+				installed=$$((installed + 1)); \
+			fi; \
+		done; \
+		echo "  Skill catalog files: $$installed/5 installed"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
@@ -495,6 +562,7 @@ status: ## Show installation status
 
 test: ## Test repository structure and installation
 	@$(SCRIPTS_DIR)/test-install.sh
+	@python3 -m unittest discover -s tests -v
 
 ##@ Maintenance
 

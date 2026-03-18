@@ -9,7 +9,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-4-blue)](#the-four-agents)
-[![Skills](https://img.shields.io/badge/Skills-27-blue)](#agent--skills-mapping)
+[![Skills](https://img.shields.io/badge/Skills-28-blue)](#agent--skills-mapping)
 
 **Quick Links:** [Installation](#installation) • [Agents](#the-four-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
@@ -17,7 +17,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**4 Expert Agents** that orchestrate **27 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
+**4 Expert Agents** that orchestrate **29 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -68,16 +68,20 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 **Use when you need to:**
 - Write or edit manuscript sections (Abstract, Intro, Methods, Results, Discussion)
 - Conduct comprehensive literature reviews
+- Track recent arXiv preprints in AI/ML, CS, math, physics, and quantitative biology
+- Track recent bioRxiv preprints in biology and life sciences
 - Evaluate research methodology and evidence quality
 - Validate citations and format references
 - Document computational workflows for Methods sections
 - Review manuscripts for rigor and clarity
 - Run structured multi-agent manuscript reviews and meta-reviews
 
-**Core Skills (6):**
+**Core Skills (8):**
 - `bio-logic` — Evaluate methodology, assess evidence, critique claims
 - `polars-dovmed` — Search 2.4M+ PubMed Central papers
-- `science-writing` — Publication-quality manuscripts with DOI validation
+- `arxiv-search` — Search the official arXiv API and build local Markdown summaries for preprints
+- `biorxiv-search` — Search the official bioRxiv API and locally filter recent biology preprints
+- `scientific-writing` — Provider-agnostic multi-agent manuscript drafting, review, and revision
 - `manuscript-review-council` — Multi-agent manuscript review with editor synthesis
 - `bio-workflow-methods-docwriter` — Reproducible Methods from workflow artifacts
 - `agent-browser` — Web scraping for databases and supplementary materials
@@ -135,6 +139,7 @@ make status
 - `make install` - Install for both Claude Code and Codex
 - `make install-claude` - Install for Claude Code only
 - `make install-codex` - Install for Codex only
+- `make build-catalog` - Rebuild the shared skill catalog
 - `make status` - Check what's installed
 - `make help` - View all options
 
@@ -145,7 +150,8 @@ make status
 
 **What gets installed:**
 - **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
-- **Skills** → `~/.agents/skills/` (27 directories)
+- **Skills** → `~/.agents/skills/` (28 directories)
+- **Skill catalog** → `~/.agents/omics-skills/` (`skill_index.py`, `catalog.json`, `relationships.json`, `routing.json`)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **CodexLoop launcher** → `~/.codex/bin/codexloop`
@@ -178,6 +184,14 @@ claude --agent dataviz-artist
 # For project-specific work
 cd /path/to/your/project
 claude --agent omics-scientist
+```
+
+### Selecting a Workflow
+
+```bash
+# Ask the shared catalog which agent and skills fit the task
+python3 ~/.agents/omics-skills/skill_index.py route \
+  "assemble a metagenome and recover MAGs"
 ```
 
 ### Using with Codex CLI
@@ -290,13 +304,15 @@ codexloop run --repo .
 ┌────────────────────────┐
 │   Science Writer       │
 ├────────────────────────┤
-│ 6 writing skills       │
+│ 8 writing skills       │
 │ Focus: Communication   │
 └────────────────────────┘
          │
          ├──> bio-logic (evidence evaluation)
          ├──> polars-dovmed (literature search)
-         ├──> science-writing (manuscripts)
+         ├──> arxiv-search (preprints)
+         ├──> biorxiv-search (biology preprints)
+         ├──> scientific-writing (manuscripts)
          ├──> manuscript-review-council
          ├──> bio-workflow-methods-docwriter
          └──> agent-browser (web research)
@@ -331,7 +347,7 @@ Omics Scientist Agent
 
 Science Writer Agent
   8. bio-workflow-methods-docwriter → Document pipeline
-  9. science-writing → Write manuscript sections
+  9. scientific-writing → Write manuscript sections
   10. polars-dovmed → Find supporting literature
 
 DataViz Artist Agent
@@ -343,12 +359,14 @@ DataViz Artist Agent
 ```
 Science Writer Agent
   1. polars-dovmed → Comprehensive literature search
-  2. bio-logic → Evaluate evidence quality
-  3. science-writing → Synthesize review manuscript
+  2. arxiv-search → Capture recent preprints not yet in PMC-heavy sources
+  3. biorxiv-search → Capture recent biology preprints
+  4. bio-logic → Evaluate evidence quality
+  5. scientific-writing → Synthesize review manuscript
 
 DataViz Artist Agent
-  4. beautiful-data-viz → Create summary figures
-  5. notebook-ai-agents-skill → Document analysis (Marimo)
+  6. beautiful-data-viz → Create summary figures
+  7. notebook-ai-agents-skill → Document analysis (Marimo)
 ```
 
 ### Interactive Dashboard for MAG Explorer
@@ -382,7 +400,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 27 specialized skills
+└── skills/                          # 29 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
@@ -399,8 +417,10 @@ omics-skills/
     ├── bio-prefect-dask-nextflow/
     ├── jgi-lakehouse/              # Query JGI GOLD/IMG/Phytozome
     ├── polars-dovmed/              # PubMed Central search
+    ├── arxiv-search/               # Official arXiv API search
+    ├── biorxiv-search/             # Official bioRxiv API search
     ├── proposal-review/            # Decision-ready proposal review
-    ├── science-writing/            # Manuscript generation
+    ├── scientific-writing/         # Manuscript drafting and revision
     ├── manuscript-review-council/  # Multi-agent manuscript review
     ├── agent-browser/              # Web automation
     ├── get-api-docs/               # Current API docs via chub

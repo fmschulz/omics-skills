@@ -30,6 +30,7 @@ CODEX_SKILLS_DIR="$HOME/.codex/skills"
 CODEX_BIN_DIR="$HOME/.codex/bin"
 CODEXLOOP_LAUNCHER="$CODEX_BIN_DIR/codexloop"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
+AGENTS_CATALOG_DIR="$HOME/.agents/omics-skills"
 
 # Parse arguments
 UNINSTALL_TARGET="both"
@@ -141,6 +142,11 @@ uninstall_skills() {
     if [ "$KEEP_BACKUPS" = false ]; then
         find "$AGENTS_SKILLS_DIR" -name "*.bak" -exec rm -rf {} + 2>/dev/null || true
         echo -e "  ${GREEN}✓${NC} Removed backup files"
+    fi
+
+    if [ -d "$AGENTS_CATALOG_DIR" ]; then
+        rm -rf "$AGENTS_CATALOG_DIR"
+        echo -e "  ${GREEN}✓${NC} Removed skill catalog"
     fi
 }
 

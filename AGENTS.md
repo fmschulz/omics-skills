@@ -6,15 +6,35 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A curated collection of **4 expert agents** and **26 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
+A curated collection of **4 expert agents** and **29 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
 
 **Structure:**
 - `agents/` - 4 agent personas that orchestrate skills
-- `skills/` - 26 specialized skills for omics workflows and agent tooling
+- `skills/` - 29 specialized skills for omics workflows and agent tooling
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 
 **Installation:** Users run `make install` to symlink agents and skills to `~/.claude/` and `~/.codex/`
+
+---
+
+## Default Workflow Selection
+
+When working in this repository without a specialized agent prompt, do not choose skills ad hoc.
+
+Start with the catalog:
+
+```bash
+python3 scripts/skill_index.py route "<task>"
+```
+
+Use the returned agent, primary skills, and suggested order as the default workflow. Then open the referenced agent file in `agents/` and the referenced `SKILL.md` files before proceeding. Only deviate from the returned path when the request clearly falls outside the suggested workflow.
+
+For installed environments outside the repository checkout, use:
+
+```bash
+python3 ~/.agents/omics-skills/skill_index.py route "<task>"
+```
 
 ---
 
@@ -38,10 +58,10 @@ skills/
 
 ### Naming Conventions
 
-- **Skill directory**: kebab-case with prefix (e.g., `bio-reads-qc-mapping`, `science-writing`)
+- **Skill directory**: kebab-case with prefix (e.g., `bio-reads-qc-mapping`, `scientific-writing`)
 - **Skill prefixes**:
   - `bio-*` - Bioinformatics workflows
-  - `science-writing`, `polars-dovmed`, `agent-browser` - Writing/research
+  - `scientific-writing`, `polars-dovmed`, `agent-browser` - Writing/research
 - `beautiful-data-viz`, `plotly-dashboard-skill`, `notebook-ai-agents-skill` - Visualization (Marimo-first notebooks)
 - **SKILL.md**: Always uppercase, always this exact filename
 - **SKILL frontmatter `name`**: lowercase letters/numbers and hyphens only, no consecutive hyphens, <=64 chars, and must match the directory name
@@ -150,10 +170,11 @@ Skills are loaded on-demand. To minimize context usage:
 Agents are markdown files that define:
 1. **Persona** - Expert role and domain
 2. **Core Principles** - Guiding philosophy
-3. **Mandatory Skill Usage** - When to use which skills
-4. **Workflow Decision Tree** - Skill orchestration logic
-5. **Task Recognition Patterns** - Keyword → skill mappings
-6. **Communication Style** - How to interact with users
+3. **Skill Lookup** - Short catalog-first lookup step before manual skill selection
+4. **Mandatory Skill Usage** - When to use which skills
+5. **Workflow Decision Tree** - Skill orchestration logic
+6. **Task Recognition Patterns** - Keyword → skill mappings
+7. **Communication Style** - How to interact with users
 
 ### Agent File Structure
 
@@ -168,6 +189,11 @@ You are an expert [domain] specializing in [specific areas]...
 
 1. Principle 1
 2. Principle 2
+
+## Skill Lookup
+
+Run the shared catalog first:
+`python3 ~/.agents/omics-skills/skill_index.py route "<task>" --agent <agent-name>`
 
 ## Mandatory Skill Usage
 
@@ -467,7 +493,7 @@ Some skills are used across all agents:
 Skills that produce final deliverables:
 
 - `bio-stats-ml-reporting` - Generate final reports
-- `science-writing` - Produce manuscripts
+- `scientific-writing` - Produce manuscripts
 - `beautiful-data-viz` - Create publication figures
 
 ---

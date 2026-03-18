@@ -5,6 +5,59 @@ description: Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG
 
 # JGI Lakehouse Skill
 
+## Instructions
+
+1. Decide whether the task needs metadata from the Lakehouse or files from the JGI filesystem.
+2. Start with a small validation query, then remove `LIMIT` for final counts or complete result sets.
+3. Use the query and download patterns below instead of improvising SQL or filesystem paths.
+4. Record the exact tables, filters, taxon OIDs, file paths, and commands used.
+
+## Quick Reference
+
+| Task | Action |
+|------|--------|
+| Find metadata | Query the Lakehouse with SQL |
+| Download IMG genome packages | Copy `{taxon_oid}.tar.gz` from `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/` |
+| Retrieve Mycocosm or Phytozome files | Query `portal.downloadRequestFiles`, then copy from `/global/dna/dm_archive/` |
+| Query metagenome proteins | Use the NUMG tables and join on both `oid` and `gene_oid` |
+| Inspect schemas | Use `SHOW TABLES` and `DESCRIBE` before writing larger joins |
+
+## Input Requirements
+
+- Clear task description: metadata discovery, annotation lookup, file retrieval, or sequence download
+- Access to the relevant JGI environment and filesystem paths
+- Known identifiers when available: GOLD IDs, IMG taxon OIDs, project names, or organism names
+- Output scope: exploratory sample, complete count, or file retrieval target
+
+## Output
+
+- SQL queries or filesystem commands that match the request
+- Returned metadata, counts, taxon IDs, file paths, or copied files
+- A concise summary of what was found, including any limits or caveats
+
+## Quality Gates
+
+- [ ] Data source chosen correctly: Lakehouse for metadata, filesystem for sequence files
+- [ ] `LIMIT` removed from final comprehensive queries
+- [ ] Table and column names validated before final query execution
+- [ ] File paths and taxon OIDs recorded exactly
+
+## Examples
+
+See the worked examples and query blocks below, especially:
+- `## NUMG (Metagenome Proteins) Agent Workflow`
+- `## Downloading Genomes with IMG Taxon OIDs`
+- `## Portal Downloads (Mycocosm / Phytozome)`
+- `## Common Queries`
+
+## Troubleshooting
+
+**Issue**: Query returns only a sample and not the full answer
+**Solution**: Remove `LIMIT` after validating query shape and use aggregation for totals.
+
+**Issue**: Expected genome sequences are not in the Lakehouse
+**Solution**: Use the filesystem paths described below; the Lakehouse is for metadata and annotations.
+
 ## Quick Start
 
 **What is it?** JGI's unified data warehouse (651 tables) + filesystem access to genome files.

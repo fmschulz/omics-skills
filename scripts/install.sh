@@ -21,6 +21,7 @@ else
 fi
 AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
+CATALOG_DIR="$REPO_ROOT/catalog"
 
 # Specific agent files
 AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
@@ -33,6 +34,7 @@ CODEX_BIN_DIR="$HOME/.codex/bin"
 CODEXLOOP_LAUNCHER="$CODEX_BIN_DIR/codexloop"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
+AGENTS_CATALOG_DIR="$HOME/.agents/omics-skills"
 
 # Installation method (symlink by default, use --copy to copy files)
 INSTALL_METHOD="symlink"
@@ -140,6 +142,41 @@ install_skills() {
     done
 }
 
+build_catalog() {
+    echo -e "${BLUE}Building skill catalog...${NC}"
+    mkdir -p "$CATALOG_DIR"
+    python3 "$REPO_ROOT/scripts/skill_index.py" build --repo "$REPO_ROOT" --out "$CATALOG_DIR" >/dev/null
+    echo -e "  ${GREEN}✓${NC} catalog.json"
+    echo -e "  ${GREEN}✓${NC} relationships.json"
+    echo -e "  ${GREEN}✓${NC} routing.json"
+}
+
+install_catalog() {
+    echo -e "${BLUE}Installing skill catalog to $AGENTS_CATALOG_DIR...${NC}"
+    mkdir -p "$AGENTS_CATALOG_DIR"
+
+    for item in skill_index.py README.md catalog.json relationships.json routing.json; do
+        if [ "$item" = "skill_index.py" ]; then
+            src="$REPO_ROOT/scripts/$item"
+        else
+            src="$CATALOG_DIR/$item"
+        fi
+        target="$AGENTS_CATALOG_DIR/$item"
+
+        if [ -L "$target" ] || [ -e "$target" ]; then
+            rm -rf "$target"
+        fi
+
+        if [ "$INSTALL_METHOD" = "symlink" ]; then
+            ln -sf "$src" "$target"
+        else
+            cp "$src" "$target"
+        fi
+
+        echo -e "  ${GREEN}✓${NC} $item"
+    done
+}
+
 link_claude_skills() {
     echo -e "${BLUE}Linking Claude skills to $AGENTS_SKILLS_DIR...${NC}"
     mkdir -p "$HOME/.claude"
@@ -219,7 +256,7 @@ check_deps() {
     if command -v python3 >/dev/null 2>&1; then
         echo -e "  ${GREEN}✓${NC} Python 3 found"
     else
-        echo -e "  ${YELLOW}○${NC} Python 3 not found (required for some skills)"
+        echo -e "  ${YELLOW}○${NC} Python 3 not found (required for installation and some skills)"
     fi
 
     echo ""
@@ -235,6 +272,18 @@ show_status() {
     if [ -d "$AGENTS_SKILLS_DIR" ]; then
         count=$(find -L "$AGENTS_SKILLS_DIR" -maxdepth 1 -type d -o -type l 2>/dev/null | tail -n +2 | wc -l)
         echo "  Installed skills: $count/$skills_total"
+    else
+        echo -e "  ${RED}Not installed${NC}"
+    fi
+    echo "  Catalog directory: $AGENTS_CATALOG_DIR"
+    if [ -d "$AGENTS_CATALOG_DIR" ]; then
+        count=0
+        for item in skill_index.py README.md catalog.json relationships.json routing.json; do
+            if [ -f "$AGENTS_CATALOG_DIR/$item" ] || [ -L "$AGENTS_CATALOG_DIR/$item" ]; then
+                count=$((count + 1))
+            fi
+        done
+        echo "  Installed catalog files: $count/5"
     else
         echo -e "  ${RED}Not installed${NC}"
     fi
@@ -303,7 +352,10 @@ fi
 echo ""
 
 # Install based on target
+build_catalog
+echo ""
 install_skills "$AGENTS_SKILLS_DIR" "Shared skills"
+install_catalog
 echo ""
 
 if [ "$INSTALL_TARGET" = "both" ] || [ "$INSTALL_TARGET" = "claude" ]; then
@@ -339,6 +391,9 @@ echo ""
 echo "  2. Or use in Codex:"
 echo "     codex --system-prompt ~/.codex/agents/omics-scientist.md"
 echo "     ~/.codex/bin/codexloop init /path/to/repo"
+echo ""
+echo "  3. Check a recommended workflow:"
+echo "     python3 ~/.agents/omics-skills/skill_index.py route \"assemble a metagenome and recover MAGs\""
 echo ""
 echo -e "${YELLOW}Tip:${NC} Use symlinks (default) to always have the latest updates"
 echo "     Updates: cd $(basename "$REPO_ROOT") && git pull && ./install.sh"

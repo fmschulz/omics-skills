@@ -48,3 +48,6 @@ htmlcov/
 tmp/
 temp/
 *.tmp
+
+# Generated catalog files
+catalog/*.json
