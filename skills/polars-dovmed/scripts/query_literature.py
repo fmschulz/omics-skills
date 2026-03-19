@@ -5,9 +5,15 @@ import argparse
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+ASYNC_ENDPOINTS = {
+    "/api/search_literature": "search_literature",
+    "/api/scan_literature_advanced": "scan_literature_advanced",
+}
 
 
 def load_env_file(path):
@@ -26,6 +32,11 @@ def parse_args():
     load_env_file("~/.config/polars-dovmed/.env")
     parser = argparse.ArgumentParser()
     parser.add_argument("--query")
+    parser.add_argument(
+        "--allow-flat-query",
+        action="store_true",
+        help="Explicitly allow exploratory free-text search via /api/search_literature",
+    )
     parser.add_argument("--queries-file")
     parser.add_argument("--group", action="append", default=[])
     parser.add_argument("--details", nargs="+")
@@ -63,6 +74,23 @@ def parse_args():
     parser.add_argument("--save-discovery-payload")
     parser.add_argument("--save-discovery-response")
     parser.add_argument(
+        "--sync",
+        action="store_true",
+        help="Use the legacy synchronous request path instead of async jobs",
+    )
+    parser.add_argument(
+        "--poll-timeout",
+        type=int,
+        default=900,
+        help="Maximum seconds to wait for async job completion",
+    )
+    parser.add_argument(
+        "--poll-interval",
+        type=int,
+        default=2,
+        help="Fallback poll interval in seconds when the API does not specify one",
+    )
+    parser.add_argument(
         "--discovery-fallback",
         action="store_true",
         help="If a structured advanced query fails or times out, retry a simplified flat discovery query built from query-group names",
@@ -75,6 +103,11 @@ def parse_args():
     if chosen != 1:
         parser.error(
             "provide exactly one of --query, --queries-file, --group, or --details"
+        )
+    if args.query and not args.allow_flat_query:
+        parser.error(
+            "--query is exploratory free-text search only; use --queries-file/--group from create_patterns, "
+            "or pass --allow-flat-query to opt in explicitly"
         )
     return args
 
@@ -184,20 +217,138 @@ def maybe_save_json(path, payload):
     output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def post_json(base_url, endpoint, api_key, payload, timeout):
-    body = json.dumps(payload).encode("utf-8")
-    request = urllib.request.Request(
+def make_request(base_url, endpoint, api_key, *, method="GET", payload=None):
+    data = None
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "X-API-Key": api_key,
+    }
+    if payload is not None:
+        headers["Content-Type"] = "application/json"
+    return urllib.request.Request(
         f"{base_url}{endpoint}",
-        data=body,
+        data=data,
         headers={
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0",
-            "X-API-Key": api_key,
+            **headers,
         },
-        method="POST",
+        method=method,
+    )
+
+
+def request_json(base_url, endpoint, api_key, *, timeout, method="GET", payload=None):
+    request = make_request(
+        base_url,
+        endpoint,
+        api_key,
+        method=method,
+        payload=payload,
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def post_json(base_url, endpoint, api_key, payload, timeout):
+    return request_json(
+        base_url,
+        endpoint,
+        api_key,
+        timeout=timeout,
+        method="POST",
+        payload=payload,
+    )
+
+
+def build_submitted_request(endpoint, payload, use_async_jobs):
+    if not use_async_jobs:
+        return endpoint, payload
+    return "/api/jobs", {
+        "job_type": ASYNC_ENDPOINTS[endpoint],
+        "payload": payload,
+    }
+
+
+def run_async_job(
+    base_url,
+    endpoint,
+    api_key,
+    payload,
+    *,
+    poll_timeout,
+    poll_interval,
+):
+    submitted_endpoint, submitted_payload = build_submitted_request(
+        endpoint,
+        payload,
+        use_async_jobs=True,
+    )
+    job = post_json(
+        base_url,
+        submitted_endpoint,
+        api_key,
+        submitted_payload,
+        timeout=min(max(poll_timeout, 30), 120),
+    )
+    job_id = job.get("job_id")
+    if not job_id:
+        raise RuntimeError(f"async job submission failed: {job}")
+
+    deadline = time.monotonic() + poll_timeout
+    result_endpoint = f"/api/jobs/{job_id}/result"
+    while True:
+        result_wrapper = request_json(
+            base_url,
+            result_endpoint,
+            api_key,
+            timeout=60,
+        )
+        status = result_wrapper.get("status")
+        if status == "succeeded":
+            result = result_wrapper.get("result")
+            if isinstance(result, dict):
+                return result
+            raise RuntimeError(f"async job {job_id} succeeded without a JSON result")
+        if status == "failed":
+            result = result_wrapper.get("result") or {}
+            error = result_wrapper.get("error") or result.get("error") or "async job failed"
+            raise RuntimeError(f"async job {job_id} failed: {error}")
+        if time.monotonic() >= deadline:
+            raise RuntimeError(
+                f"async job {job_id} timed out after {poll_timeout}s"
+            )
+        sleep_for = result_wrapper.get("poll_after_sec") or poll_interval
+        time.sleep(max(1, int(sleep_for)))
+
+
+def execute_request(
+    base_url,
+    endpoint,
+    api_key,
+    payload,
+    *,
+    timeout,
+    use_async_jobs,
+    poll_timeout,
+    poll_interval,
+):
+    try:
+        if use_async_jobs:
+            return run_async_job(
+                base_url,
+                endpoint,
+                api_key,
+                payload,
+                poll_timeout=poll_timeout,
+                poll_interval=poll_interval,
+            )
+        return post_json(base_url, endpoint, api_key, payload, timeout)
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(
+            f"http error {exc.code}: {exc.read().decode('utf-8')}"
+        ) from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"request failed: {exc.reason}") from exc
 
 
 def summarize_papers(papers, target_year):
@@ -231,39 +382,69 @@ def main():
     args = parse_args()
     api_key = load_api_key(args.api_key)
     endpoint, payload = build_request(args)
-    maybe_save_json(args.save_payload, {"endpoint": endpoint, "payload": payload})
     timeout = args.timeout or (600 if endpoint.endswith("advanced") else 120)
+    use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
+    submitted_endpoint, submitted_payload = build_submitted_request(
+        endpoint,
+        payload,
+        use_async_jobs,
+    )
+    maybe_save_json(
+        args.save_payload,
+        {
+            "endpoint": submitted_endpoint,
+            "payload": submitted_payload,
+            "target_endpoint": endpoint,
+            "target_payload": payload,
+        },
+    )
     try:
-        result = post_json(args.base_url, endpoint, api_key, payload, timeout)
-    except urllib.error.HTTPError as exc:
+        result = execute_request(
+            args.base_url,
+            endpoint,
+            api_key,
+            payload,
+            timeout=timeout,
+            use_async_jobs=use_async_jobs,
+            poll_timeout=args.poll_timeout,
+            poll_interval=args.poll_interval,
+        )
+    except RuntimeError as exc:
         if args.discovery_fallback and endpoint.endswith("advanced"):
             endpoint, payload = build_discovery_request(args)
+            use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
+            submitted_endpoint, submitted_payload = build_submitted_request(
+                endpoint,
+                payload,
+                use_async_jobs,
+            )
             maybe_save_json(
                 args.save_discovery_payload or args.save_payload,
                 {
-                    "endpoint": endpoint,
-                    "payload": payload,
-                    "note": "discovery fallback after advanced query HTTP error",
+                    "endpoint": submitted_endpoint,
+                    "payload": submitted_payload,
+                    "target_endpoint": endpoint,
+                    "target_payload": payload,
+                    "note": f"discovery fallback after advanced query failure: {exc}",
                 },
             )
-            result = post_json(args.base_url, endpoint, api_key, payload, 120)
-        else:
-            raise SystemExit(f"http error {exc.code}: {exc.read().decode('utf-8')}") from exc
-    except urllib.error.URLError as exc:
-        if args.discovery_fallback and endpoint.endswith("advanced"):
-            endpoint, payload = build_discovery_request(args)
-            maybe_save_json(
-                args.save_discovery_payload or args.save_payload,
-                {
-                    "endpoint": endpoint,
-                    "payload": payload,
-                    "note": "discovery fallback after advanced query URL error",
-                },
+            result = execute_request(
+                args.base_url,
+                endpoint,
+                api_key,
+                payload,
+                timeout=120,
+                use_async_jobs=use_async_jobs,
+                poll_timeout=args.poll_timeout,
+                poll_interval=args.poll_interval,
             )
-            result = post_json(args.base_url, endpoint, api_key, payload, 120)
         else:
-            raise SystemExit(f"request failed: {exc.reason}") from exc
-    if endpoint == "/api/discover_literature" and args.discovery_fallback:
+            raise SystemExit(str(exc)) from None
+    if (
+        args.discovery_fallback
+        and endpoint.endswith("advanced")
+        and payload.get("mode") == "discovery"
+    ):
         maybe_save_json(args.save_discovery_response or args.save_response, result)
     else:
         maybe_save_json(args.save_response, result)

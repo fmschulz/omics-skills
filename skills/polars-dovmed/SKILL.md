@@ -132,7 +132,7 @@ This repository includes `scripts/query_literature.py` as a convenience wrapper 
 Recommended API workflow:
 1. generate query JSON with `python skills/polars-dovmed/scripts/create_patterns.py ...`
 2. inspect the JSON
-3. run `POST /api/discover_literature` or `POST /api/scan_literature_advanced` with `mode="discovery"`
+3. run `POST /api/scan_literature_advanced` with `mode="discovery"`
 4. inspect top hits and collect candidate `pmc_id` values
 5. run `POST /api/get_paper_details` with `pmc_ids`
 6. if needed, run `POST /api/scan_literature_advanced` with `mode="advanced"` for final structured refinement
@@ -143,10 +143,12 @@ The query JSON is the source of truth for API mode.
 - In local mode, the JSON file is passed directly to `dovmed scan`.
 - In API mode, the agent should read the JSON file and serialize its contents into the API request body as `primary_queries`.
 - Do not bypass the structured-query generation step and jump straight to improvised free-text queries unless the user explicitly asks for a quick exploratory search.
+- `scripts/query_literature.py --query ...` is explicit opt-in only and requires `--allow-flat-query`.
 - Save the exact API payload to the run directory as a JSON file before submitting it.
 - Save the raw API response to the run directory as a JSON file after the request returns.
 - If discovery fallback is used, save it separately as `payload_discovery.json` and `results_discovery.json`.
 - The helper auto-loads `~/.config/polars-dovmed/.env`, so a configured `POLARS_DOVMED_API_KEY` does not need manual `source` in typical agent runs.
+- The helper submits hosted search work through `/api/jobs` and polls for completion, instead of holding one long edge request open.
 - For hard cases, prefer this sequence:
   - structured query
   - discovery mode
@@ -239,6 +241,7 @@ python skills/polars-dovmed/scripts/smoke_test.py \
 | Helper wrapper in this repo | `skills/polars-dovmed/scripts/query_literature.py` |
 | Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode="discovery"` |
 | Structured API endpoint | `POST /api/scan_literature_advanced` |
+| Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |
 | Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` |
 | Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
 | Recommended extra artifacts | `llm_payload.json`, `llm_response.txt`, refined query variants, `payload_discovery.json`, `results_discovery.json` |
@@ -431,6 +434,7 @@ Agent note:
 - Advanced grouped scans may still be slow and are for final structured refinement, not first-pass discovery.
 - If an advanced scan stalls, times out, or returns diffuse results, go back to discovery mode and paper-details lookup.
 - Do not jump directly to improvised free-text queries unless the user explicitly wants a quick exploratory lookup.
+- If free-text exploration is explicitly requested, `scripts/query_literature.py --query ...` requires `--allow-flat-query`.
 - The helper script talks directly to `POST /api/scan_literature_advanced` and sets `mode` in the JSON body. Do not rely on a separate `/api/discover_literature` route existing.
 
 ## Confirmed API Contract
