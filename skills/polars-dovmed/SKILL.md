@@ -181,6 +181,50 @@ dovmed scan \
   --verbose
 ```
 
+## Quick Smoke Test
+
+Use this to verify that the skill’s current API-backed discovery path, paper-details lookup, saved payloads, saved responses, and expected output shape are all working before a real run.
+
+Run:
+
+```bash
+python skills/polars-dovmed/scripts/smoke_test.py
+```
+
+This smoke test:
+- copies a fixed prompt fixture into a dedicated run directory
+- copies a fixed structured query JSON fixture into the same run directory
+- runs discovery through `query_literature.py`
+- runs paper-details lookup for a known PMC ID using normalized input
+- saves payloads, raw responses, stdout/stderr captures, and `summary.json`
+- exits non-zero if the expected fields or minimum results are missing
+
+Default artifact directory:
+
+```bash
+skills/polars-dovmed/runs/smoke-test/
+```
+
+Expected success indicators in `summary.json`:
+- `success: true`
+- discovery result has:
+  - `mode: "discovery"`
+  - `strategy_used`
+  - `elapsed_ms`
+  - at least one paper
+  - per-paper `ranking`
+- details result has:
+  - `found >= 1`
+  - `normalized_pmc_ids`
+  - empty `missing_ids` for the known test PMC
+
+You can point the smoke test at a different API host if needed:
+
+```bash
+python skills/polars-dovmed/scripts/smoke_test.py \
+  --base-url http://localhost:8001
+```
+
 ## Quick Reference
 
 | Task | Action |
@@ -193,11 +237,12 @@ dovmed scan \
 | Execution-order rule | Check API first, local fallback second |
 | Local dataset requirement | PMC OA parquet files |
 | Helper wrapper in this repo | `skills/polars-dovmed/scripts/query_literature.py` |
-| Preferred candidate endpoint | `POST /api/discover_literature` |
+| Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode="discovery"` |
 | Structured API endpoint | `POST /api/scan_literature_advanced` |
 | Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` |
 | Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
 | Recommended extra artifacts | `llm_payload.json`, `llm_response.txt`, refined query variants, `payload_discovery.json`, `results_discovery.json` |
+| Quick skill verification | `python skills/polars-dovmed/scripts/smoke_test.py` |
 
 ## Input Requirements
 
@@ -220,6 +265,136 @@ dovmed scan \
 - Avoid short ambiguous names unless they are tightly bounded and clearly necessary.
 - For complex questions, prefer multiple concept groups instead of one long flat phrase.
 - If grouped concepts matter, preserve that grouping in both API payloads and local query JSON.
+
+## Retrieval Quality Playbook
+
+- Build searches around **anchor concepts** first.
+  - Anchor concepts are the names that make a paper relevant on their own: lineage names, isolate names, clade names, species names, strain names, or distinctive entities.
+- Treat **support concepts** as refiners, not anchors.
+  - Support concepts include host names, interaction words, ecological context, methods, geography, phenotype terms.
+  - If discovery is noisy, remove or tighten support concepts before broadening anchors.
+- Prefer explicit biological names over generic role words.
+  - Better: `Vermamoeba vermiformis`, `Bodo saltans virus`, `chytrid fungi`
+  - Worse: `host`, `symbiont`, `microbe`, `association`
+- Put alternate names and spelling variants inside the same concept group.
+- Use `disqualifying_terms` aggressively for acronym collisions, wrong clades, and common false-positive phrases.
+
+## Hit Ranking Guidance
+
+Rank hits in this order:
+
+1. Exact anchor-name hit in the title.
+2. Exact anchor-name hit in the abstract.
+3. Anchor + support co-occurrence in title/abstract.
+4. Multiple distinct relevant group matches.
+5. Full-text-only matches last.
+
+Down-rank or discard:
+
+- papers matching only generic support terms
+- papers with no anchor-name evidence in title or abstract
+- papers clearly centered on the wrong clade, host, or system
+- papers whose relevance depends only on a broad background mention
+
+When ranking metadata is present, use these fields as tie-breakers after title reading:
+
+- `ranking_score`
+- `title_signal_hits`
+- `abstract_signal_hits`
+- `group_count_total`
+- `total_matches`
+
+## Recall-First Principle
+
+- When the key evidence may only appear in full text, prefer **higher recall** over early precision.
+- It is usually better to retrieve a broader candidate set and let the agent triage titles, abstracts, and then full text than to overconstrain the first query and miss the right paper entirely.
+- In practice:
+  - use discovery mode first
+  - keep anchor terms strong
+  - keep relation/support terms soft unless they are absolutely essential
+  - fetch details for the best candidate PMC IDs
+  - only then tighten with advanced grouped refinement if needed
+
+For many biological questions, the most useful workflow is:
+
+1. retrieve papers that clearly mention the focal entity or lineage
+2. rank them using support terms
+3. inspect details/full text
+4. decide whether the paper truly addresses the relation of interest
+
+This is especially important for queries like:
+- hosts of X
+- endosymbionts of Y
+- pathways in Z
+
+because the relation term is often described only in the abstract or full text, not the title.
+
+## Retrieval Loop
+
+1. Generate structured JSON.
+2. Run discovery mode.
+3. Review the first 5-10 titles.
+4. Fetch paper details for the most relevant PMC IDs.
+5. Refine the query JSON.
+6. Run advanced mode only if discovery plus details is not enough.
+
+## "X Of Y" Query Construction
+
+For requests shaped like:
+- `"hosts of X"`
+- `"symbionts of Y"`
+- `"pathways in Z"`
+- `"genes involved in W"`
+
+do not represent the query as loose top-level concepts like:
+- `X`
+- `host`
+- `symbiont`
+- `pathway`
+
+That is usually too weak and often retrieves papers that only discuss the relation term in unrelated systems.
+
+Instead:
+
+1. Identify the **entity anchor**.
+   - Usually the lineage, species, isolate, strain, pathway name, or phenotype of real interest.
+2. Identify the **relation or property term**.
+   - Examples: `host`, `endosymbiont`, `pathway`, `gene`, `trait`, `interaction`.
+3. Build OR-of-AND groups that combine them inside the same pattern group.
+
+Prefer grouped patterns like:
+
+```json
+{
+  "candidate_relation": [
+    ["entity_anchor", "relation_term"],
+    ["entity_alias", "relation_term"],
+    ["entity_anchor", "specific_relation_alias"]
+  ]
+}
+```
+
+Examples:
+- `"microbial endosymbionts of Chytridiomycota"`:
+  - better groups:
+    - `["chytridiomycota", "endosymbiont"]`
+    - `["chytrid fungi", "bacterial symbiont"]`
+    - `["chytrid", "endohyphal", "bacteria"]`
+- `"hosts of Klosneuvirinae"`:
+  - better groups:
+    - `["klosneuvirinae", "host"]`
+    - `["klosneuvirus", "infect"]`
+    - `["bodo saltans virus", "bodo saltans"]`
+
+Use discovery mode for broad anchor discovery.
+Use advanced mode with grouped AND patterns when the broad discovery set is noisy or when the relation itself is essential to relevance.
+
+If recall is more important than precision:
+
+- do **not** require the relation term in every first-pass group
+- use the entity anchor in discovery mode first
+- treat relation terms as reranking or manual-triage hints
+- only convert relation terms into hard grouped AND constraints if the initial candidate set is too large to inspect
 
 ## Local Workflow Notes
 
@@ -256,6 +431,7 @@ Agent note:
 - Advanced grouped scans may still be slow and are for final structured refinement, not first-pass discovery.
 - If an advanced scan stalls, times out, or returns diffuse results, go back to discovery mode and paper-details lookup.
 - Do not jump directly to improvised free-text queries unless the user explicitly wants a quick exploratory lookup.
+- The helper script talks directly to `POST /api/scan_literature_advanced` and sets `mode` in the JSON body. Do not rely on a separate `/api/discover_literature` route existing.
 
 ## Confirmed API Contract
 
@@ -290,9 +466,8 @@ Use the same structured request body but set:
 }
 ```
 
-Send this to either:
-- `POST /api/discover_literature`
-- or `POST /api/scan_literature_advanced`
+Send this to:
+- `POST /api/scan_literature_advanced`
 
 ### Paper Details
 

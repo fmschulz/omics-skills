@@ -6,11 +6,11 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A curated collection of **4 expert agents** and **29 specialized skills** for bioinformatics, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
+A curated collection of **5 expert agents** and **31 specialized skills** for bioinformatics, literature discovery, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
 
 **Structure:**
-- `agents/` - 4 agent personas that orchestrate skills
-- `skills/` - 29 specialized skills for omics workflows and agent tooling
+- `agents/` - 5 agent personas that orchestrate skills
+- `skills/` - 31 specialized skills for omics workflows and agent tooling
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 
@@ -235,9 +235,10 @@ Guidelines for how to communicate with users
 ### Naming Conventions
 
 - **Agent files**: kebab-case (e.g., `omics-scientist.md`, `science-writer.md`)
-- **Four agents**:
+- **Five agents**:
   - `omics-scientist.md` - Bioinformatics workflows (14 bio-* skills)
-  - `science-writer.md` - Scientific writing (5 writing skills)
+  - `literature-expert.md` - Literature discovery, preprints, and citation lookup
+  - `science-writer.md` - Scientific writing, revision, and peer review
   - `dataviz-artist.md` - Visualization (5 viz skills)
   - `codexloop.md` - Plan-driven implementation harness for CodexLoop runs
 
@@ -344,7 +345,8 @@ make install INSTALL_METHOD=copy
 ### 1. Identify Which Agent
 
 - `omics-scientist.md` - Bioinformatics workflows
-- `science-writer.md` - Manuscript writing, literature review
+- `literature-expert.md` - Literature discovery, preprints, and DOI lookup
+- `science-writer.md` - Manuscript writing, revision, and review
 - `dataviz-artist.md` - Visualization, notebooks, dashboards
 - `codexloop.md` - Plan-driven implementation harness
 
@@ -393,8 +395,8 @@ scripts/install.sh  # Alternative to Makefile
 
 ### What Gets Installed
 
-- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
-- **Skills** → `~/.agents/skills/` (26 directories)
+- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (5 files)
+- **Skills** → `~/.agents/skills/` (31 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **Symlinks** by default (auto-updates with `git pull`)

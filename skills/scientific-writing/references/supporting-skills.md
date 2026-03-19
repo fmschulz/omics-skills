@@ -4,7 +4,8 @@ Use supporting skills only when they solve a concrete gap in the current manuscr
 
 ## Citation and reference work
 
-- `citation-management`: DOI lookup, BibTeX validation, and citation metadata cleanup
+- `crossref-lookup`: DOI lookup, bibliography audits, and citation metadata cleanup
+- `scientific-impact-assessment`: OpenAlex citations, optional Altmetric, and bundled journal metrics when discussing reach or influence
 - `research-lookup` or `literature-review`: background evidence gathering when the user explicitly wants new sources
 
 Do not use these tools to pad references. Use them only to verify or fill clearly scoped citation needs.

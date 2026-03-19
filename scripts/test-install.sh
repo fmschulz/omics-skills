@@ -47,7 +47,7 @@ fi
 
 # Test 2: Check agent files
 echo -e "\n${BLUE}[2/9] Checking agent files...${NC}"
-for agent in omics-scientist science-writer dataviz-artist codexloop; do
+for agent in omics-scientist literature-expert science-writer dataviz-artist codexloop; do
     if [ ! -f "$REPO_ROOT/agents/$agent.md" ]; then
         echo -e "  ${RED}✗${NC} $agent.md missing"
         ERRORS=$((ERRORS + 1))
@@ -58,7 +58,7 @@ done
 
 # Test 3: Check critical skills
 echo -e "\n${BLUE}[3/9] Checking critical skills...${NC}"
-for skill in bio-logic bio-foundation-housekeeping scientific-writing beautiful-data-viz codexloop; do
+for skill in bio-logic bio-foundation-housekeeping scientific-writing crossref-lookup scientific-impact-assessment beautiful-data-viz codexloop; do
     if [ ! -d "$REPO_ROOT/skills/$skill" ]; then
         echo -e "  ${RED}✗${NC} $skill/ missing"
         ERRORS=$((ERRORS + 1))
@@ -150,11 +150,11 @@ if [ -d "$HOME/.claude" ]; then
     echo -e "  ${GREEN}✓${NC} Claude Code directory exists"
 
     if [ -d "$HOME/.claude/agents" ]; then
-        count=$(find "$HOME/.claude/agents" \( -name "omics-scientist.md" -o -name "science-writer.md" -o -name "dataviz-artist.md" -o -name "codexloop.md" \) 2>/dev/null | wc -l)
-        if [ "$count" -eq 4 ]; then
-            echo -e "  ${GREEN}✓${NC} All 4 agents installed in Claude Code"
+        count=$(find "$HOME/.claude/agents" \( -name "omics-scientist.md" -o -name "literature-expert.md" -o -name "science-writer.md" -o -name "dataviz-artist.md" -o -name "codexloop.md" \) 2>/dev/null | wc -l)
+        if [ "$count" -eq 5 ]; then
+            echo -e "  ${GREEN}✓${NC} All 5 agents installed in Claude Code"
         elif [ "$count" -gt 0 ]; then
-            echo -e "  ${YELLOW}⚠${NC} Only $count/4 agents installed in Claude Code"
+            echo -e "  ${YELLOW}⚠${NC} Only $count/5 agents installed in Claude Code"
             WARNINGS=$((WARNINGS + 1))
         else
             echo -e "  ${YELLOW}○${NC} No omics-skills agents in Claude Code (not installed yet)"
@@ -209,11 +209,11 @@ if [ -d "$HOME/.codex" ]; then
     echo -e "  ${GREEN}✓${NC} Codex CLI directory exists"
 
     if [ -d "$HOME/.codex/agents" ]; then
-        count=$(find "$HOME/.codex/agents" \( -name "omics-scientist.md" -o -name "science-writer.md" -o -name "dataviz-artist.md" -o -name "codexloop.md" \) 2>/dev/null | wc -l)
-        if [ "$count" -eq 4 ]; then
-            echo -e "  ${GREEN}✓${NC} All 4 agents installed in Codex"
+        count=$(find "$HOME/.codex/agents" \( -name "omics-scientist.md" -o -name "literature-expert.md" -o -name "science-writer.md" -o -name "dataviz-artist.md" -o -name "codexloop.md" \) 2>/dev/null | wc -l)
+        if [ "$count" -eq 5 ]; then
+            echo -e "  ${GREEN}✓${NC} All 5 agents installed in Codex"
         elif [ "$count" -gt 0 ]; then
-            echo -e "  ${YELLOW}⚠${NC} Only $count/4 agents installed in Codex"
+            echo -e "  ${YELLOW}⚠${NC} Only $count/5 agents installed in Codex"
             WARNINGS=$((WARNINGS + 1))
         else
             echo -e "  ${YELLOW}○${NC} No omics-skills agents in Codex (not installed yet)"

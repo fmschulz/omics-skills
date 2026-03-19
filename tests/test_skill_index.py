@@ -198,6 +198,7 @@ class SkillIndexTests(unittest.TestCase):
 
         for agent_name in (
             "omics-scientist.md",
+            "literature-expert.md",
             "science-writer.md",
             "dataviz-artist.md",
             "codexloop.md",
@@ -206,16 +207,40 @@ class SkillIndexTests(unittest.TestCase):
             self.assertIn("## Skill Lookup", text)
             self.assertIn("skill_index.py route", text)
 
-    def test_science_writer_routes_biology_preprints_to_biorxiv(self) -> None:
+    def test_literature_expert_routes_biology_preprints_to_biorxiv(self) -> None:
         result = skill_index.route_request(
             task="recent biology preprints about single cell atlases",
-            agent="science-writer",
+            agent=None,
             platform="codex",
             top_k=4,
             repo=str(REPO_ROOT),
             index_root=None,
         )
+        self.assertEqual(result["agent"], "literature-expert")
         self.assertIn("biorxiv-search", result["primary_skills"])
+
+    def test_literature_expert_routes_crossref_queries_to_crossref_lookup(self) -> None:
+        result = skill_index.route_request(
+            task="crossref DOI lookup for citation metadata",
+            agent="literature-expert",
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertIn("crossref-lookup", result["primary_skills"])
+
+    def test_literature_expert_routes_impact_queries_to_scientific_impact_assessment(self) -> None:
+        result = skill_index.route_request(
+            task="compare papers by citation count altmetric and impact factor",
+            agent=None,
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertEqual(result["agent"], "literature-expert")
+        self.assertIn("scientific-impact-assessment", result["primary_skills"])
 
 
 if __name__ == "__main__":

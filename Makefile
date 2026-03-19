@@ -13,7 +13,7 @@ SCRIPTS_DIR := $(CURDIR)/scripts
 CATALOG_DIR := $(CURDIR)/catalog
 
 # Specific agent files (flattened in agents/ directory)
-AGENT_FILES := omics-scientist.md science-writer.md dataviz-artist.md codexloop.md
+AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md dataviz-artist.md codexloop.md
 AGENT_COUNT := $(words $(AGENT_FILES))
 
 # Installation targets
@@ -584,7 +584,7 @@ endif
 validate: ## Validate installation
 	@echo "$(BLUE)Validating installation...$(NC)"
 	@errors=0; \
-	for agent in omics-scientist science-writer dataviz-artist codexloop; do \
+	for agent in omics-scientist literature-expert science-writer dataviz-artist codexloop; do \
 		if ! [ -f $(CLAUDE_AGENTS_DIR)/$$agent.md ]; then \
 			echo "  $(RED)✗$(NC) Missing: $$agent.md in Claude Code"; \
 			errors=$$((errors + 1)); \

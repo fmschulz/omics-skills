@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMC Literature Search"
+  short_description: "Search PubMed Central full text"
+  default_prompt: "Search the PMC Open Access literature for a biological topic, save the structured query artifacts, and return the strongest candidate papers."

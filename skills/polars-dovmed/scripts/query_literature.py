@@ -120,6 +120,7 @@ def resolve_year(paper):
 
 
 def compact_paper(paper):
+    ranking = paper.get("ranking") or {}
     return {
         "pmc_id": paper.get("pmc_id"),
         "pmid": paper.get("pmid"),
@@ -128,6 +129,11 @@ def compact_paper(paper):
         "year": resolve_year(paper),
         "publication_date": paper.get("publication_date"),
         "doi": paper.get("doi"),
+        "ranking_score": ranking.get("score"),
+        "title_signal_hits": ranking.get("title_signal_hits"),
+        "abstract_signal_hits": ranking.get("abstract_signal_hits"),
+        "group_count_total": ranking.get("group_count_total"),
+        "total_matches": ranking.get("total_matches"),
     }
 
 
@@ -140,18 +146,7 @@ def build_structured_request(primary_queries, args):
         "max_results": args.max_results,
         "mode": args.mode,
     }
-    endpoint = (
-        "/api/discover_literature"
-        if args.mode == "discovery"
-        else "/api/scan_literature_advanced"
-    )
-    return endpoint, payload
-
-
-def structured_scan_fallback(endpoint, payload):
-    if endpoint == "/api/discover_literature":
-        return "/api/scan_literature_advanced", payload
-    return endpoint, payload
+    return "/api/scan_literature_advanced", payload
 
 
 def build_request(args):
@@ -241,18 +236,7 @@ def main():
     try:
         result = post_json(args.base_url, endpoint, api_key, payload, timeout)
     except urllib.error.HTTPError as exc:
-        if exc.code == 404 and endpoint == "/api/discover_literature":
-            endpoint, payload = structured_scan_fallback(endpoint, payload)
-            maybe_save_json(
-                args.save_discovery_payload or args.save_payload,
-                {
-                    "endpoint": endpoint,
-                    "payload": payload,
-                    "note": "fallback from /api/discover_literature to /api/scan_literature_advanced with mode=discovery",
-                },
-            )
-            result = post_json(args.base_url, endpoint, api_key, payload, timeout)
-        elif args.discovery_fallback and endpoint.endswith("advanced"):
+        if args.discovery_fallback and endpoint.endswith("advanced"):
             endpoint, payload = build_discovery_request(args)
             maybe_save_json(
                 args.save_discovery_payload or args.save_payload,

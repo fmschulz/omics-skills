@@ -22,7 +22,7 @@ AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
 
 # Specific agent files
-AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
+AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"

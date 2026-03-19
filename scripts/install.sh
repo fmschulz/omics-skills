@@ -24,7 +24,7 @@ SKILLS_DIR="$REPO_ROOT/skills"
 CATALOG_DIR="$REPO_ROOT/catalog"
 
 # Specific agent files
-AGENT_FILES=("omics-scientist.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
+AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
 AGENT_COUNT=${#AGENT_FILES[@]}
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
@@ -384,6 +384,7 @@ echo ""
 echo -e "${BLUE}Next Steps:${NC}"
 echo "  1. Invoke an agent:"
 echo "     claude --agent omics-scientist"
+echo "     claude --agent literature-expert"
 echo "     claude --agent science-writer"
 echo "     claude --agent dataviz-artist"
 echo "     claude --agent codexloop"

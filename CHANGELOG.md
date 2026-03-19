@@ -8,13 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Three expert agents** orchestrating 22 specialized skills:
+- `literature-expert.md` to separate literature discovery, preprints, and DOI metadata lookup from manuscript drafting
+- `crossref-lookup` for dedicated Crossref REST API validation and bibliography audits
+- `scientific-impact-assessment` for OpenAlex citations, optional Altmetric, and bundled journal metrics
+- **Five expert agents** orchestrating 31 specialized skills:
   - `omics-scientist.md` - Bioinformatics workflows (14 bio-* skills)
-  - `science-writer.md` - Scientific writing and literature (5 skills)
+  - `literature-expert.md` - Literature discovery, preprints, and citation metadata
+  - `science-writer.md` - Scientific writing, revision, and peer review
   - `dataviz-artist.md` - Data visualization (5 skills)
-- **Twenty specialized skills** across domains:
+- **Thirty-one specialized skills** across domains:
   - 14 bio-* skills (reads QC, assembly, annotation, phylogenomics, etc.)
-  - 5 writing skills (literature search, manuscript generation)
+  - literature and writing skills for discovery, citation lookup, and manuscript generation
   - 5 visualization skills (notebooks, static plots, dashboards)
 - **Comprehensive installation system**:
   - `Makefile` - Primary installation interface with 15+ targets

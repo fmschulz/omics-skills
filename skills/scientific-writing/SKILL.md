@@ -39,7 +39,7 @@ If a required input is missing, name the gap and keep the prose conservative.
    - the remaining issues require missing evidence
    - another loop would only repeat the same findings without material improvement
 6. Keep intermediate artifacts auditable: plan, methods draft, outline, manuscript draft, citation audit, review notes, and revision notes.
-7. Validate citations before finalizing. Use `python scripts/crossref_validator.py --help` when DOI or title checks are needed.
+7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.
 8. Return unresolved evidence gaps explicitly instead of smoothing them over.
 
 ## Quick Reference
@@ -49,7 +49,7 @@ If a required input is missing, name the gap and keep the prose conservative.
 | Plan a writing run | audit artifacts, mode, venue, and blockers before prose |
 | Draft a manuscript | follow Methods -> outline -> prose -> citation audit |
 | Improve quality | run reviewer and reviser loops until quality gates pass or evidence runs out |
-| Validate citations | `python scripts/crossref_validator.py --doi <doi>` or `--title <title>` |
+| Validate citations | `/crossref-lookup` |
 
 ## Input Requirements
 
@@ -102,9 +102,7 @@ If a required input is missing, name the gap and keep the prose conservative.
 
 ### Example 2: Citation Check
 
-```bash
-python scripts/crossref_validator.py --doi "10.1038/nature12373"
-```
+Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.
 
 ## Troubleshooting
 

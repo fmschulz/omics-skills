@@ -8,16 +8,16 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green)](https://code.claude.com)
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-4-blue)](#the-four-agents)
-[![Skills](https://img.shields.io/badge/Skills-28-blue)](#agent--skills-mapping)
+[![Agents](https://img.shields.io/badge/Agents-5-blue)](#the-five-agents)
+[![Skills](https://img.shields.io/badge/Skills-31-blue)](#agent--skills-mapping)
 
-**Quick Links:** [Installation](#installation) • [Agents](#the-four-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
+**Quick Links:** [Installation](#installation) • [Agents](#the-five-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
 ---
 
 ## What This Repository Provides
 
-**4 Expert Agents** that orchestrate **29 specialized skills** for end-to-end omics analysis, scientific communication, data visualization, and agent tooling.
+**5 Expert Agents** that orchestrate **31 specialized skills** for end-to-end omics analysis, literature discovery, scientific communication, data visualization, and agent tooling.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -27,7 +27,7 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ---
 
-## The Four Agents
+## The Five Agents
 
 ### Omics Scientist
 **Expert computational biologist** for genomics, metagenomics, and phylogenomics workflows.
@@ -62,25 +62,43 @@ Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publicatio
 
 ---
 
+### Literature Expert
+**Expert literature researcher** for peer-reviewed discovery, preprint surveillance, and citation metadata.
+
+**Use when you need to:**
+- Conduct comprehensive literature reviews
+- Search PubMed Central full text for peer-reviewed literature
+- Track recent arXiv preprints in AI/ML, CS, math, physics, and quantitative biology
+- Track recent bioRxiv preprints in biology and life sciences
+- Validate DOIs and resolve citation metadata with Crossref
+- Measure citation counts, Altmetric attention, and journal impact
+- Evaluate research methodology and evidence quality
+- Shortlist papers before handing off to a writing workflow
+
+**Core Skills (7):**
+- `polars-dovmed` — Search 2.4M+ PubMed Central papers
+- `arxiv-search` — Search the official arXiv API and build local Markdown summaries for preprints
+- `biorxiv-search` — Search the official bioRxiv API and locally filter recent biology preprints
+- `crossref-lookup` — Validate DOIs, search title metadata, and audit bibliographies against Crossref
+- `scientific-impact-assessment` — Combine OpenAlex citations, optional Altmetric, and bundled journal impact-factor references
+- `bio-logic` — Evaluate methodology, assess evidence, critique claims
+- `agent-browser` — Web scraping for databases and supplementary materials
+
+---
+
 ### Science Writer
-**Expert scientific writer** for publication-quality manuscripts and literature reviews.
+**Expert scientific writer** for publication-quality manuscripts, revisions, and peer review.
 
 **Use when you need to:**
 - Write or edit manuscript sections (Abstract, Intro, Methods, Results, Discussion)
-- Conduct comprehensive literature reviews
-- Track recent arXiv preprints in AI/ML, CS, math, physics, and quantitative biology
-- Track recent bioRxiv preprints in biology and life sciences
-- Evaluate research methodology and evidence quality
-- Validate citations and format references
+- Rewrite or revise a draft for a target venue
+- Produce response letters, rebuttals, or revision plans
 - Document computational workflows for Methods sections
 - Review manuscripts for rigor and clarity
 - Run structured multi-agent manuscript reviews and meta-reviews
 
-**Core Skills (8):**
+**Core Skills (5):**
 - `bio-logic` — Evaluate methodology, assess evidence, critique claims
-- `polars-dovmed` — Search 2.4M+ PubMed Central papers
-- `arxiv-search` — Search the official arXiv API and build local Markdown summaries for preprints
-- `biorxiv-search` — Search the official bioRxiv API and locally filter recent biology preprints
 - `scientific-writing` — Provider-agnostic multi-agent manuscript drafting, review, and revision
 - `manuscript-review-council` — Multi-agent manuscript review with editor synthesis
 - `bio-workflow-methods-docwriter` — Reproducible Methods from workflow artifacts
@@ -149,8 +167,8 @@ make status
 - **Color**: Use `NO_COLOR=1` to disable colors (auto-detected for non-TTY)
 
 **What gets installed:**
-- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
-- **Skills** → `~/.agents/skills/` (28 directories)
+- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (5 files)
+- **Skills** → `~/.agents/skills/` (31 directories)
 - **Skill catalog** → `~/.agents/omics-skills/` (`skill_index.py`, `catalog.json`, `relationships.json`, `routing.json`)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
@@ -178,6 +196,7 @@ claude --agent omics-scientist
 claude --agent codexloop
 
 # Or specify other agents
+claude --agent literature-expert
 claude --agent science-writer
 claude --agent dataviz-artist
 
@@ -302,16 +321,28 @@ codexloop run --repo .
          └──> tracking-taxonomy-updates
 
 ┌────────────────────────┐
+│  Literature Expert     │
+├────────────────────────┤
+│ 6 discovery skills     │
+│ Focus: Search & triage │
+└────────────────────────┘
+         │
+         ├──> polars-dovmed (literature search)
+         ├──> arxiv-search (preprints)
+         ├──> biorxiv-search (biology preprints)
+         ├──> crossref-lookup (DOI metadata)
+         ├──> scientific-impact-assessment (citations and impact)
+         ├──> bio-logic (evidence evaluation)
+         └──> agent-browser (web research)
+
+┌────────────────────────┐
 │   Science Writer       │
 ├────────────────────────┤
-│ 8 writing skills       │
+│ 5 writing skills       │
 │ Focus: Communication   │
 └────────────────────────┘
          │
          ├──> bio-logic (evidence evaluation)
-         ├──> polars-dovmed (literature search)
-         ├──> arxiv-search (preprints)
-         ├──> biorxiv-search (biology preprints)
          ├──> scientific-writing (manuscripts)
          ├──> manuscript-review-council
          ├──> bio-workflow-methods-docwriter
@@ -345,10 +376,12 @@ Omics Scientist Agent
   6. bio-phylogenomics → Phylogenetic placement
   7. bio-stats-ml-reporting → Generate report
 
+Literature Expert Agent
+  8. polars-dovmed → Find supporting literature
+
 Science Writer Agent
-  8. bio-workflow-methods-docwriter → Document pipeline
-  9. scientific-writing → Write manuscript sections
-  10. polars-dovmed → Find supporting literature
+  9. bio-workflow-methods-docwriter → Document pipeline
+  10. scientific-writing → Write manuscript sections
 
 DataViz Artist Agent
   11. notebook-ai-agents-skill → Create Marimo notebook
@@ -357,16 +390,20 @@ DataViz Artist Agent
 
 ### Literature Review & Meta-Analysis
 ```
-Science Writer Agent
+Literature Expert Agent
   1. polars-dovmed → Comprehensive literature search
   2. arxiv-search → Capture recent preprints not yet in PMC-heavy sources
   3. biorxiv-search → Capture recent biology preprints
-  4. bio-logic → Evaluate evidence quality
-  5. scientific-writing → Synthesize review manuscript
+  4. crossref-lookup → Normalize DOI and citation metadata
+  5. scientific-impact-assessment → Compare citations, attention, and journal context
+  6. bio-logic → Evaluate evidence quality
+
+Science Writer Agent
+  7. scientific-writing → Synthesize review manuscript
 
 DataViz Artist Agent
-  6. beautiful-data-viz → Create summary figures
-  7. notebook-ai-agents-skill → Document analysis (Marimo)
+  8. beautiful-data-viz → Create summary figures
+  9. notebook-ai-agents-skill → Document analysis (Marimo)
 ```
 
 ### Interactive Dashboard for MAG Explorer
@@ -387,8 +424,9 @@ DataViz Artist Agent
 
 ```
 omics-skills/
-├── agents/                          # 4 expert agent personas
+├── agents/                          # 5 expert agent personas
 │   ├── omics-scientist.md          # Bioinformatics workflows
+│   ├── literature-expert.md        # Literature discovery and citations
 │   ├── science-writer.md           # Manuscript writing
 │   ├── dataviz-artist.md           # Visualization design
 │   ├── codexloop.md                # Plan-driven CodexLoop harness
@@ -400,7 +438,7 @@ omics-skills/
 │       ├── QUICK_REFERENCE.md
 │       └── README.md
 │
-└── skills/                          # 29 specialized skills
+└── skills/                          # 31 specialized skills
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
@@ -419,6 +457,8 @@ omics-skills/
     ├── polars-dovmed/              # PubMed Central search
     ├── arxiv-search/               # Official arXiv API search
     ├── biorxiv-search/             # Official bioRxiv API search
+    ├── crossref-lookup/            # Crossref DOI and citation metadata
+    ├── scientific-impact-assessment/ # OpenAlex, Altmetric, and journal metrics
     ├── proposal-review/            # Decision-ready proposal review
     ├── scientific-writing/         # Manuscript drafting and revision
     ├── manuscript-review-council/  # Multi-agent manuscript review

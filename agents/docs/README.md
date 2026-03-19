@@ -1,6 +1,6 @@
 # Omics Skills Agents
 
-This directory contains specialized agent personas for bioinformatics, scientific writing, visualization, and Codex-native plan execution.
+This directory contains specialized agent personas for bioinformatics, literature discovery, scientific writing, visualization, and Codex-native plan execution.
 
 ## Available Agents
 
@@ -32,16 +32,28 @@ Expert data visualization specialist combining design principles with technical 
 
 ### Science Writer (`science-writer.md`)
 
-Expert scientific writer and editor specializing in publication-quality manuscripts for peer-reviewed journals. Automatically orchestrates literature search, evidence evaluation, and prose generation with rigorous quality standards.
+Expert scientific writer and editor specializing in publication-quality manuscripts for peer-reviewed journals. Automatically orchestrates drafting, review, revision, and methods documentation with rigorous quality standards.
 
 **Use this agent when:**
 - Writing or editing manuscript sections (Abstract, Introduction, Methods, Results, Discussion)
-- Conducting comprehensive literature reviews
+- Revising a draft for a target venue
+- Preparing rebuttals, response letters, or revision plans
 - Evaluating research methodology and evidence quality
-- Managing references with DOI validation
 - Documenting computational pipelines for Methods sections
 - Reviewing manuscripts for scientific rigor and writing quality
 - Adapting manuscripts to different target venues
+
+### Literature Expert (`literature-expert.md`)
+
+Expert literature researcher specializing in peer-reviewed discovery, preprint surveillance, and citation metadata resolution. Automatically selects the correct search surface for PMC, arXiv, bioRxiv, or Crossref workflows.
+
+**Use this agent when:**
+- Conducting comprehensive literature reviews
+- Searching PubMed Central full text
+- Tracking recent arXiv or bioRxiv preprints
+- Resolving DOI, title, and citation metadata with Crossref
+- Measuring citation counts, Altmetric attention, and journal impact
+- Evaluating research methodology and evidence quality before drafting
 
 ### CodexLoop (`codexloop.md`)
 
