@@ -5,27 +5,77 @@ import argparse
 import json
 import os
 import re
-import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
+
+
+def load_env_file(path):
+    env_path = Path(path).expanduser()
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip())
 
 
 def parse_args():
+    load_env_file("~/.config/polars-dovmed/.env")
     parser = argparse.ArgumentParser()
     parser.add_argument("--query")
+    parser.add_argument("--queries-file")
     parser.add_argument("--group", action="append", default=[])
     parser.add_argument("--details", nargs="+")
+    parser.add_argument(
+        "--mode",
+        choices=["advanced", "discovery"],
+        default="discovery",
+        help="Structured-search mode for --queries-file/--group. Default is discovery for fast candidate retrieval.",
+    )
     parser.add_argument("--max-results", type=int, default=25)
     parser.add_argument("--fast-mode", action="store_true")
+    parser.add_argument(
+        "--search-columns",
+        default="title,abstract_text,full_text",
+        help="Comma-separated columns for advanced structured search",
+    )
+    parser.add_argument(
+        "--extract-matches",
+        choices=["primary", "secondary", "both", "none"],
+        default="none",
+        help="Extraction mode for advanced structured search",
+    )
+    parser.add_argument(
+        "--add-group-counts",
+        choices=["primary", "secondary", "both"],
+        default="primary",
+        help="Group-count mode for advanced structured search",
+    )
     parser.add_argument("--year", type=int)
     parser.add_argument("--timeout", type=int)
     parser.add_argument("--base-url", default="https://api.newlineages.com")
     parser.add_argument("--api-key")
+    parser.add_argument("--save-payload")
+    parser.add_argument("--save-response")
+    parser.add_argument("--save-discovery-payload")
+    parser.add_argument("--save-discovery-response")
+    parser.add_argument(
+        "--discovery-fallback",
+        action="store_true",
+        help="If a structured advanced query fails or times out, retry a simplified flat discovery query built from query-group names",
+    )
     parser.add_argument("--raw", action="store_true")
     args = parser.parse_args()
-    chosen = sum(bool(value) for value in (args.query, args.group, args.details))
+    chosen = sum(
+        bool(value) for value in (args.query, args.queries_file, args.group, args.details)
+    )
     if chosen != 1:
-        parser.error("provide exactly one of --query, --group, or --details")
+        parser.error(
+            "provide exactly one of --query, --queries-file, --group, or --details"
+        )
     return args
 
 
@@ -44,6 +94,19 @@ def parse_group(spec):
     if not name or not terms:
         raise SystemExit(f"invalid group '{spec}', expected name=term1,term2")
     return name, [[term] for term in terms]
+
+
+def load_queries_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"queries file not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"invalid queries file '{path}': {exc}") from exc
+    if not isinstance(data, dict):
+        raise SystemExit(f"invalid queries file '{path}', expected a JSON object")
+    return data
 
 
 def resolve_year(paper):
@@ -68,19 +131,36 @@ def compact_paper(paper):
     }
 
 
+def build_structured_request(primary_queries, args):
+    payload = {
+        "primary_queries": primary_queries,
+        "search_columns": [col.strip() for col in args.search_columns.split(",") if col.strip()],
+        "extract_matches": args.extract_matches,
+        "add_group_counts": args.add_group_counts,
+        "max_results": args.max_results,
+        "mode": args.mode,
+    }
+    endpoint = (
+        "/api/discover_literature"
+        if args.mode == "discovery"
+        else "/api/scan_literature_advanced"
+    )
+    return endpoint, payload
+
+
+def structured_scan_fallback(endpoint, payload):
+    if endpoint == "/api/discover_literature":
+        return "/api/scan_literature_advanced", payload
+    return endpoint, payload
+
+
 def build_request(args):
     if args.details:
         return "/api/get_paper_details", {"pmc_ids": args.details}
+    if args.queries_file:
+        return build_structured_request(load_queries_file(args.queries_file), args)
     if args.group:
-        primary_queries = dict(parse_group(spec) for spec in args.group)
-        payload = {
-            "primary_queries": primary_queries,
-            "search_columns": ["title", "abstract_text", "full_text"],
-            "extract_matches": "primary",
-            "add_group_counts": "primary",
-            "max_results": args.max_results,
-        }
-        return "/api/scan_literature_advanced", payload
+        return build_structured_request(dict(parse_group(spec) for spec in args.group), args)
     payload = {
         "query": args.query,
         "max_results": args.max_results,
@@ -88,6 +168,25 @@ def build_request(args):
         "fast_mode": args.fast_mode,
     }
     return "/api/search_literature", payload
+
+
+def build_discovery_request(args):
+    if not args.queries_file:
+        raise SystemExit("--discovery-fallback requires --queries-file")
+    original_mode = args.mode
+    args.mode = "discovery"
+    try:
+        return build_structured_request(load_queries_file(args.queries_file), args)
+    finally:
+        args.mode = original_mode
+
+
+def maybe_save_json(path, payload):
+    if not path:
+        return
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def post_json(base_url, endpoint, api_key, payload, timeout):
@@ -137,13 +236,53 @@ def main():
     args = parse_args()
     api_key = load_api_key(args.api_key)
     endpoint, payload = build_request(args)
+    maybe_save_json(args.save_payload, {"endpoint": endpoint, "payload": payload})
     timeout = args.timeout or (600 if endpoint.endswith("advanced") else 120)
     try:
         result = post_json(args.base_url, endpoint, api_key, payload, timeout)
     except urllib.error.HTTPError as exc:
-        raise SystemExit(f"http error {exc.code}: {exc.read().decode('utf-8')}") from exc
+        if exc.code == 404 and endpoint == "/api/discover_literature":
+            endpoint, payload = structured_scan_fallback(endpoint, payload)
+            maybe_save_json(
+                args.save_discovery_payload or args.save_payload,
+                {
+                    "endpoint": endpoint,
+                    "payload": payload,
+                    "note": "fallback from /api/discover_literature to /api/scan_literature_advanced with mode=discovery",
+                },
+            )
+            result = post_json(args.base_url, endpoint, api_key, payload, timeout)
+        elif args.discovery_fallback and endpoint.endswith("advanced"):
+            endpoint, payload = build_discovery_request(args)
+            maybe_save_json(
+                args.save_discovery_payload or args.save_payload,
+                {
+                    "endpoint": endpoint,
+                    "payload": payload,
+                    "note": "discovery fallback after advanced query HTTP error",
+                },
+            )
+            result = post_json(args.base_url, endpoint, api_key, payload, 120)
+        else:
+            raise SystemExit(f"http error {exc.code}: {exc.read().decode('utf-8')}") from exc
     except urllib.error.URLError as exc:
-        raise SystemExit(f"request failed: {exc.reason}") from exc
+        if args.discovery_fallback and endpoint.endswith("advanced"):
+            endpoint, payload = build_discovery_request(args)
+            maybe_save_json(
+                args.save_discovery_payload or args.save_payload,
+                {
+                    "endpoint": endpoint,
+                    "payload": payload,
+                    "note": "discovery fallback after advanced query URL error",
+                },
+            )
+            result = post_json(args.base_url, endpoint, api_key, payload, 120)
+        else:
+            raise SystemExit(f"request failed: {exc.reason}") from exc
+    if endpoint == "/api/discover_literature" and args.discovery_fallback:
+        maybe_save_json(args.save_discovery_response or args.save_response, result)
+    else:
+        maybe_save_json(args.save_response, result)
     if args.raw:
         print(json.dumps(result, indent=2))
         return
@@ -151,6 +290,11 @@ def main():
     compact, missing_year, filtered_year = summarize_papers(papers, args.year)
     summary = {
         "endpoint": endpoint,
+        "mode": args.mode if args.queries_file or args.group else None,
+        "strategy_used": result.get("strategy_used"),
+        "elapsed_ms": result.get("elapsed_ms"),
+        "signal_terms": result.get("signal_terms"),
+        "discovery_query": result.get("discovery_query"),
         "reported_total": result.get("total_found"),
         "returned": len(papers),
         "year_filter": args.year,
@@ -167,7 +311,7 @@ def main():
         summary["warnings"].append(
             "Some papers lacked complete citation metadata such as year or DOI."
         )
-    if endpoint == "/api/scan_literature_advanced":
+    if endpoint in ["/api/scan_literature_advanced", "/api/discover_literature"]:
         summary["warnings"].append(
             "Grouped scans improve recall for multi-concept biology queries."
         )

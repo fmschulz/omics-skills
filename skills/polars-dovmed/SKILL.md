@@ -1,286 +1,407 @@
 ---
 name: polars-dovmed
-description: Search 2.4M+ full-text PubMed Central Open Access papers for literature reviews, trend scans, and structured host-microbe literature queries.
+description: Search the PMC Open Access literature with polars-dovmed. Prefer dovmed create-patterns to build structured JSON queries, then use the hosted API when an API key is available or fall back to local dovmed scan over parquet files.
 user-invocable: true
 ---
 
 # polars-dovmed
 
-Search across 2.4M+ PMC Open Access papers for literature discovery and extraction tasks.
+Search the PubMed Central Open Access subset with `polars-dovmed`.
+
+The preferred workflow is always:
+1. use the vendored `create_patterns.py` helper to mirror upstream `dovmed create-patterns` and turn the research question into structured query JSON
+2. inspect and refine the generated JSON
+3. run structured discovery first
+4. fetch paper details for candidate PMC IDs
+5. use structured advanced scans only for final refinement when needed
+
+Search execution has two modes:
+- Preferred when available: hosted API over the formatted parquet database
+- Fallback: local `dovmed scan` over local parquet files
+
+Do not skip the structured-query generation step unless the user explicitly supplies a ready query JSON file and asks to use it as-is.
+
+For every search prompt, create a dedicated run directory and save:
+- the original prompt text
+- the generated query JSON
+- the exact LLM request payload used to generate the query JSON
+- the exact payload submitted to the API or local scan
+- the raw results returned
+- any curated summary derived from those results
+- if discovery fallback is used, save separate discovery payload and result artifacts
 
 ## Instructions
 
-1. Load the API key from a secure location.
-2. Pick the endpoint based on query shape:
-   - Use `/api/search_literature` for one concept, a quoted phrase, or a flat synonym query.
-   - Use `/api/scan_literature_advanced` when you need precise multi-concept logic such as host + symbiont, organism + pathway, or explicit concept grouping.
-   - Use `/api/get_paper_details` once you have candidate PMC IDs.
-3. Start with exact taxa or core terms, then broaden with explicit `OR` synonyms.
-4. Inspect the first 5-10 returned titles before trusting the result set.
-5. If the user needs a specific recent year or complete citation fields, verify missing metadata in PubMed or PMC before finalizing the answer.
+1. Decide execution mode up front.
+   - Check API availability first.
+   - If `POLARS_DOVMED_API_KEY` is available in the environment, in the configured polars-dovmed env file, or the user provides an API key, use the hosted API.
+   - Only fall back to local `dovmed` CLI plus local parquet files if API mode is unavailable.
+2. Start by generating a structured query JSON with `dovmed create-patterns`.
+   - Treat this as the default and preferred way of searching.
+   - This step creates the valid JSON format for pattern search.
+   - In this skill, use `python skills/polars-dovmed/scripts/create_patterns.py ...` because it vendors the upstream `create-patterns` behavior directly into the skill directory.
+   - The helper auto-loads `~/.config/polars-dovmed/.env` if present.
+   - If the user already gave a query JSON, inspect it before use.
+3. Create a dedicated run directory before searching.
+   - Use a slug based on the prompt or topic.
+   - Save the original prompt text there as `prompt.txt`.
+   - Save the generated or supplied query JSON there.
+4. Review the generated JSON before searching.
+   - Check that concept groups match the biological question.
+   - Remove or tighten noisy groups.
+   - Add `disqualifying_terms` if obvious acronym or taxonomy collisions exist.
+   - Be especially careful with short isolate names or generic tokens. Tighten them with whole-word boundaries, replace them with fuller names, or remove them if they introduce obvious ambiguity.
+5. Run the search.
+   - API mode: read the query JSON and send its contents in the JSON request body under `primary_queries`. Do not upload the file itself.
+   - Local mode: run `dovmed scan` against the local parquet files using the JSON query file.
+   - Save the exact submitted payload in the run directory before sending the request.
+   - Save the raw returned results in the run directory immediately after the search completes.
+   - Default structured API path:
+     - `discover_literature` or `scan_literature_advanced(mode="discovery")`
+     - `get_paper_details(pmc_ids=[...])`
+     - `scan_literature_advanced(mode="advanced")` only for final refinement
+   - If advanced refinement is too slow or too noisy, return to discovery-plus-details rather than forcing repeated heavy scans.
+   - Save discovery artifacts separately rather than overwriting the structured advanced artifacts.
+6. Inspect the first results before trusting the full set.
+   - For targeted questions, review the first 5-10 titles.
+   - If results are noisy, refine the JSON and rerun instead of widening free-text queries.
+7. If the user needs citation-quality output, verify missing metadata in PubMed or PMC before finalizing.
+
+## Preferred Workflow
+
+### Step 1: Generate Query JSON
+
+Always start here unless the user already provided a query JSON file.
+
+```bash
+python skills/polars-dovmed/scripts/create_patterns.py \
+  --input-text "native hosts of Klosneuviruses" \
+  --output-file queries/klosneuvirus_hosts.json \
+  --save-payload runs/klosneuvirinae-hosts/llm_payload.json \
+  --save-raw-response runs/klosneuvirinae-hosts/llm_response.txt
+```
+
+This helper mirrors the upstream `dovmed create-patterns` step and uses the prompt template shipped with this skill:
+- `skills/polars-dovmed/scripts/create_patterns.py`
+- `skills/polars-dovmed/prompts/pattern_groups_query.txt`
+
+### Step 2: Inspect And Refine
+
+The generated JSON is the main search artifact. Review it before running the search.
+
+Expected structure:
+
+```json
+{
+  "concept_group_1": [
+    ["pattern_1"],
+    ["pattern_2"]
+  ],
+  "concept_group_2": [
+    ["pattern_a", "pattern_b"]
+  ],
+  "disqualifying_terms": [
+    ["term_to_exclude"]
+  ]
+}
+```
+
+Interpretation:
+- outer keys are concept groups
+- each inner list is a grouped pattern set
+- use `disqualifying_terms` to suppress known false positives
+
+### Step 2.5: Create A Run Directory
+
+Create a directory for each prompt, for example:
+
+```bash
+mkdir -p runs/klosneuvirinae-hosts
+printf '%s\n' "find papers that describe hosts of Klosneuvirinae" > runs/klosneuvirinae-hosts/prompt.txt
+cp queries/klosneuvirus_hosts.json runs/klosneuvirinae-hosts/query.json
+```
+
+This is mandatory. Every run should preserve the input prompt, structured query, submitted payload, raw results, and ideally the raw LLM response used to create the query JSON.
+
+### Step 3A: Search With Hosted API
+
+Use this mode when `POLARS_DOVMED_API_KEY` is available or provided by the user.
+
+This repository includes `scripts/query_literature.py` as a convenience wrapper for the hosted parquet-backed API.
+
+Recommended API workflow:
+1. generate query JSON with `python skills/polars-dovmed/scripts/create_patterns.py ...`
+2. inspect the JSON
+3. run `POST /api/discover_literature` or `POST /api/scan_literature_advanced` with `mode="discovery"`
+4. inspect top hits and collect candidate `pmc_id` values
+5. run `POST /api/get_paper_details` with `pmc_ids`
+6. if needed, run `POST /api/scan_literature_advanced` with `mode="advanced"` for final structured refinement
+
+Use discovery mode first for candidate retrieval. Use advanced mode only for final structured refinement.
+
+The query JSON is the source of truth for API mode.
+- In local mode, the JSON file is passed directly to `dovmed scan`.
+- In API mode, the agent should read the JSON file and serialize its contents into the API request body as `primary_queries`.
+- Do not bypass the structured-query generation step and jump straight to improvised free-text queries unless the user explicitly asks for a quick exploratory search.
+- Save the exact API payload to the run directory as a JSON file before submitting it.
+- Save the raw API response to the run directory as a JSON file after the request returns.
+- If discovery fallback is used, save it separately as `payload_discovery.json` and `results_discovery.json`.
+- The helper auto-loads `~/.config/polars-dovmed/.env`, so a configured `POLARS_DOVMED_API_KEY` does not need manual `source` in typical agent runs.
+- For hard cases, prefer this sequence:
+  - structured query
+  - discovery mode
+  - paper-details lookup
+  - advanced scan only if needed
+  - curated PMC verification
+
+### Step 3B: Search Locally With dovmed scan
+
+Use this mode when no hosted API key is available.
+
+```bash
+dovmed scan \
+  --parquet-pattern "data/pubmed_central/parquet_files/*/*.parquet" \
+  --queries-file queries/klosneuvirus_hosts.json \
+  --extract-matches primary \
+  --add-group-counts primary \
+  --output-path results/klosneuvirus_hosts \
+  --verbose
+```
+
+For more specific searches, use secondary queries:
+
+```bash
+dovmed scan \
+  --parquet-pattern "data/pubmed_central/parquet_files/*/*.parquet" \
+  --queries-file queries/primary.json \
+  --secondary-queries-file queries/secondary.json \
+  --extract-matches both \
+  --add-group-counts both \
+  --output-path results/literature_scan \
+  --verbose
+```
 
 ## Quick Reference
 
 | Task | Action |
 |------|--------|
-| API key | `POLARS_DOVMED_API_KEY` in env or `~/.config/polars-dovmed/.env` |
-| Base URL | `https://api.newlineages.com` |
-| Search endpoint | `POST /api/search_literature` |
-| Paper details endpoint | `POST /api/get_paper_details` |
-| Advanced endpoint | `POST /api/scan_literature_advanced` |
-| Helper script | `scripts/query_literature.py` for grouped scans and compact output |
-| Rate limit | 100 queries/hour |
+| Preferred first step | `dovmed create-patterns` |
+| Vendored helper for agents | `python skills/polars-dovmed/scripts/create_patterns.py ...` |
+| Search artifact | Query JSON file |
+| Preferred execution when key exists | Hosted API |
+| Fallback execution | `dovmed scan` on local parquet files |
+| Execution-order rule | Check API first, local fallback second |
+| Local dataset requirement | PMC OA parquet files |
+| Helper wrapper in this repo | `skills/polars-dovmed/scripts/query_literature.py` |
+| Preferred candidate endpoint | `POST /api/discover_literature` |
+| Structured API endpoint | `POST /api/scan_literature_advanced` |
+| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` |
+| Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
+| Recommended extra artifacts | `llm_payload.json`, `llm_response.txt`, refined query variants, `payload_discovery.json`, `results_discovery.json` |
 
 ## Input Requirements
 
-- API key (`POLARS_DOVMED_API_KEY`)
-- Search query or grouped concepts
-- Optional local year target for post-filtering and verification
-- Optional `fast_mode`:
-  - `false` (default): full-text search (`title`, `abstract_text`, `abstract`, `full_text`)
-  - `true`: abstract-only search (`abstract_text`, `abstract`)
-- Optional `match_mode` on `/api/search_literature`:
-  - `literal` (default): case-insensitive literal matching with whole-word behavior for single terms and simple plural expansion
-  - `substring`: case-insensitive partial matching
-  - `regex`: raw regex matching on the simple endpoint; use sparingly
-- Do not assume endpoint-level year or journal filters exist unless you have verified the current API syntax.
-  - If the user asks for a specific year, treat it as a post-filtering and citation-verification step.
-- On the simple endpoint, `total_found` may be approximate unless the service is configured to compute exact counts.
-  - Treat returned titles as the authoritative signal unless `total_found_is_exact` is `true`.
+- Research question or topic description
+- Either:
+  - hosted API key via `POLARS_DOVMED_API_KEY`, or
+  - local parquet files plus local `dovmed` installation
+- Optional existing query JSON
+- Optional year or metadata requirements for post-search verification
+- A writable directory for run artifacts
 
 ## Search Semantics
 
-- Plain multi-word queries are literal `AND` queries.
-  - `"mirusvirus host"` means papers must match both `mirusvirus` and `host`.
-  - This is often too strict for natural-language searches.
-- The simple endpoint defaults to `match_mode="literal"`.
-  - This is usually the safest choice for scientific names and exact terms.
-- Quoted phrases are preserved on the simple endpoint.
-  - `"\"giant virus\" OR mimivirus"` preserves the phrase `giant virus` and broadens with `mimivirus`.
-- Single-word literal terms use whole-word matching on the simple endpoint.
-  - This reduces substring noise such as matching `virus` inside unrelated longer tokens.
-- Literal mode also applies simple plural expansion for single-word terms.
-  - A query term like `virus` can match both `virus` and `viruses`.
-- Use `match_mode="substring"` only when partial matching is intentional.
-  - Example: catching surface forms that differ in ways not covered by the simple plural expansion.
-- Use `match_mode="regex"` only when you really need regex behavior on the simple endpoint.
-  - Otherwise prefer `literal` or move to `/api/scan_literature_advanced`.
-- `OR` must be written explicitly to broaden synonyms or alternate taxonomy names.
-  - `"Mirusviricota OR mirusvirus"`
-  - `"bacteriophage OR phage"`
-  - `"\"giant virus\" OR giant viruses OR Nucleocytoviricota"`
-- Do not rely on ambiguous flat mixed boolean intent.
-  - If grouping matters, switch to `/api/scan_literature_advanced` instead of assuming how `"A OR B C"` will be parsed.
-- Stop words such as `the`, `a`, `an`, `in`, `of`, `for`, `and`, `to`, `from` are removed.
-- Single high-frequency terms can be noisy.
-  - A query like `"CRISPR"` may return low-precision results.
-- Do not assume the endpoint understands natural-language intent.
-  - Bad: `"papers on hosts of mirusviricota"`
-  - Better: `"Mirusviricota OR mirusvirus"`
-  - Then fetch details for the returned papers and inspect host text directly.
+- Prefer structured JSON over ad hoc natural-language search strings.
+- `create_patterns.py` is used to generate the valid structured JSON format for search and mirrors upstream `dovmed create-patterns`.
+- The helper auto-loads `~/.config/polars-dovmed/.env` so configured API keys are picked up without extra shell setup.
+- Refine concept groups instead of repeatedly retrying loose text searches.
+- Use narrow biological names first, then expand with synonyms or alternate taxonomy names.
+- Use `disqualifying_terms` when collisions are predictable.
+- Avoid short ambiguous names unless they are tightly bounded and clearly necessary.
+- For complex questions, prefer multiple concept groups instead of one long flat phrase.
+- If grouped concepts matter, preserve that grouping in both API payloads and local query JSON.
 
-## Query Workflow
+## Local Workflow Notes
 
-1. Start with the narrowest exact concept that should exist in the literature.
-   - Example: `"Holospora OR Caedibacter"`
-2. Broaden with explicit synonym queries when taxonomy or naming drift is likely.
-   - Example: `"Mirusviricota OR mirusvirus OR \"giant virus\""`
-3. If recall still looks too low, consider whether `match_mode="substring"` is justified before switching endpoints.
-   - Do this only when partial matching is intentional and you have checked the first titles for noise.
-4. If the request combines multiple biological concepts or needs explicit boolean grouping, switch early to `/api/scan_literature_advanced`.
-   - Use grouped queries for cases like host + symbiont, organism + pathway, or organism + time window.
-5. Use `/api/get_paper_details` on candidate PMC IDs to inspect abstract/full text and collect citation metadata.
-6. If metadata fields such as `year`, `publication_date`, or `doi` are blank, verify the citation in PubMed or PMC before final output.
-7. If a recent paper is missing from the API but exists in PubMed or PMC, report the gap rather than assuming the literature is absent.
-8. If the simple endpoint reports `total_found_is_exact: false`, do not over-interpret `total_found`.
+- Upstream `polars-dovmed` is built around local parquet scanning.
+- Local search requires:
+  - `dovmed download`
+  - `dovmed build-parquet`
+  - `dovmed create-patterns`
+  - `dovmed scan`
+- If the local corpus is not available, do not pretend the local workflow is runnable.
+  - Either switch to hosted API mode or state that local parquet files are missing.
+- Save the local scan inputs and raw outputs into the run directory as well.
 
-## Author Name Queries
+Agent note:
+- In this repository, do not assume `dovmed` is installed.
+- Use `skills/polars-dovmed/scripts/create_patterns.py` to create the structured JSON if the CLI is unavailable.
+- That helper is included specifically so agents can still follow the upstream workflow.
 
-- Author-name searches are recall-sensitive because the same author may appear as a full name, an initialed name, or an initialed name with a middle initial.
-- For named-author requests, try explicit `OR` variants instead of trusting one spelling.
-  - Example: `"Peter Nugent" OR "P. Nugent"`
-  - If recall still looks low: `"Peter E. Nugent" OR "P. E. Nugent"`
-- If the middle initial is unknown, start with:
-  - full first name + surname
-  - first initial + surname
-  - Then inspect returned author strings or external citation metadata for a middle initial and rerun with that variant.
-- Treat full-text author-name matching as discovery, not definitive authorship proof.
-- If the user explicitly asks for arXiv author output, use arXiv author metadata directly instead of this PMC-focused API.
+## API Workflow Notes
 
-## Synonym Query Examples
+- The hosted API is a convenience layer over the formatted parquet database.
+- Prefer it when a key is available because it avoids rebuilding or hosting the local corpus.
+- Check for API availability before looking for a local checkout or local parquet setup.
+- Still begin with the structured-query generation step and query JSON.
+- The query JSON is not just a note or scratch artifact.
+  - It defines the structured search intent.
+  - The API request should be built from that JSON.
+  - For structured searches, send it as `primary_queries` to `POST /api/scan_literature_advanced`.
+- Authentication is via `X-API-Key`.
+- Structured query files are not uploaded to the API.
+- `POST /api/get_paper_details` expects `pmc_ids`, not `paper_ids`.
+- For debugging or triage, include `add_group_counts: "primary"` and inspect returned `_group_*_count` fields.
+- Discovery mode is the fast candidate-first path and should be the default for agents.
+- Advanced grouped scans may still be slow and are for final structured refinement, not first-pass discovery.
+- If an advanced scan stalls, times out, or returns diffuse results, go back to discovery mode and paper-details lookup.
+- Do not jump directly to improvised free-text queries unless the user explicitly wants a quick exploratory lookup.
 
-- `"Mirusviricota OR mirusvirus"`
-- `"bacteriophage OR phage"`
-- `"Nucleocytoviricota OR \"giant virus\" OR giant viruses"`
-- `"host range OR host specificity"`
-- `"protist OR microeukaryote"`
+## Confirmed API Contract
 
-## Recent-Paper And Metadata Caveats
+### Structured Advanced Search
 
-- Recent papers may be partially indexed or missing entirely from this API even when they are already in PubMed or PMC.
-- `get_paper_details` can return blank `year`, `publication_date`, `doi`, or `authors` fields for valid papers.
-- The simple endpoint can return approximate `total_found` counts when exact counting is disabled for performance.
-- When the user asks for "2025 papers", "latest papers", or complete citations:
-  - treat API results as discovery, not final authority
-  - verify dates and DOI in PubMed or PMC if metadata is incomplete
-  - say explicitly when the API appears to have indexing gaps
+Use:
+
+```json
+{
+  "primary_queries": {
+    "concept_a": [["pattern1"], ["pattern2"]],
+    "concept_b": [["pattern3"]]
+  },
+  "search_columns": ["title", "abstract_text", "full_text"],
+  "extract_matches": "none",
+  "add_group_counts": "primary",
+  "max_results": 5
+}
+```
+
+Send this to:
+- `POST /api/scan_literature_advanced`
+- header: `X-API-Key: ...`
+
+### Structured Discovery Search
+
+Use the same structured request body but set:
+
+```json
+{
+  "mode": "discovery"
+}
+```
+
+Send this to either:
+- `POST /api/discover_literature`
+- or `POST /api/scan_literature_advanced`
+
+### Paper Details
+
+Use:
+
+```json
+{
+  "pmc_ids": ["PMC1234567"]
+}
+```
+
+Send this to:
+- `POST /api/get_paper_details`
+
+Do not use `paper_ids`.
 
 ## Output
 
-- Paper lists with metadata (PMC ID, DOI, title, year)
-- Matched text snippets
-- Extracted entities (genes, accessions, terms)
-- Mode metadata (`search_mode`, `searched_columns`)
-- Count metadata (`total_found_is_exact`, when present)
-- Warnings about missing metadata or likely indexing gaps when relevant
+- Curated paper lists with titles and identifiers
+- Match snippets or extracted terms when requested
+- Query JSON files used for the search
+- Saved run artifacts for reproducibility
+- Notes on noisy concepts, exclusions, and refinements
+- Warnings about incomplete citation metadata or likely indexing gaps
 
 ## Quality Gates
 
-- [ ] API key loaded successfully
-- [ ] Chosen endpoint matches the query shape
-- [ ] First 5-10 returned titles match expected scope
-- [ ] If `total_found_is_exact` is false or missing, answer does not overstate the count
-- [ ] Extracted citation fields checked for missing `year`, `publication_date`, `doi`, or `authors`
-- [ ] Recent-year requests verified in PubMed or PMC if API metadata is incomplete
-- [ ] Final answer calls out indexing gaps or low-confidence matches when present
+- [ ] Execution mode chosen correctly: API when key exists, local otherwise
+- [ ] API availability checked before local fallback assumptions
+- [ ] Structured query file created first with `create_patterns.py` or an explicit user-supplied JSON
+- [ ] Dedicated run directory created for the prompt
+- [ ] `prompt.txt`, `query.json`, `payload.json`, raw results, and ideally `llm_payload.json` plus `llm_response.txt` saved
+- [ ] Query JSON inspected before search
+- [ ] First 5-10 results reviewed before trusting the result set
+- [ ] Noisy concept groups refined instead of widening free-text queries blindly
+- [ ] Discovery mode used before paper-details lookup and advanced refinement
+- [ ] Discovery fallback artifacts saved separately if used
+- [ ] Missing citation metadata verified in PubMed or PMC when needed
+- [ ] Final answer states whether results came from hosted API or local parquet scan
 
 ## Examples
 
-### Example 1: Flat synonym or phrase search (Python)
-
-```python
-import httpx
-
-headers = {"X-API-Key": "YOUR_KEY"}
-resp = httpx.post(
-    "https://api.newlineages.com/api/search_literature",
-    headers=headers,
-    json={
-        "query": "\"giant virus\" OR giant viruses OR Nucleocytoviricota",
-        "max_results": 10,
-        "extract_matches": False,
-        "fast_mode": False,
-        "match_mode": "literal",
-    },
-)
-print(resp.json())
-```
-
-### Example 2: Grouped host-microbe scan with the helper script
-
-Use the bundled script when the query has multiple concept groups and you want compact output.
+### Example 1: Preferred API-backed workflow
 
 ```bash
-POLARS_DOVMED_API_KEY=YOUR_KEY \
+python skills/polars-dovmed/scripts/create_patterns.py \
+  --input-text "native hosts of Klosneuviruses" \
+  --output-file runs/klosneuvirinae-hosts/query.json \
+  --save-payload runs/klosneuvirinae-hosts/llm_payload.json \
+  --save-raw-response runs/klosneuvirinae-hosts/llm_response.txt
+
 python skills/polars-dovmed/scripts/query_literature.py \
-  --group host_terms=ciliate,ciliates,Ciliophora,Paramecium,Loxodes \
-  --group symbiont_terms=endosymbiont,symbionts,intracellular,Holosporales,Rickettsiales,Legionellales \
-  --max-results 25
+  --queries-file runs/klosneuvirinae-hosts/query.json \
+  --mode discovery \
+  --extract-matches none \
+  --add-group-counts primary \
+  --max-results 25 \
+  --save-payload runs/klosneuvirinae-hosts/payload_discovery.json \
+  --save-response runs/klosneuvirinae-hosts/results_discovery.json
+
+python skills/polars-dovmed/scripts/query_literature.py \
+  --details PMC6912108 PMC8490762 PMC5871332 \
+  --save-payload runs/klosneuvirinae-hosts/payload_details.json \
+  --save-response runs/klosneuvirinae-hosts/results_details.json
 ```
 
-### Example 3: Advanced structured scan (Python)
+### Example 2: Preferred local workflow
 
-```python
-import httpx
+```bash
+python skills/polars-dovmed/scripts/create_patterns.py \
+  --input-text "native hosts of Klosneuviruses" \
+  --output-file runs/klosneuvirinae-hosts/query.json \
+  --save-payload runs/klosneuvirinae-hosts/llm_payload.json \
+  --save-raw-response runs/klosneuvirinae-hosts/llm_response.txt
 
-headers = {"X-API-Key": "YOUR_KEY"}
-resp = httpx.post(
-    "https://api.newlineages.com/api/scan_literature_advanced",
-    headers=headers,
-    json={
-        "primary_queries": {
-            "host_terms": [["ciliate"], ["ciliates"], ["Ciliophora"], ["Paramecium"], ["Loxodes"]],
-            "symbiont_terms": [["endosymbiont"], ["symbionts"], ["intracellular"], ["Holosporales"], ["Rickettsiales"], ["Legionellales"]],
-        },
-        "search_columns": ["title", "abstract_text", "full_text"],
-        "extract_matches": "primary",
-        "add_group_counts": "primary",
-        "max_results": 25,
-    },
-    timeout=600.0,
-)
-print(resp.json())
+dovmed scan \
+  --parquet-pattern "data/pubmed_central/parquet_files/*/*.parquet" \
+  --queries-file runs/klosneuvirinae-hosts/query.json \
+  --extract-matches primary \
+  --add-group-counts primary \
+  --output-path results/klosneuvirus_hosts \
+  --verbose
 ```
 
-Use this endpoint when:
-- you need more than one concept group
-- the flat search endpoint returns `0` or low-precision results
-- the user is asking about host-associated bacteria, symbionts, pathogens, or recent organism-specific literature
+### Example 3: Use an existing query JSON as-is
 
-### Example 4: Fetch details for candidate papers
+If the user provides a ready JSON file and asks not to regenerate it:
 
-Use `/api/get_paper_details` after a broad search has identified relevant PMC IDs.
-
-```python
-import httpx
-
-headers = {"X-API-Key": "YOUR_KEY"}
-resp = httpx.post(
-    "https://api.newlineages.com/api/get_paper_details",
-    headers=headers,
-    json={"pmc_ids": ["PMC10827195", "PMC11465185"]},
-    timeout=120.0,
-)
-print(resp.json())
+```bash
+dovmed scan \
+  --parquet-pattern "data/pubmed_central/parquet_files/*/*.parquet" \
+  --queries-file queries/user_supplied.json \
+  --output-path results/user_query \
+  --verbose
 ```
-
-Use this endpoint when:
-- you already have candidate PMC IDs
-- you need abstract/full-text fields for manual review
-- you want DOI, journal, and publication metadata without rerunning broader searches
-
-## Timeout And Relevance Guidance
-
-- Simple `/api/search_literature` queries usually fit in `60-120s`.
-- Broad or high-frequency terms may take longer; use `120s` unless you know the query is tiny.
-- `/api/scan_literature_advanced` can take minutes; use `600s` for non-trivial scans.
-- For multi-concept biology searches, prefer the advanced endpoint instead of repeatedly retrying brittle flat queries.
-- If the API is healthy but results look wrong:
-  - check whether you accidentally overconstrained the query with implicit `AND`
-  - check whether a quoted phrase or whole-word literal would be better than a loose flat query
-  - retry with `OR` across synonyms or taxonomy variants
-  - switch to grouped `primary_queries` instead of adding more words to a flat query
-  - inspect candidate titles before trusting the set
-  - treat `0` hits from a long natural-language phrase as a query-construction problem before assuming the literature is absent
-  - treat missing recent papers as a possible indexing problem and verify externally
 
 ## Troubleshooting
 
-**Issue**: 401 Unauthorized
-**Solution**: Verify `POLARS_DOVMED_API_KEY` and reload the environment.
+**Issue**: Hosted API key is missing  
+**Solution**: Fall back to local `dovmed scan` if local parquet files exist.
 
-**Issue**: 429 Rate limited
-**Solution**: Wait for quota reset or reduce request frequency.
+**Issue**: Local parquet files are missing  
+**Solution**: Use hosted API mode if a key is available, otherwise state that the local corpus must be prepared first.
 
-**Issue**: Fast mode returns too few results
-**Solution**: Retry with `fast_mode=false` to include full text.
+**Issue**: `create-patterns` generated noisy concepts  
+**Solution**: Edit the JSON manually, tighten taxonomy names, and add `disqualifying_terms`.
 
-**Issue**: Literal mode is too strict and misses expected variants
-**Solution**: First add explicit synonyms or quoted phrases. If partial matching is really intended, retry with `match_mode="substring"` and inspect the first titles for new noise.
+**Issue**: Search returns too many generic hits  
+**Solution**: Refine the query JSON rather than broadening the free-text query.
 
-**Issue**: Substring mode is noisy
-**Solution**: Go back to `match_mode="literal"` or move the query to `/api/scan_literature_advanced` with explicit grouped concepts.
-
-**Issue**: Multi-word query returns `0` but related papers should exist
-**Solution**: Remember plain space-separated terms are `AND`. Retry with explicit `OR` synonyms, then switch to `/api/scan_literature_advanced` for grouped concepts.
-
-**Issue**: `total_found` equals `returned` on the simple endpoint
-**Solution**: Treat the returned set as authoritative and check `total_found_is_exact`. If exact counting matters, do not overstate the total unless the response marks it exact.
-
-**Issue**: Need host/pathway/accession extraction across several concept groups
-**Solution**: Use `/api/scan_literature_advanced` instead of forcing everything into one `query` string.
-
-**Issue**: Results look topically wrong even though the API returned hits
-**Solution**: Inspect the first returned titles and tighten the query with quoted phrases, grouped concepts, or explicit synonym control.
-
-**Issue**: Author search looks incomplete
-**Solution**: Retry with explicit name variants such as `"Peter Nugent" OR "P. Nugent"` and, if needed, `"Peter E. Nugent" OR "P. E. Nugent"`. If the request is specifically for arXiv, switch to arXiv author metadata instead of relying on PMC full text.
-
-**Issue**: Flat query grouping is ambiguous
-**Solution**: Do not rely on implicit boolean parsing for complex intent. Move the query to `/api/scan_literature_advanced` and spell out the concept groups.
-
-**Issue**: A recent paper appears in PubMed or PMC but not in this API
-**Solution**: Treat this as an indexing gap, cite the external source, and mention that the API missed a relevant paper.
-
-**Issue**: `get_paper_details` returns blank `year`, `publication_date`, or `doi`
-**Solution**: Verify the citation in PubMed or PMC before giving a year-specific or publication-ready answer.
+**Issue**: Citation fields are incomplete  
+**Solution**: Verify in PubMed or PMC before final output.
