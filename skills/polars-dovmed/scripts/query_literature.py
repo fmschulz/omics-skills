@@ -47,6 +47,14 @@ GENERIC_SUPPORT_TERMS = {
     "associations",
     "range",
 }
+SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?;:])\s+|\n+")
+MAX_SENTENCE_CONTEXT_CHARS = 450
+WINDOW_WORDS = 80
+WINDOW_STRIDE = 40
+FULLTEXT_CONTEXT_RADIUS = 260
+MAX_TERM_SPANS_PER_TERM = 4
+MAX_FULLTEXT_CONTEXTS = 36
+CONTEXT_SNIPPET_CHARS = 240
 
 
 def load_env_file(path):
@@ -222,6 +230,12 @@ def compact_paper(paper):
         "support_concept_coverage": triage.get("support_concept_coverage"),
         "support_specificity_score": triage.get("support_specificity_score"),
         "specific_support_group_hits": triage.get("specific_support_group_hits"),
+        "best_local_context_score": triage.get("best_local_context_score"),
+        "best_local_concept_coverage": triage.get("best_local_concept_coverage"),
+        "local_joint_contexts": triage.get("local_joint_contexts"),
+        "anchor_support_contexts": triage.get("anchor_support_contexts"),
+        "best_local_context_source": triage.get("best_local_context_source"),
+        "best_local_context_snippet": triage.get("best_local_context_snippet"),
         "matched_concepts": triage.get("matched_concepts"),
     }
 
@@ -465,6 +479,17 @@ def field_texts(paper):
     }
 
 
+def normalize_space(text):
+    return re.sub(r"\s+", " ", text or "").strip()
+
+
+def truncate_text(text, limit=CONTEXT_SNIPPET_CHARS):
+    normalized = normalize_space(text)
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 3].rstrip() + "..."
+
+
 def is_support_concept(concept_name):
     lower = concept_name.lower()
     return any(token in lower for token in SUPPORT_CONCEPT_TOKENS)
@@ -490,6 +515,142 @@ def term_specificity(term):
 
 def group_specificity(group):
     return max((term_specificity(term) for term in group if term), default=0.0)
+
+
+def split_into_word_windows(text, max_words=WINDOW_WORDS, stride=WINDOW_STRIDE):
+    words = normalize_space(text).split()
+    if not words:
+        return []
+    if len(words) <= max_words:
+        return [" ".join(words)]
+    windows = []
+    for start in range(0, len(words), stride):
+        chunk = words[start : start + max_words]
+        if not chunk:
+            break
+        windows.append(" ".join(chunk))
+        if start + max_words >= len(words):
+            break
+    return windows
+
+
+def split_into_sentence_contexts(text):
+    normalized = normalize_space(text)
+    if not normalized:
+        return []
+    pieces = [piece.strip() for piece in SENTENCE_SPLIT_RE.split(normalized) if piece.strip()]
+    contexts = []
+    for piece in pieces:
+        if len(piece) <= MAX_SENTENCE_CONTEXT_CHARS:
+            contexts.append(piece)
+        else:
+            contexts.extend(split_into_word_windows(piece))
+    return contexts
+
+
+def find_pattern_spans(pattern, text, max_hits=MAX_TERM_SPANS_PER_TERM):
+    if not text:
+        return []
+    cleaned = normalize_pattern(pattern)
+    try:
+        regex = re.compile(cleaned, flags=re.IGNORECASE)
+    except re.error:
+        regex = re.compile(re.escape(cleaned), flags=re.IGNORECASE)
+    spans = []
+    for match in regex.finditer(text):
+        spans.append(match.span())
+        if len(spans) >= max_hits:
+            break
+    return spans
+
+
+def merge_windows(windows):
+    if not windows:
+        return []
+    merged = []
+    for start, end in sorted(windows):
+        if not merged or start > merged[-1][1] + 40:
+            merged.append([start, end])
+        else:
+            merged[-1][1] = max(merged[-1][1], end)
+    return [(start, end) for start, end in merged]
+
+
+def build_local_contexts(paper, primary_queries):
+    texts = field_texts(paper)
+    contexts = []
+    seen = set()
+
+    def add_context(source, text):
+        normalized = normalize_space(text)
+        if not normalized:
+            return
+        key = (source, normalized)
+        if key in seen:
+            return
+        seen.add(key)
+        contexts.append({"source": source, "text": normalized})
+
+    if texts["title"]:
+        add_context("title", texts["title"])
+    for sentence in split_into_sentence_contexts(texts["abstract"]):
+        add_context("abstract", sentence)
+
+    full_text = texts["full_text"]
+    if full_text:
+        windows = []
+        for concept, groups in primary_queries.items():
+            if concept == "disqualifying_terms":
+                continue
+            for group in groups:
+                for term in group:
+                    for start, end in find_pattern_spans(term, full_text):
+                        windows.append(
+                            (
+                                max(0, start - FULLTEXT_CONTEXT_RADIUS),
+                                min(len(full_text), end + FULLTEXT_CONTEXT_RADIUS),
+                            )
+                        )
+        for start, end in merge_windows(windows)[:MAX_FULLTEXT_CONTEXTS]:
+            for sentence in split_into_sentence_contexts(full_text[start:end]):
+                add_context("full_text", sentence)
+    return contexts
+
+
+def analyze_context_against_queries(text, primary_queries):
+    matched_group_counts = {}
+    matched_group_scores = {}
+    specific_support_group_hits = 0
+    support_specificity_score = 0.0
+    for concept, groups in primary_queries.items():
+        if concept == "disqualifying_terms":
+            continue
+        matched_groups = 0
+        matched_score = 0.0
+        for group in groups:
+            terms = [term for term in group if term]
+            if terms and all(pattern_matches_text(term, text) for term in terms):
+                matched_groups += 1
+                specificity = group_specificity(group)
+                matched_score += specificity
+                if is_support_concept(concept) and specificity >= 2.0:
+                    specific_support_group_hits += 1
+        matched_group_counts[concept] = matched_groups
+        matched_group_scores[concept] = round(matched_score, 3)
+        if is_support_concept(concept):
+            support_specificity_score += matched_score
+    matched_concepts = [concept for concept, count in matched_group_counts.items() if count > 0]
+    support_concepts = [concept for concept in matched_concepts if is_support_concept(concept)]
+    return {
+        "matched_group_counts": matched_group_counts,
+        "matched_group_scores": matched_group_scores,
+        "matched_concepts": matched_concepts,
+        "concept_coverage": len(matched_concepts),
+        "support_concept_coverage": len(support_concepts),
+        "support_specificity_score": round(support_specificity_score, 3),
+        "specific_support_group_hits": specific_support_group_hits,
+        "total_group_matches": sum(matched_group_counts.values()),
+    }
 
 
 def analyze_paper_against_queries(paper, primary_queries):
@@ -555,6 +716,70 @@ def analyze_paper_against_queries(paper, primary_queries):
     }
 
 
+def analyze_local_contexts(paper, primary_queries):
+    contexts = build_local_contexts(paper, primary_queries)
+    best = None
+    local_joint_contexts = 0
+    anchor_support_contexts = 0
+
+    for context in contexts:
+        analysis = analyze_context_against_queries(context["text"], primary_queries)
+        if analysis["concept_coverage"] == 0:
+            continue
+        local_score = (
+            analysis["concept_coverage"] * 220
+            + analysis["support_concept_coverage"] * 120
+            + int(analysis["support_specificity_score"] * 130)
+            + analysis["specific_support_group_hits"] * 95
+            + analysis["total_group_matches"] * 18
+        )
+        if analysis["concept_coverage"] >= 2:
+            local_joint_contexts += 1
+            local_score += 120
+        if analysis["support_concept_coverage"] > 0 and analysis["concept_coverage"] > analysis["support_concept_coverage"]:
+            anchor_support_contexts += 1
+            local_score += 110
+        if context["source"] == "title":
+            local_score += 40
+        elif context["source"] == "abstract":
+            local_score += 20
+
+        candidate = {
+            "score": local_score,
+            "source": context["source"],
+            "snippet": truncate_text(context["text"]),
+            **analysis,
+        }
+        if best is None or (
+            candidate["score"],
+            candidate["concept_coverage"],
+            candidate["support_concept_coverage"],
+        ) > (
+            best["score"],
+            best["concept_coverage"],
+            best["support_concept_coverage"],
+        ):
+            best = candidate
+
+    if best is None:
+        return {
+            "best_local_context_score": 0,
+            "best_local_concept_coverage": 0,
+            "best_local_context_source": None,
+            "best_local_context_snippet": None,
+            "local_joint_contexts": 0,
+            "anchor_support_contexts": 0,
+        }
+    return {
+        "best_local_context_score": best["score"],
+        "best_local_concept_coverage": best["concept_coverage"],
+        "best_local_context_source": best["source"],
+        "best_local_context_snippet": best["snippet"],
+        "local_joint_contexts": local_joint_contexts,
+        "anchor_support_contexts": anchor_support_contexts,
+    }
+
+
 def triage_score(paper, analysis):
     discovery_ranking = paper.get("ranking") or {}
     score = (
@@ -567,9 +792,14 @@ def triage_score(paper, analysis):
         + analysis["abstract_support_hits"] * 70
         + analysis["full_text_support_hits"] * 25
         + analysis["total_group_matches"] * 20
+        + analysis["best_local_context_score"] * 2
+        + analysis["local_joint_contexts"] * 90
+        + analysis["anchor_support_contexts"] * 110
     )
     if analysis["support_concept_coverage"] > 0 and analysis["specific_support_group_hits"] == 0:
         score -= 80
+    if analysis["support_concept_coverage"] > 0 and analysis["best_local_concept_coverage"] < 2:
+        score -= 140
     return score
 
 
@@ -582,6 +812,7 @@ def merge_and_rerank_details(discovery_result, details_result, primary_queries):
         pmc_id = paper.get("pmc_id")
         discovery_paper = discovery_by_id.get(pmc_id, {})
         analysis = analyze_paper_against_queries(paper, primary_queries)
+        analysis.update(analyze_local_contexts(paper, primary_queries))
         triaged_paper = dict(paper)
         triaged_paper["ranking"] = discovery_paper.get("ranking") or {}
         triaged_paper["triage"] = {
@@ -592,6 +823,7 @@ def merge_and_rerank_details(discovery_result, details_result, primary_queries):
     triaged.sort(
         key=lambda paper: (
             paper["triage"]["score"],
+            paper["triage"]["best_local_context_score"],
             paper["triage"]["support_concept_coverage"],
             paper["triage"]["concept_coverage"],
             (paper.get("ranking") or {}).get("score") or 0,
