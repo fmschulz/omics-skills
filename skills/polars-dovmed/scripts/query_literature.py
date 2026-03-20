@@ -14,6 +14,39 @@ ASYNC_ENDPOINTS = {
     "/api/search_literature": "search_literature",
     "/api/scan_literature_advanced": "scan_literature_advanced",
 }
+SUPPORT_CONCEPT_TOKENS = (
+    "host",
+    "hosts",
+    "infect",
+    "infection",
+    "interact",
+    "interaction",
+    "symbio",
+    "pathway",
+    "metab",
+    "association",
+    "range",
+)
+GENERIC_SUPPORT_TERMS = {
+    "host",
+    "hosts",
+    "infect",
+    "infects",
+    "infected",
+    "infection",
+    "infections",
+    "amoeba",
+    "amoebae",
+    "protist",
+    "protists",
+    "microeukaryote",
+    "microeukaryotes",
+    "symbiont",
+    "symbionts",
+    "association",
+    "associations",
+    "range",
+}
 
 
 def load_env_file(path):
@@ -73,6 +106,17 @@ def parse_args():
     parser.add_argument("--save-response")
     parser.add_argument("--save-discovery-payload")
     parser.add_argument("--save-discovery-response")
+    parser.add_argument(
+        "--details-rerank-limit",
+        type=int,
+        default=8,
+        help="How many discovery candidates to fetch with get_paper_details for second-pass reranking",
+    )
+    parser.add_argument(
+        "--skip-details-rerank",
+        action="store_true",
+        help="Skip the automatic discovery -> details -> rerank second pass",
+    )
     parser.add_argument(
         "--sync",
         action="store_true",
@@ -154,6 +198,7 @@ def resolve_year(paper):
 
 def compact_paper(paper):
     ranking = paper.get("ranking") or {}
+    triage = paper.get("triage") or {}
     return {
         "pmc_id": paper.get("pmc_id"),
         "pmid": paper.get("pmid"),
@@ -167,6 +212,12 @@ def compact_paper(paper):
         "abstract_signal_hits": ranking.get("abstract_signal_hits"),
         "group_count_total": ranking.get("group_count_total"),
         "total_matches": ranking.get("total_matches"),
+        "triage_score": triage.get("score"),
+        "concept_coverage": triage.get("concept_coverage"),
+        "support_concept_coverage": triage.get("support_concept_coverage"),
+        "support_specificity_score": triage.get("support_specificity_score"),
+        "specific_support_group_hits": triage.get("specific_support_group_hits"),
+        "matched_concepts": triage.get("matched_concepts"),
     }
 
 
@@ -215,6 +266,14 @@ def maybe_save_json(path, payload):
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def companion_json_path(path, suffix):
+    if not path:
+        return None
+    output = Path(path)
+    ext = output.suffix or ".json"
+    return str(output.with_name(f"{output.stem}_{suffix}{ext}"))
 
 
 def make_request(base_url, endpoint, api_key, *, method="GET", payload=None):
@@ -378,6 +437,178 @@ def has_incomplete_citation(papers):
     return False
 
 
+def normalize_pattern(pattern):
+    cleaned = pattern.replace("(?i)", "")
+    return cleaned.replace("\\b", r"\b")
+
+
+def pattern_matches_text(pattern, text):
+    if not text:
+        return False
+    cleaned = normalize_pattern(pattern)
+    try:
+        return re.search(cleaned, text, flags=re.IGNORECASE) is not None
+    except re.error:
+        return re.search(re.escape(cleaned), text, flags=re.IGNORECASE) is not None
+
+
+def field_texts(paper):
+    return {
+        "title": paper.get("title") or "",
+        "abstract": paper.get("abstract_text") or paper.get("abstract") or "",
+        "full_text": paper.get("full_text") or "",
+    }
+
+
+def is_support_concept(concept_name):
+    lower = concept_name.lower()
+    return any(token in lower for token in SUPPORT_CONCEPT_TOKENS)
+
+
+def term_specificity(term):
+    cleaned = normalize_pattern(term).strip().strip("\"'").lower()
+    if not cleaned:
+        return 0.0
+    score = 1.0
+    if cleaned in GENERIC_SUPPORT_TERMS:
+        score -= 0.6
+    if " " in cleaned:
+        score += 2.0
+    if "-" in cleaned or "/" in cleaned:
+        score += 0.5
+    if len(cleaned) >= 10:
+        score += 0.8
+    if any(char.isdigit() for char in cleaned):
+        score += 0.5
+    return max(score, 0.2)
+
+
+def group_specificity(group):
+    return max((term_specificity(term) for term in group if term), default=0.0)
+
+
+def analyze_paper_against_queries(paper, primary_queries):
+    texts = field_texts(paper)
+    combined_text = " ".join(value for value in texts.values() if value)
+    matched_group_counts = {}
+    matched_group_scores = {}
+    title_support_hits = 0
+    abstract_support_hits = 0
+    full_text_support_hits = 0
+    support_specificity_score = 0.0
+    specific_support_group_hits = 0
+
+    for concept, groups in primary_queries.items():
+        if concept == "disqualifying_terms":
+            continue
+        matched_groups = 0
+        matched_score = 0.0
+        for group in groups:
+            terms = [term for term in group if term]
+            if terms and all(pattern_matches_text(term, combined_text) for term in terms):
+                matched_groups += 1
+                matched_score += group_specificity(group)
+                if is_support_concept(concept) and group_specificity(group) >= 2.0:
+                    specific_support_group_hits += 1
+        matched_group_counts[concept] = matched_groups
+        matched_group_scores[concept] = round(matched_score, 3)
+        if is_support_concept(concept):
+            support_specificity_score += matched_score
+        if matched_groups <= 0 or not is_support_concept(concept):
+            continue
+        if any(
+            group and all(pattern_matches_text(term, texts["title"]) for term in group if term)
+            for group in groups
+        ):
+            title_support_hits += 1
+        if any(
+            group and all(pattern_matches_text(term, texts["abstract"]) for term in group if term)
+            for group in groups
+        ):
+            abstract_support_hits += 1
+        if any(
+            group and all(pattern_matches_text(term, texts["full_text"]) for term in group if term)
+            for group in groups
+        ):
+            full_text_support_hits += 1
+
+    matched_concepts = [concept for concept, count in matched_group_counts.items() if count > 0]
+    support_concepts = [concept for concept in matched_concepts if is_support_concept(concept)]
+    total_group_matches = sum(matched_group_counts.values())
+    return {
+        "matched_group_counts": matched_group_counts,
+        "matched_group_scores": matched_group_scores,
+        "matched_concepts": matched_concepts,
+        "concept_coverage": len(matched_concepts),
+        "support_concept_coverage": len(support_concepts),
+        "support_specificity_score": round(support_specificity_score, 3),
+        "specific_support_group_hits": specific_support_group_hits,
+        "title_support_hits": title_support_hits,
+        "abstract_support_hits": abstract_support_hits,
+        "full_text_support_hits": full_text_support_hits,
+        "total_group_matches": total_group_matches,
+    }
+
+
+def triage_score(paper, analysis):
+    discovery_ranking = paper.get("ranking") or {}
+    score = (
+        int(discovery_ranking.get("score") or 0)
+        + analysis["concept_coverage"] * 240
+        + analysis["support_concept_coverage"] * 120
+        + int(analysis["support_specificity_score"] * 110)
+        + analysis["specific_support_group_hits"] * 90
+        + analysis["title_support_hits"] * 120
+        + analysis["abstract_support_hits"] * 70
+        + analysis["full_text_support_hits"] * 25
+        + analysis["total_group_matches"] * 20
+    )
+    if analysis["support_concept_coverage"] > 0 and analysis["specific_support_group_hits"] == 0:
+        score -= 80
+    return score
+
+
+def merge_and_rerank_details(discovery_result, details_result, primary_queries):
+    discovery_by_id = {
+        paper.get("pmc_id"): paper for paper in discovery_result.get("papers") or []
+    }
+    triaged = []
+    for paper in details_result.get("papers") or []:
+        pmc_id = paper.get("pmc_id")
+        discovery_paper = discovery_by_id.get(pmc_id, {})
+        analysis = analyze_paper_against_queries(paper, primary_queries)
+        triaged_paper = dict(paper)
+        triaged_paper["ranking"] = discovery_paper.get("ranking") or {}
+        triaged_paper["triage"] = {
+            "score": triage_score(discovery_paper, analysis),
+            **analysis,
+        }
+        triaged.append(triaged_paper)
+    triaged.sort(
+        key=lambda paper: (
+            paper["triage"]["score"],
+            paper["triage"]["support_concept_coverage"],
+            paper["triage"]["concept_coverage"],
+            (paper.get("ranking") or {}).get("score") or 0,
+        ),
+        reverse=True,
+    )
+    return triaged
+
+
+def recommended_next_step(triaged_papers, primary_queries):
+    concept_count = len([key for key in primary_queries if key != "disqualifying_terms"])
+    if not triaged_papers:
+        return "advanced_refinement_recommended"
+    top = triaged_papers[0].get("triage") or {}
+    if concept_count > 1 and top.get("concept_coverage", 0) < min(2, concept_count):
+        return "advanced_refinement_recommended"
+    if any(is_support_concept(key) for key in primary_queries if key != "disqualifying_terms"):
+        if top.get("support_concept_coverage", 0) == 0:
+            return "advanced_refinement_recommended"
+    return "details_triage_sufficient"
+
+
 def main():
     args = parse_args()
     api_key = load_api_key(args.api_key)
@@ -441,6 +672,57 @@ def main():
         else:
             raise SystemExit(str(exc)) from None
     if (
+        not args.skip_details_rerank
+        and endpoint.endswith("advanced")
+        and payload.get("mode") == "discovery"
+        and payload.get("primary_queries")
+        and result.get("papers")
+    ):
+        candidate_ids = [
+            paper.get("pmc_id")
+            for paper in (result.get("papers") or [])[: max(1, args.details_rerank_limit)]
+            if paper.get("pmc_id")
+        ]
+        if candidate_ids:
+            details_payload = {"pmc_ids": candidate_ids}
+            details_result = execute_request(
+                args.base_url,
+                "/api/get_paper_details",
+                api_key,
+                details_payload,
+                timeout=120,
+                use_async_jobs=False,
+                poll_timeout=args.poll_timeout,
+                poll_interval=args.poll_interval,
+            )
+            maybe_save_json(
+                companion_json_path(args.save_payload, "details_payload"),
+                {
+                    "endpoint": "/api/get_paper_details",
+                    "payload": details_payload,
+                },
+            )
+            maybe_save_json(
+                companion_json_path(args.save_response, "details_response"),
+                details_result,
+            )
+            triaged_papers = merge_and_rerank_details(
+                result,
+                details_result,
+                payload["primary_queries"],
+            )
+            result["details_lookup"] = {
+                "requested": details_result.get("requested"),
+                "found": details_result.get("found"),
+                "missing_ids": details_result.get("missing_ids"),
+                "candidate_pmc_ids": candidate_ids,
+            }
+            result["triaged_papers"] = triaged_papers
+            result["recommended_next_step"] = recommended_next_step(
+                triaged_papers,
+                payload["primary_queries"],
+            )
+    if (
         args.discovery_fallback
         and endpoint.endswith("advanced")
         and payload.get("mode") == "discovery"
@@ -451,7 +733,7 @@ def main():
     if args.raw:
         print(json.dumps(result, indent=2))
         return
-    papers = result.get("papers", [])
+    papers = result.get("triaged_papers") or result.get("papers") or []
     compact, missing_year, filtered_year = summarize_papers(papers, args.year)
     summary = {
         "endpoint": endpoint,
@@ -462,6 +744,8 @@ def main():
         "discovery_query": result.get("discovery_query"),
         "reported_total": result.get("total_found"),
         "returned": len(papers),
+        "details_lookup": result.get("details_lookup"),
+        "recommended_next_step": result.get("recommended_next_step"),
         "year_filter": args.year,
         "excluded_missing_year": missing_year,
         "excluded_nonmatching_year": filtered_year,

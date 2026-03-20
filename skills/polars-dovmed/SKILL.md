@@ -149,6 +149,7 @@ The query JSON is the source of truth for API mode.
 - If discovery fallback is used, save it separately as `payload_discovery.json` and `results_discovery.json`.
 - The helper auto-loads `~/.config/polars-dovmed/.env`, so a configured `POLARS_DOVMED_API_KEY` does not need manual `source` in typical agent runs.
 - The helper submits hosted search work through `/api/jobs` and polls for completion, instead of holding one long edge request open.
+- For structured discovery runs, the helper automatically fetches details for the top candidate PMC IDs and reranks them using grouped query evidence before summarizing results.
 - For hard cases, prefer this sequence:
   - structured query
   - discovery mode
@@ -242,6 +243,7 @@ python skills/polars-dovmed/scripts/smoke_test.py \
 | Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode="discovery"` |
 | Structured API endpoint | `POST /api/scan_literature_advanced` |
 | Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |
+| Automatic second pass | discovery -> paper details -> grouped rerank |
 | Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` |
 | Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
 | Recommended extra artifacts | `llm_payload.json`, `llm_response.txt`, refined query variants, `payload_discovery.json`, `results_discovery.json` |
