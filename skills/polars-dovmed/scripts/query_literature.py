@@ -118,6 +118,11 @@ def parse_args():
         help="Skip the automatic discovery -> details -> rerank second pass",
     )
     parser.add_argument(
+        "--auto-advanced-refinement",
+        action="store_true",
+        help="Run an additional advanced structured scan after discovery when the first pass is still too loose",
+    )
+    parser.add_argument(
         "--sync",
         action="store_true",
         help="Use the legacy synchronous request path instead of async jobs",
@@ -723,6 +728,49 @@ def main():
                 payload["primary_queries"],
             )
     if (
+        args.auto_advanced_refinement
+        and endpoint.endswith("advanced")
+        and payload.get("mode") == "discovery"
+        and payload.get("primary_queries")
+        and (
+            result.get("strategy_used") == "discovery_fallback"
+            or result.get("recommended_next_step") == "advanced_refinement_recommended"
+        )
+    ):
+        advanced_payload = dict(payload)
+        advanced_payload["mode"] = "advanced"
+        advanced_payload["max_results"] = max(
+            args.max_results,
+            min(args.details_rerank_limit, args.max_results),
+        )
+        try:
+            advanced_result = execute_request(
+                args.base_url,
+                endpoint,
+                api_key,
+                advanced_payload,
+                timeout=args.timeout or 600,
+                use_async_jobs=use_async_jobs,
+                poll_timeout=args.poll_timeout,
+                poll_interval=args.poll_interval,
+            )
+            result["advanced_refinement"] = advanced_result
+            result["recommended_next_step"] = "advanced_refinement_completed"
+            maybe_save_json(
+                companion_json_path(args.save_payload, "advanced_payload"),
+                {
+                    "endpoint": endpoint,
+                    "payload": advanced_payload,
+                },
+            )
+            maybe_save_json(
+                companion_json_path(args.save_response, "advanced_response"),
+                advanced_result,
+            )
+        except RuntimeError as exc:
+            result["advanced_refinement"] = {"error": str(exc)}
+            result["recommended_next_step"] = "advanced_refinement_failed"
+    if (
         args.discovery_fallback
         and endpoint.endswith("advanced")
         and payload.get("mode") == "discovery"
@@ -733,7 +781,12 @@ def main():
     if args.raw:
         print(json.dumps(result, indent=2))
         return
-    papers = result.get("triaged_papers") or result.get("papers") or []
+    papers = (
+        (result.get("advanced_refinement") or {}).get("papers")
+        or result.get("triaged_papers")
+        or result.get("papers")
+        or []
+    )
     compact, missing_year, filtered_year = summarize_papers(papers, args.year)
     summary = {
         "endpoint": endpoint,
@@ -744,7 +797,24 @@ def main():
         "discovery_query": result.get("discovery_query"),
         "reported_total": result.get("total_found"),
         "returned": len(papers),
+        "paper_source": (
+            "advanced_refinement"
+            if (result.get("advanced_refinement") or {}).get("papers")
+            else "details_triage"
+            if result.get("triaged_papers")
+            else "discovery"
+        ),
         "details_lookup": result.get("details_lookup"),
+        "advanced_refinement": (
+            {
+                "strategy_used": (result.get("advanced_refinement") or {}).get("strategy_used"),
+                "elapsed_ms": (result.get("advanced_refinement") or {}).get("elapsed_ms"),
+                "returned": len((result.get("advanced_refinement") or {}).get("papers") or []),
+                "error": (result.get("advanced_refinement") or {}).get("error"),
+            }
+            if result.get("advanced_refinement") is not None
+            else None
+        ),
         "recommended_next_step": result.get("recommended_next_step"),
         "year_filter": args.year,
         "excluded_missing_year": missing_year,

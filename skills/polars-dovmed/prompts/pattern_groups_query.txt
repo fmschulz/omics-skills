@@ -34,6 +34,10 @@ Guidelines for creating patterns:
 10. If there are different ways to punctuate/space a term, create separate patterns for each variation within the same concept group.
 11. If you want to match a term as a whole word (not as part of another word), use `\\b` at the start and/or end of the group. For example, use `"\\brev\\b"` to match only the word "rev" and not "reverse".
 12. The disqualifying_terms list is optional. if used, it should contain simple terms or phrases (not regex) that can cause false positives, each as a single-group pattern (e.g., ["dyslipidemia"]), that could cuase false positive papers to come up. These can be alternative disambiguations of similar acronyms. Anything matching any of these patterns will be compleltely discarded, so only include terms that should not appear in the full text searches at all, to avoid false negatives. If you can not think of any, omit the disqualifying_terms list.
+13. For "X of Y" relation queries such as "hosts of Klosneuvirinae", do not create one loose generic relation group like ["host"] by itself. Prefer grouped patterns that combine the entity anchor and the relation term, such as ["klosneuvirinae", "host"], ["klosneuvirus", "host"], or isolate-host pairs when the query names them explicitly.
+14. For relation queries, keep anchors and relation terms separate enough that discovery can still use anchor names alone, but include at least some grouped AND patterns that preserve the relation intent for advanced refinement.
+15. Prefer specific biological anchors over generic role words. Terms like "host", "infection", "interaction", "amoeba", and "protist" are weak support terms unless they are paired with a lineage, isolate, or named host organism.
+16. If the query names likely lineage members or isolate-host pairs, include them explicitly rather than relying only on the parent lineage name.
 
 Example response for "RNA secondary structure elements and motifs used in the genomes of RNA viruses":
 {
