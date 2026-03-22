@@ -63,7 +63,7 @@ cut -f3 results.tsv | taxonkit lineage -n -r | \
 ### InterProScan Annotation
 ```bash
 # Comprehensive protein annotation
-interproscan.sh -i proteins.faa -o interpro_results \
+interproscan.sh -i proteins.faa -b interpro_results \
   -f TSV,GFF3 -goterms -iprlookup -pathways -cpu 32
 ```
 
@@ -91,7 +91,7 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 
 1. **DIAMOND**: Use `--sensitive` mode by default, increase to `--very-sensitive` for divergent sequences
 2. **TaxonKit**: Keep taxdump on SSD, use appropriate thread count
-3. **InterProScan**: Enable precalculated matches (`-pa`), select specific analyses with `-appl`
+3. **InterProScan**: Validate the exact CLI first, use either `-b` or `-d` for output, and select specific analyses with `-appl` when appropriate
 4. **eggNOG-mapper**: Use `--dbmem` on high-RAM systems, set appropriate `--tax_scope`
 
 ## Database Requirements
@@ -129,6 +129,7 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 ### InterProScan
 - **Memory errors**: Increase Java heap size in interproscan.properties
 - **Timeout issues**: Split input into smaller batches
+- **Immediate startup failure**: Check for mutually exclusive `-b`/`-d` usage, missing `setup.py` initialization, unresolved ProSite binaries, or `*` in the FAA input
 
 ### eggNOG-mapper
 - **Database download fails**: Use `--resume` flag, check disk space
@@ -150,8 +151,8 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 
 ## Documentation Updates
 
-**Last Updated**: 2026-02-01
-**Documentation Version**: 1.0
+**Last Updated**: 2026-03-22
+**Documentation Version**: 1.1
 **Tool Versions**: See individual files for version-specific information
 
 For the most current information, always refer to the official documentation links provided in each tool's usage guide.

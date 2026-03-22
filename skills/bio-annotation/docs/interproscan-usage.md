@@ -49,11 +49,25 @@ python3 setup.py -f interproscan.properties
 conda install -c bioconda interproscan
 ```
 
+### One-time initialization after install
+
+Some packaged InterProScan installs still require the bundled HMM databases to
+be pressed/indexed before real runs succeed.
+
+```bash
+cd /path/to/InterProScan
+python3 setup.py -f interproscan.properties
+```
+
+If `hmmscan` reports missing binary auxfiles or tells you to run `hmmpress`
+first, run this setup step before retrying.
+
 ## Key Command-Line Options
 
 ### Basic Options
 - `-i, --input` - Input FASTA file (required)
-- `-o, --output-file-base` - Output file base name
+- `-b, --output-file-base` - Output file base name
+- `-o, --outfile` - Explicit output filename
 - `-f, --formats` - Output formats (TSV, XML, JSON, GFF3)
 - `-d, --output-dir` - Output directory
 - `-cpu` - Number of CPU cores to use
@@ -78,42 +92,146 @@ conda install -c bioconda interproscan
 - `-verbose` - Verbose logging
 - `-version` - Print version and exit
 
+## Operational Pitfalls That Commonly Break Runs
+
+### 1. `-b`, `-o`, and `-d` are mutually exclusive
+
+Use exactly one of these output modes:
+
+- `-b /path/to/output_base`
+- `-d /path/to/output_dir`
+- `-o /path/to/output.tsv` with a single `-f` format
+
+Do not combine them.
+
+Correct:
+
+```bash
+./interproscan.sh -i proteins.faa -b results/interpro_run -f TSV
+```
+
+Also correct:
+
+```bash
+./interproscan.sh -i proteins.faa -d results/interpro_dir -f TSV
+```
+
+Incorrect:
+
+```bash
+./interproscan.sh -i proteins.faa -b interpro_run -d results -f TSV
+```
+
+### 2. Protein FASTA files must not contain `*`
+
+InterProScan rejects protein sequences containing stop-symbol asterisks.
+
+Check first:
+
+```bash
+rg -n '\\*' proteins.faa
+```
+
+Strip them deliberately if they are expected ORF stop symbols:
+
+```bash
+python - <<'PY'
+from pathlib import Path
+inp = Path("proteins.faa")
+out = Path("proteins.no_stop.faa")
+with inp.open() as fh, out.open("w") as oh:
+    for line in fh:
+        if line.startswith(">"):
+            oh.write(line)
+        else:
+            oh.write(line.replace("*", ""))
+PY
+```
+
+Then run InterProScan on `proteins.no_stop.faa`.
+
+### 3. Packaged installs may need helper binaries on `PATH`
+
+Some packaged installs ship ProSite helpers in a bundled subdirectory while the
+default `interproscan.properties` still references bare executable names such as
+`ps_scan.pl`, `pfscan`, and `pfsearch`.
+
+Validate resolution before large runs:
+
+```bash
+command -v ps_scan.pl
+command -v pfscan
+command -v pfsearch
+```
+
+If needed, prepend the bundled directory:
+
+```bash
+export INTERPROSCAN_HOME=/path/to/InterProScan
+export PATH="${INTERPROSCAN_HOME}/bin/prosite:${PATH}"
+```
+
+If a packaged install still fails on helper binaries after this, prefer fixing
+the environment first and rerunning the smoke test rather than launching the
+full cluster job blind.
+
+### 4. Validate the exact installation with a tiny smoke test
+
+Before launching a large cluster run, execute a login-node smoke test on 1-2
+proteins with the exact CLI you plan to submit:
+
+```bash
+./interproscan.sh \
+  -i smoke_input.faa \
+  -b smoke_run \
+  -f TSV \
+  -cpu 1 \
+  -dp \
+  -iprlookup \
+  -goterms \
+  -pa \
+  -T ./tmp
+```
+
+Only submit the large job after the smoke test reaches completion and writes the
+expected TSV output.
+
 ## Common Usage Examples
 
 ### Basic protein annotation
 ```bash
-./interproscan.sh -i proteins.faa -o results -f TSV
+./interproscan.sh -i proteins.faa -b results -f TSV
 ```
 
 ### With GO terms and pathways
 ```bash
-./interproscan.sh -i proteins.faa -o results \
+./interproscan.sh -i proteins.faa -b results \
   -f TSV,GFF3 -goterms -iprlookup -pathways
 ```
 
 ### Run specific analyses only
 ```bash
 # Pfam and Gene3D only
-./interproscan.sh -i proteins.faa -o results \
+./interproscan.sh -i proteins.faa -b results \
   -appl Pfam,Gene3D -f TSV
 ```
 
 ### Multiple output formats
 ```bash
-./interproscan.sh -i proteins.faa -o results \
+./interproscan.sh -i proteins.faa -b results \
   -f TSV,XML,JSON,GFF3 -goterms -iprlookup
 ```
 
 ### With increased CPU usage
 ```bash
-./interproscan.sh -i proteins.faa -o results \
+./interproscan.sh -i proteins.faa -b results \
   -f TSV -cpu 32 -goterms -iprlookup
 ```
 
 ### Using precalculated matches
 ```bash
 # Faster execution using EBI's precalculated matches
-./interproscan.sh -i proteins.faa -o results \
+./interproscan.sh -i proteins.faa -b results \
   -f TSV -pa -goterms -iprlookup
 ```
 
@@ -211,7 +329,7 @@ MALWMRLLPLLALLALWGPDPAAAFVNQHLC...
 ### Complete annotation pipeline
 ```bash
 # Run InterProScan with all annotations
-./interproscan.sh -i proteins.faa -o interpro_results \
+./interproscan.sh -i proteins.faa -b interpro_results \
   -f TSV,GFF3 -goterms -iprlookup -pathways \
   -cpu 64 -T /scratch/tmp
 ```
@@ -228,7 +346,7 @@ cut -f1,14 interpro_results.tsv | grep -v "^$" > go_annotations.tsv
 ### Convert to different formats
 ```bash
 # Re-run with different output format (uses cached results)
-./interproscan.sh -i proteins.faa -o results_json \
+./interproscan.sh -i proteins.faa -b results_json \
   -f JSON -goterms -iprlookup
 ```
 
@@ -260,16 +378,16 @@ cut -f1,14 interpro_results.tsv | grep -v "^$" > go_annotations.tsv
 ### Slow performance
 ```bash
 # Use precalculated matches
-./interproscan.sh -i proteins.faa -o results -pa
+./interproscan.sh -i proteins.faa -b results -pa
 
 # Or select specific fast analyses
-./interproscan.sh -i proteins.faa -o results -appl Pfam,Gene3D
+./interproscan.sh -i proteins.faa -b results -appl Pfam,Gene3D
 ```
 
 ### Temporary file issues
 ```bash
 # Specify temp directory with more space
-./interproscan.sh -i proteins.faa -o results -T /path/to/large/tmp
+./interproscan.sh -i proteins.faa -b results -T /path/to/large/tmp
 ```
 
 ### Check installation
