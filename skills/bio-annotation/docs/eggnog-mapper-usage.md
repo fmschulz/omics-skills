@@ -359,17 +359,111 @@ emapper.py -i proteins.faa -o results \
 emapper.py --version
 ```
 
+## HPC Resource Guidelines (Benchmarked March 2026)
+
+These numbers are from real runs on NERSC Perlmutter (shared_milan partition)
+annotating viral EVE proteins against the full eggNOG v5.0.2 database (diamond mode,
+`--sensitive --iterate` default).
+
+### Database sizes on disk
+
+| File | Size |
+|------|------|
+| eggnog.db | 39 GB |
+| eggnog_proteins.dmnd | 8.7 GB |
+| eggnog.taxa.db | 266 MB |
+| **Total** | **~48 GB** |
+
+### `--dbmem` is dangerous: do NOT use with ≤64 GB RAM
+
+`--dbmem` loads `eggnog.db` (39 GB) + diamond DB (8.7 GB) into memory.
+Combined with the annotation engine and OS overhead this requires **>80 GB RAM**.
+At 32 GB it will OOM-kill during the annotation phase (diamond search may
+complete, but the subsequent annotation step loads eggnog.db and kills the job).
+At 64 GB it is marginal and often OOM-kills as well.
+
+**Recommendation:** Only use `--dbmem` when requesting ≥128 GB RAM.
+For shared-queue HPC jobs, **omit `--dbmem`** entirely — disk-based
+access is slower but reliable and fits in 64 GB.
+
+### Resource requirements per chunk (without `--dbmem`)
+
+| Proteins per chunk | CPUs | RAM | Wall time (observed) | Notes |
+|--------------------|------|-----|---------------------|-------|
+| 5,000 | 8 | 64 GB | 1.5–3 h | Viral proteins, divergent sequences |
+| 10,000 | 8 | 64 GB | 3–6 h | Set walltime ≥8 h |
+| 5,000 | 8 | 32 GB | OOM | Fails in annotation phase |
+| 5,000 + `--dbmem` | 8 | 32 GB | OOM | Fails: needs ≥128 GB |
+| 5,000 + `--dbmem` | 8 | 128 GB | ~45 min | Fast but expensive |
+
+### Recommended SLURM settings for chunked runs
+
+```bash
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --time=08:00:00
+#SBATCH --constraint=cpu
+
+# Do NOT use --dbmem unless requesting >=128G
+emapper.py -i chunk.faa -o chunk_out \
+  -m diamond --cpu 8 \
+  --data_dir $EGGNOG_DATA_DIR \
+  --go_evidence non-electronic \
+  --override
+```
+
+### Chunking strategy
+
+- **5,000 proteins per chunk** is a good balance for 8-CPU shared-queue jobs
+- For 100k+ proteins, create 20-25 chunks and submit as a SLURM array
+- Submit a dependent finalization job to merge outputs:
+  ```bash
+  sbatch --dependency=afterok:$ARRAY_JOB finalize.sh
+  ```
+- Merge annotations with: `grep '^#query' chunk_001.emapper.annotations | head -1 > merged.tsv`
+  then `grep -hv '^#' chunk_*/chunk_*.emapper.annotations >> merged.tsv`
+
+### Database download URL fix (as of 2025-09)
+
+The default download URL `eggnogdb.embl.de` is **dead** (returns 404).
+The domain moved to `eggnog5.embl.de`. You must patch the download script:
+
+```bash
+# In download_eggnog_data.py (line ~15), change:
+#   BASE_URL = f'http://eggnogdb.embl.de/download/emapperdb-{__DB_VERSION__}'
+# to:
+#   BASE_URL = f'http://eggnog5.embl.de/download/emapperdb-{__DB_VERSION__}'
+
+sed -i 's|eggnogdb.embl.de|eggnog5.embl.de|g' \
+  "$(which download_eggnog_data.py)"
+```
+
+This applies to eggnog-mapper v2.1.13 (latest as of March 2026).
+The fix has been reported (GitHub issues #571, #574, #576) but not merged.
+
+### Diamond binary PATH issue
+
+eggnog-mapper resolves diamond via `shutil.which('diamond')`. In pixi/conda
+environments the binary may not be on the system PATH inside SLURM jobs.
+Fix by adding the env bin to PATH in your SBATCH script:
+
+```bash
+export PATH="/path/to/pixi/envs/default/bin:${PATH}"
+```
+
 ## Best Practices
 
 1. **Download appropriate databases**: Only download taxonomic scopes needed
 2. **Use taxonomic scope**: Specify `--tax_scope` to improve accuracy
 3. **Set reasonable thresholds**: Adjust e-value and coverage filters
 4. **Enable ortholog reporting**: Use `--report_orthologs` for detailed analysis
-5. **Monitor resource usage**: eggNOG-mapper can be memory-intensive
+5. **Monitor resource usage**: eggNOG-mapper can be memory-intensive; see resource table above
 6. **Keep databases updated**: Regularly update eggNOG databases
-7. **Validate input**: Check FASTA format before processing
+7. **Validate input**: Check FASTA format before processing; strip `*` stop codons
 8. **Save all outputs**: Keep seed orthologs and hits files for troubleshooting
 9. **Use resume feature**: Enable `--resume` for large datasets
+10. **Never use `--dbmem` with <128 GB RAM**: It will OOM-kill; see resource guidelines above
+11. **Always test on login node first**: Run 2-3 proteins to verify PATH, DB access, and CLI before submitting arrays
 
 ## Integration with Other Tools
 
