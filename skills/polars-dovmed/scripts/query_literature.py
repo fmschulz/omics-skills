@@ -163,7 +163,7 @@ def parse_args():
         )
     if args.query and not args.allow_flat_query:
         parser.error(
-            "--query is exploratory free-text search only; use --queries-file/--group from create_patterns, "
+            "--query is exploratory free-text search only; use --queries-file/--group with a structured JSON query, "
             "or pass --allow-flat-query to opt in explicitly"
         )
     return args
