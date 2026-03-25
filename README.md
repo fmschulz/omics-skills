@@ -11,7 +11,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Agents](https://img.shields.io/badge/Agents-5-blue)](#the-five-agents)
 [![Skills](https://img.shields.io/badge/Skills-32-blue)](#agent--skills-mapping)
 
-**Quick Links:** [Installation](#installation) • [Agents](#the-five-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
+**Quick Links:** [Installation](#installation) • [Agents](#the-five-agents) • [Skills Mapping](#agent--skills-mapping) • [Skill Graph](docs/SKILL_GRAPH.md) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
 ---
 
@@ -439,6 +439,9 @@ DataViz Artist Agent
 
 ```
 omics-skills/
+├── docs/                            # Consolidated repository documentation
+│   └── SKILL_GRAPH.md              # Skill graph and routing model
+│
 ├── agents/                          # 5 expert agent personas
 │   ├── omics-scientist.md          # Bioinformatics workflows
 │   ├── literature-expert.md        # Literature discovery and citations
@@ -454,6 +457,7 @@ omics-skills/
 │       └── README.md
 │
 └── skills/                          # 31 specialized skills
+    ├── ai-scientist-evaluator/     # Review and rank AI scientist outputs
     ├── bio-logic/                  # Scientific reasoning (shared)
     ├── bio-foundation-housekeeping/
     ├── bio-reads-qc-mapping/
