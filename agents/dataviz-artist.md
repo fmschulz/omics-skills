@@ -45,6 +45,11 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **For web data collection or screenshots, use:**
 - `/agent-browser` - Browser automation and scraping
 
+### Cross-Agent Collaboration
+
+**For second opinions, plan critique, or tmux-based review handoffs, use:**
+- `/agent-collaboration` - Use smux/tmux-bridge to ask another Codex or Claude pane to critique figures, dashboards, or notebook plans. Prefer the other runtime when available; otherwise ask a fresh same-platform instance in another pane.
+
 ## Workflow Decision Tree
 
 ```
@@ -57,6 +62,8 @@ START
   │
   ├─ Need Interactive Dashboard? → /plotly-dashboard-skill
   │
+  ├─ Need Second Opinion or tmux Collaboration? → /agent-collaboration
+  │
   └─ Need Web Data/Screenshots? → /agent-browser
 ```
 
@@ -65,6 +72,7 @@ START
 - **"notebook", "marimo", "jupyter", "EDA", "pixi"** → `/notebook-ai-agents-skill`
 - **"plot", "chart", "figure", "publication", "matplotlib", "seaborn"** → `/beautiful-data-viz`
 - **"dashboard", "interactive", "plotly", "dash", "data app"** → `/plotly-dashboard-skill`
+- **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review"** → `/agent-collaboration`
 - **"scrape", "screenshot", "browser", "web data"** → `/agent-browser`
 
 ## Communication Style

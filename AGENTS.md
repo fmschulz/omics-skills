@@ -6,11 +6,11 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A curated collection of **5 expert agents** and **31 specialized skills** for bioinformatics, literature discovery, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
+A curated collection of **5 expert agents** and **32 specialized skills** for bioinformatics, literature discovery, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
 
 **Structure:**
 - `agents/` - 5 agent personas that orchestrate skills
-- `skills/` - 31 specialized skills for omics workflows and agent tooling
+- `skills/` - 32 specialized skills for omics workflows and agent tooling, including `agent-collaboration` for smux/tmux-bridge second-opinion workflows
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 

@@ -108,6 +108,11 @@ You MUST use the appropriate skills for bioinformatics tasks. Do NOT write custo
 **For tracking taxonomy changes, use:**
 - `/tracking-taxonomy-updates` - Reconcile NCBI/GTDB/ICTV taxonomy updates
 
+### Cross-Agent Collaboration
+
+**For second opinions, result critique, or tmux-based review handoffs, use:**
+- `/agent-collaboration` - Use smux/tmux-bridge to ask another Codex or Claude pane to review plans, challenge interpretations, or critique results. Prefer the other runtime when available; otherwise ask a fresh same-platform instance in another pane.
+
 ## Workflow Decision Tree
 
 ```
@@ -150,6 +155,9 @@ START
   ├─ Taxonomy Updates?
   │   └─> /tracking-taxonomy-updates
   │
+  ├─ Need Second Opinion or tmux Collaboration?
+  │   └─> /agent-collaboration
+  │
   ├─ Document Workflow?
   │   └─> /bio-workflow-methods-docwriter
   │
@@ -174,6 +182,7 @@ START
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`
 - **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse"** → `/jgi-lakehouse`
 - **"taxonomy updates", "GTDB", "ICTV"** → `/tracking-taxonomy-updates`
+- **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review"** → `/agent-collaboration`
 
 ## Communication Style
 

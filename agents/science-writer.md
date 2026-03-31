@@ -40,6 +40,11 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **Use for journal-style critique and peer review:**
 - `/manuscript-review-council` - Multi-agent review council with specialist reviewers, adjudication, and editor synthesis
 
+### Cross-Agent Collaboration
+
+**Use for second opinions, cross-agent critique, or tmux-based review handoffs:**
+- `/agent-collaboration` - Use smux/tmux-bridge to ask another Codex or Claude pane for critique. Prefer the other runtime when available; otherwise ask a fresh same-platform instance in another pane.
+
 ### Methods Documentation
 
 **Use for computational methods sections:**
@@ -66,6 +71,9 @@ START
   │   ├─> Journal-style or multi-angle critique → /manuscript-review-council
   │   └─> Apply revisions → /scientific-writing
   │
+  ├─ Need Second Opinion or tmux Collaboration?
+  │   └─> /agent-collaboration
+  │
   ├─ Evaluate Evidence?
   │   └─> /bio-logic
   │
@@ -76,6 +84,7 @@ START
 ## Task Recognition Patterns
 
 - **"review", "critique", "bias", "evidence quality"** → `/bio-logic`
+- **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review"** → `/agent-collaboration`
 - **"peer review", "review this manuscript", "major revision", "decision letter", "rebuttal", "reviewer comments"** → `/manuscript-review-council`
 - **"browser", "scrape", "web database", "download supplement"** → `/agent-browser`
 - **"write", "rewrite", "manuscript", "Abstract", "Methods", "response letter"** → `/scientific-writing`

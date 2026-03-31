@@ -9,7 +9,7 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Compatible-green)](https://developers.openai.com/codex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-5-blue)](#the-five-agents)
-[![Skills](https://img.shields.io/badge/Skills-31-blue)](#agent--skills-mapping)
+[![Skills](https://img.shields.io/badge/Skills-32-blue)](#agent--skills-mapping)
 
 **Quick Links:** [Installation](#installation) • [Agents](#the-five-agents) • [Skills Mapping](#agent--skills-mapping) • [Examples](#example-workflows) • [Distribution](DISTRIBUTION.md)
 
@@ -17,7 +17,9 @@ A curated collection of domain-expert agents and battle-tested skills for comput
 
 ## What This Repository Provides
 
-**5 Expert Agents** that orchestrate **31 specialized skills** for end-to-end omics analysis, literature discovery, scientific communication, data visualization, and agent tooling.
+**5 Expert Agents** that orchestrate **32 specialized skills** for end-to-end omics analysis, literature discovery, scientific communication, data visualization, and agent tooling.
+
+The skill set now includes `agent-collaboration`, a tmux/smux workflow for asking another Codex CLI or Claude Code pane to review code, critique plans, challenge results, or provide a second opinion. Prefer a different runtime when available, but fall back to a fresh same-platform instance in another pane instead of self-reviewing in place.
 
 ```
 Raw Reads → Assembly → Annotation → Analysis → Manuscript → Publication
@@ -204,6 +206,19 @@ claude --agent dataviz-artist
 cd /path/to/your/project
 claude --agent omics-scientist
 ```
+
+### Cross-Agent Review in tmux
+
+After `make install`, agents can use `agent-collaboration` with `smux` and `tmux-bridge` for second opinions:
+
+```bash
+tmux-bridge read codex 40
+tmux-bridge message codex "Review the current diff for bugs and missing tests. Findings first."
+tmux-bridge read codex 10
+tmux-bridge keys codex Enter
+```
+
+If the other runtime is not available, open another tmux pane and start a fresh instance of the same platform, for example a second Claude Code pane labeled `claude-review`.
 
 ### Selecting a Workflow
 
