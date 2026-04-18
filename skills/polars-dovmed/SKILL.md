@@ -1,12 +1,12 @@
 ---
 name: polars-dovmed
-description: Search the PMC Open Access literature with polars-dovmed. Author structured JSON queries directly, then use the hosted API when an API key is available or fall back to local dovmed scan over parquet files.
+description: Search the PMC Open Access literature with polars-dovmed. Author structured JSON queries directly, then use the hosted API when an API key is available or fall back to local dovmed scan over PMC, bioRxiv, or both parquet corpora.
 user-invocable: true
 ---
 
 # polars-dovmed
 
-Search the PubMed Central Open Access subset with `polars-dovmed`.
+Search the PubMed Central Open Access subset and the local bioRxiv parquet corpus with `polars-dovmed`.
 
 The preferred workflow is always:
 1. decide execution mode up front
@@ -17,8 +17,8 @@ The preferred workflow is always:
 6. use structured advanced scans only for final refinement when needed
 
 Search execution has two modes:
-- Preferred when available: hosted API over the formatted parquet database
-- Fallback: local `dovmed scan` over local parquet files
+- Preferred when available: hosted API over the formatted PMC/OpenPMC parquet database
+- Fallback: local `dovmed scan` over local parquet files for `pmc`, `biorxiv`, or `both`
 
 Do not skip the structured-query authoring step unless the user explicitly supplies a ready query JSON file and asks to use it as-is.
 
@@ -34,8 +34,8 @@ For every search prompt, create a dedicated run directory and save:
 
 1. Decide execution mode up front.
    - Check API availability first.
-   - If `POLARS_DOVMED_API_KEY` is available in the environment, in the configured polars-dovmed env file, or the user provides an API key, use the hosted API.
-   - Only fall back to local `dovmed` CLI plus local parquet files if API mode is unavailable.
+   - If `POLARS_DOVMED_API_KEY` is available in the environment, in the configured polars-dovmed env file, or the user provides an API key, use the hosted API for PMC/OpenPMC searches.
+   - Use local `dovmed` CLI plus local parquet files whenever the user explicitly wants bioRxiv, a PMC+bioRxiv combined scan, or there is no hosted API key.
 2. Author a structured query JSON directly.
    - The agent should write the JSON itself instead of calling another helper to generate it.
    - If the user already gave a query JSON, inspect it before use.
@@ -225,17 +225,55 @@ python skills/polars-dovmed/scripts/query_literature.py \
 
 ### Step 3B: Search Locally With dovmed scan
 
-Use this mode when no hosted API key is available.
+Use this mode when no hosted API key is available, or when the user explicitly wants the local bioRxiv parquet corpus.
 
 ```bash
 dovmed scan \
-  --parquet-pattern "data/pubmed_central/parquet_files/*/*.parquet" \
+  --corpus pmc \
   --queries-file runs/klosneuvirinae-hosts/query.json \
   --extract-matches primary \
   --add-group-counts primary \
   --output-path results/klosneuvirus_hosts \
   --verbose
 ```
+
+Local corpus aliases on this workstation:
+- `--corpus pmc`: `~/dev/polars-dovmed/data/pubmed_central/parquet_files/*/*.parquet`
+- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/*.parquet`
+- `--corpus both`: both corpora in one scan
+
+Examples:
+
+```bash
+dovmed scan \
+  --corpus biorxiv \
+  --queries-file runs/mirusvirus/query.json \
+  --extract-matches primary \
+  --add-group-counts primary \
+  --output-path results/mirusvirus_biorxiv \
+  --verbose
+
+dovmed scan \
+  --corpus both \
+  --queries-file runs/mirusvirus/query.json \
+  --extract-matches primary \
+  --add-group-counts primary \
+  --output-path results/mirusvirus_pmc_plus_biorxiv \
+  --verbose
+```
+
+The helper wrapper also supports local execution directly:
+
+```bash
+python skills/polars-dovmed/scripts/query_literature.py \
+  --execution-mode local \
+  --local-corpus biorxiv \
+  --queries-file runs/mirusvirus/query.json \
+  --save-payload runs/mirusvirus/payload_local.json \
+  --save-response runs/mirusvirus/results_local.json
+```
+
+Use `--local-corpus both` to scan PMC plus bioRxiv in one pass.
 
 ## Search Semantics
 

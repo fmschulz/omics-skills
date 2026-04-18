@@ -5,6 +5,8 @@ import argparse
 import json
 import os
 import re
+import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -55,6 +57,7 @@ FULLTEXT_CONTEXT_RADIUS = 260
 MAX_TERM_SPANS_PER_TERM = 4
 MAX_FULLTEXT_CONTEXTS = 36
 CONTEXT_SNIPPET_CHARS = 240
+DEFAULT_LOCAL_REPO = str(Path("~/dev/polars-dovmed").expanduser())
 
 
 def load_env_file(path):
@@ -110,6 +113,27 @@ def parse_args():
     parser.add_argument("--timeout", type=int)
     parser.add_argument("--base-url", default="https://api.newlineages.com")
     parser.add_argument("--api-key")
+    parser.add_argument(
+        "--execution-mode",
+        choices=["auto", "api", "local"],
+        default="auto",
+        help="Use the hosted API or force a local parquet-backed scan.",
+    )
+    parser.add_argument(
+        "--local-corpus",
+        choices=["pmc", "biorxiv", "both"],
+        default="pmc",
+        help="Which local corpus alias to use when execution mode resolves to local.",
+    )
+    parser.add_argument(
+        "--local-repo-dir",
+        default=DEFAULT_LOCAL_REPO,
+        help="Path to the local polars-dovmed repo used for local scans.",
+    )
+    parser.add_argument(
+        "--local-output-dir",
+        help="Optional output directory for local dovmed scan results.",
+    )
     parser.add_argument("--save-payload")
     parser.add_argument("--save-response")
     parser.add_argument("--save-discovery-payload")
@@ -135,6 +159,7 @@ def parse_args():
         action="store_true",
         help="Use the legacy synchronous request path instead of async jobs",
     )
+    parser.add_argument("--verbose", action="store_true")
     parser.add_argument(
         "--poll-timeout",
         type=int,
@@ -174,6 +199,21 @@ def load_api_key(explicit_key):
     if not api_key:
         raise SystemExit("missing POLARS_DOVMED_API_KEY")
     return api_key
+
+
+def determine_execution_mode(args):
+    if args.execution_mode != "auto":
+        return args.execution_mode
+    # --query and --details are only supported by the API path. Route them
+    # there even without a key so the user sees a clear missing-key error
+    # instead of the generic "local mode does not support ..." message.
+    if args.query or args.details:
+        return "api"
+    if args.local_corpus != "pmc":
+        return "local"
+    if args.api_key or os.environ.get("POLARS_DOVMED_API_KEY"):
+        return "api"
+    return "local"
 
 
 def parse_group(spec):
@@ -285,6 +325,118 @@ def maybe_save_json(path, payload):
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def local_output_dir(args):
+    if args.local_output_dir:
+        return Path(args.local_output_dir).expanduser()
+    if args.save_response:
+        response_path = Path(args.save_response)
+        return response_path.with_suffix("")
+    return Path(tempfile.mkdtemp(prefix="dovmed_local_scan_"))
+
+
+def compact_local_paper(row):
+    publication_date = row.get("publication_date") or ""
+    year = None
+    match = re.match(r"(\d{4})", publication_date)
+    if match:
+        year = int(match.group(1))
+    return {
+        "pmc_id": row.get("pmc_id") or None,
+        "doi": row.get("doi") or None,
+        "title": row.get("title") or None,
+        "journal": row.get("journal") or None,
+        "year": year,
+        "publication_date": publication_date or None,
+        "source": row.get("source") or "pmc",
+        "version": row.get("version"),
+        "total_matches": row.get("total_matches"),
+    }
+
+
+def execute_local_scan(args):
+    if args.query or args.details:
+        raise SystemExit(
+            "local mode currently supports --queries-file or --group, not --query or --details"
+        )
+    if args.group:
+        queries = dict(parse_group(spec) for spec in args.group)
+        query_file = Path(tempfile.mkdtemp(prefix="dovmed_query_")) / "query.json"
+        query_file.write_text(json.dumps(queries, indent=2) + "\n", encoding="utf-8")
+    else:
+        queries = load_queries_file(args.queries_file)
+        query_file = Path(args.queries_file)
+
+    repo_dir = Path(args.local_repo_dir).expanduser()
+    output_dir = local_output_dir(args)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+
+    command = [
+        os.path.expanduser("~/.pixi/bin/pixi"),
+        "run",
+        "dovmed",
+        "scan",
+        "--corpus",
+        args.local_corpus,
+        "--queries-file",
+        str(query_file),
+        "--search-columns",
+        args.search_columns,
+        "--extract-matches",
+        args.extract_matches,
+        "--add-group-counts",
+        args.add_group_counts,
+        "--output-path",
+        str(output_dir),
+    ]
+    if args.verbose:
+        command.append("--verbose")
+
+    payload = {
+        "execution_mode": "local",
+        "corpus": args.local_corpus,
+        "repo_dir": str(repo_dir),
+        "command": command,
+        "primary_queries": queries,
+    }
+    maybe_save_json(args.save_payload, payload)
+
+    result = subprocess.run(
+        command,
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+
+    processed_path = output_dir / "processed.parquet"
+    papers = []
+    if processed_path.exists():
+        import polars as pl
+
+        df = pl.read_parquet(processed_path)
+        papers = [compact_local_paper(row) for row in df.head(args.max_results).to_dicts()]
+
+    response = {
+        "execution_mode": "local",
+        "corpus": args.local_corpus,
+        "repo_dir": str(repo_dir),
+        "command": command,
+        "returncode": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "output_dir": str(output_dir),
+        "processed_parquet": str(processed_path) if processed_path.exists() else None,
+        "flattened_csv": str(output_dir / "flattened.csv")
+        if (output_dir / "flattened.csv").exists()
+        else None,
+        "papers": papers,
+    }
+    maybe_save_json(args.save_response, response)
+
+    if result.returncode != 0:
+        raise SystemExit(result.stderr.strip() or result.stdout.strip() or "local dovmed scan failed")
+    return response
 
 
 def companion_json_path(path, suffix):
@@ -848,6 +1000,27 @@ def recommended_next_step(triaged_papers, primary_queries):
 
 def main():
     args = parse_args()
+    execution_mode = determine_execution_mode(args)
+
+    if execution_mode == "local":
+        result = execute_local_scan(args)
+        if args.raw:
+            print(json.dumps(result, indent=2))
+            return
+        summary = {
+            "endpoint": "local_scan",
+            "execution_mode": "local",
+            "corpus": args.local_corpus,
+            "returned": len(result.get("papers") or []),
+            "output_dir": result.get("output_dir"),
+            "processed_parquet": result.get("processed_parquet"),
+            "flattened_csv": result.get("flattened_csv"),
+            "papers": result.get("papers") or [],
+            "warnings": [],
+        }
+        print(json.dumps(summary, indent=2))
+        return
+
     api_key = load_api_key(args.api_key)
     endpoint, payload = build_request(args)
     timeout = args.timeout or (600 if endpoint.endswith("advanced") else 120)
