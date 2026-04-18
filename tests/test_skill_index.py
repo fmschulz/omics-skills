@@ -355,6 +355,29 @@ class CatalogConsistencyTests(unittest.TestCase):
                 )
 
 
+class AgentSectionHeadingScoringTests(unittest.TestCase):
+    """When a skill is co-owned by multiple agents, the section heading
+    each agent files it under breaks the tie. Guards against the router
+    regressing to a pure-alphabetical-tiebreak on shared skills."""
+
+    def test_section_heading_wins_over_alphabetical_tiebreak(self) -> None:
+        # bio-logic is listed by both omics-scientist (under "Scientific
+        # Reasoning & Hypothesis Formation") and science-writer (under
+        # "Scientific Reasoning & Evaluation"). A "hypothesis" query must
+        # route to omics-scientist even though science-writer wins
+        # alphabetically.
+        result = skill_index.route_request(
+            task="formulate a hypothesis for why certain strains outperform others",
+            agent=None,
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertIn("bio-logic", result["primary_skills"])
+        self.assertEqual(result["agent"], "omics-scientist")
+
+
 class CatalogPathPortabilityTests(unittest.TestCase):
     """Catalog JSON on disk stores repo-relative paths; route_request
     resolves them back to absolute via metadata.source_repo so users can

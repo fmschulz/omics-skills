@@ -51,11 +51,6 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **Use for methodology and evidence-quality assessment:**
 - `/bio-logic` - Evaluate methodology, detect bias, and assess evidence strength
 
-### Cross-Agent Collaboration
-
-**Use for second opinions, tmux-based critique, or cross-agent review handoffs:**
-- `/agent-collaboration` - Use smux/tmux-bridge to ask another Codex or Claude pane to challenge a shortlist, critique evidence framing, or stress-test synthesis. Prefer the other runtime when available; otherwise ask a fresh same-platform instance in another pane.
-
 ### Web Retrieval
 
 **Use for sources that require browser access:**
@@ -87,9 +82,6 @@ START
   ├─ Need Evidence Critique?
   │   └─> /bio-logic
   │
-  ├─ Need Second Opinion or tmux Collaboration?
-  │   └─> /agent-collaboration
-  │
   └─ Need Web-Only Retrieval?
       └─> /agent-browser
 ```
@@ -102,7 +94,6 @@ START
 - **"crossref", "doi lookup", "citation metadata", "reference metadata", "bibtex"** → `/crossref-lookup`
 - **"citation count", "altmetric", "impact factor", "journal impact", "scientific impact"** → `/scientific-impact-assessment`
 - **"review evidence", "evidence quality", "bias", "methodology"** → `/bio-logic`
-- **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review"** → `/agent-collaboration`
 - **"browser", "scrape", "supplementary materials", "web database"** → `/agent-browser`
 
 ## Communication Style

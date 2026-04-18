@@ -10,7 +10,7 @@ A curated collection of **5 expert agents** and **32 specialized skills** for bi
 
 **Structure:**
 - `agents/` - 5 agent personas that orchestrate skills
-- `skills/` - 32 specialized skills for omics workflows and agent tooling, including `agent-collaboration` for smux/tmux-bridge second-opinion workflows
+- `skills/` - specialized skills for omics workflows and agent tooling
 - `scripts/` - Installation and testing utilities
 - `Makefile` - Primary installation interface
 

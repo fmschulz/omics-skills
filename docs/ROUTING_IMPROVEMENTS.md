@@ -55,15 +55,9 @@ Pure plumbing change — no routing signal should move. Catalog JSON now stores 
 3. **`## Related Skills` sections added to 15 cluster SKILL.md files** (literature × 5, notebook × 5, writing/review × 5). Parser picks these up as `compose_with` edges, enriching the graph from 6→46 typed edges.
 4. **Alternative-source cross-refs tuned.** `arxiv-search` and `biorxiv-search` intentionally do NOT cross-reference each other; they serve different query domains and would leak into the wrong `forbidden_skills` set if treated as composable partners.
 
-### Remaining 3 failures (deferred)
+### Remaining 3 failures (resolved in PR 6)
 
-All three are shared-skill agent-selection tiebreaks:
-
-- "formulate a hypothesis" — `bio-logic` is owned by both `omics-scientist` and `science-writer`; alphabetical tiebreak picks science-writer. Fix: add agent-description weighting or prefer-earlier-owner tiebreak. Out of scope for PR 5.
-- "ask a peer Codex pane" — `agent-collaboration` is owned by every agent; picks `science-writer` over `codexloop`. Same tiebreak problem.
-- "reason about causation" — `bio-logic` not recognised; `agent-collaboration` wins via a phantom single-token overlap (`plan` → `plan critique`). Needs either tighter pattern thresholds (attempted, regressed other tests) or a stop-word list.
-
-Tracked for a follow-up router-disambiguation PR.
+All three were cleared in the follow-up PR. See "PR 6" below.
 
 ## PR 4 — SessionStart / UserPromptSubmit hook
 
@@ -90,11 +84,25 @@ make hook-status        # check install state
 make uninstall-hook     # remove
 ```
 
-### Remaining router gaps (deferred, unchanged from PR 5)
+### Remaining router gaps
 
-The three benchmark failures all remain shared-skill agent-selection tiebreaks:
-- `formulate a hypothesis` — bio-logic co-owned, science-writer wins on alphabetical tiebreak
-- `ask a peer Codex pane` — agent-collaboration co-owned, science-writer wins
-- `reason about causation` — bio-logic not recognised; agent-collaboration wins via single-token overlap on `plan`
+Resolved in PR 6 (see below).
 
-These need a smarter agent-scoring algorithm (weight agent-description overlap more, or prefer the agent whose section heading for the skill matches the query context). Targeted for a follow-up PR.
+## PR 6 — Disambiguate shared skills and cover causal-reasoning vocabulary
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| Pass rate | 35/38 (92.1%) | **37/37 (100%)** | closes all remaining failures |
+| Agent-selection failures | 2 | 0 | −2 |
+| Primary-skill failures | 1 | 0 | −1 |
+| Forbidden-skill leaks | 0 | 0 | 0 |
+
+Three changes close the last failures:
+
+1. **Retire `agent-collaboration`.** Rarely used in practice; its task patterns (`plan critique`, `code review`, `second opinion`) sourced the `reason about causation → agent-collaboration` phantom. Deleting the skill, scrubbing references from all five agent prompts, and removing the two benchmark rows that depended on it eliminated both that false positive and one shared-skill tiebreak. Suite shrinks from 38 to 37 rows.
+
+2. **Section-heading context in agent scoring.** When a skill is co-owned — e.g. `bio-logic` is filed under "Scientific Reasoning & Hypothesis Formation" in `omics-scientist` but "Scientific Reasoning & Evaluation" in `science-writer` — the router now adds a score bonus proportional to the overlap between query tokens and the section heading under which each agent lists the shared skill. `formulate a hypothesis …` therefore prefers `omics-scientist` even though `science-writer` wins the raw-alphabetical tiebreak.
+
+3. **bio-logic task patterns extended** with `reason, causation, causal, observational, follow-up experiments, formulate hypothesis, experimental design` so causal-reasoning queries are recognised instead of scoring zero and falling back to whichever agent tokens happened to overlap.
+
+New guard test `test_section_heading_wins_over_alphabetical_tiebreak` pins the section-heading behaviour so this cannot regress silently.

@@ -1,10 +1,10 @@
 {
   "metadata": {
     "source_repo": "/home/fschulz/dev/omics-skills",
-    "built_at": "2026-04-18T22:27:28+00:00",
-    "skill_count": 37,
+    "built_at": "2026-04-18T23:10:42+00:00",
+    "skill_count": 36,
     "agent_count": 5,
-    "edge_count": 110
+    "edge_count": 105
   },
   "skills": [
     {
@@ -81,41 +81,6 @@
         "supplementary materials",
         "web data",
         "web database"
-      ],
-      "internal_references": [],
-      "reference_contexts": {}
-    },
-    {
-      "name": "agent-collaboration",
-      "title": "Agent Collaboration",
-      "description": "Coordinate cross-agent collaboration through smux/tmux-bridge for code review, plan critique, result checking, scientific writing review, and second-opinion workflows across Codex CLI, Claude Code, and OpenHarness (`oh`). Prefer a different runtime when available; otherwise use a fresh same-platform instance in another tmux pane.",
-      "path": "skills/agent-collaboration/SKILL.md",
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "agents": [
-        "codexloop",
-        "dataviz-artist",
-        "literature-expert",
-        "omics-scientist",
-        "science-writer"
-      ],
-      "sections": [
-        "Cross-Agent Collaboration"
-      ],
-      "task_patterns": [
-        "another agent",
-        "ask claude",
-        "ask codex",
-        "cross-agent review",
-        "peer codex pane",
-        "plan critique",
-        "review the current diff",
-        "second opinion",
-        "smux",
-        "tmux",
-        "tmux-bridge"
       ],
       "internal_references": [],
       "reference_contexts": {}
@@ -409,13 +374,20 @@
       ],
       "task_patterns": [
         "bias",
+        "causal",
+        "causation",
         "critique",
         "design experiment",
         "evidence quality",
+        "experimental design",
+        "follow-up experiments",
+        "formulate hypothesis",
         "how",
         "hypothesis",
         "interpret",
         "methodology",
+        "observational",
+        "reason",
         "review",
         "review evidence",
         "why"
@@ -1233,9 +1205,6 @@
         "API Documentation Lookup": [
           "get-api-docs"
         ],
-        "Cross-Agent Collaboration": [
-          "agent-collaboration"
-        ],
         "Long-Running Implementation Harness": [
           "codexloop"
         ]
@@ -1268,22 +1237,6 @@
           ]
         },
         {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review",
-            "plan critique",
-            "peer codex pane",
-            "review the current diff"
-          ]
-        },
-        {
           "skill_name": "get-api-docs",
           "phrases": [
             "api docs",
@@ -1301,9 +1254,6 @@
       "description": "Expert data visualization specialist for publication-quality figures, dashboards, and reproducible analysis notebooks.",
       "path": "agents/dataviz-artist.md",
       "skill_sections": {
-        "Cross-Agent Collaboration": [
-          "agent-collaboration"
-        ],
         "Interactive Dashboards": [
           "plotly-dashboard-skill"
         ],
@@ -1417,19 +1367,6 @@
           ]
         },
         {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
-          ]
-        },
-        {
           "skill_name": "agent-browser",
           "phrases": [
             "scrape",
@@ -1447,9 +1384,6 @@
       "skill_sections": {
         "Citation Metadata": [
           "crossref-lookup"
-        ],
-        "Cross-Agent Collaboration": [
-          "agent-collaboration"
         ],
         "Evidence Triage": [
           "bio-logic"
@@ -1528,19 +1462,6 @@
           ]
         },
         {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
-          ]
-        },
-        {
           "skill_name": "agent-browser",
           "phrases": [
             "browser",
@@ -1564,9 +1485,6 @@
         ],
         "Comparative Genomics": [
           "bio-protein-clustering-pangenome"
-        ],
-        "Cross-Agent Collaboration": [
-          "agent-collaboration"
         ],
         "Functional Annotation": [
           "bio-annotation"
@@ -1658,7 +1576,14 @@
             "how",
             "interpret",
             "hypothesis",
-            "design experiment"
+            "formulate hypothesis",
+            "design experiment",
+            "experimental design",
+            "reason",
+            "causation",
+            "causal",
+            "observational",
+            "follow-up experiments"
           ]
         },
         {
@@ -1788,19 +1713,6 @@
             "GTDB",
             "ICTV"
           ]
-        },
-        {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
-          ]
         }
       ]
     },
@@ -1809,9 +1721,6 @@
       "description": "Expert scientific writer and editor for publication-quality manuscripts, revision strategy, peer review, and reproducible methods documentation.",
       "path": "agents/science-writer.md",
       "skill_sections": {
-        "Cross-Agent Collaboration": [
-          "agent-collaboration"
-        ],
         "Manuscript Review": [
           "manuscript-review-council"
         ],
@@ -1841,19 +1750,6 @@
             "critique",
             "bias",
             "evidence quality"
-          ]
-        },
-        {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
           ]
         },
         {
@@ -2359,20 +2255,6 @@
     },
     {
       "source": "codexloop",
-      "target": "agent-collaboration",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/codexloop.md"
-      ]
-    },
-    {
-      "source": "codexloop",
       "target": "codexloop",
       "type": "uses",
       "source_type": "agent",
@@ -2472,20 +2354,6 @@
     {
       "source": "dataviz-artist",
       "target": "agent-browser",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/dataviz-artist.md"
-      ]
-    },
-    {
-      "source": "dataviz-artist",
-      "target": "agent-collaboration",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -2696,20 +2564,6 @@
     {
       "source": "literature-expert",
       "target": "agent-browser",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/literature-expert.md"
-      ]
-    },
-    {
-      "source": "literature-expert",
-      "target": "agent-collaboration",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -2991,20 +2845,6 @@
     },
     {
       "source": "omics-scientist",
-      "target": "agent-collaboration",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/omics-scientist.md"
-      ]
-    },
-    {
-      "source": "omics-scientist",
       "target": "bio-annotation",
       "type": "uses",
       "source_type": "agent",
@@ -3272,20 +3112,6 @@
     {
       "source": "science-writer",
       "target": "agent-browser",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/science-writer.md"
-      ]
-    },
-    {
-      "source": "science-writer",
-      "target": "agent-collaboration",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",

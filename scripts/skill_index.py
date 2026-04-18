@@ -664,6 +664,48 @@ def route_request(
     for skill_name in primary_skills:
         for owner in skills[skill_name]["agents"]:
             agent_scores[owner] += skill_scores[skill_name]
+            owner_record = agents.get(owner) or {}
+            # Section-heading context: when the same skill is co-owned by
+            # multiple agents, the section heading the owning agent filed
+            # it under is a strong tiebreak signal. E.g. bio-logic lives in
+            # "Scientific Reasoning & Hypothesis Formation" for
+            # omics-scientist and "Scientific Reasoning & Evaluation" for
+            # science-writer — a query about "formulate a hypothesis"
+            # should prefer the agent whose section heading contains
+            # "hypothesis".
+            for section, section_skills in owner_record.get("skill_sections", {}).items():
+                if skill_name not in section_skills:
+                    continue
+                section_overlap = text_overlap(query_tokens, tokenize(section))
+                if section_overlap:
+                    agent_scores[owner] += section_overlap * skill_scores[skill_name]
+                    reasons[skill_name].append(
+                        f"section-heading '{section}' overlap for agent {owner}"
+                    )
+            # Per-agent task-pattern match: if the query hits a phrase that
+            # the owning agent specifically mapped to this skill, prefer
+            # that agent over co-owners whose patterns do not match. E.g.
+            # omics-scientist lists "causation" → /bio-logic;
+            # science-writer lists "bias" → /bio-logic. A causation query
+            # should favour omics-scientist even when both score the skill.
+            for pattern_entry in owner_record.get("task_patterns", []):
+                if pattern_entry.get("skill_name") != skill_name:
+                    continue
+                for phrase in pattern_entry.get("phrases", []):
+                    phrase_lower = phrase.lower()
+                    phrase_tokens = tokenize(phrase)
+                    if phrase_lower in query:
+                        agent_scores[owner] += 1.0
+                        reasons[skill_name].append(
+                            f'agent {owner} pattern "{phrase}" direct match'
+                        )
+                        break
+                    phrase_overlap = text_overlap(query_tokens, phrase_tokens)
+                    if phrase_overlap >= 0.34:
+                        agent_scores[owner] += phrase_overlap * 0.5
+                        reasons[skill_name].append(
+                            f'agent {owner} pattern "{phrase}" overlap'
+                        )
     for agent_name, agent_record in agents.items():
         if agent and agent_name != agent:
             continue

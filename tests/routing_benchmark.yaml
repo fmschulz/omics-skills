@@ -191,11 +191,6 @@
   expected_agent: codexloop
   expected_primary_skills: [codexloop]
 
-- task: "ask a peer Codex pane for a second opinion on the current diff over tmux"
-  platform: codex
-  expected_agent: codexloop
-  expected_primary_skills: [agent-collaboration]
-
 - task: "automate browsing a website to download supplementary data"
   platform: codex
   expected_primary_skills: [agent-browser]
@@ -220,10 +215,10 @@
 
 - task: "reason about causation from a noisy observational dataset and plan follow-up experiments"
   platform: codex
+  expected_agent: omics-scientist
   expected_primary_skills: [bio-logic]
   forbidden_skills: [ai-scientist-evaluator]
 
 - task: "log into a web portal to download supplementary data for a paper"
   platform: codex
   expected_primary_skills: [agent-browser]
-  forbidden_skills: [agent-collaboration]

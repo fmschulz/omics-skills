@@ -5,7 +5,6 @@
       "description": "Codex-native implementation harness agent for plan-driven execution with docs/plans tracking, MEMORY.md feedback, iterative verification, and resumable task loops.",
       "path": "agents/codexloop.md",
       "skills": [
-        "agent-collaboration",
         "codexloop",
         "get-api-docs"
       ],
@@ -36,22 +35,6 @@
           ]
         },
         {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review",
-            "plan critique",
-            "peer codex pane",
-            "review the current diff"
-          ]
-        },
-        {
           "skill_name": "get-api-docs",
           "phrases": [
             "api docs",
@@ -71,7 +54,6 @@
       "skills": [
         "add-molab-badge",
         "agent-browser",
-        "agent-collaboration",
         "anywidget",
         "beautiful-data-viz",
         "implement-paper-auto",
@@ -153,19 +135,6 @@
           ]
         },
         {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
-          ]
-        },
-        {
           "skill_name": "agent-browser",
           "phrases": [
             "scrape",
@@ -182,7 +151,6 @@
       "path": "agents/literature-expert.md",
       "skills": [
         "agent-browser",
-        "agent-collaboration",
         "arxiv-search",
         "bio-logic",
         "biorxiv-search",
@@ -249,19 +217,6 @@
           ]
         },
         {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
-          ]
-        },
-        {
           "skill_name": "agent-browser",
           "phrases": [
             "browser",
@@ -277,7 +232,6 @@
       "description": "Expert computational biologist for omics workflows (QC, assembly, annotation, phylogenomics, MAG recovery, viral analysis, and JGI data access).",
       "path": "agents/omics-scientist.md",
       "skills": [
-        "agent-collaboration",
         "bio-annotation",
         "bio-assembly-qc",
         "bio-binning-qc",
@@ -303,7 +257,14 @@
             "how",
             "interpret",
             "hypothesis",
-            "design experiment"
+            "formulate hypothesis",
+            "design experiment",
+            "experimental design",
+            "reason",
+            "causation",
+            "causal",
+            "observational",
+            "follow-up experiments"
           ]
         },
         {
@@ -433,19 +394,6 @@
             "GTDB",
             "ICTV"
           ]
-        },
-        {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
-          ]
         }
       ]
     },
@@ -455,7 +403,6 @@
       "path": "agents/science-writer.md",
       "skills": [
         "agent-browser",
-        "agent-collaboration",
         "ai-scientist-evaluator",
         "bio-logic",
         "bio-workflow-methods-docwriter",
@@ -471,19 +418,6 @@
             "critique",
             "bias",
             "evidence quality"
-          ]
-        },
-        {
-          "skill_name": "agent-collaboration",
-          "phrases": [
-            "smux",
-            "tmux",
-            "tmux-bridge",
-            "second opinion",
-            "ask codex",
-            "ask claude",
-            "another agent",
-            "cross-agent review"
           ]
         },
         {
@@ -591,35 +525,6 @@
         "codex"
       ],
       "path": "skills/agent-browser/SKILL.md"
-    },
-    {
-      "name": "agent-collaboration",
-      "description": "Coordinate cross-agent collaboration through smux/tmux-bridge for code review, plan critique, result checking, scientific writing review, and second-opinion workflows across Codex CLI, Claude Code, and OpenHarness (`oh`). Prefer a different runtime when available; otherwise use a fresh same-platform instance in another tmux pane.",
-      "agents": [
-        "codexloop",
-        "dataviz-artist",
-        "literature-expert",
-        "omics-scientist",
-        "science-writer"
-      ],
-      "task_patterns": [
-        "another agent",
-        "ask claude",
-        "ask codex",
-        "cross-agent review",
-        "peer codex pane",
-        "plan critique",
-        "review the current diff",
-        "second opinion",
-        "smux",
-        "tmux",
-        "tmux-bridge"
-      ],
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "path": "skills/agent-collaboration/SKILL.md"
     },
     {
       "name": "ai-scientist-evaluator",
@@ -794,13 +699,20 @@
       ],
       "task_patterns": [
         "bias",
+        "causal",
+        "causation",
         "critique",
         "design experiment",
         "evidence quality",
+        "experimental design",
+        "follow-up experiments",
+        "formulate hypothesis",
         "how",
         "hypothesis",
         "interpret",
         "methodology",
+        "observational",
+        "reason",
         "review",
         "review evidence",
         "why"
