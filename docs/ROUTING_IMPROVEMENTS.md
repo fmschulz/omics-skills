@@ -65,6 +65,36 @@ All three are shared-skill agent-selection tiebreaks:
 
 Tracked for a follow-up router-disambiguation PR.
 
-## PR 4 — SessionStart hook
+## PR 4 — SessionStart / UserPromptSubmit hook
 
-_Pending._
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| Pass rate | 35/38 (92.1%) | 35/38 (92.1%) | 0 |
+
+PR 4 is about **enforcing** the router, not expanding it. Benchmark output is unchanged because the same `route_request` is being called — just from a hook on every user prompt instead of prose text asking Claude / Codex to run a shell command. Routing signal quality stays where PR 5 left it.
+
+### What shipped
+
+- `scripts/emit_routing_hint.py` — hook script. Reads stdin JSON (Claude Code `UserPromptSubmit` payload) or falls back to raw prompt. Calls `route_request` and emits either `hookSpecificOutput` JSON (Claude Code contract, prepends a `## Routing hint` block to context) or plain text (`--text` for Codex CLI).
+- `scripts/install_hook.py` + `make install-hook` / `make uninstall-hook` / `make hook-status` — idempotent installer for Claude Code `~/.claude/settings.json` and Codex CLI `~/.codex/hooks.json` (identical JSON schema — Codex adopted Claude Code's `UserPromptSubmit` contract in 2026). Also writes `[features] codex_hooks = true` into `~/.codex/config.toml` to enable Codex's hook system. Atomic writes (tempfile + rename) prevent torn files under concurrent edits; structural marker matching (`omics-skills-autoroute` marker combined with the hook script path) prevents double-installs and false positives.
+- `tests/test_emit_routing_hint.py` — 9 tests covering: empty stdin, opt-out env var, JSON mode, text mode, `--prompt` flag, bare-prompt stdin, off-topic query (suppressed), idempotent Claude install, Codex install preserves existing content.
+- All 5 agent prompts updated — the old "Skill Lookup" prose now says "If the hook is installed, follow the injected hint; otherwise fall back to the command."
+- Opt-out: `OMICS_SKILLS_AUTOROUTE=0` in env exits the hook silently.
+- Failure mode: on any error (catalog missing, route raises), the hook returns exit 0 and emits an HTML comment explaining the skip — never blocks a user prompt.
+
+### Enable it
+
+```
+make install-hook       # Claude Code + Codex CLI
+make hook-status        # check install state
+make uninstall-hook     # remove
+```
+
+### Remaining router gaps (deferred, unchanged from PR 5)
+
+The three benchmark failures all remain shared-skill agent-selection tiebreaks:
+- `formulate a hypothesis` — bio-logic co-owned, science-writer wins on alphabetical tiebreak
+- `ask a peer Codex pane` — agent-collaboration co-owned, science-writer wins
+- `reason about causation` — bio-logic not recognised; agent-collaboration wins via single-token overlap on `plan`
+
+These need a smarter agent-scoring algorithm (weight agent-description overlap more, or prefer the agent whose section heading for the skill matches the query context). Targeted for a follow-up PR.

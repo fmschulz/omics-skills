@@ -18,7 +18,7 @@ You are a CodexLoop orchestration agent. Your job is to turn a repository-level 
 
 ## Skill Lookup
 
-Before deciding whether to use the harness, consult the installed catalog:
+When the `omics-skills` routing-hint hook is installed (`make install-hook`), a `## Routing hint` block is auto-injected into your context on every user prompt — follow it. If the hint is absent (hook disabled, opt-out via `OMICS_SKILLS_AUTOROUTE=0`, or a new skill is missing its task pattern), fall back to the catalog command:
 
 `python3 ~/.agents/omics-skills/skill_index.py route "<task>" --agent codexloop`
 

@@ -3,7 +3,8 @@
 
 .PHONY: help install install-claude install-codex install-agents install-skills \
         install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
-        install-codex-tools build-catalog install-catalog uninstall uninstall-claude \
+        install-codex-tools build-catalog install-catalog install-hook uninstall-hook \
+        hook-status benchmark uninstall uninstall-claude \
         uninstall-codex uninstall-skills uninstall-catalog status check-deps clean test
 
 # Directories
@@ -99,6 +100,18 @@ install-codex: build-catalog install-skills install-catalog install-codex-agents
 	@echo "$(GREEN)✓ Codex CLI installation complete$(NC)"
 	@echo "  Skills linked at $(CODEX_SKILLS_DIR)"
 	@echo "  CodexLoop launcher: $(CODEXLOOP_LAUNCHER)"
+
+install-hook: ## Install the routing-hint hook for Claude Code + Codex CLI
+	@python3 $(SCRIPTS_DIR)/install_hook.py install
+
+uninstall-hook: ## Remove the routing-hint hook from Claude Code + Codex CLI
+	@python3 $(SCRIPTS_DIR)/install_hook.py uninstall
+
+hook-status: ## Show whether the routing-hint hook is installed per runtime
+	@python3 $(SCRIPTS_DIR)/install_hook.py status
+
+benchmark: ## Run the routing benchmark and diff against docs/routing_baseline.json
+	@python3 $(SCRIPTS_DIR)/routing_benchmark.py --compare docs/routing_baseline.json
 
 build-catalog: ## Build the shared skill catalog files
 	@echo "$(BLUE)Building skill catalog...$(NC)"
