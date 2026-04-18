@@ -1,20 +1,23 @@
 # AGENTS.md
 
-This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, etc.) when working with code in this repository.
+Guidance for AI coding agents (Claude Code, Cursor, Copilot) working in this repository.
 
 ---
 
-## Repository Overview
+## Repository overview
 
-A curated collection of **5 expert agents** and **32 specialized skills** for bioinformatics, literature discovery, scientific writing, data visualization, and agent tooling. Compatible with **Claude Code** and **Codex CLI**.
+5 agents and 36 skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
 
-**Structure:**
-- `agents/` - 5 agent personas that orchestrate skills
-- `skills/` - specialized skills for omics workflows and agent tooling
-- `scripts/` - Installation and testing utilities
-- `Makefile` - Primary installation interface
+Layout:
+- `agents/` — 5 agent definitions (markdown)
+- `skills/` — skill directories; each has a `SKILL.md`
+- `scripts/` — router, catalog builder, hook, installer, benchmark
+- `tests/` — unit tests + routing benchmark
+- `catalog/` — generated routing artifacts (`catalog.json`, `relationships.json`, `routing.json`)
+- `docs/` — routing model, PR-by-PR deltas, benchmark baseline
+- `Makefile` — install, catalog, hook, benchmark, uninstall targets
 
-**Installation:** Users run `make install` to symlink agents and skills to `~/.claude/` and `~/.codex/`
+Install: `make install` symlinks agents and skills into `~/.claude/` and `~/.codex/`.
 
 ---
 
@@ -454,7 +457,7 @@ claude --agent omics-scientist
 - [ ] Persona clearly defined
 - [ ] All used skills documented in "Mandatory Skill Usage"
 - [ ] Decision tree covers all skill paths
-- [ ] Keyword mappings comprehensive
+- [ ] Keyword mappings cover the skill's expected triggers
 - [ ] Example interactions show real workflows
 - [ ] Quality gates specified for workflows
 
@@ -574,4 +577,4 @@ make status    # Verify
 
 ---
 
-**Note**: This repository emphasizes reproducibility, quality gates, and modular composition. When adding skills or modifying agents, maintain these principles.
+When adding skills or modifying agents, preserve the YAML frontmatter shape, the `Mandatory Skill Usage` / `Task Recognition Patterns` / `Workflow Decision Tree` sections the router parses, and the `name`-matches-directory invariant enforced by `tests/test_skill_index.py`.
