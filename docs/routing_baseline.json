@@ -1,0 +1,558 @@
+{
+  "summary": {
+    "total": 38,
+    "passed": 23,
+    "failed": 15,
+    "pass_rate": 0.605,
+    "agent_failures": 3,
+    "primary_skill_failures": 12,
+    "ordered_skill_failures": 0,
+    "forbidden_skill_leaks": 1
+  },
+  "rows": [
+    {
+      "task": "quality-control Illumina short reads with fastp and trim adapters",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-reads-qc-mapping",
+          "bio-logic"
+        ],
+        "ordered_skills": [
+          "bio-logic",
+          "bio-reads-qc-mapping"
+        ]
+      }
+    },
+    {
+      "task": "assemble a metagenome from short reads and recover MAGs",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-assembly-qc",
+          "bio-binning-qc",
+          "bio-reads-qc-mapping"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-binning-qc"
+        ]
+      }
+    },
+    {
+      "task": "predict genes in a newly assembled bacterial genome",
+      "passed": false,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-assembly-qc"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc"
+        ]
+      }
+    },
+    {
+      "task": "functional annotation with eggnog-mapper on predicted proteins",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-annotation"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-gene-calling",
+          "bio-annotation"
+        ]
+      }
+    },
+    {
+      "task": "build a phylogenetic tree from marker gene alignments",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-phylogenomics"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-gene-calling",
+          "bio-phylogenomics"
+        ]
+      }
+    },
+    {
+      "task": "detect viral contigs in a metagenomic assembly and classify them",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-assembly-qc",
+          "bio-viromics"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics"
+        ]
+      }
+    },
+    {
+      "task": "cluster proteins into orthogroups and derive a pangenome matrix",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-protein-clustering-pangenome"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-gene-calling",
+          "bio-protein-clustering-pangenome"
+        ]
+      }
+    },
+    {
+      "task": "predict protein structure with AlphaFold and run structure-based annotation",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-structure-annotation",
+          "bio-annotation"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-gene-calling",
+          "bio-annotation",
+          "bio-structure-annotation"
+        ]
+      }
+    },
+    {
+      "task": "query JGI IMG for all cyanobacterial genomes and download FASTA files",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "jgi-lakehouse"
+        ],
+        "ordered_skills": [
+          "jgi-lakehouse"
+        ]
+      }
+    },
+    {
+      "task": "reconcile NCBI and GTDB taxonomy for a list of MAGs",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "tracking-taxonomy-updates",
+          "bio-annotation",
+          "bio-binning-qc"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-binning-qc",
+          "bio-gene-calling",
+          "bio-annotation",
+          "tracking-taxonomy-updates"
+        ]
+      }
+    },
+    {
+      "task": "scaffold a new bioinformatics project with reproducible environments",
+      "passed": false,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "design a Nextflow pipeline for metagenomic assembly on HPC",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-prefect-dask-nextflow",
+          "bio-workflow-methods-docwriter",
+          "bio-assembly-qc"
+        ],
+        "ordered_skills": [
+          "bio-prefect-dask-nextflow",
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-workflow-methods-docwriter"
+        ]
+      }
+    },
+    {
+      "task": "formulate a hypothesis for why certain strains outperform others and plan the experimental design",
+      "passed": false,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "bio-logic"
+        ],
+        "ordered_skills": [
+          "bio-logic"
+        ]
+      }
+    },
+    {
+      "task": "find recent arxiv preprints on protein language models",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "arxiv-search"
+        ],
+        "ordered_skills": [
+          "arxiv-search"
+        ]
+      }
+    },
+    {
+      "task": "find recent biorxiv preprints on single-cell atlases",
+      "passed": false,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "biorxiv-search",
+          "arxiv-search"
+        ],
+        "ordered_skills": [
+          "arxiv-search",
+          "biorxiv-search"
+        ]
+      }
+    },
+    {
+      "task": "search PubMed Central Open Access full text for CRISPR in Archaea",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "polars-dovmed"
+        ],
+        "ordered_skills": [
+          "polars-dovmed"
+        ]
+      }
+    },
+    {
+      "task": "validate a list of DOIs and resolve their citation metadata",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "crossref-lookup"
+        ],
+        "ordered_skills": [
+          "crossref-lookup"
+        ]
+      }
+    },
+    {
+      "task": "compare the impact of two journals using citation counts and altmetric data",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "scientific-impact-assessment"
+        ],
+        "ordered_skills": [
+          "scientific-impact-assessment"
+        ]
+      }
+    },
+    {
+      "task": "draft the methods section of a manuscript on metagenomic binning",
+      "passed": true,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "scientific-writing",
+          "bio-workflow-methods-docwriter",
+          "bio-binning-qc"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-binning-qc",
+          "bio-workflow-methods-docwriter",
+          "scientific-writing"
+        ]
+      }
+    },
+    {
+      "task": "run a multi-reviewer critique on a submitted manuscript draft",
+      "passed": false,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "bio-logic",
+          "scientific-writing"
+        ],
+        "ordered_skills": [
+          "bio-logic",
+          "scientific-writing"
+        ]
+      }
+    },
+    {
+      "task": "review a research proposal for methodological rigor and feasibility",
+      "passed": false,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "bio-logic"
+        ],
+        "ordered_skills": [
+          "bio-logic"
+        ]
+      }
+    },
+    {
+      "task": "evaluate the scientific rigor of an AI scientist output for evidence quality and bias",
+      "passed": false,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "bio-logic"
+        ],
+        "ordered_skills": [
+          "bio-logic"
+        ]
+      }
+    },
+    {
+      "task": "generate reproducible methods documentation from a Nextflow pipeline run",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-workflow-methods-docwriter",
+          "bio-prefect-dask-nextflow"
+        ],
+        "ordered_skills": [
+          "bio-prefect-dask-nextflow",
+          "bio-workflow-methods-docwriter"
+        ]
+      }
+    },
+    {
+      "task": "create a publication-quality matplotlib figure of assembly statistics",
+      "passed": true,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "beautiful-data-viz"
+        ],
+        "ordered_skills": [
+          "beautiful-data-viz"
+        ]
+      }
+    },
+    {
+      "task": "build an interactive Plotly Dash dashboard of pipeline run metrics",
+      "passed": true,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "plotly-dashboard-skill"
+        ],
+        "ordered_skills": [
+          "plotly-dashboard-skill"
+        ]
+      }
+    },
+    {
+      "task": "write a reproducible marimo notebook loading DuckDB data",
+      "passed": false,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "notebook-ai-agents-skill",
+          "scientific-writing"
+        ],
+        "ordered_skills": [
+          "notebook-ai-agents-skill",
+          "scientific-writing"
+        ]
+      }
+    },
+    {
+      "task": "convert a Jupyter notebook to a marimo notebook",
+      "passed": false,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "notebook-ai-agents-skill"
+        ],
+        "ordered_skills": [
+          "notebook-ai-agents-skill"
+        ]
+      }
+    },
+    {
+      "task": "add an Open-in-molab badge to the README for a notebook",
+      "passed": false,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "notebook-ai-agents-skill"
+        ],
+        "ordered_skills": [
+          "notebook-ai-agents-skill"
+        ]
+      }
+    },
+    {
+      "task": "generate an anywidget component for a marimo notebook",
+      "passed": false,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "notebook-ai-agents-skill"
+        ],
+        "ordered_skills": [
+          "notebook-ai-agents-skill"
+        ]
+      }
+    },
+    {
+      "task": "reproduce a recent bioRxiv paper end-to-end in a marimo notebook",
+      "passed": false,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "notebook-ai-agents-skill",
+          "biorxiv-search"
+        ],
+        "ordered_skills": [
+          "biorxiv-search",
+          "notebook-ai-agents-skill"
+        ]
+      }
+    },
+    {
+      "task": "resume the long-running coding loop and keep going until the plan tests pass",
+      "passed": true,
+      "actual": {
+        "agent": "codexloop",
+        "primary_skills": [
+          "codexloop"
+        ],
+        "ordered_skills": [
+          "codexloop"
+        ]
+      }
+    },
+    {
+      "task": "ask a peer Codex pane for a second opinion on the current diff over tmux",
+      "passed": false,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "agent-collaboration"
+        ],
+        "ordered_skills": [
+          "agent-collaboration"
+        ]
+      }
+    },
+    {
+      "task": "automate browsing a website to download supplementary data",
+      "passed": true,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "agent-browser"
+        ],
+        "ordered_skills": [
+          "agent-browser"
+        ]
+      }
+    },
+    {
+      "task": "fetch up-to-date Anthropic SDK API documentation before writing client code",
+      "passed": false,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "agent-collaboration"
+        ],
+        "ordered_skills": [
+          "agent-collaboration"
+        ]
+      }
+    },
+    {
+      "task": "quality-control Illumina short reads with fastp and trim adapters",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-reads-qc-mapping",
+          "bio-logic"
+        ],
+        "ordered_skills": [
+          "bio-logic",
+          "bio-reads-qc-mapping"
+        ]
+      }
+    },
+    {
+      "task": "find recent arxiv preprints on protein language models",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "arxiv-search"
+        ],
+        "ordered_skills": [
+          "arxiv-search"
+        ]
+      }
+    },
+    {
+      "task": "reason about causation from a noisy observational dataset and plan follow-up experiments",
+      "passed": false,
+      "actual": {
+        "agent": "codexloop",
+        "primary_skills": [
+          "agent-collaboration"
+        ],
+        "ordered_skills": [
+          "agent-collaboration"
+        ]
+      }
+    },
+    {
+      "task": "log into a web portal to download supplementary data for a paper",
+      "passed": true,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "agent-browser"
+        ],
+        "ordered_skills": [
+          "agent-browser"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+# Routing benchmark: representative tasks → expected router output.
+#
+# Runner: python3 scripts/routing_benchmark.py [--json]
+#
+# Fields:
+#   task                       — natural-language task description
+#   platform                   — claude | codex | generic
+#   expected_agent             — required agent name or null (no constraint)
+#   expected_primary_skills    — skills that MUST appear in result.primary_skills
+#   expected_ordered_includes  — skills that MUST appear anywhere in result.ordered_skills
+#                                (use this for dependencies the router should surface)
+#   forbidden_skills           — skills that MUST NOT appear in any result list
+#                                (use for mutual-exclusion cases, e.g. an arxiv query
+#                                must not surface biorxiv-search as primary)
+
+# ============================================================================
+# Omics pipeline (omics-scientist)
+# ============================================================================
+
+- task: "quality-control Illumina short reads with fastp and trim adapters"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-reads-qc-mapping]
+
+- task: "assemble a metagenome from short reads and recover MAGs"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-assembly-qc]
+  expected_ordered_includes: [bio-reads-qc-mapping, bio-assembly-qc, bio-binning-qc]
+
+- task: "predict genes in a newly assembled bacterial genome"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-gene-calling]
+
+- task: "functional annotation with eggnog-mapper on predicted proteins"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-annotation]
+
+- task: "build a phylogenetic tree from marker gene alignments"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-phylogenomics]
+
+- task: "detect viral contigs in a metagenomic assembly and classify them"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-viromics]
+
+- task: "cluster proteins into orthogroups and derive a pangenome matrix"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-protein-clustering-pangenome]
+
+- task: "predict protein structure with AlphaFold and run structure-based annotation"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-structure-annotation]
+
+- task: "query JGI IMG for all cyanobacterial genomes and download FASTA files"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [jgi-lakehouse]
+
+- task: "reconcile NCBI and GTDB taxonomy for a list of MAGs"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [tracking-taxonomy-updates]
+
+- task: "scaffold a new bioinformatics project with reproducible environments"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-foundation-housekeeping]
+
+- task: "design a Nextflow pipeline for metagenomic assembly on HPC"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-prefect-dask-nextflow]
+
+- task: "formulate a hypothesis for why certain strains outperform others and plan the experimental design"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-logic]
+
+# ============================================================================
+# Literature discovery (literature-expert)
+# ============================================================================
+
+- task: "find recent arxiv preprints on protein language models"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [arxiv-search]
+  forbidden_skills: [biorxiv-search]
+
+- task: "find recent biorxiv preprints on single-cell atlases"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [biorxiv-search]
+  forbidden_skills: [arxiv-search]
+
+- task: "search PubMed Central Open Access full text for CRISPR in Archaea"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [polars-dovmed]
+
+- task: "validate a list of DOIs and resolve their citation metadata"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [crossref-lookup]
+
+- task: "compare the impact of two journals using citation counts and altmetric data"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [scientific-impact-assessment]
+
+# ============================================================================
+# Writing and review (science-writer)
+# ============================================================================
+
+- task: "draft the methods section of a manuscript on metagenomic binning"
+  platform: codex
+  expected_agent: science-writer
+  expected_primary_skills: [scientific-writing]
+
+- task: "run a multi-reviewer critique on a submitted manuscript draft"
+  platform: codex
+  expected_agent: science-writer
+  expected_primary_skills: [manuscript-review-council]
+
+- task: "review a research proposal for methodological rigor and feasibility"
+  platform: codex
+  expected_agent: science-writer
+  expected_primary_skills: [proposal-review]
+
+- task: "evaluate the scientific rigor of an AI scientist output for evidence quality and bias"
+  platform: codex
+  expected_agent: science-writer
+  expected_primary_skills: [ai-scientist-evaluator]
+
+- task: "generate reproducible methods documentation from a Nextflow pipeline run"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-workflow-methods-docwriter]
+
+# ============================================================================
+# Visualization and notebooks (dataviz-artist)
+# ============================================================================
+
+- task: "create a publication-quality matplotlib figure of assembly statistics"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [beautiful-data-viz]
+
+- task: "build an interactive Plotly Dash dashboard of pipeline run metrics"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [plotly-dashboard-skill]
+
+- task: "write a reproducible marimo notebook loading DuckDB data"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [marimo-notebook]
+
+- task: "convert a Jupyter notebook to a marimo notebook"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [jupyter-to-marimo]
+
+- task: "add an Open-in-molab badge to the README for a notebook"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [add-molab-badge]
+
+- task: "generate an anywidget component for a marimo notebook"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [anywidget]
+
+- task: "reproduce a recent bioRxiv paper end-to-end in a marimo notebook"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [implement-paper-auto]
+
+# ============================================================================
+# Orchestration / meta (codexloop)
+# ============================================================================
+
+- task: "resume the long-running coding loop and keep going until the plan tests pass"
+  platform: codex
+  expected_agent: codexloop
+  expected_primary_skills: [codexloop]
+
+- task: "ask a peer Codex pane for a second opinion on the current diff over tmux"
+  platform: codex
+  expected_agent: codexloop
+  expected_primary_skills: [agent-collaboration]
+
+- task: "automate browsing a website to download supplementary data"
+  platform: codex
+  expected_primary_skills: [agent-browser]
+
+- task: "fetch up-to-date Anthropic SDK API documentation before writing client code"
+  platform: codex
+  expected_primary_skills: [get-api-docs]
+
+# ============================================================================
+# Cross-platform + shared-skill disambiguation
+# ============================================================================
+
+- task: "quality-control Illumina short reads with fastp and trim adapters"
+  platform: claude
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-reads-qc-mapping]
+
+- task: "find recent arxiv preprints on protein language models"
+  platform: generic
+  expected_agent: literature-expert
+  expected_primary_skills: [arxiv-search]
+
+- task: "reason about causation from a noisy observational dataset and plan follow-up experiments"
+  platform: codex
+  expected_primary_skills: [bio-logic]
+  forbidden_skills: [ai-scientist-evaluator]
+
+- task: "log into a web portal to download supplementary data for a paper"
+  platform: codex
+  expected_primary_skills: [agent-browser]
+  forbidden_skills: [agent-collaboration]
