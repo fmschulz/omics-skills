@@ -355,5 +355,111 @@ class CatalogConsistencyTests(unittest.TestCase):
                 )
 
 
+class CatalogPathPortabilityTests(unittest.TestCase):
+    """Catalog JSON on disk stores repo-relative paths; route_request
+    resolves them back to absolute via metadata.source_repo so users can
+    consume a shared catalog regardless of where the repo is checked out."""
+
+    def test_catalog_paths_are_repo_relative(self) -> None:
+        payload = skill_index.build_outputs(REPO_ROOT)
+        for item in payload["catalog"]["skills"]:
+            self.assertFalse(
+                Path(item["path"]).is_absolute(),
+                f"catalog.skills[{item['name']!r}].path is absolute: {item['path']!r}",
+            )
+            self.assertTrue(
+                item["path"].startswith("skills/"),
+                f"catalog.skills[{item['name']!r}].path should start with 'skills/': {item['path']!r}",
+            )
+        for item in payload["catalog"]["agents"]:
+            self.assertFalse(Path(item["path"]).is_absolute())
+            self.assertTrue(item["path"].startswith("agents/"))
+
+    def test_route_request_resolves_relative_paths_against_source_repo(self) -> None:
+        """Simulate a moved-clone: write the built catalog to a random directory
+        whose metadata.source_repo still points at the real repo. route_request
+        with --index-root should still produce absolute paths that exist."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            index_root = Path(tmpdir)
+            payload = skill_index.build_outputs(REPO_ROOT)
+            skill_index.write_outputs(payload, index_root)
+            result = skill_index.route_request(
+                task="assemble a metagenome and recover MAGs",
+                agent="omics-scientist",
+                platform="codex",
+                top_k=4,
+                repo=None,
+                index_root=str(index_root),
+            )
+            self.assertEqual(result["agent"], "omics-scientist")
+            self.assertIn("bio-assembly-qc", result["primary_skills"])
+            for name, path in result["skill_paths"].items():
+                self.assertTrue(
+                    Path(path).is_absolute(),
+                    f"route_request must emit absolute paths; got {path!r} for {name!r}",
+                )
+                self.assertTrue(
+                    Path(path).exists(),
+                    f"resolved path does not exist: {path!r}",
+                )
+
+    def test_catalog_is_checkout_portable_across_different_repo_paths(self) -> None:
+        """The whole point of committing catalog/*.json is that a second
+        clone at a different filesystem path still produces usable routes.
+        Simulate that: build a catalog under repo A (metadata.source_repo =
+        A), then ship that catalog to repo B at a different path. route_request
+        against repo B's catalog/ must resolve skill paths under repo B, not A."""
+        with tempfile.TemporaryDirectory() as a_dir, tempfile.TemporaryDirectory() as b_dir:
+            a_root = Path(a_dir) / "repo_a"
+            b_root = Path(b_dir) / "repo_b"
+            for root in (a_root, b_root):
+                (root / "skills" / "bio-assembly-qc").mkdir(parents=True)
+                (root / "skills" / "bio-reads-qc-mapping").mkdir(parents=True)
+                (root / "agents").mkdir(parents=True)
+                (root / "catalog").mkdir(parents=True)
+                (root / "skills" / "bio-assembly-qc" / "SKILL.md").write_text(
+                    "---\nname: bio-assembly-qc\ndescription: Assemble genomes and metagenomes.\n---\n# Assembly\n",
+                    encoding="utf-8",
+                )
+                (root / "skills" / "bio-reads-qc-mapping" / "SKILL.md").write_text(
+                    "---\nname: bio-reads-qc-mapping\ndescription: QC and trim reads.\n---\n# Reads\nRun before /bio-assembly-qc.\n",
+                    encoding="utf-8",
+                )
+                (root / "agents" / "omics-scientist.md").write_text(
+                    "---\nname: omics-scientist\ndescription: omics\n---\n"
+                    "## Mandatory Skill Usage\n\n### Pipeline\n- `/bio-reads-qc-mapping`\n- `/bio-assembly-qc`\n",
+                    encoding="utf-8",
+                )
+
+            # Build the catalog against repo A; metadata.source_repo == a_root.
+            payload = skill_index.build_outputs(a_root)
+            skill_index.write_outputs(payload, b_root / "catalog")
+
+            # Wipe repo A completely. If the catalog is portable, routing
+            # against B's catalog/ still resolves under B.
+            import shutil
+
+            shutil.rmtree(a_root)
+
+            result = skill_index.route_request(
+                task="assemble a metagenome and recover MAGs",
+                agent="omics-scientist",
+                platform="codex",
+                top_k=4,
+                repo=None,
+                index_root=str(b_root / "catalog"),
+            )
+            for name, path in result["skill_paths"].items():
+                self.assertTrue(
+                    path.startswith(str(b_root)),
+                    f"catalog must resolve under the local checkout {b_root}, "
+                    f"but {name} resolved to {path}",
+                )
+                self.assertTrue(
+                    Path(path).exists(),
+                    f"resolved path does not exist: {path!r}",
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

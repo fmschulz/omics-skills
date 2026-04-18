@@ -1,0 +1,1099 @@
+{
+  "agents": [
+    {
+      "name": "codexloop",
+      "description": "Codex-native implementation harness agent for plan-driven execution with docs/plans tracking, MEMORY.md feedback, iterative verification, and resumable task loops.",
+      "path": "agents/codexloop.md",
+      "skills": [
+        "agent-collaboration",
+        "codexloop"
+      ],
+      "task_patterns": [
+        {
+          "skill_name": "codexloop",
+          "phrases": [
+            "finish this plan",
+            "keep going until tests pass",
+            "resume the harness"
+          ]
+        },
+        {
+          "skill_name": "codexloop",
+          "phrases": [
+            "docs/plans",
+            "MEMORY.md",
+            "implementation loop",
+            "resumable Codex"
+          ]
+        },
+        {
+          "skill_name": "codexloop",
+          "phrases": [
+            "Mycelium-like",
+            "orchestrate Codex tasks",
+            "long-running coding loop"
+          ]
+        },
+        {
+          "skill_name": "agent-collaboration",
+          "phrases": [
+            "smux",
+            "tmux",
+            "tmux-bridge",
+            "second opinion",
+            "ask codex",
+            "ask claude",
+            "another agent",
+            "cross-agent review",
+            "plan critique",
+            "code review"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dataviz-artist",
+      "description": "Expert data visualization specialist for publication-quality figures, dashboards, and reproducible analysis notebooks.",
+      "path": "agents/dataviz-artist.md",
+      "skills": [
+        "agent-browser",
+        "agent-collaboration",
+        "beautiful-data-viz",
+        "notebook-ai-agents-skill",
+        "plotly-dashboard-skill"
+      ],
+      "task_patterns": [
+        {
+          "skill_name": "notebook-ai-agents-skill",
+          "phrases": [
+            "notebook",
+            "marimo",
+            "jupyter",
+            "EDA",
+            "pixi"
+          ]
+        },
+        {
+          "skill_name": "beautiful-data-viz",
+          "phrases": [
+            "plot",
+            "chart",
+            "figure",
+            "publication",
+            "matplotlib",
+            "seaborn"
+          ]
+        },
+        {
+          "skill_name": "plotly-dashboard-skill",
+          "phrases": [
+            "dashboard",
+            "interactive",
+            "plotly",
+            "dash",
+            "data app"
+          ]
+        },
+        {
+          "skill_name": "agent-collaboration",
+          "phrases": [
+            "smux",
+            "tmux",
+            "tmux-bridge",
+            "second opinion",
+            "ask codex",
+            "ask claude",
+            "another agent",
+            "cross-agent review"
+          ]
+        },
+        {
+          "skill_name": "agent-browser",
+          "phrases": [
+            "scrape",
+            "screenshot",
+            "browser",
+            "web data"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "literature-expert",
+      "description": "Expert literature discovery and citation metadata agent for peer-reviewed papers, preprints, DOI lookup, and evidence-grounded search triage.",
+      "path": "agents/literature-expert.md",
+      "skills": [
+        "agent-browser",
+        "agent-collaboration",
+        "arxiv-search",
+        "bio-logic",
+        "biorxiv-search",
+        "crossref-lookup",
+        "polars-dovmed",
+        "scientific-impact-assessment"
+      ],
+      "task_patterns": [
+        {
+          "skill_name": "polars-dovmed",
+          "phrases": [
+            "literature search",
+            "find papers",
+            "PMC",
+            "publication trends"
+          ]
+        },
+        {
+          "skill_name": "arxiv-search",
+          "phrases": [
+            "arxiv",
+            "preprint",
+            "latest ML papers",
+            "latest AI papers",
+            "recent preprints"
+          ]
+        },
+        {
+          "skill_name": "biorxiv-search",
+          "phrases": [
+            "biorxiv",
+            "bioRxiv",
+            "biology preprint",
+            "recent biology preprints"
+          ]
+        },
+        {
+          "skill_name": "crossref-lookup",
+          "phrases": [
+            "crossref",
+            "doi lookup",
+            "citation metadata",
+            "reference metadata",
+            "bibtex"
+          ]
+        },
+        {
+          "skill_name": "scientific-impact-assessment",
+          "phrases": [
+            "citation count",
+            "altmetric",
+            "impact factor",
+            "journal impact",
+            "scientific impact"
+          ]
+        },
+        {
+          "skill_name": "bio-logic",
+          "phrases": [
+            "review evidence",
+            "evidence quality",
+            "bias",
+            "methodology"
+          ]
+        },
+        {
+          "skill_name": "agent-collaboration",
+          "phrases": [
+            "smux",
+            "tmux",
+            "tmux-bridge",
+            "second opinion",
+            "ask codex",
+            "ask claude",
+            "another agent",
+            "cross-agent review"
+          ]
+        },
+        {
+          "skill_name": "agent-browser",
+          "phrases": [
+            "browser",
+            "scrape",
+            "supplementary materials",
+            "web database"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "omics-scientist",
+      "description": "Expert computational biologist for omics workflows (QC, assembly, annotation, phylogenomics, MAG recovery, viral analysis, and JGI data access).",
+      "path": "agents/omics-scientist.md",
+      "skills": [
+        "agent-collaboration",
+        "bio-annotation",
+        "bio-assembly-qc",
+        "bio-binning-qc",
+        "bio-foundation-housekeeping",
+        "bio-gene-calling",
+        "bio-logic",
+        "bio-phylogenomics",
+        "bio-prefect-dask-nextflow",
+        "bio-protein-clustering-pangenome",
+        "bio-reads-qc-mapping",
+        "bio-stats-ml-reporting",
+        "bio-structure-annotation",
+        "bio-viromics",
+        "bio-workflow-methods-docwriter",
+        "jgi-lakehouse",
+        "tracking-taxonomy-updates"
+      ],
+      "task_patterns": [
+        {
+          "skill_name": "bio-logic",
+          "phrases": [
+            "why",
+            "how",
+            "interpret",
+            "hypothesis",
+            "design experiment"
+          ]
+        },
+        {
+          "skill_name": "bio-reads-qc-mapping",
+          "phrases": [
+            "raw reads",
+            "fastq",
+            "QC",
+            "trimming"
+          ]
+        },
+        {
+          "skill_name": "bio-assembly-qc",
+          "phrases": [
+            "assemble",
+            "assembly",
+            "contigs",
+            "QUAST"
+          ]
+        },
+        {
+          "skill_name": "bio-binning-qc",
+          "phrases": [
+            "binning",
+            "MAGs",
+            "CheckM"
+          ]
+        },
+        {
+          "skill_name": "bio-gene-calling",
+          "phrases": [
+            "gene calling",
+            "ORF",
+            "Prodigal"
+          ]
+        },
+        {
+          "skill_name": "bio-annotation",
+          "phrases": [
+            "annotation",
+            "DIAMOND",
+            "KEGG",
+            "taxonomy"
+          ]
+        },
+        {
+          "skill_name": "bio-phylogenomics",
+          "phrases": [
+            "phylogeny",
+            "tree",
+            "alignment"
+          ]
+        },
+        {
+          "skill_name": "bio-protein-clustering-pangenome",
+          "phrases": [
+            "pangenome",
+            "orthologs"
+          ]
+        },
+        {
+          "skill_name": "bio-structure-annotation",
+          "phrases": [
+            "structure prediction",
+            "AlphaFold"
+          ]
+        },
+        {
+          "skill_name": "bio-viromics",
+          "phrases": [
+            "viral",
+            "phage",
+            "VirSorter"
+          ]
+        },
+        {
+          "skill_name": "bio-stats-ml-reporting",
+          "phrases": [
+            "statistics",
+            "report",
+            "machine learning"
+          ]
+        },
+        {
+          "skill_name": "bio-workflow-methods-docwriter",
+          "phrases": [
+            "methods",
+            "document workflow",
+            "pipeline methods"
+          ]
+        },
+        {
+          "skill_name": "bio-prefect-dask-nextflow",
+          "phrases": [
+            "Nextflow",
+            "Prefect",
+            "Dask",
+            "pipeline design"
+          ]
+        },
+        {
+          "skill_name": "jgi-lakehouse",
+          "phrases": [
+            "JGI",
+            "GOLD",
+            "IMG",
+            "Phytozome",
+            "lakehouse"
+          ]
+        },
+        {
+          "skill_name": "tracking-taxonomy-updates",
+          "phrases": [
+            "taxonomy updates",
+            "GTDB",
+            "ICTV"
+          ]
+        },
+        {
+          "skill_name": "agent-collaboration",
+          "phrases": [
+            "smux",
+            "tmux",
+            "tmux-bridge",
+            "second opinion",
+            "ask codex",
+            "ask claude",
+            "another agent",
+            "cross-agent review"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "science-writer",
+      "description": "Expert scientific writer and editor for publication-quality manuscripts, revision strategy, peer review, and reproducible methods documentation.",
+      "path": "agents/science-writer.md",
+      "skills": [
+        "agent-browser",
+        "agent-collaboration",
+        "bio-logic",
+        "bio-workflow-methods-docwriter",
+        "manuscript-review-council",
+        "scientific-writing"
+      ],
+      "task_patterns": [
+        {
+          "skill_name": "bio-logic",
+          "phrases": [
+            "review",
+            "critique",
+            "bias",
+            "evidence quality"
+          ]
+        },
+        {
+          "skill_name": "agent-collaboration",
+          "phrases": [
+            "smux",
+            "tmux",
+            "tmux-bridge",
+            "second opinion",
+            "ask codex",
+            "ask claude",
+            "another agent",
+            "cross-agent review"
+          ]
+        },
+        {
+          "skill_name": "manuscript-review-council",
+          "phrases": [
+            "peer review",
+            "review this manuscript",
+            "major revision",
+            "decision letter",
+            "rebuttal",
+            "reviewer comments"
+          ]
+        },
+        {
+          "skill_name": "agent-browser",
+          "phrases": [
+            "browser",
+            "scrape",
+            "web database",
+            "download supplement"
+          ]
+        },
+        {
+          "skill_name": "scientific-writing",
+          "phrases": [
+            "write",
+            "rewrite",
+            "manuscript",
+            "Abstract",
+            "Methods",
+            "response letter"
+          ]
+        },
+        {
+          "skill_name": "bio-workflow-methods-docwriter",
+          "phrases": [
+            "document workflow",
+            "Nextflow",
+            "Snakemake",
+            "pipeline methods"
+          ]
+        }
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "name": "add-molab-badge",
+      "description": "Add \"Open in molab\" badge(s) linking to marimo notebooks. Works with READMEs, docs, websites, or any markdown/HTML target.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/add-molab-badge/SKILL.md"
+    },
+    {
+      "name": "agent-browser",
+      "description": "Browser automation via agent-browser CLI for web navigation, form filling, screenshots, scraping, login flows, and UI testing.",
+      "agents": [
+        "dataviz-artist",
+        "literature-expert",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "browser",
+        "download supplement",
+        "scrape",
+        "screenshot",
+        "supplementary materials",
+        "web data",
+        "web database"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/agent-browser/SKILL.md"
+    },
+    {
+      "name": "agent-collaboration",
+      "description": "Coordinate cross-agent collaboration through smux/tmux-bridge for code review, plan critique, result checking, scientific writing review, and second-opinion workflows across Codex CLI, Claude Code, and OpenHarness (`oh`). Prefer a different runtime when available; otherwise use a fresh same-platform instance in another tmux pane.",
+      "agents": [
+        "codexloop",
+        "dataviz-artist",
+        "literature-expert",
+        "omics-scientist",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "another agent",
+        "ask claude",
+        "ask codex",
+        "code review",
+        "cross-agent review",
+        "plan critique",
+        "second opinion",
+        "smux",
+        "tmux",
+        "tmux-bridge"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/agent-collaboration/SKILL.md"
+    },
+    {
+      "name": "ai-scientist-evaluator",
+      "description": "Critically review, score, compare, and rank one or more AI scientist outputs for biology, bioinformatics, computational life science, or adjacent research tasks. Trigger when the user asks to evaluate notebooks, code, figures, analyses, manuscripts, software, or final reports produced by AI scientists; compare multiple AI scientists on the same task; judge publication readiness; or audit rigor, reproducibility, novelty, and task completion. Do not use this skill to perform the original research task itself unless the user is explicitly asking for a reviewer-style audit of already produced outputs.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "codex"
+      ],
+      "path": "skills/ai-scientist-evaluator/SKILL.md"
+    },
+    {
+      "name": "anywidget",
+      "description": "Generate anywidget components for marimo notebooks.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/anywidget/SKILL.md"
+    },
+    {
+      "name": "arxiv-search",
+      "description": "Search arXiv preprints through the official arXiv API and turn arXiv IDs into local Markdown summaries. Use when you need CS, math, physics, or quantitative biology preprints, especially recent submissions that may not yet appear in peer-reviewed literature indexes.",
+      "agents": [
+        "literature-expert"
+      ],
+      "task_patterns": [
+        "arxiv",
+        "latest AI papers",
+        "latest ML papers",
+        "preprint",
+        "recent preprints"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/arxiv-search/SKILL.md"
+    },
+    {
+      "name": "beautiful-data-viz",
+      "description": "Create publication-quality matplotlib/seaborn charts with readable axes, tight layout, and curated palettes.",
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "chart",
+        "figure",
+        "matplotlib",
+        "plot",
+        "publication",
+        "seaborn"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/beautiful-data-viz/SKILL.md"
+    },
+    {
+      "name": "bio-annotation",
+      "description": "Functional annotation and taxonomy inference from sequence homology.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "DIAMOND",
+        "KEGG",
+        "annotation",
+        "taxonomy"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-annotation/SKILL.md"
+    },
+    {
+      "name": "bio-assembly-qc",
+      "description": "Assemble genomes/metagenomes and produce assembly QC artifacts.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "QUAST",
+        "assemble",
+        "assembly",
+        "contigs"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-assembly-qc/SKILL.md"
+    },
+    {
+      "name": "bio-binning-qc",
+      "description": "Perform metagenomic binning, refinement, and QC with completeness/contamination checks.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "CheckM",
+        "MAGs",
+        "binning"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-binning-qc/SKILL.md"
+    },
+    {
+      "name": "bio-foundation-housekeeping",
+      "description": "Initialize a bioinformatics project scaffold with reproducible environments, schemas, and data cataloging. Use for new projects or repo setup.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-foundation-housekeeping/SKILL.md"
+    },
+    {
+      "name": "bio-gene-calling",
+      "description": "Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "ORF",
+        "Prodigal",
+        "gene calling"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-gene-calling/SKILL.md"
+    },
+    {
+      "name": "bio-logic",
+      "description": "Evaluate scientific rigor, methods, biases, and evidence quality for claims, papers, and study designs.",
+      "agents": [
+        "literature-expert",
+        "omics-scientist",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "bias",
+        "critique",
+        "design experiment",
+        "evidence quality",
+        "how",
+        "hypothesis",
+        "interpret",
+        "methodology",
+        "review",
+        "review evidence",
+        "why"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-logic/SKILL.md"
+    },
+    {
+      "name": "bio-phylogenomics",
+      "description": "Build marker gene alignments and phylogenetic trees.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "alignment",
+        "phylogeny",
+        "tree"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-phylogenomics/SKILL.md"
+    },
+    {
+      "name": "bio-prefect-dask-nextflow",
+      "description": "Design and scaffold bioinformatics pipelines using Prefect+Dask for local/distributed execution or Nextflow for HPC schedulers.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "Dask",
+        "Nextflow",
+        "Prefect",
+        "pipeline design"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-prefect-dask-nextflow/SKILL.md"
+    },
+    {
+      "name": "bio-protein-clustering-pangenome",
+      "description": "Cluster proteins into orthogroups and derive pangenome matrices.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "orthologs",
+        "pangenome"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-protein-clustering-pangenome/SKILL.md"
+    },
+    {
+      "name": "bio-reads-qc-mapping",
+      "description": "Ingest, QC, and map reads with reproducible outputs. Use for raw read processing and coverage stats.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "QC",
+        "fastq",
+        "raw reads",
+        "trimming"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-reads-qc-mapping/SKILL.md"
+    },
+    {
+      "name": "bio-stats-ml-reporting",
+      "description": "Aggregate results, train ML models, and produce reports with validated references.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "machine learning",
+        "report",
+        "statistics"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-stats-ml-reporting/SKILL.md"
+    },
+    {
+      "name": "bio-structure-annotation",
+      "description": "Structure prediction and structure-based annotation.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "AlphaFold",
+        "structure prediction"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-structure-annotation/SKILL.md"
+    },
+    {
+      "name": "bio-viromics",
+      "description": "Detect, classify, and QC viral contigs.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "VirSorter",
+        "phage",
+        "viral"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-viromics/SKILL.md"
+    },
+    {
+      "name": "bio-workflow-methods-docwriter",
+      "description": "Generate reproducible Methods documentation from workflow run artifacts (Nextflow/Snakemake/CWL), including exact commands, versions, parameters, QC gates, and outputs.",
+      "agents": [
+        "omics-scientist",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "Nextflow",
+        "Snakemake",
+        "document workflow",
+        "methods",
+        "pipeline methods"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-workflow-methods-docwriter/SKILL.md"
+    },
+    {
+      "name": "biorxiv-search",
+      "description": "Search bioRxiv preprints through the official bioRxiv API and locally filter titles, abstracts, and authors for keyword queries. Use when you need recent biology preprints, bioRxiv-native metadata, date-range scans, DOI lookups, or author shortlists that may not yet appear in peer-reviewed literature indexes.",
+      "agents": [
+        "literature-expert"
+      ],
+      "task_patterns": [
+        "bioRxiv",
+        "biology preprint",
+        "biorxiv",
+        "recent biology preprints"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/biorxiv-search/SKILL.md"
+    },
+    {
+      "name": "codexloop",
+      "description": "Run a Codex-native planning and implementation loop with docs/plans progress tracking, MEMORY.md failure memory, per-task git worktrees, and iterative verification until tasks pass or need human intervention. Use when you want Mycelium-like orchestration for Codex without the Mycelium stack.",
+      "agents": [
+        "codexloop"
+      ],
+      "task_patterns": [
+        "MEMORY.md",
+        "Mycelium-like",
+        "docs/plans",
+        "finish this plan",
+        "implementation loop",
+        "keep going until tests pass",
+        "long-running coding loop",
+        "orchestrate Codex tasks",
+        "resumable Codex",
+        "resume the harness"
+      ],
+      "platforms": [
+        "codex"
+      ],
+      "path": "skills/codexloop/SKILL.md"
+    },
+    {
+      "name": "crossref-lookup",
+      "description": "Query the Crossref REST API for DOI validation, title search, citation metadata, and bibliography audits. Use when you need DOI lookup, title-to-DOI matching, or reference metadata cleanup.",
+      "agents": [
+        "literature-expert"
+      ],
+      "task_patterns": [
+        "bibtex",
+        "citation metadata",
+        "crossref",
+        "doi lookup",
+        "reference metadata"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/crossref-lookup/SKILL.md"
+    },
+    {
+      "name": "get-api-docs",
+      "description": "Fetch current API and SDK documentation with the chub CLI. Use when writing or reviewing code against fast-changing APIs, especially when the user asks for the latest or current docs.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/get-api-docs/SKILL.md"
+    },
+    {
+      "name": "implement-paper-auto",
+      "description": "Implement a research paper in a marimo notebook fully automatically without extra user input.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/implement-paper-auto/SKILL.md"
+    },
+    {
+      "name": "jgi-lakehouse",
+      "description": "Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG, Mycocosm, Phytozome. Downloads genome files from JGI filesystem using IMG taxon OIDs. Use when working with JGI data, GOLD projects, IMG annotations, or downloading genomes.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "GOLD",
+        "IMG",
+        "JGI",
+        "Phytozome",
+        "lakehouse"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/jgi-lakehouse/SKILL.md"
+    },
+    {
+      "name": "jupyter-to-marimo",
+      "description": "Convert a Jupyter notebook (.ipynb) to a marimo notebook (.py).",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/jupyter-to-marimo/SKILL.md"
+    },
+    {
+      "name": "manuscript-review-council",
+      "description": "Run a multi-agent scientific manuscript review with parallel specialist reviewers, disagreement checks, and an editor meta-review. Use when reviewing a manuscript, preprint, revision, or rebuttal in Codex or Claude Code.",
+      "agents": [
+        "science-writer"
+      ],
+      "task_patterns": [
+        "decision letter",
+        "major revision",
+        "peer review",
+        "rebuttal",
+        "review this manuscript",
+        "reviewer comments"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/manuscript-review-council/SKILL.md"
+    },
+    {
+      "name": "marimo-notebook",
+      "description": "Write a marimo notebook in a Python file in the right format.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/marimo-notebook/SKILL.md"
+    },
+    {
+      "name": "notebook-ai-agents-skill",
+      "description": "Create/refactor reproducible analysis notebooks with Marimo (preferred) or Jupyter (minimal support). Use for interactive, narrative-first analyses.",
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "EDA",
+        "jupyter",
+        "marimo",
+        "notebook",
+        "pixi"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/notebook-ai-agents-skill/SKILL.md"
+    },
+    {
+      "name": "plotly-dashboard-skill",
+      "description": "Build production-ready Plotly Dash dashboards with consistent theming, clear layouts, and performant callbacks.",
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "dash",
+        "dashboard",
+        "data app",
+        "interactive",
+        "plotly"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/plotly-dashboard-skill/SKILL.md"
+    },
+    {
+      "name": "polars-dovmed",
+      "description": "Search the PMC Open Access literature with polars-dovmed. Author structured JSON queries directly, then use the hosted API when an API key is available or fall back to local dovmed scan over PMC, bioRxiv, or both parquet corpora.",
+      "agents": [
+        "literature-expert"
+      ],
+      "task_patterns": [
+        "PMC",
+        "find papers",
+        "literature search",
+        "publication trends"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/polars-dovmed/SKILL.md"
+    },
+    {
+      "name": "proposal-review",
+      "description": "Structured, decision-ready review framework for AI/ML, computational biology, and bioscience proposals. Use when evaluating grant, project, or funding proposals.",
+      "agents": [],
+      "task_patterns": [],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/proposal-review/SKILL.md"
+    },
+    {
+      "name": "scientific-impact-assessment",
+      "description": "Assess paper and journal impact using OpenAlex citation counts, optional Altmetric data, and curated journal impact-factor references. Use when comparing papers, journals, or literature shortlists by reach and influence.",
+      "agents": [
+        "literature-expert"
+      ],
+      "task_patterns": [
+        "altmetric",
+        "citation count",
+        "impact factor",
+        "journal impact",
+        "scientific impact"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/scientific-impact-assessment/SKILL.md"
+    },
+    {
+      "name": "scientific-writing",
+      "description": "Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, or manuscript QA when claims must stay grounded in supplied artifacts.",
+      "agents": [
+        "science-writer"
+      ],
+      "task_patterns": [
+        "Abstract",
+        "Methods",
+        "manuscript",
+        "response letter",
+        "rewrite",
+        "write"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/scientific-writing/SKILL.md"
+    },
+    {
+      "name": "tracking-taxonomy-updates",
+      "description": "Track and reconcile taxonomy updates across NCBI, GTDB, ICTV, and community eukaryote frameworks with versioned provenance.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "GTDB",
+        "ICTV",
+        "taxonomy updates"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/tracking-taxonomy-updates/SKILL.md"
+    }
+  ]
+}

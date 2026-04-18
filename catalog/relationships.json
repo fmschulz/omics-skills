@@ -1,0 +1,201 @@
+[
+  {
+    "source": "arxiv-search",
+    "target": "polars-dovmed",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead."
+    ]
+  },
+  {
+    "source": "bio-annotation",
+    "target": "bio-gene-calling",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502           \u251c\u2500> /bio-annotation"
+    ]
+  },
+  {
+    "source": "bio-assembly-qc",
+    "target": "bio-reads-qc-mapping",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502   \u2514\u2500> /bio-assembly-qc"
+    ]
+  },
+  {
+    "source": "bio-binning-qc",
+    "target": "bio-assembly-qc",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502       \u2502   \u2514\u2500> /bio-binning-qc"
+    ]
+  },
+  {
+    "source": "bio-gene-calling",
+    "target": "bio-assembly-qc",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502       \u2514\u2500> /bio-gene-calling"
+    ]
+  },
+  {
+    "source": "bio-phylogenomics",
+    "target": "bio-gene-calling",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502           \u2514\u2500> /bio-phylogenomics"
+    ]
+  },
+  {
+    "source": "bio-protein-clustering-pangenome",
+    "target": "bio-gene-calling",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502           \u251c\u2500> /bio-protein-clustering-pangenome"
+    ]
+  },
+  {
+    "source": "bio-stats-ml-reporting",
+    "target": "bio-reads-qc-mapping",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502           \u2514\u2500> /bio-stats-ml-reporting"
+    ]
+  },
+  {
+    "source": "bio-structure-annotation",
+    "target": "bio-gene-calling",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2502           \u251c\u2500> /bio-structure-annotation"
+    ]
+  },
+  {
+    "source": "manuscript-review-council",
+    "target": "bio-logic",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "- use `/bio-logic` for evidence-strength and causal-claim stress tests"
+    ]
+  },
+  {
+    "source": "manuscript-review-council",
+    "target": "polars-dovmed",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "- use `/polars-dovmed` for claim-specific literature context"
+    ]
+  },
+  {
+    "source": "manuscript-review-council",
+    "target": "scientific-writing",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton."
+    ]
+  },
+  {
+    "source": "scientific-impact-assessment",
+    "target": "crossref-lookup",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "- If you only have a title, use `/crossref-lookup` first to resolve a DOI before running this skill.",
+      "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup."
+    ]
+  },
+  {
+    "source": "scientific-writing",
+    "target": "crossref-lookup",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
+      "| Validate citations | `/crossref-lookup` |",
+      "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript."
+    ]
+  }
+]

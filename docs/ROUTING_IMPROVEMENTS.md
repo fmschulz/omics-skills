@@ -30,7 +30,11 @@ python3 scripts/routing_benchmark.py --compare docs/routing_baseline.json
 
 ## PR 3 — Repo-relative catalog paths
 
-_Pending._
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| Pass rate | 23/38 (60.5%) | 23/38 (60.5%) | 0 |
+
+Pure plumbing change — no routing signal should move. Catalog JSON now stores repo-relative paths (`skills/add-molab-badge/SKILL.md`); `route_request` resolves them against `metadata.source_repo` so output paths stay absolute. `catalog/*.json` is committed and shareable across checkouts.
 
 ## PR 5 — Router consumes typed edges + cross-refs
 

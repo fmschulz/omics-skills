@@ -49,8 +49,6 @@ tmp/
 temp/
 *.tmp
 
-# Generated catalog files
-catalog/*.json
 
 # AI scratch artifacts (task lists, session handoffs, agent memory)
 tasks/

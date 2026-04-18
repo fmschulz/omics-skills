@@ -272,7 +272,7 @@ def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, di
             "name": name,
             "title": extract_first_heading(body) or name,
             "description": frontmatter.get("description", "").strip(),
-            "path": str(skill_file),
+            "path": str(skill_file.relative_to(repo_root)),
             "platforms": extract_platforms("\n".join((frontmatter.get("description", ""), body))),
             "agents": [],
             "sections": [],
@@ -289,7 +289,7 @@ def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, di
         agent = {
             "name": name,
             "description": frontmatter.get("description", "").strip(),
-            "path": str(agent_file),
+            "path": str(agent_file.relative_to(repo_root)),
             "skill_sections": parse_skill_sections(body),
             "workflow_edges": parse_workflow_edges(body),
             "task_patterns": parse_task_patterns(body),
@@ -518,20 +518,90 @@ def resolve_route_source(repo: str | None, index_root: str | None) -> tuple[dict
     if index_root:
         resolved = Path(index_root).expanduser().resolve()
         source_mode = "installed" if (resolved / "skill_index.py").exists() else "index"
-        return load_outputs(resolved), source_mode
+        payload = load_outputs(resolved)
+        _absolutize_paths(payload, catalog_dir=resolved)
+        return payload, source_mode
     if repo:
-        return build_outputs(resolve_repo_root(repo)), "repo"
+        repo_root = resolve_repo_root(repo)
+        payload = build_outputs(repo_root)
+        _absolutize_paths(payload, catalog_dir=repo_root / "catalog")
+        return payload, "repo"
 
     script_path = Path(__file__).resolve()
     repo_candidate = script_path.parent.parent
     if is_repo_root(repo_candidate):
-        return build_outputs(repo_candidate), "repo"
+        payload = build_outputs(repo_candidate)
+        _absolutize_paths(payload, catalog_dir=repo_candidate / "catalog")
+        return payload, "repo"
 
     installed_root = script_path.parent
     if (installed_root / "catalog.json").exists():
-        return load_outputs(installed_root), "installed"
+        payload = load_outputs(installed_root)
+        _absolutize_paths(payload, catalog_dir=installed_root)
+        return payload, "installed"
 
     raise SystemExit("Could not find catalog files. Pass --repo or --index-root explicitly.")
+
+
+def _is_relative_skill_path(value: str) -> bool:
+    """Relative paths we emit always start with skills/ or agents/. Anything
+    else (POSIX absolute `/…`, Windows absolute `C:\\…`, `~/…`) should pass
+    through untouched."""
+    return value.startswith("skills/") or value.startswith("agents/")
+
+
+def _absolutize_paths(payload: dict[str, Any], catalog_dir: Path | None = None) -> None:
+    """Resolve any repo-relative `path` fields in catalog / routing. Callers
+    downstream (route_request, format_route_result) assume absolute paths so
+    the router can print a usable location regardless of the cwd at
+    invocation time.
+
+    Portability: when ``catalog_dir`` is itself a sibling of a real repo
+    checkout (`<repo>/skills/` and `<repo>/agents/` both exist), the
+    surrounding repo wins over any ``metadata.source_repo`` baked in at build
+    time. This lets a committed catalog.json resolve correctly in every
+    clone even though the committing machine's path is recorded in
+    metadata."""
+    catalog = payload.get("catalog")
+    if not catalog:
+        return
+
+    base: Path | None = None
+    if catalog_dir is not None:
+        # catalog.json is usually at <repo>/catalog/catalog.json or at
+        # <install-root>/catalog.json. Walk up one level first, then check
+        # the dir itself (installed layouts keep skills/ at the home level).
+        for candidate in (catalog_dir.parent, catalog_dir):
+            if is_repo_root(candidate):
+                base = candidate
+                break
+
+    if base is None:
+        source_repo = catalog.get("metadata", {}).get("source_repo")
+        if source_repo:
+            base = Path(source_repo)
+
+    if base is None:
+        return
+
+    def resolve(value: str) -> str:
+        if _is_relative_skill_path(value):
+            return str(base / value)
+        return value
+
+    for item in catalog.get("skills", []):
+        if "path" in item:
+            item["path"] = resolve(item["path"])
+    for item in catalog.get("agents", []):
+        if "path" in item:
+            item["path"] = resolve(item["path"])
+    routing = payload.get("routing") or {}
+    for item in routing.get("skills", []):
+        if "path" in item:
+            item["path"] = resolve(item["path"])
+    for item in routing.get("agents", []):
+        if "path" in item:
+            item["path"] = resolve(item["path"])
 
 
 def route_request(
