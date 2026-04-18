@@ -51,3 +51,11 @@ temp/
 
 # Generated catalog files
 catalog/*.json
+
+# AI scratch artifacts (task lists, session handoffs, agent memory)
+tasks/
+lessons.md
+MEMORY.md
+.codexloop/
+docs/handoffs/
+docs/plans/
