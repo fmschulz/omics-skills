@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SKILL_REF_PATTERN = re.compile(r"/([a-z0-9][a-z0-9-]+)")
+SKILL_REF_PATTERN = re.compile(r"(?<![\w:/])/([a-z0-9][a-z0-9-]+)")
 QUOTED_PATTERN = re.compile(r'"([^"]+)"')
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 RELATIONSHIP_TYPES = {"depend_on", "compose_with", "similar_to", "belong_to"}
@@ -436,14 +436,26 @@ def build_outputs(repo_root: Path) -> dict[str, Any]:
         for edge in merged_edges
         if edge["source_type"] == "skill" and edge["target_type"] == "skill" and edge["type"] in RELATIONSHIP_TYPES
     ]
+    skill_names = set(skills)
     routing = {
         "agents": [
             {
                 "name": agent["name"],
                 "description": agent["description"],
                 "path": agent["path"],
-                "skills": sorted({skill for skills_list in agent["skill_sections"].values() for skill in skills_list}),
-                "task_patterns": agent["task_patterns"],
+                "skills": sorted(
+                    {
+                        skill
+                        for skills_list in agent["skill_sections"].values()
+                        for skill in skills_list
+                        if skill in skill_names
+                    }
+                ),
+                "task_patterns": [
+                    pattern
+                    for pattern in agent["task_patterns"]
+                    if pattern["skill_name"] in skill_names
+                ],
             }
             for agent in sorted(agents.values(), key=lambda item: item["name"])
         ],
@@ -465,6 +477,33 @@ def build_outputs(repo_root: Path) -> dict[str, Any]:
 def write_outputs(payload: dict[str, Any], out_dir: Path) -> None:
     for name in ("catalog", "relationships", "routing"):
         (out_dir / f"{name}.json").write_text(json.dumps(payload[name], indent=2), encoding="utf-8")
+
+
+def collect_unresolved_references(repo_root: Path) -> list[tuple[str, str, str]]:
+    """Return (source_kind, source_name, unresolved_ref) triples for every /skill-like
+    token in the repo that does not resolve to an actual skill directory. Used by tests
+    to hard-error on skill graph inconsistencies.
+    """
+    skills, agents = parse_repo(repo_root)
+    real = set(skills)
+    unresolved: list[tuple[str, str, str]] = []
+    for agent in agents.values():
+        for section_skills in agent["skill_sections"].values():
+            for skill_name in section_skills:
+                if skill_name not in real:
+                    unresolved.append(("agent", agent["name"], skill_name))
+        for pattern in agent["task_patterns"]:
+            if pattern["skill_name"] not in real:
+                unresolved.append(("agent_task_pattern", agent["name"], pattern["skill_name"]))
+        for edge in agent["workflow_edges"]:
+            for name in (edge.source, edge.target):
+                if name not in real:
+                    unresolved.append(("workflow_edge", agent["name"], name))
+    for skill in skills.values():
+        for ref in skill["internal_references"]:
+            if ref not in real:
+                unresolved.append(("skill_body", skill["name"], ref))
+    return sorted(set(unresolved))
 
 
 def load_outputs(index_root: Path) -> dict[str, Any]:

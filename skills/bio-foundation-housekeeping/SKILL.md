@@ -22,7 +22,6 @@ Initialize a bioinformatics project scaffold with reproducible environments, sch
 | Validate inputs | Confirm required inputs and reference data exist. |
 | Review outputs | Inspect reports and QC gates before proceeding. |
 | Tool docs | See `docs/README.md`. |
-| References | - See ../bio-skills-references.md |
 
 ## Input Requirements
 

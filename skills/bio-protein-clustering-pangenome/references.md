@@ -25,4 +25,3 @@
 - [OrthoDB in 2025: annotation of orthologs with wider sampling - Nucleic Acids Research](https://academic.oup.com/nar/article/53/D1/D516/7899526)
 
 ## Additional Resources
-- See `../bio-skills-references.md`

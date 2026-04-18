@@ -24,7 +24,7 @@ Cluster proteins into orthogroups and derive pangenome matrices.
 | Validate inputs | Confirm required inputs and reference data exist. |
 | Review outputs | Inspect reports and QC gates before proceeding. |
 | Tool docs | See `docs/README.md`. |
-| References | See `references.md` and `../bio-skills-references.md`. |
+| References | See `references.md`. |
 
 ## Input Requirements
 

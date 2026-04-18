@@ -230,4 +230,3 @@ conda install conda-forge::ete4
 
 - Project paper summaries: `../summaries/`
 - Main skill documentation: `../SKILL.md`
-- Bio-skills references: `../../bio-skills-references.md`

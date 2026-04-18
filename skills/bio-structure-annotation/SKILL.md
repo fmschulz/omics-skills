@@ -21,7 +21,6 @@ Structure prediction and structure-based annotation.
 | Validate inputs | Confirm required inputs and reference data exist. |
 | Review outputs | Inspect reports and QC gates before proceeding. |
 | Tool docs | See `docs/README.md`. |
-| References | - See ../bio-skills-references.md |
 
 ## Input Requirements
 

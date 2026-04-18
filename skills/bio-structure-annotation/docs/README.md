@@ -112,10 +112,6 @@ pip install boltz[cuda] -U
 - CATH domains database
 - SWISS-PROT sequences (pre-embedded)
 
-### Papers and Citations
-
-See `../bio-skills-references.md` for complete citations and methodology details.
-
 ## Support and Issues
 
 - Tool-specific issues: Report to respective GitHub repositories

@@ -21,7 +21,6 @@ Aggregate results, train ML models, and produce reports with validated reference
 | Validate inputs | Confirm required inputs and reference data exist. |
 | Review outputs | Inspect reports and QC gates before proceeding. |
 | Tool docs | See `docs/README.md`. |
-| References | - See ../bio-skills-references.md |
 
 ## Input Requirements
 

@@ -64,4 +64,3 @@ quast.py spades_out/contigs.fasta -r reference.fasta -o qc_results -t 8
 
 - All tools available via pixi (see `pixi.toml` in skill root)
 - Paper summaries with use cases: `../summaries/`
-- General bioinformatics references: `../../bio-skills-references.md`

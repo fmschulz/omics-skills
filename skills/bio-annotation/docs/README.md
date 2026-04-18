@@ -162,7 +162,6 @@ For the most current information, always refer to the official documentation lin
 ### Related Documentation
 - See `../SKILL.md` for overall bio-annotation workflow
 - See `../summaries/` for example use cases from recent papers
-- See `../../bio-skills-references.md` for comprehensive references
 
 ### Support
 For tool-specific issues, consult:

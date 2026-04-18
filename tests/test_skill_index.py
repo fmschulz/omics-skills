@@ -243,5 +243,117 @@ class SkillIndexTests(unittest.TestCase):
         self.assertIn("scientific-impact-assessment", result["primary_skills"])
 
 
+class SkillRefPatternTests(unittest.TestCase):
+    """Guard tests for SKILL_REF_PATTERN so prose like matplotlib/seaborn,
+    docs/plans, DOI/date-range, https://github.com/... stops being parsed as
+    phantom skill references."""
+
+    def _find(self, text: str) -> list[str]:
+        return skill_index.SKILL_REF_PATTERN.findall(text)
+
+    def test_ignores_intra_word_slashes(self) -> None:
+        self.assertEqual(self._find("matplotlib/seaborn"), [])
+        self.assertEqual(self._find("docs/plans"), [])
+        self.assertEqual(self._find("completeness/contamination"), [])
+        self.assertEqual(self._find("genome/metagenome"), [])
+        self.assertEqual(self._find("DOI/date-range"), [])
+
+    def test_ignores_url_and_path_slashes(self) -> None:
+        self.assertEqual(self._find("https://example.com/foo"), [])
+        self.assertEqual(self._find("file:///etc/passwd"), [])
+        self.assertEqual(self._find("// comment with /bar-baz inside"), ["bar-baz"])
+
+    def test_matches_valid_skill_refs(self) -> None:
+        self.assertEqual(self._find("Use /bio-annotation after QC"), ["bio-annotation"])
+        self.assertEqual(self._find("- `/scientific-writing` - manuscript drafting"), ["scientific-writing"])
+        self.assertEqual(self._find("(/codexloop)"), ["codexloop"])
+        self.assertEqual(self._find("/marimo-notebook at line start"), ["marimo-notebook"])
+
+
+class CatalogConsistencyTests(unittest.TestCase):
+    """Integration tests that hold the shipped repo state consistent. They
+    run against the real skills/ and agents/ directories — not fixtures —
+    so they fail on any drift between SKILL.md files, agent Mandatory Skill
+    Usage sections, and directory layout."""
+
+    def test_every_skill_dir_has_skill_md_and_name_matches(self) -> None:
+        skills_root = REPO_ROOT / "skills"
+        for entry in sorted(skills_root.iterdir()):
+            if not entry.is_dir():
+                continue
+            skill_md = entry / "SKILL.md"
+            self.assertTrue(
+                skill_md.exists(),
+                f"{entry.name} is a skills/ subdirectory with no SKILL.md",
+            )
+            frontmatter, _ = skill_index.split_frontmatter(skill_md.read_text(encoding="utf-8"))
+            self.assertEqual(
+                frontmatter.get("name"),
+                entry.name,
+                f"{entry.name}/SKILL.md has frontmatter name={frontmatter.get('name')!r} "
+                f"but directory is {entry.name!r}",
+            )
+
+    def test_skills_root_has_no_stray_files(self) -> None:
+        skills_root = REPO_ROOT / "skills"
+        stray = [entry.name for entry in skills_root.iterdir() if entry.is_file()]
+        self.assertEqual(
+            stray, [], f"skills/ root contains non-directory entries: {stray}"
+        )
+
+    def test_no_nested_duplicate_skill_dirs(self) -> None:
+        """A skills/<name>/<name>/ nested copy almost always means an
+        accidentally-duplicated skill tree. Fail loudly if any appear."""
+        skills_root = REPO_ROOT / "skills"
+        duplicates = []
+        for entry in skills_root.iterdir():
+            if not entry.is_dir():
+                continue
+            nested = entry / entry.name
+            if nested.is_dir():
+                duplicates.append(str(nested.relative_to(REPO_ROOT)))
+        self.assertEqual(
+            duplicates, [], f"Nested duplicate skill directories detected: {duplicates}"
+        )
+
+    def test_agent_skill_references_all_resolve(self) -> None:
+        """Every /skill-name in an agent's Mandatory Skill Usage, Workflow
+        Decision Tree, or Task Recognition Patterns must resolve to a real
+        skill. Phantoms here mean the routing layer will propose a skill
+        that doesn't exist."""
+        unresolved = [
+            item
+            for item in skill_index.collect_unresolved_references(REPO_ROOT)
+            if item[0] in {"agent", "agent_task_pattern", "workflow_edge"}
+        ]
+        self.assertEqual(
+            unresolved,
+            [],
+            f"Unresolved agent-side skill references: {unresolved}",
+        )
+
+    def test_routing_only_lists_real_skills(self) -> None:
+        """routing.json agents[].skills and task_patterns must only reference
+        skills that exist in skills[]. This is the belt-and-suspenders filter
+        that protects downstream consumers from phantom skill names."""
+        payload = skill_index.build_outputs(REPO_ROOT)
+        real = {skill["name"] for skill in payload["catalog"]["skills"]}
+        for agent in payload["routing"]["agents"]:
+            for skill_name in agent["skills"]:
+                self.assertIn(
+                    skill_name,
+                    real,
+                    f"routing.agents[{agent['name']!r}].skills contains {skill_name!r}, "
+                    f"which is not in catalog.skills",
+                )
+            for pattern in agent["task_patterns"]:
+                self.assertIn(
+                    pattern["skill_name"],
+                    real,
+                    f"routing.agents[{agent['name']!r}].task_patterns references "
+                    f"{pattern['skill_name']!r}, which is not in catalog.skills",
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

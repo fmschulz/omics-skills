@@ -96,4 +96,3 @@ chmod +x gvclass-a
 
 - Paper summaries with use cases: `../summaries/`
 - Skill specification: `../SKILL.md`
-- References: `../../bio-skills-references.md`
