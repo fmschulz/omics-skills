@@ -40,6 +40,14 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **Use for journal-style critique and peer review:**
 - `/manuscript-review-council` - Multi-agent review council with specialist reviewers, adjudication, and editor synthesis
 
+### Proposal & AI-Output Review
+
+**Use for grant or funding-proposal critique:**
+- `/proposal-review` - Decision-ready framework for AI/ML, computational biology, and bioscience funding proposals
+
+**Use for evaluating AI scientist outputs:**
+- `/ai-scientist-evaluator` - Score, compare, and rank AI scientist deliverables for evidence quality and methodological rigor
+
 ### Cross-Agent Collaboration
 
 **Use for second opinions, cross-agent critique, or tmux-based review handoffs:**
@@ -71,6 +79,12 @@ START
   │   ├─> Journal-style or multi-angle critique → /manuscript-review-council
   │   └─> Apply revisions → /scientific-writing
   │
+  ├─ Review a Funding Proposal?
+  │   └─> /proposal-review
+  │
+  ├─ Evaluate an AI Scientist Output?
+  │   └─> /ai-scientist-evaluator
+  │
   ├─ Need Second Opinion or tmux Collaboration?
   │   └─> /agent-collaboration
   │
@@ -85,7 +99,9 @@ START
 
 - **"review", "critique", "bias", "evidence quality"** → `/bio-logic`
 - **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review"** → `/agent-collaboration`
-- **"peer review", "review this manuscript", "major revision", "decision letter", "rebuttal", "reviewer comments"** → `/manuscript-review-council`
+- **"peer review", "review this manuscript", "major revision", "decision letter", "rebuttal", "reviewer comments", "multi-reviewer", "review council", "critique manuscript", "manuscript review"** → `/manuscript-review-council`
+- **"proposal", "grant", "funding proposal", "review this proposal"** → `/proposal-review`
+- **"AI scientist", "evaluate agent output", "score AI output", "rank AI scientists"** → `/ai-scientist-evaluator`
 - **"browser", "scrape", "web database", "download supplement"** → `/agent-browser`
 - **"write", "rewrite", "manuscript", "Abstract", "Methods", "response letter"** → `/scientific-writing`
 - **"document workflow", "Nextflow", "Snakemake", "pipeline methods"** → `/bio-workflow-methods-docwriter`

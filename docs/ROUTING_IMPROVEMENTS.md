@@ -38,7 +38,32 @@ Pure plumbing change — no routing signal should move. Catalog JSON now stores 
 
 ## PR 5 — Router consumes typed edges + cross-refs
 
-_Pending._
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| Pass rate | 23/38 (60.5%) | **35/38 (92.1%)** | **+12** |
+| Agent-selection failures | 3 | 2 | −1 |
+| Primary-skill failures | 12 | 1 | −11 |
+| Ordered-skill failures | 0 | 0 | 0 |
+| Forbidden-skill leaks | 1 | 0 | −1 |
+| `compose_with` edges | 6 | 46 | +40 |
+| Total graph edges | 18 | 58 | +40 |
+
+### What changed
+
+1. **Agents now expose the full notebook / writing specialist set.** `dataviz-artist` gained `marimo-notebook`, `jupyter-to-marimo`, `anywidget`, `add-molab-badge`, `implement-paper-auto` as first-class Mandatory Skills; `science-writer` gained `proposal-review` and `ai-scientist-evaluator`; `codexloop` gained `get-api-docs`. Task-recognition patterns updated to match. Each skill remains independently invocable.
+2. **Router consumes `compose_with` and `similar_to` edges.** `route_request` now surfaces typed neighbours of every primary skill as supporting skills (new `compose_neighbors()` helper). Respects the active agent filter and platform gate.
+3. **`## Related Skills` sections added to 15 cluster SKILL.md files** (literature × 5, notebook × 5, writing/review × 5). Parser picks these up as `compose_with` edges, enriching the graph from 6→46 typed edges.
+4. **Alternative-source cross-refs tuned.** `arxiv-search` and `biorxiv-search` intentionally do NOT cross-reference each other; they serve different query domains and would leak into the wrong `forbidden_skills` set if treated as composable partners.
+
+### Remaining 3 failures (deferred)
+
+All three are shared-skill agent-selection tiebreaks:
+
+- "formulate a hypothesis" — `bio-logic` is owned by both `omics-scientist` and `science-writer`; alphabetical tiebreak picks science-writer. Fix: add agent-description weighting or prefer-earlier-owner tiebreak. Out of scope for PR 5.
+- "ask a peer Codex pane" — `agent-collaboration` is owned by every agent; picks `science-writer` over `codexloop`. Same tiebreak problem.
+- "reason about causation" — `bio-logic` not recognised; `agent-collaboration` wins via a phantom single-token overlap (`plan` → `plan critique`). Needs either tighter pattern thresholds (attempted, regressed other tests) or a stop-word list.
+
+Tracked for a follow-up router-disambiguation PR.
 
 ## PR 4 — SessionStart hook
 

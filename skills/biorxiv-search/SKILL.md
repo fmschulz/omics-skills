@@ -186,3 +186,8 @@ skills/biorxiv-search/scripts/search --doi 10.1101/682021
 
 **Issue**: Need peer-reviewed literature rather than preprints  
 **Solution**: Use `polars-dovmed` or another peer-reviewed-literature workflow instead of bioRxiv metadata search.
+
+## Related Skills
+
+- `/crossref-lookup` — resolve citation metadata from bioRxiv DOIs
+- `/polars-dovmed` — switch here if the query wants peer-reviewed PMC full text instead of preprints

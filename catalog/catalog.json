@@ -1,10 +1,10 @@
 {
   "metadata": {
     "source_repo": "/home/fschulz/dev/omics-skills",
-    "built_at": "2026-04-18T21:52:32+00:00",
+    "built_at": "2026-04-18T22:08:45+00:00",
     "skill_count": 37,
     "agent_count": 5,
-    "edge_count": 60
+    "edge_count": 110
   },
   "skills": [
     {
@@ -16,11 +16,21 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "sections": [
+        "Notebook Authoring (Marimo-First)"
+      ],
+      "task_patterns": [
+        "molab badge",
+        "notebook badge",
+        "open in molab"
+      ],
       "internal_references": [
         "blob",
+        "implement-paper-auto",
+        "marimo-notebook",
         "wasm"
       ],
       "reference_contexts": {
@@ -35,6 +45,12 @@
           "Where `URL` is the constructed molab URL (with or without `/wasm` per the rules above).",
           "Note: `/wasm` is appended because this replaces a `marimo.app` link.",
           "Note: no `/wasm` suffix by default for new badges."
+        ],
+        "marimo-notebook": [
+          "- `/marimo-notebook` \u2014 the notebook being advertised"
+        ],
+        "implement-paper-auto": [
+          "- `/implement-paper-auto` \u2014 paper-reproduction notebook badging"
         ]
       }
     },
@@ -92,9 +108,10 @@
         "another agent",
         "ask claude",
         "ask codex",
-        "code review",
         "cross-agent review",
+        "peer codex pane",
         "plan critique",
+        "review the current diff",
         "second opinion",
         "smux",
         "tmux",
@@ -111,11 +128,34 @@
       "platforms": [
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
-      "internal_references": [],
-      "reference_contexts": {}
+      "agents": [
+        "science-writer"
+      ],
+      "sections": [
+        "Proposal & AI-Output Review"
+      ],
+      "task_patterns": [
+        "AI scientist",
+        "evaluate agent output",
+        "rank AI scientists",
+        "score AI output"
+      ],
+      "internal_references": [
+        "bio-logic",
+        "manuscript-review-council",
+        "scientific-writing"
+      ],
+      "reference_contexts": {
+        "bio-logic": [
+          "- `/bio-logic` \u2014 general scientific reasoning beyond AI evaluation"
+        ],
+        "manuscript-review-council": [
+          "- `/manuscript-review-council` \u2014 equivalent pipeline for human-authored manuscripts"
+        ],
+        "scientific-writing": [
+          "- `/scientific-writing` \u2014 draft the evaluation writeup"
+        ]
+      }
     },
     {
       "name": "anywidget",
@@ -126,12 +166,21 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "sections": [
+        "Notebook Authoring (Marimo-First)"
+      ],
+      "task_patterns": [
+        "anywidget",
+        "custom widget",
+        "widget component"
+      ],
       "internal_references": [
         "etc",
-        "example"
+        "example",
+        "marimo-notebook"
       ],
       "reference_contexts": {
         "example": [
@@ -139,6 +188,9 @@
         ],
         "etc": [
           "5. **External file paths**: When using pathlib for external `_esm`/`_css` files, keep paths relative to the project directory, consider using `Path(__file__)` for this. Do not read files outside the project (e.g., `~/.ssh`, `~/.env`, `/etc/`) or embed their contents in widget output."
+        ],
+        "marimo-notebook": [
+          "- `/marimo-notebook` \u2014 the host notebook that embeds the widget"
         ]
       }
     },
@@ -159,17 +211,21 @@
       ],
       "task_patterns": [
         "arxiv",
+        "arxiv preprint",
         "latest AI papers",
-        "latest ML papers",
-        "preprint",
-        "recent preprints"
+        "latest ML papers"
       ],
       "internal_references": [
+        "crossref-lookup",
         "polars-dovmed"
       ],
       "reference_contexts": {
         "polars-dovmed": [
-          "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead."
+          "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead.",
+          "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+        ],
+        "crossref-lookup": [
+          "- `/crossref-lookup` \u2014 resolve citation metadata from arXiv DOIs"
         ]
       }
     },
@@ -297,7 +353,13 @@
       "sections": [
         "Project Initialization"
       ],
-      "task_patterns": [],
+      "task_patterns": [
+        "new project",
+        "project housekeeping",
+        "project setup",
+        "reproducible environment",
+        "scaffold"
+      ],
       "internal_references": [],
       "reference_contexts": {}
     },
@@ -319,7 +381,9 @@
       "task_patterns": [
         "ORF",
         "Prodigal",
-        "gene calling"
+        "gene calling",
+        "gene prediction",
+        "predict genes"
       ],
       "internal_references": [],
       "reference_contexts": {}
@@ -356,8 +420,22 @@
         "review evidence",
         "why"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "ai-scientist-evaluator",
+        "manuscript-review-council",
+        "proposal-review"
+      ],
+      "reference_contexts": {
+        "ai-scientist-evaluator": [
+          "- `/ai-scientist-evaluator` \u2014 rubric-scored evaluation of AI scientist outputs"
+        ],
+        "manuscript-review-council": [
+          "- `/manuscript-review-council` \u2014 multi-reviewer critique of peer-reviewed manuscripts"
+        ],
+        "proposal-review": [
+          "- `/proposal-review` \u2014 structured critique of funding proposals"
+        ]
+      }
     },
     {
       "name": "bio-phylogenomics",
@@ -577,10 +655,21 @@
         "bioRxiv",
         "biology preprint",
         "biorxiv",
+        "life-science preprint",
         "recent biology preprints"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "crossref-lookup",
+        "polars-dovmed"
+      ],
+      "reference_contexts": {
+        "crossref-lookup": [
+          "- `/crossref-lookup` \u2014 resolve citation metadata from bioRxiv DOIs"
+        ],
+        "polars-dovmed": [
+          "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+        ]
+      }
     },
     {
       "name": "codexloop",
@@ -639,8 +728,26 @@
         "doi lookup",
         "reference metadata"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "arxiv-search",
+        "biorxiv-search",
+        "polars-dovmed",
+        "scientific-impact-assessment"
+      ],
+      "reference_contexts": {
+        "polars-dovmed": [
+          "- `/polars-dovmed` \u2014 full-text PMC Open Access search when the DOI is unknown"
+        ],
+        "arxiv-search": [
+          "- `/arxiv-search` \u2014 source-native preprint search on arXiv"
+        ],
+        "biorxiv-search": [
+          "- `/biorxiv-search` \u2014 source-native preprint search on bioRxiv"
+        ],
+        "scientific-impact-assessment": [
+          "- `/scientific-impact-assessment` \u2014 citation counts and journal impact"
+        ]
+      }
     },
     {
       "name": "get-api-docs",
@@ -651,9 +758,20 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
+      "agents": [
+        "codexloop"
+      ],
+      "sections": [
+        "API Documentation Lookup"
+      ],
+      "task_patterns": [
+        "anthropic sdk",
+        "api docs",
+        "current API documentation",
+        "fetch documentation",
+        "openai sdk",
+        "sdk docs"
+      ],
       "internal_references": [],
       "reference_contexts": {}
     },
@@ -666,11 +784,37 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
-      "internal_references": [],
-      "reference_contexts": {}
+      "agents": [
+        "dataviz-artist"
+      ],
+      "sections": [
+        "Notebook Authoring (Marimo-First)"
+      ],
+      "task_patterns": [
+        "implement paper",
+        "reproduce paper",
+        "rerun paper end-to-end"
+      ],
+      "internal_references": [
+        "add-molab-badge",
+        "arxiv-search",
+        "biorxiv-search",
+        "marimo-notebook"
+      ],
+      "reference_contexts": {
+        "marimo-notebook": [
+          "- `/marimo-notebook` \u2014 target format for the reproduction notebook"
+        ],
+        "biorxiv-search": [
+          "- `/biorxiv-search` \u2014 locate the paper on bioRxiv before reproducing"
+        ],
+        "arxiv-search": [
+          "- `/arxiv-search` \u2014 locate the paper on arXiv before reproducing"
+        ],
+        "add-molab-badge": [
+          "- `/add-molab-badge` \u2014 advertise the reproduction notebook"
+        ]
+      }
     },
     {
       "name": "jgi-lakehouse",
@@ -722,11 +866,26 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
-      "internal_references": [],
-      "reference_contexts": {}
+      "agents": [
+        "dataviz-artist"
+      ],
+      "sections": [
+        "Notebook Authoring (Marimo-First)"
+      ],
+      "task_patterns": [
+        "convert",
+        "ipynb to marimo",
+        "jupyter to marimo",
+        "port notebook"
+      ],
+      "internal_references": [
+        "marimo-notebook"
+      ],
+      "reference_contexts": {
+        "marimo-notebook": [
+          "- `/marimo-notebook` \u2014 author the target notebook in marimo style after conversion"
+        ]
+      }
     },
     {
       "name": "manuscript-review-council",
@@ -744,14 +903,19 @@
         "Manuscript Review"
       ],
       "task_patterns": [
+        "critique manuscript",
         "decision letter",
         "major revision",
+        "manuscript review",
+        "multi-reviewer",
         "peer review",
         "rebuttal",
+        "review council",
         "review this manuscript",
         "reviewer comments"
       ],
       "internal_references": [
+        "ai-scientist-evaluator",
         "bio-logic",
         "polars-dovmed",
         "scientific-writing"
@@ -761,10 +925,15 @@
           "- use `/polars-dovmed` for claim-specific literature context"
         ],
         "bio-logic": [
-          "- use `/bio-logic` for evidence-strength and causal-claim stress tests"
+          "- use `/bio-logic` for evidence-strength and causal-claim stress tests",
+          "- `/bio-logic` \u2014 deeper reasoning about evidence strength"
         ],
         "scientific-writing": [
-          "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton."
+          "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.",
+          "- `/scientific-writing` \u2014 apply the reviewer feedback to the manuscript"
+        ],
+        "ai-scientist-evaluator": [
+          "- `/ai-scientist-evaluator` \u2014 equivalent pipeline for AI scientist outputs"
         ]
       }
     },
@@ -777,11 +946,41 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
-      "internal_references": [],
-      "reference_contexts": {}
+      "agents": [
+        "dataviz-artist"
+      ],
+      "sections": [
+        "Notebook Authoring (Marimo-First)"
+      ],
+      "task_patterns": [
+        "marimo notebook",
+        "reactive notebook",
+        "write a marimo"
+      ],
+      "internal_references": [
+        "add-molab-badge",
+        "anywidget",
+        "implement-paper-auto",
+        "jupyter-to-marimo",
+        "notebook-ai-agents-skill"
+      ],
+      "reference_contexts": {
+        "jupyter-to-marimo": [
+          "- `/jupyter-to-marimo` \u2014 convert an existing .ipynb to marimo"
+        ],
+        "anywidget": [
+          "- `/anywidget` \u2014 generate a custom widget component for the notebook"
+        ],
+        "add-molab-badge": [
+          "- `/add-molab-badge` \u2014 advertise the notebook with an Open-in-molab badge"
+        ],
+        "implement-paper-auto": [
+          "- `/implement-paper-auto` \u2014 reproduce a paper end-to-end in a marimo notebook"
+        ],
+        "notebook-ai-agents-skill": [
+          "- `/notebook-ai-agents-skill` \u2014 refactor Jupyter/agent notebooks if not starting from scratch"
+        ]
+      }
     },
     {
       "name": "notebook-ai-agents-skill",
@@ -796,14 +995,13 @@
         "dataviz-artist"
       ],
       "sections": [
-        "Notebook Development (Marimo First)"
+        "Notebook Authoring (Marimo-First)"
       ],
       "task_patterns": [
         "EDA",
-        "jupyter",
-        "marimo",
-        "notebook",
-        "pixi"
+        "clean up notebook",
+        "pixi kernel",
+        "refactor notebook"
       ],
       "internal_references": [],
       "reference_contexts": {}
@@ -889,11 +1087,34 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
-      "internal_references": [],
-      "reference_contexts": {}
+      "agents": [
+        "science-writer"
+      ],
+      "sections": [
+        "Proposal & AI-Output Review"
+      ],
+      "task_patterns": [
+        "funding proposal",
+        "grant",
+        "proposal",
+        "review this proposal"
+      ],
+      "internal_references": [
+        "bio-logic",
+        "manuscript-review-council",
+        "scientific-writing"
+      ],
+      "reference_contexts": {
+        "manuscript-review-council": [
+          "- `/manuscript-review-council` \u2014 equivalent pipeline for manuscripts"
+        ],
+        "scientific-writing": [
+          "- `/scientific-writing` \u2014 draft or revise the proposal narrative"
+        ],
+        "bio-logic": [
+          "- `/bio-logic` \u2014 assess methodology and evidence rigor"
+        ]
+      }
     },
     {
       "name": "scientific-impact-assessment",
@@ -918,12 +1139,17 @@
         "scientific impact"
       ],
       "internal_references": [
-        "crossref-lookup"
+        "crossref-lookup",
+        "polars-dovmed"
       ],
       "reference_contexts": {
         "crossref-lookup": [
           "- If you only have a title, use `/crossref-lookup` first to resolve a DOI before running this skill.",
-          "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup."
+          "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup.",
+          "- `/crossref-lookup` \u2014 resolve DOIs before scoring impact"
+        ],
+        "polars-dovmed": [
+          "- `/polars-dovmed` \u2014 retrieve the full text that backs the impact claim"
         ]
       }
     },
@@ -951,13 +1177,26 @@
         "write"
       ],
       "internal_references": [
-        "crossref-lookup"
+        "bio-logic",
+        "crossref-lookup",
+        "manuscript-review-council",
+        "proposal-review"
       ],
       "reference_contexts": {
         "crossref-lookup": [
           "7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
           "| Validate citations | `/crossref-lookup` |",
-          "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript."
+          "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
+          "- `/crossref-lookup` \u2014 validate every cited DOI"
+        ],
+        "manuscript-review-council": [
+          "- `/manuscript-review-council` \u2014 run a multi-reviewer critique before revision"
+        ],
+        "proposal-review": [
+          "- `/proposal-review` \u2014 switch here for funding-proposal critique"
+        ],
+        "bio-logic": [
+          "- `/bio-logic` \u2014 evaluate evidence quality and rigor during revision"
         ]
       }
     },
@@ -991,6 +1230,9 @@
       "description": "Codex-native implementation harness agent for plan-driven execution with docs/plans tracking, MEMORY.md feedback, iterative verification, and resumable task loops.",
       "path": "agents/codexloop.md",
       "skill_sections": {
+        "API Documentation Lookup": [
+          "get-api-docs"
+        ],
         "Cross-Agent Collaboration": [
           "agent-collaboration"
         ],
@@ -1037,7 +1279,19 @@
             "another agent",
             "cross-agent review",
             "plan critique",
-            "code review"
+            "peer codex pane",
+            "review the current diff"
+          ]
+        },
+        {
+          "skill_name": "get-api-docs",
+          "phrases": [
+            "api docs",
+            "sdk docs",
+            "fetch documentation",
+            "anthropic sdk",
+            "openai sdk",
+            "current API documentation"
           ]
         }
       ]
@@ -1053,7 +1307,12 @@
         "Interactive Dashboards": [
           "plotly-dashboard-skill"
         ],
-        "Notebook Development (Marimo First)": [
+        "Notebook Authoring (Marimo-First)": [
+          "add-molab-badge",
+          "anywidget",
+          "implement-paper-auto",
+          "jupyter-to-marimo",
+          "marimo-notebook",
           "notebook-ai-agents-skill"
         ],
         "Static Publication-Quality Plots": [
@@ -1063,16 +1322,77 @@
           "agent-browser"
         ]
       },
-      "workflow_edges": [],
+      "workflow_edges": [
+        {
+          "source": "marimo-notebook",
+          "target": "jupyter-to-marimo",
+          "evidence": "\u2502   \u251c\u2500 Converting a Jupyter notebook? \u2192 /jupyter-to-marimo"
+        },
+        {
+          "source": "marimo-notebook",
+          "target": "anywidget",
+          "evidence": "\u2502   \u251c\u2500 Need a custom widget? \u2192 /anywidget"
+        },
+        {
+          "source": "marimo-notebook",
+          "target": "implement-paper-auto",
+          "evidence": "\u2502   \u251c\u2500 Reproducing a paper? \u2192 /implement-paper-auto"
+        },
+        {
+          "source": "marimo-notebook",
+          "target": "add-molab-badge",
+          "evidence": "\u2502   \u2514\u2500 Advertising it with a badge? \u2192 /add-molab-badge"
+        }
+      ],
       "task_patterns": [
+        {
+          "skill_name": "marimo-notebook",
+          "phrases": [
+            "marimo notebook",
+            "reactive notebook",
+            "write a marimo"
+          ]
+        },
+        {
+          "skill_name": "jupyter-to-marimo",
+          "phrases": [
+            "convert",
+            "jupyter to marimo",
+            "ipynb to marimo",
+            "port notebook"
+          ]
+        },
+        {
+          "skill_name": "anywidget",
+          "phrases": [
+            "anywidget",
+            "custom widget",
+            "widget component"
+          ]
+        },
+        {
+          "skill_name": "implement-paper-auto",
+          "phrases": [
+            "reproduce paper",
+            "implement paper",
+            "rerun paper end-to-end"
+          ]
+        },
+        {
+          "skill_name": "add-molab-badge",
+          "phrases": [
+            "molab badge",
+            "open in molab",
+            "notebook badge"
+          ]
+        },
         {
           "skill_name": "notebook-ai-agents-skill",
           "phrases": [
-            "notebook",
-            "marimo",
-            "jupyter",
+            "refactor notebook",
+            "clean up notebook",
             "EDA",
-            "pixi"
+            "pixi kernel"
           ]
         },
         {
@@ -1163,10 +1483,9 @@
           "skill_name": "arxiv-search",
           "phrases": [
             "arxiv",
-            "preprint",
+            "arxiv preprint",
             "latest ML papers",
-            "latest AI papers",
-            "recent preprints"
+            "latest AI papers"
           ]
         },
         {
@@ -1175,7 +1494,8 @@
             "biorxiv",
             "bioRxiv",
             "biology preprint",
-            "recent biology preprints"
+            "recent biology preprints",
+            "life-science preprint"
           ]
         },
         {
@@ -1371,8 +1691,20 @@
           "skill_name": "bio-gene-calling",
           "phrases": [
             "gene calling",
+            "predict genes",
+            "gene prediction",
             "ORF",
             "Prodigal"
+          ]
+        },
+        {
+          "skill_name": "bio-foundation-housekeeping",
+          "phrases": [
+            "scaffold",
+            "new project",
+            "project setup",
+            "reproducible environment",
+            "project housekeeping"
           ]
         },
         {
@@ -1489,6 +1821,10 @@
         "Methods Documentation": [
           "bio-workflow-methods-docwriter"
         ],
+        "Proposal & AI-Output Review": [
+          "ai-scientist-evaluator",
+          "proposal-review"
+        ],
         "Scientific Reasoning & Evaluation": [
           "bio-logic"
         ],
@@ -1528,7 +1864,29 @@
             "major revision",
             "decision letter",
             "rebuttal",
-            "reviewer comments"
+            "reviewer comments",
+            "multi-reviewer",
+            "review council",
+            "critique manuscript",
+            "manuscript review"
+          ]
+        },
+        {
+          "skill_name": "proposal-review",
+          "phrases": [
+            "proposal",
+            "grant",
+            "funding proposal",
+            "review this proposal"
+          ]
+        },
+        {
+          "skill_name": "ai-scientist-evaluator",
+          "phrases": [
+            "AI scientist",
+            "evaluate agent output",
+            "score AI output",
+            "rank AI scientists"
           ]
         },
         {
@@ -1565,17 +1923,144 @@
   ],
   "edges": [
     {
-      "source": "arxiv-search",
-      "target": "polars-dovmed",
+      "source": "add-molab-badge",
+      "target": "implement-paper-auto",
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.75,
+      "confidence": 0.6,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead."
+        "- `/implement-paper-auto` \u2014 paper-reproduction notebook badging"
+      ]
+    },
+    {
+      "source": "add-molab-badge",
+      "target": "marimo-notebook",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/marimo-notebook` \u2014 the notebook being advertised"
+      ]
+    },
+    {
+      "source": "add-molab-badge",
+      "target": "marimo-notebook",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u2514\u2500 Advertising it with a badge? \u2192 /add-molab-badge"
+      ]
+    },
+    {
+      "source": "ai-scientist-evaluator",
+      "target": "bio-logic",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/bio-logic` \u2014 general scientific reasoning beyond AI evaluation"
+      ]
+    },
+    {
+      "source": "ai-scientist-evaluator",
+      "target": "manuscript-review-council",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/manuscript-review-council` \u2014 equivalent pipeline for human-authored manuscripts"
+      ]
+    },
+    {
+      "source": "ai-scientist-evaluator",
+      "target": "scientific-writing",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/scientific-writing` \u2014 draft the evaluation writeup"
+      ]
+    },
+    {
+      "source": "anywidget",
+      "target": "marimo-notebook",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/marimo-notebook` \u2014 the host notebook that embeds the widget"
+      ]
+    },
+    {
+      "source": "anywidget",
+      "target": "marimo-notebook",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u251c\u2500 Need a custom widget? \u2192 /anywidget"
+      ]
+    },
+    {
+      "source": "arxiv-search",
+      "target": "crossref-lookup",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/crossref-lookup` \u2014 resolve citation metadata from arXiv DOIs"
+      ]
+    },
+    {
+      "source": "arxiv-search",
+      "target": "polars-dovmed",
+      "type": "similar_to",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.8,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead.",
+        "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
       ]
     },
     {
@@ -1719,6 +2204,48 @@
       ]
     },
     {
+      "source": "bio-logic",
+      "target": "ai-scientist-evaluator",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/ai-scientist-evaluator` \u2014 rubric-scored evaluation of AI scientist outputs"
+      ]
+    },
+    {
+      "source": "bio-logic",
+      "target": "manuscript-review-council",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/manuscript-review-council` \u2014 multi-reviewer critique of peer-reviewed manuscripts"
+      ]
+    },
+    {
+      "source": "bio-logic",
+      "target": "proposal-review",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/proposal-review` \u2014 structured critique of funding proposals"
+      ]
+    },
+    {
       "source": "bio-phylogenomics",
       "target": "bio-gene-calling",
       "type": "depend_on",
@@ -1803,6 +2330,34 @@
       ]
     },
     {
+      "source": "biorxiv-search",
+      "target": "crossref-lookup",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/crossref-lookup` \u2014 resolve citation metadata from bioRxiv DOIs"
+      ]
+    },
+    {
+      "source": "biorxiv-search",
+      "target": "polars-dovmed",
+      "type": "similar_to",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.8,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+      ]
+    },
+    {
       "source": "codexloop",
       "target": "agent-collaboration",
       "type": "uses",
@@ -1828,6 +2383,90 @@
       ],
       "evidence": [
         "agents/codexloop.md"
+      ]
+    },
+    {
+      "source": "codexloop",
+      "target": "get-api-docs",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/codexloop.md"
+      ]
+    },
+    {
+      "source": "crossref-lookup",
+      "target": "arxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/arxiv-search` \u2014 source-native preprint search on arXiv"
+      ]
+    },
+    {
+      "source": "crossref-lookup",
+      "target": "biorxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/biorxiv-search` \u2014 source-native preprint search on bioRxiv"
+      ]
+    },
+    {
+      "source": "crossref-lookup",
+      "target": "polars-dovmed",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/polars-dovmed` \u2014 full-text PMC Open Access search when the DOI is unknown"
+      ]
+    },
+    {
+      "source": "crossref-lookup",
+      "target": "scientific-impact-assessment",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/scientific-impact-assessment` \u2014 citation counts and journal impact"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
+      "target": "add-molab-badge",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
       ]
     },
     {
@@ -1860,7 +2499,63 @@
     },
     {
       "source": "dataviz-artist",
+      "target": "anywidget",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
       "target": "beautiful-data-viz",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
+      "target": "implement-paper-auto",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
+      "target": "jupyter-to-marimo",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
+      "target": "marimo-notebook",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -1898,6 +2593,104 @@
       ],
       "evidence": [
         "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "implement-paper-auto",
+      "target": "add-molab-badge",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/add-molab-badge` \u2014 advertise the reproduction notebook"
+      ]
+    },
+    {
+      "source": "implement-paper-auto",
+      "target": "arxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/arxiv-search` \u2014 locate the paper on arXiv before reproducing"
+      ]
+    },
+    {
+      "source": "implement-paper-auto",
+      "target": "biorxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/biorxiv-search` \u2014 locate the paper on bioRxiv before reproducing"
+      ]
+    },
+    {
+      "source": "implement-paper-auto",
+      "target": "marimo-notebook",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/marimo-notebook` \u2014 target format for the reproduction notebook"
+      ]
+    },
+    {
+      "source": "implement-paper-auto",
+      "target": "marimo-notebook",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u251c\u2500 Reproducing a paper? \u2192 /implement-paper-auto"
+      ]
+    },
+    {
+      "source": "jupyter-to-marimo",
+      "target": "marimo-notebook",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/marimo-notebook` \u2014 author the target notebook in marimo style after conversion"
+      ]
+    },
+    {
+      "source": "jupyter-to-marimo",
+      "target": "marimo-notebook",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u251c\u2500 Converting a Jupyter notebook? \u2192 /jupyter-to-marimo"
       ]
     },
     {
@@ -2014,6 +2807,20 @@
     },
     {
       "source": "manuscript-review-council",
+      "target": "ai-scientist-evaluator",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/ai-scientist-evaluator` \u2014 equivalent pipeline for AI scientist outputs"
+      ]
+    },
+    {
+      "source": "manuscript-review-council",
       "target": "bio-logic",
       "type": "compose_with",
       "source_type": "skill",
@@ -2023,7 +2830,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- use `/bio-logic` for evidence-strength and causal-claim stress tests"
+        "- use `/bio-logic` for evidence-strength and causal-claim stress tests",
+        "- `/bio-logic` \u2014 deeper reasoning about evidence strength"
       ]
     },
     {
@@ -2051,7 +2859,134 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton."
+        "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.",
+        "- `/scientific-writing` \u2014 apply the reviewer feedback to the manuscript"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "add-molab-badge",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/add-molab-badge` \u2014 advertise the notebook with an Open-in-molab badge"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "anywidget",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/anywidget` \u2014 generate a custom widget component for the notebook"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "implement-paper-auto",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/implement-paper-auto` \u2014 reproduce a paper end-to-end in a marimo notebook"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "jupyter-to-marimo",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/jupyter-to-marimo` \u2014 convert an existing .ipynb to marimo"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "notebook-ai-agents-skill",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/notebook-ai-agents-skill` \u2014 refactor Jupyter/agent notebooks if not starting from scratch"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "add-molab-badge",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u2514\u2500 Advertising it with a badge? \u2192 /add-molab-badge"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "anywidget",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u251c\u2500 Need a custom widget? \u2192 /anywidget"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "implement-paper-auto",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u251c\u2500 Reproducing a paper? \u2192 /implement-paper-auto"
+      ]
+    },
+    {
+      "source": "marimo-notebook",
+      "target": "jupyter-to-marimo",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502   \u251c\u2500 Converting a Jupyter notebook? \u2192 /jupyter-to-marimo"
       ]
     },
     {
@@ -2293,6 +3228,48 @@
       ]
     },
     {
+      "source": "proposal-review",
+      "target": "bio-logic",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/bio-logic` \u2014 assess methodology and evidence rigor"
+      ]
+    },
+    {
+      "source": "proposal-review",
+      "target": "manuscript-review-council",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/manuscript-review-council` \u2014 equivalent pipeline for manuscripts"
+      ]
+    },
+    {
+      "source": "proposal-review",
+      "target": "scientific-writing",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/scientific-writing` \u2014 draft or revise the proposal narrative"
+      ]
+    },
+    {
       "source": "science-writer",
       "target": "agent-browser",
       "type": "uses",
@@ -2309,6 +3286,20 @@
     {
       "source": "science-writer",
       "target": "agent-collaboration",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/science-writer.md"
+      ]
+    },
+    {
+      "source": "science-writer",
+      "target": "ai-scientist-evaluator",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -2364,6 +3355,20 @@
     },
     {
       "source": "science-writer",
+      "target": "proposal-review",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/science-writer.md"
+      ]
+    },
+    {
+      "source": "science-writer",
       "target": "scientific-writing",
       "type": "uses",
       "source_type": "agent",
@@ -2388,7 +3393,36 @@
       ],
       "evidence": [
         "- If you only have a title, use `/crossref-lookup` first to resolve a DOI before running this skill.",
-        "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup."
+        "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup.",
+        "- `/crossref-lookup` \u2014 resolve DOIs before scoring impact"
+      ]
+    },
+    {
+      "source": "scientific-impact-assessment",
+      "target": "polars-dovmed",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/polars-dovmed` \u2014 retrieve the full text that backs the impact claim"
+      ]
+    },
+    {
+      "source": "scientific-writing",
+      "target": "bio-logic",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/bio-logic` \u2014 evaluate evidence quality and rigor during revision"
       ]
     },
     {
@@ -2404,7 +3438,36 @@
       "evidence": [
         "7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
         "| Validate citations | `/crossref-lookup` |",
-        "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript."
+        "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
+        "- `/crossref-lookup` \u2014 validate every cited DOI"
+      ]
+    },
+    {
+      "source": "scientific-writing",
+      "target": "manuscript-review-council",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/manuscript-review-council` \u2014 run a multi-reviewer critique before revision"
+      ]
+    },
+    {
+      "source": "scientific-writing",
+      "target": "proposal-review",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- `/proposal-review` \u2014 switch here for funding-proposal critique"
       ]
     }
   ]

@@ -104,3 +104,8 @@ skills/scientific-impact-assessment/scripts/measure-impact \
 
 **Issue**: Only a title is available.  
 **Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup.
+
+## Related Skills
+
+- `/crossref-lookup` — resolve DOIs before scoring impact
+- `/polars-dovmed` — retrieve the full text that backs the impact claim

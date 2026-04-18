@@ -159,3 +159,9 @@ Suggestive but not conclusive due to differential attrition.
 
 **Issue**: Conflicting results across studies
 **Solution**: Report uncertainty and suggest stronger study designs for resolution.
+
+## Related Skills
+
+- `/ai-scientist-evaluator` — rubric-scored evaluation of AI scientist outputs
+- `/manuscript-review-council` — multi-reviewer critique of peer-reviewed manuscripts
+- `/proposal-review` — structured critique of funding proposals

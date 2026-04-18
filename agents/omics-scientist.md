@@ -171,7 +171,8 @@ START
 - **"raw reads", "fastq", "QC", "trimming"** → `/bio-reads-qc-mapping`
 - **"assemble", "assembly", "contigs", "QUAST"** → `/bio-assembly-qc`
 - **"binning", "MAGs", "CheckM"** → `/bio-binning-qc`
-- **"gene calling", "ORF", "Prodigal"** → `/bio-gene-calling`
+- **"gene calling", "predict genes", "gene prediction", "ORF", "Prodigal"** → `/bio-gene-calling`
+- **"scaffold", "new project", "project setup", "reproducible environment", "project housekeeping"** → `/bio-foundation-housekeeping`
 - **"annotation", "DIAMOND", "KEGG", "taxonomy"** → `/bio-annotation`
 - **"phylogeny", "tree", "alignment"** → `/bio-phylogenomics`
 - **"pangenome", "orthologs"** → `/bio-protein-clustering-pangenome`

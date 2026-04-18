@@ -88,3 +88,9 @@ $1.5M budget cap, and high concern for regulatory risk.
 
 **Issue**: Ethics or compliance details are absent
 **Solution**: Treat the omission as a potential blocker and ask targeted questions about subjects, privacy, biosafety, or regulatory readiness.
+
+## Related Skills
+
+- `/manuscript-review-council` — equivalent pipeline for manuscripts
+- `/scientific-writing` — draft or revise the proposal narrative
+- `/bio-logic` — assess methodology and evidence rigor

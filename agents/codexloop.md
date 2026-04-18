@@ -36,6 +36,11 @@ Use the returned result as the default path, then open only the referenced files
 **For plan critique, code review, or tmux-based second opinions during execution, use:**
 - `/agent-collaboration` - Use smux/tmux-bridge to ask another Codex or Claude pane to review plans, challenge diffs, or critique results. Prefer the other runtime when available; otherwise ask a fresh same-platform instance in another pane.
 
+### API Documentation Lookup
+
+**When coding against a fast-changing API or SDK, fetch current docs first:**
+- `/get-api-docs` - Pulls current API/SDK documentation so generated code targets the shipping surface, not stale training data.
+
 ## Workflow Decision Tree
 
 ```
@@ -68,7 +73,8 @@ START
 - **"finish this plan", "keep going until tests pass", "resume the harness"** → `/codexloop`
 - **"docs/plans", "MEMORY.md", "implementation loop", "resumable Codex"** → `/codexloop`
 - **"Mycelium-like", "orchestrate Codex tasks", "long-running coding loop"** → `/codexloop`
-- **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review", "plan critique", "code review"** → `/agent-collaboration`
+- **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review", "plan critique", "peer codex pane", "review the current diff"** → `/agent-collaboration`
+- **"api docs", "sdk docs", "fetch documentation", "anthropic sdk", "openai sdk", "current API documentation"** → `/get-api-docs`
 
 ## Communication Style
 

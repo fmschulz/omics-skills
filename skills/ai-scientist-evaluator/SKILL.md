@@ -189,3 +189,9 @@ python scripts/aggregate_reviews.py review_a.json review_b.json --out_md leaderb
 
 **Issue**: A claim looks impressive but evidence is thin or missing.
 **Solution**: Penalize unsupported claims, cite the missing evidence directly, and keep the verdict skeptical.
+
+## Related Skills
+
+- `/bio-logic` — general scientific reasoning beyond AI evaluation
+- `/manuscript-review-council` — equivalent pipeline for human-authored manuscripts
+- `/scientific-writing` — draft the evaluation writeup

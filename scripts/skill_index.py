@@ -670,9 +670,27 @@ def route_request(
         agent_scores[agent_name] += text_overlap(query_tokens, tokenize(agent_record["description"]))
     selected_agent = agent or (max(agent_scores.items(), key=lambda item: (item[1], item[0]))[0] if agent_scores else None)
 
-    supporting_skills = ordered_dependencies(primary_skills, edges)
-    supporting_only = [name for name in supporting_skills if name not in set(primary_skills)]
-    ordered_skills = ordered_workflow(supporting_skills, edges)
+    dep_skills = ordered_dependencies(primary_skills, edges)
+    primary_set = set(primary_skills)
+    # Order only the primary + strict-dependency set through the workflow
+    # topological sort — pulling compose_with neighbours through it produces
+    # huge "also consider" tails of unrelated skills.
+    ordered_skills = ordered_workflow(dep_skills, edges)
+
+    compose_extras: list[str] = []
+    compose_set: set[str] = set()
+    for neighbor in compose_neighbors(primary_set, edges):
+        if neighbor in primary_set or neighbor in set(dep_skills) or neighbor in compose_set:
+            continue
+        if allowed_skills is not None and neighbor not in allowed_skills:
+            continue
+        if platform in ("claude", "codex") and neighbor in skills:
+            if platform not in skills[neighbor]["platforms"]:
+                continue
+        compose_extras.append(neighbor)
+        compose_set.add(neighbor)
+
+    supporting_only = [name for name in dep_skills if name not in primary_set] + compose_extras
     agent_path = agents[selected_agent]["path"] if selected_agent in agents else None
     skill_paths = {name: skills[name]["path"] for name in ordered_skills if name in skills}
     if source_mode == "installed":
@@ -696,6 +714,28 @@ def route_request(
         "agent_path": agent_path,
         "skill_paths": skill_paths,
     }
+
+
+def compose_neighbors(primary_set: set[str], edges: list[dict[str, Any]]) -> list[str]:
+    """Return skills that any primary skill explicitly cites via a
+    `compose_with` edge (outgoing direction only). Treated as a tight
+    supporting list — not reverse-direction, not `similar_to`, not
+    transitive — so a primary-skill hit surfaces only the partners that
+    skill's body directly recommends. Keeps the router from snowballing
+    unrelated sibling skills into every query."""
+    neighbors: list[str] = []
+    seen: set[str] = set()
+    for edge in edges:
+        if edge.get("source_type") != "skill" or edge.get("target_type") != "skill":
+            continue
+        if edge.get("type") != "compose_with":
+            continue
+        source = edge.get("source")
+        target = edge.get("target")
+        if source in primary_set and target not in primary_set and target not in seen:
+            neighbors.append(target)
+            seen.add(target)
+    return neighbors
 
 
 def ordered_dependencies(primary_skills: list[str], edges: list[dict[str, Any]]) -> list[str]:

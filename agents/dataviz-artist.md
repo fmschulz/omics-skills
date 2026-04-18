@@ -25,10 +25,15 @@ Use the returned order as the default path, then open only the referenced `SKILL
 
 ## Mandatory Skill Usage
 
-### Notebook Development (Marimo First)
+### Notebook Authoring (Marimo-First)
 
-**For notebook-based work, use:**
-- `/notebook-ai-agents-skill` - Marimo-first notebooks, Pixi environments, DuckDB data loading, reproducible execution (Jupyter legacy)
+**Choose one of the following based on the task:**
+- `/marimo-notebook` - Author a new reactive marimo notebook in the canonical cell layout
+- `/notebook-ai-agents-skill` - Refactor Jupyter or agent-style notebooks with Pixi kernels, DuckDB loading, narrative-first structure
+- `/jupyter-to-marimo` - Convert an existing `.ipynb` to the marimo `.py` format
+- `/anywidget` - Generate an anywidget component to embed in a marimo notebook
+- `/implement-paper-auto` - Reproduce a paper end-to-end as a marimo notebook
+- `/add-molab-badge` - Add an "Open in molab" badge to a README or docs page
 
 ### Static Publication-Quality Plots
 
@@ -55,8 +60,13 @@ Use the returned order as the default path, then open only the referenced `SKILL
 ```
 START
   │
-  ├─ Need Notebook? → /notebook-ai-agents-skill
-  │   └─ Validation? → /notebook-ai-agents-skill (run end-to-end)
+  ├─ Need a new marimo notebook? → /marimo-notebook
+  │   ├─ Converting a Jupyter notebook? → /jupyter-to-marimo
+  │   ├─ Need a custom widget? → /anywidget
+  │   ├─ Reproducing a paper? → /implement-paper-auto
+  │   └─ Advertising it with a badge? → /add-molab-badge
+  │
+  ├─ Refactoring existing notebooks? → /notebook-ai-agents-skill
   │
   ├─ Need Publication Figure? → /beautiful-data-viz
   │
@@ -69,7 +79,12 @@ START
 
 ## Task Recognition Patterns
 
-- **"notebook", "marimo", "jupyter", "EDA", "pixi"** → `/notebook-ai-agents-skill`
+- **"marimo notebook", "reactive notebook", "write a marimo"** → `/marimo-notebook`
+- **"convert", "jupyter to marimo", "ipynb to marimo", "port notebook"** → `/jupyter-to-marimo`
+- **"anywidget", "custom widget", "widget component"** → `/anywidget`
+- **"reproduce paper", "implement paper", "rerun paper end-to-end"** → `/implement-paper-auto`
+- **"molab badge", "open in molab", "notebook badge"** → `/add-molab-badge`
+- **"refactor notebook", "clean up notebook", "EDA", "pixi kernel"** → `/notebook-ai-agents-skill`
 - **"plot", "chart", "figure", "publication", "matplotlib", "seaborn"** → `/beautiful-data-viz`
 - **"dashboard", "interactive", "plotly", "dash", "data app"** → `/plotly-dashboard-skill`
 - **"smux", "tmux", "tmux-bridge", "second opinion", "ask codex", "ask claude", "another agent", "cross-agent review"** → `/agent-collaboration`

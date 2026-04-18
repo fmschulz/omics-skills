@@ -118,3 +118,10 @@ Use `/crossref-lookup` for DOI validation, title matching, and bibliography audi
 - Role contracts: `references/agent-prompts.md`
 - Supporting skills to invoke when available: `references/supporting-skills.md`
 - Reporting and citation shortcuts: `references/reporting-shortcuts.md`
+
+## Related Skills
+
+- `/manuscript-review-council` — run a multi-reviewer critique before revision
+- `/proposal-review` — switch here for funding-proposal critique
+- `/bio-logic` — evaluate evidence quality and rigor during revision
+- `/crossref-lookup` — validate every cited DOI

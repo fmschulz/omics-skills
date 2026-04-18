@@ -97,8 +97,8 @@ START
 ## Task Recognition Patterns
 
 - **"literature search", "find papers", "PMC", "publication trends"** → `/polars-dovmed`
-- **"arxiv", "preprint", "latest ML papers", "latest AI papers", "recent preprints"** → `/arxiv-search`
-- **"biorxiv", "bioRxiv", "biology preprint", "recent biology preprints"** → `/biorxiv-search`
+- **"arxiv", "arxiv preprint", "latest ML papers", "latest AI papers"** → `/arxiv-search`
+- **"biorxiv", "bioRxiv", "biology preprint", "recent biology preprints", "life-science preprint"** → `/biorxiv-search`
 - **"crossref", "doi lookup", "citation metadata", "reference metadata", "bibtex"** → `/crossref-lookup`
 - **"citation count", "altmetric", "impact factor", "journal impact", "scientific impact"** → `/scientific-impact-assessment`
 - **"review evidence", "evidence quality", "bias", "methodology"** → `/bio-logic`

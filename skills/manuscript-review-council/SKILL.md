@@ -154,3 +154,9 @@ fatally flawed.
 
 **Issue**: Only one agent can run.
 **Solution**: Emulate the council sequentially with role-scoped passes and keep the notes separated until the editor synthesis step.
+
+## Related Skills
+
+- `/scientific-writing` — apply the reviewer feedback to the manuscript
+- `/bio-logic` — deeper reasoning about evidence strength
+- `/ai-scientist-evaluator` — equivalent pipeline for AI scientist outputs

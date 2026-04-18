@@ -6,7 +6,8 @@
       "path": "agents/codexloop.md",
       "skills": [
         "agent-collaboration",
-        "codexloop"
+        "codexloop",
+        "get-api-docs"
       ],
       "task_patterns": [
         {
@@ -46,7 +47,19 @@
             "another agent",
             "cross-agent review",
             "plan critique",
-            "code review"
+            "peer codex pane",
+            "review the current diff"
+          ]
+        },
+        {
+          "skill_name": "get-api-docs",
+          "phrases": [
+            "api docs",
+            "sdk docs",
+            "fetch documentation",
+            "anthropic sdk",
+            "openai sdk",
+            "current API documentation"
           ]
         }
       ]
@@ -56,21 +69,66 @@
       "description": "Expert data visualization specialist for publication-quality figures, dashboards, and reproducible analysis notebooks.",
       "path": "agents/dataviz-artist.md",
       "skills": [
+        "add-molab-badge",
         "agent-browser",
         "agent-collaboration",
+        "anywidget",
         "beautiful-data-viz",
+        "implement-paper-auto",
+        "jupyter-to-marimo",
+        "marimo-notebook",
         "notebook-ai-agents-skill",
         "plotly-dashboard-skill"
       ],
       "task_patterns": [
         {
+          "skill_name": "marimo-notebook",
+          "phrases": [
+            "marimo notebook",
+            "reactive notebook",
+            "write a marimo"
+          ]
+        },
+        {
+          "skill_name": "jupyter-to-marimo",
+          "phrases": [
+            "convert",
+            "jupyter to marimo",
+            "ipynb to marimo",
+            "port notebook"
+          ]
+        },
+        {
+          "skill_name": "anywidget",
+          "phrases": [
+            "anywidget",
+            "custom widget",
+            "widget component"
+          ]
+        },
+        {
+          "skill_name": "implement-paper-auto",
+          "phrases": [
+            "reproduce paper",
+            "implement paper",
+            "rerun paper end-to-end"
+          ]
+        },
+        {
+          "skill_name": "add-molab-badge",
+          "phrases": [
+            "molab badge",
+            "open in molab",
+            "notebook badge"
+          ]
+        },
+        {
           "skill_name": "notebook-ai-agents-skill",
           "phrases": [
-            "notebook",
-            "marimo",
-            "jupyter",
+            "refactor notebook",
+            "clean up notebook",
             "EDA",
-            "pixi"
+            "pixi kernel"
           ]
         },
         {
@@ -146,10 +204,9 @@
           "skill_name": "arxiv-search",
           "phrases": [
             "arxiv",
-            "preprint",
+            "arxiv preprint",
             "latest ML papers",
-            "latest AI papers",
-            "recent preprints"
+            "latest AI papers"
           ]
         },
         {
@@ -158,7 +215,8 @@
             "biorxiv",
             "bioRxiv",
             "biology preprint",
-            "recent biology preprints"
+            "recent biology preprints",
+            "life-science preprint"
           ]
         },
         {
@@ -278,8 +336,20 @@
           "skill_name": "bio-gene-calling",
           "phrases": [
             "gene calling",
+            "predict genes",
+            "gene prediction",
             "ORF",
             "Prodigal"
+          ]
+        },
+        {
+          "skill_name": "bio-foundation-housekeeping",
+          "phrases": [
+            "scaffold",
+            "new project",
+            "project setup",
+            "reproducible environment",
+            "project housekeeping"
           ]
         },
         {
@@ -386,9 +456,11 @@
       "skills": [
         "agent-browser",
         "agent-collaboration",
+        "ai-scientist-evaluator",
         "bio-logic",
         "bio-workflow-methods-docwriter",
         "manuscript-review-council",
+        "proposal-review",
         "scientific-writing"
       ],
       "task_patterns": [
@@ -422,7 +494,29 @@
             "major revision",
             "decision letter",
             "rebuttal",
-            "reviewer comments"
+            "reviewer comments",
+            "multi-reviewer",
+            "review council",
+            "critique manuscript",
+            "manuscript review"
+          ]
+        },
+        {
+          "skill_name": "proposal-review",
+          "phrases": [
+            "proposal",
+            "grant",
+            "funding proposal",
+            "review this proposal"
+          ]
+        },
+        {
+          "skill_name": "ai-scientist-evaluator",
+          "phrases": [
+            "AI scientist",
+            "evaluate agent output",
+            "score AI output",
+            "rank AI scientists"
           ]
         },
         {
@@ -461,8 +555,14 @@
     {
       "name": "add-molab-badge",
       "description": "Add \"Open in molab\" badge(s) linking to marimo notebooks. Works with READMEs, docs, websites, or any markdown/HTML target.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "molab badge",
+        "notebook badge",
+        "open in molab"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -506,9 +606,10 @@
         "another agent",
         "ask claude",
         "ask codex",
-        "code review",
         "cross-agent review",
+        "peer codex pane",
         "plan critique",
+        "review the current diff",
         "second opinion",
         "smux",
         "tmux",
@@ -523,8 +624,15 @@
     {
       "name": "ai-scientist-evaluator",
       "description": "Critically review, score, compare, and rank one or more AI scientist outputs for biology, bioinformatics, computational life science, or adjacent research tasks. Trigger when the user asks to evaluate notebooks, code, figures, analyses, manuscripts, software, or final reports produced by AI scientists; compare multiple AI scientists on the same task; judge publication readiness; or audit rigor, reproducibility, novelty, and task completion. Do not use this skill to perform the original research task itself unless the user is explicitly asking for a reviewer-style audit of already produced outputs.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "science-writer"
+      ],
+      "task_patterns": [
+        "AI scientist",
+        "evaluate agent output",
+        "rank AI scientists",
+        "score AI output"
+      ],
       "platforms": [
         "codex"
       ],
@@ -533,8 +641,14 @@
     {
       "name": "anywidget",
       "description": "Generate anywidget components for marimo notebooks.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "anywidget",
+        "custom widget",
+        "widget component"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -549,10 +663,9 @@
       ],
       "task_patterns": [
         "arxiv",
+        "arxiv preprint",
         "latest AI papers",
-        "latest ML papers",
-        "preprint",
-        "recent preprints"
+        "latest ML papers"
       ],
       "platforms": [
         "claude",
@@ -639,7 +752,13 @@
       "agents": [
         "omics-scientist"
       ],
-      "task_patterns": [],
+      "task_patterns": [
+        "new project",
+        "project housekeeping",
+        "project setup",
+        "reproducible environment",
+        "scaffold"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -655,7 +774,9 @@
       "task_patterns": [
         "ORF",
         "Prodigal",
-        "gene calling"
+        "gene calling",
+        "gene prediction",
+        "predict genes"
       ],
       "platforms": [
         "claude",
@@ -839,6 +960,7 @@
         "bioRxiv",
         "biology preprint",
         "biorxiv",
+        "life-science preprint",
         "recent biology preprints"
       ],
       "platforms": [
@@ -892,8 +1014,17 @@
     {
       "name": "get-api-docs",
       "description": "Fetch current API and SDK documentation with the chub CLI. Use when writing or reviewing code against fast-changing APIs, especially when the user asks for the latest or current docs.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "codexloop"
+      ],
+      "task_patterns": [
+        "anthropic sdk",
+        "api docs",
+        "current API documentation",
+        "fetch documentation",
+        "openai sdk",
+        "sdk docs"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -903,8 +1034,14 @@
     {
       "name": "implement-paper-auto",
       "description": "Implement a research paper in a marimo notebook fully automatically without extra user input.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "implement paper",
+        "reproduce paper",
+        "rerun paper end-to-end"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -933,8 +1070,15 @@
     {
       "name": "jupyter-to-marimo",
       "description": "Convert a Jupyter notebook (.ipynb) to a marimo notebook (.py).",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "convert",
+        "ipynb to marimo",
+        "jupyter to marimo",
+        "port notebook"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -948,10 +1092,14 @@
         "science-writer"
       ],
       "task_patterns": [
+        "critique manuscript",
         "decision letter",
         "major revision",
+        "manuscript review",
+        "multi-reviewer",
         "peer review",
         "rebuttal",
+        "review council",
         "review this manuscript",
         "reviewer comments"
       ],
@@ -964,8 +1112,14 @@
     {
       "name": "marimo-notebook",
       "description": "Write a marimo notebook in a Python file in the right format.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "dataviz-artist"
+      ],
+      "task_patterns": [
+        "marimo notebook",
+        "reactive notebook",
+        "write a marimo"
+      ],
       "platforms": [
         "claude",
         "codex"
@@ -980,10 +1134,9 @@
       ],
       "task_patterns": [
         "EDA",
-        "jupyter",
-        "marimo",
-        "notebook",
-        "pixi"
+        "clean up notebook",
+        "pixi kernel",
+        "refactor notebook"
       ],
       "platforms": [
         "claude",
@@ -1031,8 +1184,15 @@
     {
       "name": "proposal-review",
       "description": "Structured, decision-ready review framework for AI/ML, computational biology, and bioscience proposals. Use when evaluating grant, project, or funding proposals.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "science-writer"
+      ],
+      "task_patterns": [
+        "funding proposal",
+        "grant",
+        "proposal",
+        "review this proposal"
+      ],
       "platforms": [
         "claude",
         "codex"

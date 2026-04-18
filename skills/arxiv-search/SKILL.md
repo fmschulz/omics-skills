@@ -203,3 +203,8 @@ skills/arxiv-search/scripts/summarize 2501.01234 2406.00001 \
 
 **Issue**: `HTTP 429 Rate exceeded`  
 **Solution**: Slow down. arXiv recommends a 3-second delay between repeated API calls. Cache identical queries, avoid tight retry loops, and prefer fetching small result slices.
+
+## Related Skills
+
+- `/crossref-lookup` — resolve citation metadata from arXiv DOIs
+- `/polars-dovmed` — switch here if the query wants peer-reviewed PMC full text instead of preprints

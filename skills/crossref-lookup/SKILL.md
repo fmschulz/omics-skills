@@ -100,3 +100,10 @@ skills/crossref-lookup/scripts/lookup \
 
 **Issue**: Bibliography audit reports missing DOIs for many entries.  
 **Solution**: Treat that as a coverage gap, not proof that the citations are invalid. Crossref metadata may be incomplete for some records.
+
+## Related Skills
+
+- `/polars-dovmed` — full-text PMC Open Access search when the DOI is unknown
+- `/arxiv-search` — source-native preprint search on arXiv
+- `/biorxiv-search` — source-native preprint search on bioRxiv
+- `/scientific-impact-assessment` — citation counts and journal impact
