@@ -165,7 +165,21 @@
             "literature search",
             "find papers",
             "PMC",
-            "publication trends"
+            "publication trends",
+            "polars-dovmed",
+            "dovmed scan",
+            "local bioRxiv parquet",
+            "full-text bioRxiv screening",
+            "--corpus biorxiv",
+            "--corpus both"
+          ]
+        },
+        {
+          "skill_name": "polars-dovmed",
+          "phrases": [
+            "screen bioRxiv with polars-dovmed",
+            "bioRxiv screening",
+            "PMC plus bioRxiv"
           ]
         },
         {
@@ -1082,10 +1096,19 @@
         "literature-expert"
       ],
       "task_patterns": [
+        "--corpus biorxiv",
+        "--corpus both",
         "PMC",
+        "PMC plus bioRxiv",
+        "bioRxiv screening",
+        "dovmed scan",
         "find papers",
+        "full-text bioRxiv screening",
         "literature search",
-        "publication trends"
+        "local bioRxiv parquet",
+        "polars-dovmed",
+        "publication trends",
+        "screen bioRxiv with polars-dovmed"
       ],
       "platforms": [
         "claude",

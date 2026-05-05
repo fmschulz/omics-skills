@@ -28,7 +28,7 @@ Use the returned order as the default path, then open only the referenced `SKILL
 ### Peer-Reviewed Literature
 
 **Use for PMC and peer-reviewed discovery:**
-- `/polars-dovmed` - Full-text search across the PMC Open Access corpus
+- `/polars-dovmed` - Full-text search across the PMC Open Access corpus and local PMC/bioRxiv parquet corpora
 
 ### Preprint Discovery
 
@@ -88,7 +88,8 @@ START
 
 ## Task Recognition Patterns
 
-- **"literature search", "find papers", "PMC", "publication trends"** → `/polars-dovmed`
+- **"literature search", "find papers", "PMC", "publication trends", "polars-dovmed", "dovmed scan", "local bioRxiv parquet", "full-text bioRxiv screening", "--corpus biorxiv", "--corpus both"** → `/polars-dovmed`
+- **"screen bioRxiv with polars-dovmed", "bioRxiv screening", "PMC plus bioRxiv"** → `/polars-dovmed`
 - **"arxiv", "arxiv preprint", "latest ML papers", "latest AI papers"** → `/arxiv-search`
 - **"biorxiv", "bioRxiv", "biology preprint", "recent biology preprints", "life-science preprint"** → `/biorxiv-search`
 - **"crossref", "doi lookup", "citation metadata", "reference metadata", "bibtex"** → `/crossref-lookup`

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "source_repo": "/home/fschulz/dev/omics-skills",
-    "built_at": "2026-04-18T23:30:44+00:00",
+    "built_at": "2026-05-05T21:37:35+00:00",
     "skill_count": 36,
     "agent_count": 5,
     "edge_count": 105
@@ -1019,14 +1019,23 @@
         "Peer-Reviewed Literature"
       ],
       "task_patterns": [
+        "--corpus biorxiv",
+        "--corpus both",
         "PMC",
+        "PMC plus bioRxiv",
+        "bioRxiv screening",
+        "dovmed scan",
         "find papers",
+        "full-text bioRxiv screening",
         "literature search",
-        "publication trends"
+        "local bioRxiv parquet",
+        "polars-dovmed",
+        "publication trends",
+        "screen bioRxiv with polars-dovmed"
       ],
       "internal_references": [
         "api",
-        "dev",
+        "media",
         "mnt"
       ],
       "reference_contexts": {
@@ -1042,11 +1051,13 @@
           "- `POST /api/scan_literature_advanced`",
           "- `POST /api/get_paper_details`"
         ],
-        "dev": [
-          "- `--corpus pmc`: `~/dev/polars-dovmed/data/pubmed_central/parquet_files/*/*.parquet`"
+        "media": [
+          "- `--corpus pmc`: `/media/shared-expansion/db/pubmed_central/parquet_files/**/*.parquet` when mounted, otherwise the repo-local PMC parquet directory"
         ],
         "mnt": [
-          "- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/*.parquet`"
+          "- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`",
+          "- latest-version search corpus: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`",
+          "- version-history parquet: `/mnt/taskmaster2/biorxiv/parquet/versions/year=YYYY/month=MM/`"
         ]
       }
     },
@@ -1410,7 +1421,21 @@
             "literature search",
             "find papers",
             "PMC",
-            "publication trends"
+            "publication trends",
+            "polars-dovmed",
+            "dovmed scan",
+            "local bioRxiv parquet",
+            "full-text bioRxiv screening",
+            "--corpus biorxiv",
+            "--corpus both"
+          ]
+        },
+        {
+          "skill_name": "polars-dovmed",
+          "phrases": [
+            "screen bioRxiv with polars-dovmed",
+            "bioRxiv screening",
+            "PMC plus bioRxiv"
           ]
         },
         {

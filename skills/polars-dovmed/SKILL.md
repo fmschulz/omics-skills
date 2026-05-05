@@ -30,6 +30,12 @@ For every search prompt, create a dedicated run directory and save:
 - any curated summary derived from those results
 - if discovery fallback is used, separate discovery payload and result artifacts
 
+## Input Requirements
+
+- A search prompt or an inspected `query.json`.
+- A hosted API key for PMC/OpenPMC mode, or mounted local parquet files for `pmc`, `biorxiv`, or `both`.
+- A writable run directory for prompts, payloads, raw results, and summaries.
+
 ## Instructions
 
 1. Decide execution mode up front.
@@ -228,7 +234,7 @@ python skills/polars-dovmed/scripts/query_literature.py \
 Use this mode when no hosted API key is available, or when the user explicitly wants the local bioRxiv parquet corpus.
 
 ```bash
-dovmed scan \
+~/.pixi/bin/pixi run dovmed scan \
   --corpus pmc \
   --queries-file runs/klosneuvirinae-hosts/query.json \
   --extract-matches primary \
@@ -238,14 +244,26 @@ dovmed scan \
 ```
 
 Local corpus aliases on this workstation:
-- `--corpus pmc`: `~/dev/polars-dovmed/data/pubmed_central/parquet_files/*/*.parquet`
-- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/*.parquet`
+- `--corpus pmc`: `/media/shared-expansion/db/pubmed_central/parquet_files/**/*.parquet` when mounted, otherwise the repo-local PMC parquet directory
+- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`
 - `--corpus both`: both corpora in one scan
+
+Current local bioRxiv corpus, checked on 2026-05-05:
+- latest-version search corpus: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`
+- version-history parquet: `/mnt/taskmaster2/biorxiv/parquet/versions/year=YYYY/month=MM/`
+- 306,299 latest-version records
+- date range: 2013-11-07 to 2026-05-05
+- 32 latest parquet part files
+- latest parquet size: about 5.7G
+- version-history parquet size: about 7.7G
+- raw XML/cache size: about 64G
+
+The bioRxiv schema is compatible with `dovmed scan` and includes the same search-critical fields as PMC: `title`, `abstract_text`, `full_text`, `authors`, `journal`, `publication_date`, `doi`, `pmc_id`, `pmid`, and `file_path`. For bioRxiv records, `pmc_id` and `pmid` are blank. Extra fields include `source`, `version`, `license`, `category`, and `xml_url`.
 
 Examples:
 
 ```bash
-dovmed scan \
+~/.pixi/bin/pixi run dovmed scan \
   --corpus biorxiv \
   --queries-file runs/mirusvirus/query.json \
   --extract-matches primary \
@@ -253,7 +271,7 @@ dovmed scan \
   --output-path results/mirusvirus_biorxiv \
   --verbose
 
-dovmed scan \
+~/.pixi/bin/pixi run dovmed scan \
   --corpus both \
   --queries-file runs/mirusvirus/query.json \
   --extract-matches primary \
@@ -434,6 +452,10 @@ Send this to:
 - `POST /api/get_paper_details`
 
 Do not use `paper_ids`.
+
+## Examples
+
+Use the hosted API examples above for PMC/OpenPMC searches. Use the local examples above for `--corpus biorxiv` and `--corpus both`.
 
 ## Output
 
