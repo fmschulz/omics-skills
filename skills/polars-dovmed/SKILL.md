@@ -6,18 +6,18 @@ user-invocable: true
 
 # polars-dovmed
 
-Search the PubMed Central Open Access subset and the local bioRxiv parquet corpus with `polars-dovmed`.
+Search the PubMed Central Open Access subset and the bioRxiv parquet corpus with `polars-dovmed`.
 
 The preferred workflow is always:
 1. decide execution mode up front
 2. author a structured query JSON directly
 3. inspect and refine the query JSON
 4. run structured discovery first
-5. fetch paper details for candidate PMC IDs
+5. fetch paper details for candidate PMC IDs or bioRxiv DOIs
 6. use structured advanced scans only for final refinement when needed
 
 Search execution has two modes:
-- Preferred when available: hosted API over the formatted PMC/OpenPMC parquet database
+- Preferred when available: hosted API over `pmc`/OpenPMC, `biorxiv`, or `both`
 - Fallback: local `dovmed scan` over local parquet files for `pmc`, `biorxiv`, or `both`
 
 Do not skip the structured-query authoring step unless the user explicitly supplies a ready query JSON file and asks to use it as-is.
@@ -33,15 +33,15 @@ For every search prompt, create a dedicated run directory and save:
 ## Input Requirements
 
 - A search prompt or an inspected `query.json`.
-- A hosted API key for PMC/OpenPMC mode, or mounted local parquet files for `pmc`, `biorxiv`, or `both`.
+- A hosted API key, or mounted local parquet files for `pmc`, `biorxiv`, or `both`.
 - A writable run directory for prompts, payloads, raw results, and summaries.
 
 ## Instructions
 
 1. Decide execution mode up front.
    - Check API availability first.
-   - If `POLARS_DOVMED_API_KEY` is available in the environment, in the configured polars-dovmed env file, or the user provides an API key, use the hosted API for PMC/OpenPMC searches.
-   - Use local `dovmed` CLI plus local parquet files whenever the user explicitly wants bioRxiv, a PMC+bioRxiv combined scan, or there is no hosted API key.
+   - If `POLARS_DOVMED_API_KEY` is available in the environment, in the configured polars-dovmed env file, or the user provides an API key, use the hosted API for `pmc`, `biorxiv`, or `both` searches.
+   - Use local `dovmed` CLI plus local parquet files when there is no hosted API key or the user explicitly requests a local scan.
 2. Author a structured query JSON directly.
    - The agent should write the JSON itself instead of calling another helper to generate it.
    - If the user already gave a query JSON, inspect it before use.
@@ -61,7 +61,7 @@ For every search prompt, create a dedicated run directory and save:
    - Save the raw returned results in the run directory immediately after the search completes.
    - Default structured API path:
      - `scan_literature_advanced(mode="discovery")`
-     - `get_paper_details(pmc_ids=[...])`
+     - `get_paper_details(pmc_ids=[...])` for PMC or `get_paper_details(corpus="biorxiv", dois=[...])` for bioRxiv
      - `scan_literature_advanced(mode="advanced")` only for final refinement
    - If advanced refinement is too slow or too noisy, return to discovery-plus-details rather than forcing repeated heavy scans.
 6. Inspect the first results before trusting the full set.
@@ -193,8 +193,8 @@ Recommended API workflow:
 1. author `query.json`
 2. inspect the JSON
 3. run `POST /api/scan_literature_advanced` with `mode="discovery"`
-4. inspect top hits and collect candidate `pmc_id` values
-5. run `POST /api/get_paper_details` with `pmc_ids`
+4. inspect top hits and collect candidate `pmc_id` values for PMC or DOI values for bioRxiv
+5. run `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus="biorxiv"` plus `dois` for bioRxiv
 6. if needed, run `POST /api/scan_literature_advanced` with `mode="advanced"` for final structured refinement
 
 Use discovery mode first for candidate retrieval. Use advanced mode only for final structured refinement.
@@ -209,13 +209,14 @@ The query JSON is the source of truth for API mode.
 - If discovery fallback is used, save it separately as `payload_discovery.json` and `results_discovery.json`.
 - The helper auto-loads `~/.config/polars-dovmed/.env`, so a configured `POLARS_DOVMED_API_KEY` does not need manual `source` in typical agent runs.
 - The helper submits hosted search work through `/api/jobs` and polls for completion, instead of holding one long edge request open.
-- For structured discovery runs, the helper automatically fetches details for the top candidate PMC IDs and reranks them using grouped query evidence before summarizing results.
+- For structured discovery runs, the helper automatically fetches details for the top candidate PMC IDs or bioRxiv DOIs and reranks them using grouped query evidence before summarizing results.
 
 Example:
 
 ```bash
 python skills/polars-dovmed/scripts/query_literature.py \
   --queries-file runs/klosneuvirinae-hosts/query.json \
+  --corpus pmc \
   --mode discovery \
   --extract-matches none \
   --add-group-counts primary \
@@ -225,13 +226,16 @@ python skills/polars-dovmed/scripts/query_literature.py \
 
 python skills/polars-dovmed/scripts/query_literature.py \
   --details PMC6912108 PMC8490762 PMC5871332 \
+  --corpus pmc \
   --save-payload runs/klosneuvirinae-hosts/payload_details.json \
   --save-response runs/klosneuvirinae-hosts/results_details.json
 ```
 
+Use `--corpus biorxiv` or `--corpus both` with the same helper to route hosted API requests to the bioRxiv corpus when the API key is available.
+
 ### Step 3B: Search Locally With dovmed scan
 
-Use this mode when no hosted API key is available, or when the user explicitly wants the local bioRxiv parquet corpus.
+Use this mode when no hosted API key is available, or when the user explicitly wants a local parquet scan.
 
 ```bash
 ~/.pixi/bin/pixi run dovmed scan \
@@ -285,13 +289,13 @@ The helper wrapper also supports local execution directly:
 ```bash
 python skills/polars-dovmed/scripts/query_literature.py \
   --execution-mode local \
-  --local-corpus biorxiv \
+  --corpus biorxiv \
   --queries-file runs/mirusvirus/query.json \
   --save-payload runs/mirusvirus/payload_local.json \
   --save-response runs/mirusvirus/results_local.json
 ```
 
-Use `--local-corpus both` to scan PMC plus bioRxiv in one pass.
+Use `--corpus both` to scan PMC plus bioRxiv in one pass. `--local-corpus` is retained as a backward-compatible alias for local scans.
 
 ## Search Semantics
 
@@ -395,13 +399,13 @@ Expected success indicators in `summary.json`:
 | Preferred execution when key exists | Hosted API |
 | Fallback execution | `dovmed scan` on local parquet files |
 | Execution-order rule | Check API first, local fallback second |
-| Local dataset requirement | PMC OA parquet files |
+| Local dataset requirement | PMC OA parquet files and/or bioRxiv parquet files, depending on `corpus` |
 | Helper wrapper in this repo | `skills/polars-dovmed/scripts/query_literature.py` |
 | Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode="discovery"` |
 | Structured API endpoint | `POST /api/scan_literature_advanced` |
 | Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |
 | Automatic second pass | discovery -> paper details -> grouped rerank |
-| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` |
+| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus="biorxiv"` with `dois` |
 | Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
 | Quick skill verification | `python skills/polars-dovmed/scripts/smoke_test.py` |
 
@@ -417,6 +421,7 @@ Use:
     "concept_a": [["pattern1"], ["pattern2"]],
     "concept_b": [["pattern3"]]
   },
+  "corpus": "pmc",
   "search_columns": ["title", "abstract_text", "full_text"],
   "extract_matches": "none",
   "add_group_counts": "primary",
@@ -444,6 +449,7 @@ Use:
 
 ```json
 {
+  "corpus": "pmc",
   "pmc_ids": ["PMC1234567"]
 }
 ```
@@ -451,11 +457,18 @@ Use:
 Send this to:
 - `POST /api/get_paper_details`
 
-Do not use `paper_ids`.
+For bioRxiv details, use:
+
+```json
+{
+  "corpus": "biorxiv",
+  "dois": ["10.1101/2026.01.01.123456"]
+}
+```
 
 ## Examples
 
-Use the hosted API examples above for PMC/OpenPMC searches. Use the local examples above for `--corpus biorxiv` and `--corpus both`.
+Use the same hosted API examples for `--corpus pmc`, `--corpus biorxiv`, or `--corpus both` when a key is available. Use the local examples when the hosted API is unavailable or a local scan is explicitly requested.
 
 ## Output
 

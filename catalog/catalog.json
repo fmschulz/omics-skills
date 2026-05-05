@@ -1,7 +1,7 @@
 {
   "metadata": {
     "source_repo": "/home/fschulz/dev/omics-skills",
-    "built_at": "2026-05-05T21:37:35+00:00",
+    "built_at": "2026-05-05T23:03:01+00:00",
     "skill_count": 36,
     "agent_count": 5,
     "edge_count": 105
@@ -1041,13 +1041,13 @@
       "reference_contexts": {
         "api": [
           "3. run `POST /api/scan_literature_advanced` with `mode=\"discovery\"`",
-          "5. run `POST /api/get_paper_details` with `pmc_ids`",
+          "5. run `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` plus `dois` for bioRxiv",
           "6. if needed, run `POST /api/scan_literature_advanced` with `mode=\"advanced\"` for final structured refinement",
           "- The helper submits hosted search work through `/api/jobs` and polls for completion, instead of holding one long edge request open.",
           "| Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode=\"discovery\"` |",
           "| Structured API endpoint | `POST /api/scan_literature_advanced` |",
           "| Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |",
-          "| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` |",
+          "| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` with `dois` |",
           "- `POST /api/scan_literature_advanced`",
           "- `POST /api/get_paper_details`"
         ],

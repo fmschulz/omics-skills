@@ -114,6 +114,11 @@ def parse_args():
     parser.add_argument("--base-url", default="https://api.newlineages.com")
     parser.add_argument("--api-key")
     parser.add_argument(
+        "--corpus",
+        choices=["pmc", "biorxiv", "both"],
+        help="Corpus selector for hosted API requests and local scans.",
+    )
+    parser.add_argument(
         "--execution-mode",
         choices=["auto", "api", "local"],
         default="auto",
@@ -204,16 +209,21 @@ def load_api_key(explicit_key):
 def determine_execution_mode(args):
     if args.execution_mode != "auto":
         return args.execution_mode
+    corpus = effective_corpus(args)
     # --query and --details are only supported by the API path. Route them
     # there even without a key so the user sees a clear missing-key error
     # instead of the generic "local mode does not support ..." message.
     if args.query or args.details:
         return "api"
-    if args.local_corpus != "pmc":
-        return "local"
     if args.api_key or os.environ.get("POLARS_DOVMED_API_KEY"):
         return "api"
+    if corpus != "pmc":
+        return "local"
     return "local"
+
+
+def effective_corpus(args):
+    return args.corpus or args.local_corpus
 
 
 def parse_group(spec):
@@ -255,6 +265,8 @@ def compact_paper(paper):
     return {
         "pmc_id": paper.get("pmc_id"),
         "pmid": paper.get("pmid"),
+        "corpus": paper.get("corpus"),
+        "source": paper.get("source"),
         "title": paper.get("title"),
         "journal": paper.get("journal"),
         "year": resolve_year(paper),
@@ -283,6 +295,7 @@ def compact_paper(paper):
 def build_structured_request(primary_queries, args):
     payload = {
         "primary_queries": primary_queries,
+        "corpus": effective_corpus(args),
         "search_columns": [col.strip() for col in args.search_columns.split(",") if col.strip()],
         "extract_matches": args.extract_matches,
         "add_group_counts": args.add_group_counts,
@@ -294,13 +307,17 @@ def build_structured_request(primary_queries, args):
 
 def build_request(args):
     if args.details:
-        return "/api/get_paper_details", {"pmc_ids": args.details}
+        corpus = effective_corpus(args)
+        if corpus == "biorxiv":
+            return "/api/get_paper_details", {"corpus": corpus, "dois": args.details}
+        return "/api/get_paper_details", {"corpus": corpus, "pmc_ids": args.details}
     if args.queries_file:
         return build_structured_request(load_queries_file(args.queries_file), args)
     if args.group:
         return build_structured_request(dict(parse_group(spec) for spec in args.group), args)
     payload = {
         "query": args.query,
+        "corpus": effective_corpus(args),
         "max_results": args.max_results,
         "extract_matches": False,
         "fast_mode": args.fast_mode,
@@ -378,7 +395,7 @@ def execute_local_scan(args):
         "dovmed",
         "scan",
         "--corpus",
-        args.local_corpus,
+        effective_corpus(args),
         "--queries-file",
         str(query_file),
         "--search-columns",
@@ -395,7 +412,7 @@ def execute_local_scan(args):
 
     payload = {
         "execution_mode": "local",
-        "corpus": args.local_corpus,
+        "corpus": effective_corpus(args),
         "repo_dir": str(repo_dir),
         "command": command,
         "primary_queries": queries,
@@ -419,7 +436,7 @@ def execute_local_scan(args):
 
     response = {
         "execution_mode": "local",
-        "corpus": args.local_corpus,
+        "corpus": effective_corpus(args),
         "repo_dir": str(repo_dir),
         "command": command,
         "returncode": result.returncode,
@@ -955,14 +972,17 @@ def triage_score(paper, analysis):
     return score
 
 
+def paper_lookup_key(paper):
+    return paper.get("pmc_id") or (paper.get("doi") or "").strip().lower()
+
+
 def merge_and_rerank_details(discovery_result, details_result, primary_queries):
     discovery_by_id = {
-        paper.get("pmc_id"): paper for paper in discovery_result.get("papers") or []
+        paper_lookup_key(paper): paper for paper in discovery_result.get("papers") or []
     }
     triaged = []
     for paper in details_result.get("papers") or []:
-        pmc_id = paper.get("pmc_id")
-        discovery_paper = discovery_by_id.get(pmc_id, {})
+        discovery_paper = discovery_by_id.get(paper_lookup_key(paper), {})
         analysis = analyze_paper_against_queries(paper, primary_queries)
         analysis.update(analyze_local_contexts(paper, primary_queries))
         triaged_paper = dict(paper)
@@ -1010,7 +1030,7 @@ def main():
         summary = {
             "endpoint": "local_scan",
             "execution_mode": "local",
-            "corpus": args.local_corpus,
+            "corpus": effective_corpus(args),
             "returned": len(result.get("papers") or []),
             "output_dir": result.get("output_dir"),
             "processed_parquet": result.get("processed_parquet"),
@@ -1088,13 +1108,28 @@ def main():
         and payload.get("primary_queries")
         and result.get("papers")
     ):
-        candidate_ids = [
-            paper.get("pmc_id")
-            for paper in (result.get("papers") or [])[: max(1, args.details_rerank_limit)]
-            if paper.get("pmc_id")
-        ]
+        corpus = payload.get("corpus") or "pmc"
+        candidate_id_field = "pmc_id"
+        candidate_ids = []
+        if corpus == "biorxiv":
+            candidate_id_field = "doi"
+            candidate_ids = [
+                paper.get("doi")
+                for paper in (result.get("papers") or [])[: max(1, args.details_rerank_limit)]
+                if paper.get("doi")
+            ]
+        elif corpus == "pmc":
+            candidate_ids = [
+                paper.get("pmc_id")
+                for paper in (result.get("papers") or [])[: max(1, args.details_rerank_limit)]
+                if paper.get("pmc_id")
+            ]
         if candidate_ids:
-            details_payload = {"pmc_ids": candidate_ids}
+            details_payload = (
+                {"corpus": "biorxiv", "dois": candidate_ids}
+                if corpus == "biorxiv"
+                else {"corpus": "pmc", "pmc_ids": candidate_ids}
+            )
             details_result = execute_request(
                 args.base_url,
                 "/api/get_paper_details",
@@ -1125,7 +1160,7 @@ def main():
                 "requested": details_result.get("requested"),
                 "found": details_result.get("found"),
                 "missing_ids": details_result.get("missing_ids"),
-                "candidate_pmc_ids": candidate_ids,
+                f"candidate_{candidate_id_field}s": candidate_ids,
             }
             result["triaged_papers"] = triaged_papers
             result["recommended_next_step"] = recommended_next_step(
