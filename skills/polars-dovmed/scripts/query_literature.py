@@ -2,6 +2,8 @@
 """Small helper for grouped polars-dovmed literature queries."""
 
 import argparse
+import copy
+import concurrent.futures
 import json
 import os
 import re
@@ -58,6 +60,36 @@ MAX_TERM_SPANS_PER_TERM = 4
 MAX_FULLTEXT_CONTEXTS = 36
 CONTEXT_SNIPPET_CHARS = 240
 DEFAULT_LOCAL_REPO = str(Path("~/dev/polars-dovmed").expanduser())
+CLEAN_YEAR_BANDS = ("2024_plus", "2021_2023", "2010_2020", "pre_2010")
+RECENT_YEAR_BANDS = ("2024_plus", "2021_2023")
+YEAR_BAND_ALIASES = {
+    "pre_2010": "pre_2010",
+    "pre-2010": "pre_2010",
+    "pre2010": "pre_2010",
+    "before_2010": "pre_2010",
+    "before-2010": "pre_2010",
+    "2010_2020": "2010_2020",
+    "2010-2020": "2010_2020",
+    "2010_to_2020": "2010_2020",
+    "2010to2020": "2010_2020",
+    "2021_2023": "2021_2023",
+    "2021-2023": "2021_2023",
+    "2021_to_2023": "2021_2023",
+    "2021to2023": "2021_2023",
+    "2024_plus": "2024_plus",
+    "2024+": "2024_plus",
+    "post_2023": "2024_plus",
+    "post-2023": "2024_plus",
+    "after_2023": "2024_plus",
+    "after-2023": "2024_plus",
+    "since_2024": "2024_plus",
+    "post_2020": "post_2020",
+    "post-2020": "post_2020",
+    "post2020": "post_2020",
+    "after_2020": "post_2020",
+    "after-2020": "post_2020",
+    "recent": "post_2020",
+}
 
 
 def load_env_file(path):
@@ -70,6 +102,38 @@ def load_env_file(path):
             continue
         key, value = line.split("=", 1)
         os.environ.setdefault(key.strip(), value.strip())
+
+
+def normalize_year_band(value):
+    normalized = str(value).strip().lower()
+    if not normalized or normalized == "all":
+        return None
+    if normalized == "clean_split":
+        return "clean_split"
+    if normalized == "recent_split":
+        return "recent_split"
+    if normalized not in YEAR_BAND_ALIASES:
+        allowed = ", ".join(sorted(set(YEAR_BAND_ALIASES.values()) | {"clean_split", "recent_split"}))
+        raise ValueError(f"unsupported year band '{value}'. Use one of: {allowed}")
+    return YEAR_BAND_ALIASES[normalized]
+
+
+def parse_year_bands(values):
+    bands = []
+    for raw_value in values or []:
+        for item in str(raw_value).split(","):
+            normalized = normalize_year_band(item)
+            if normalized == "clean_split":
+                bands.extend(CLEAN_YEAR_BANDS)
+            elif normalized == "recent_split":
+                bands.extend(RECENT_YEAR_BANDS)
+            elif normalized:
+                bands.append(normalized)
+    deduped = []
+    for band in bands:
+        if band not in deduped:
+            deduped.append(band)
+    return deduped
 
 
 def parse_args():
@@ -110,6 +174,35 @@ def parse_args():
         help="Group-count mode for advanced structured search",
     )
     parser.add_argument("--year", type=int)
+    parser.add_argument(
+        "--year-band",
+        choices=[
+            "all",
+            "pre_2010",
+            "2010_2020",
+            "post_2020",
+            "2021_2023",
+            "2024_plus",
+        ],
+        default="all",
+        help="Restrict API/local search to a materialized publication-year band.",
+    )
+    parser.add_argument(
+        "--year-bands",
+        action="append",
+        default=[],
+        help=(
+            "Fan one API query out over multiple materialized year bands in parallel. "
+            "Use a comma-separated list such as 2024_plus,2021_2023 or the presets "
+            "recent_split and clean_split."
+        ),
+    )
+    parser.add_argument(
+        "--year-band-workers",
+        type=int,
+        default=2,
+        help="Maximum concurrent hosted API jobs for --year-bands.",
+    )
     parser.add_argument("--timeout", type=int)
     parser.add_argument("--base-url", default="https://api.newlineages.com")
     parser.add_argument("--api-key")
@@ -196,6 +289,16 @@ def parse_args():
             "--query is exploratory free-text search only; use --queries-file/--group with a structured JSON query, "
             "or pass --allow-flat-query to opt in explicitly"
         )
+    try:
+        args.year_bands = parse_year_bands(args.year_bands)
+    except ValueError as exc:
+        parser.error(str(exc))
+    if args.year_bands and args.year_band != "all":
+        parser.error("use either --year-band for a single band or --year-bands for parallel fan-out")
+    if args.year_bands and args.details:
+        parser.error("--year-bands applies to search requests, not paper-details lookups")
+    if args.year_band_workers < 1:
+        parser.error("--year-band-workers must be at least 1")
     return args
 
 
@@ -296,6 +399,7 @@ def build_structured_request(primary_queries, args):
     payload = {
         "primary_queries": primary_queries,
         "corpus": effective_corpus(args),
+        "year_band": None if args.year_band == "all" else args.year_band,
         "search_columns": [col.strip() for col in args.search_columns.split(",") if col.strip()],
         "extract_matches": args.extract_matches,
         "add_group_counts": args.add_group_counts,
@@ -318,6 +422,7 @@ def build_request(args):
     payload = {
         "query": args.query,
         "corpus": effective_corpus(args),
+        "year_band": None if args.year_band == "all" else args.year_band,
         "max_results": args.max_results,
         "extract_matches": False,
         "fast_mode": args.fast_mode,
@@ -396,6 +501,8 @@ def execute_local_scan(args):
         "scan",
         "--corpus",
         effective_corpus(args),
+        "--year-band",
+        args.year_band,
         "--queries-file",
         str(query_file),
         "--search-columns",
@@ -427,11 +534,13 @@ def execute_local_scan(args):
     )
 
     processed_path = output_dir / "processed.parquet"
+    legacy_processed_path = output_dir / "prcoessed.parquet"
     papers = []
-    if processed_path.exists():
+    readable_processed_path = processed_path if processed_path.exists() else legacy_processed_path
+    if readable_processed_path.exists():
         import polars as pl
 
-        df = pl.read_parquet(processed_path)
+        df = pl.read_parquet(readable_processed_path)
         papers = [compact_local_paper(row) for row in df.head(args.max_results).to_dicts()]
 
     response = {
@@ -443,7 +552,9 @@ def execute_local_scan(args):
         "stdout": result.stdout,
         "stderr": result.stderr,
         "output_dir": str(output_dir),
-        "processed_parquet": str(processed_path) if processed_path.exists() else None,
+        "processed_parquet": str(readable_processed_path)
+        if readable_processed_path.exists()
+        else None,
         "flattened_csv": str(output_dir / "flattened.csv")
         if (output_dir / "flattened.csv").exists()
         else None,
@@ -513,6 +624,31 @@ def build_submitted_request(endpoint, payload, use_async_jobs):
     return "/api/jobs", {
         "job_type": ASYNC_ENDPOINTS[endpoint],
         "payload": payload,
+    }
+
+
+def build_parallel_submitted_request(endpoint, payload, year_bands, use_async_jobs):
+    requests = []
+    for band in year_bands:
+        band_payload = copy.deepcopy(payload)
+        band_payload["year_band"] = band
+        submitted_endpoint, submitted_payload = build_submitted_request(
+            endpoint,
+            band_payload,
+            use_async_jobs,
+        )
+        requests.append(
+            {
+                "year_band": band,
+                "endpoint": submitted_endpoint,
+                "payload": submitted_payload,
+                "target_endpoint": endpoint,
+                "target_payload": band_payload,
+            }
+        )
+    return {
+        "parallel_year_bands": year_bands,
+        "requests": requests,
     }
 
 
@@ -596,6 +732,116 @@ def execute_request(
         ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"request failed: {exc.reason}") from exc
+
+
+def paper_identity(paper):
+    corpus = paper.get("corpus") or paper.get("source") or "pmc"
+    for key in ("pmc_id", "doi", "pmid"):
+        value = paper.get(key)
+        if value:
+            return corpus, key, str(value).lower()
+    return (
+        corpus,
+        "title_year",
+        str(paper.get("title") or "").strip().lower(),
+        resolve_year(paper),
+    )
+
+
+def merge_parallel_year_band_results(year_bands, band_results, elapsed_ms):
+    per_band_by_name = {item["year_band"]: item for item in band_results}
+    papers = []
+    seen = set()
+    total_found = 0
+    summaries = []
+    failures = []
+    for band in year_bands:
+        band_item = per_band_by_name.get(band)
+        if not band_item:
+            continue
+        if band_item.get("error"):
+            failures.append({"year_band": band, "error": band_item["error"]})
+            continue
+        result = band_item["result"]
+        total_found += result.get("total_found") or 0
+        band_papers = result.get("papers") or []
+        summaries.append(
+            {
+                "year_band": band,
+                "elapsed_ms": result.get("elapsed_ms"),
+                "total_found": result.get("total_found"),
+                "returned": len(band_papers),
+                "strategy_used": result.get("strategy_used"),
+            }
+        )
+        for paper in band_papers:
+            key = paper_identity(paper)
+            if key in seen:
+                continue
+            seen.add(key)
+            merged_paper = dict(paper)
+            merged_paper.setdefault("search_year_band", band)
+            papers.append(merged_paper)
+    return {
+        "strategy_used": "parallel_year_bands",
+        "parallel_year_bands": list(year_bands),
+        "elapsed_ms": elapsed_ms,
+        "total_found": total_found,
+        "papers": papers,
+        "year_band_results": summaries,
+        "year_band_errors": failures,
+    }
+
+
+def execute_parallel_year_band_requests(
+    args,
+    endpoint,
+    api_key,
+    payload,
+    *,
+    timeout,
+    use_async_jobs,
+    poll_timeout,
+    poll_interval,
+):
+    if endpoint not in ASYNC_ENDPOINTS:
+        raise RuntimeError("--year-bands only supports search endpoints")
+    year_bands = list(args.year_bands)
+    max_workers = min(args.year_band_workers, len(year_bands))
+    started = time.monotonic()
+
+    def run_band(band):
+        band_payload = copy.deepcopy(payload)
+        band_payload["year_band"] = band
+        try:
+            result = execute_request(
+                args.base_url,
+                endpoint,
+                api_key,
+                band_payload,
+                timeout=timeout,
+                use_async_jobs=use_async_jobs,
+                poll_timeout=poll_timeout,
+                poll_interval=poll_interval,
+            )
+            return {"year_band": band, "result": result}
+        except Exception as exc:
+            return {"year_band": band, "error": str(exc)}
+
+    band_results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(run_band, band) for band in year_bands]
+        for future in concurrent.futures.as_completed(futures):
+            band_results.append(future.result())
+
+    elapsed_ms = int((time.monotonic() - started) * 1000)
+    merged = merge_parallel_year_band_results(year_bands, band_results, elapsed_ms)
+    if not merged["papers"] and merged["year_band_errors"]:
+        errors = "; ".join(
+            f"{item['year_band']}: {item['error']}" for item in merged["year_band_errors"]
+        )
+        raise RuntimeError(f"parallel year-band search failed: {errors}")
+    return merged
 
 
 def summarize_papers(papers, target_year):
@@ -1023,6 +1269,11 @@ def main():
     execution_mode = determine_execution_mode(args)
 
     if execution_mode == "local":
+        if args.year_bands:
+            raise SystemExit(
+                "--year-bands parallel fan-out is supported for hosted API mode; "
+                "use --year-band for one local scan"
+            )
         result = execute_local_scan(args)
         if args.raw:
             print(json.dumps(result, indent=2))
@@ -1045,60 +1296,101 @@ def main():
     endpoint, payload = build_request(args)
     timeout = args.timeout or (600 if endpoint.endswith("advanced") else 120)
     use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
-    submitted_endpoint, submitted_payload = build_submitted_request(
-        endpoint,
-        payload,
-        use_async_jobs,
-    )
-    maybe_save_json(
-        args.save_payload,
-        {
+    if args.year_bands:
+        submitted_payload_info = build_parallel_submitted_request(
+            endpoint,
+            payload,
+            args.year_bands,
+            use_async_jobs,
+        )
+    else:
+        submitted_endpoint, submitted_payload = build_submitted_request(
+            endpoint,
+            payload,
+            use_async_jobs,
+        )
+        submitted_payload_info = {
             "endpoint": submitted_endpoint,
             "payload": submitted_payload,
             "target_endpoint": endpoint,
             "target_payload": payload,
-        },
-    )
+        }
+    maybe_save_json(args.save_payload, submitted_payload_info)
     try:
-        result = execute_request(
-            args.base_url,
-            endpoint,
-            api_key,
-            payload,
-            timeout=timeout,
-            use_async_jobs=use_async_jobs,
-            poll_timeout=args.poll_timeout,
-            poll_interval=args.poll_interval,
-        )
-    except RuntimeError as exc:
-        if args.discovery_fallback and endpoint.endswith("advanced"):
-            endpoint, payload = build_discovery_request(args)
-            use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
-            submitted_endpoint, submitted_payload = build_submitted_request(
+        if args.year_bands:
+            result = execute_parallel_year_band_requests(
+                args,
                 endpoint,
+                api_key,
                 payload,
-                use_async_jobs,
+                timeout=timeout,
+                use_async_jobs=use_async_jobs,
+                poll_timeout=args.poll_timeout,
+                poll_interval=args.poll_interval,
             )
-            maybe_save_json(
-                args.save_discovery_payload or args.save_payload,
-                {
-                    "endpoint": submitted_endpoint,
-                    "payload": submitted_payload,
-                    "target_endpoint": endpoint,
-                    "target_payload": payload,
-                    "note": f"discovery fallback after advanced query failure: {exc}",
-                },
-            )
+        else:
             result = execute_request(
                 args.base_url,
                 endpoint,
                 api_key,
                 payload,
-                timeout=120,
+                timeout=timeout,
                 use_async_jobs=use_async_jobs,
                 poll_timeout=args.poll_timeout,
                 poll_interval=args.poll_interval,
             )
+    except RuntimeError as exc:
+        if args.discovery_fallback and endpoint.endswith("advanced"):
+            endpoint, payload = build_discovery_request(args)
+            use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
+            if args.year_bands:
+                submitted_payload_info = build_parallel_submitted_request(
+                    endpoint,
+                    payload,
+                    args.year_bands,
+                    use_async_jobs,
+                )
+            else:
+                submitted_endpoint, submitted_payload = build_submitted_request(
+                    endpoint,
+                    payload,
+                    use_async_jobs,
+                )
+                submitted_payload_info = {
+                    "endpoint": submitted_endpoint,
+                    "payload": submitted_payload,
+                    "target_endpoint": endpoint,
+                    "target_payload": payload,
+                }
+            maybe_save_json(
+                args.save_discovery_payload or args.save_payload,
+                {
+                    **submitted_payload_info,
+                    "note": f"discovery fallback after advanced query failure: {exc}",
+                },
+            )
+            if args.year_bands:
+                result = execute_parallel_year_band_requests(
+                    args,
+                    endpoint,
+                    api_key,
+                    payload,
+                    timeout=120,
+                    use_async_jobs=use_async_jobs,
+                    poll_timeout=args.poll_timeout,
+                    poll_interval=args.poll_interval,
+                )
+            else:
+                result = execute_request(
+                    args.base_url,
+                    endpoint,
+                    api_key,
+                    payload,
+                    timeout=120,
+                    use_async_jobs=use_async_jobs,
+                    poll_timeout=args.poll_timeout,
+                    poll_interval=args.poll_interval,
+                )
         else:
             raise SystemExit(str(exc)) from None
     if (
@@ -1184,21 +1476,40 @@ def main():
             min(args.details_rerank_limit, args.max_results),
         )
         try:
-            advanced_result = execute_request(
-                args.base_url,
-                endpoint,
-                api_key,
-                advanced_payload,
-                timeout=args.timeout or 600,
-                use_async_jobs=use_async_jobs,
-                poll_timeout=args.poll_timeout,
-                poll_interval=args.poll_interval,
-            )
+            if args.year_bands:
+                advanced_result = execute_parallel_year_band_requests(
+                    args,
+                    endpoint,
+                    api_key,
+                    advanced_payload,
+                    timeout=args.timeout or 600,
+                    use_async_jobs=use_async_jobs,
+                    poll_timeout=args.poll_timeout,
+                    poll_interval=args.poll_interval,
+                )
+            else:
+                advanced_result = execute_request(
+                    args.base_url,
+                    endpoint,
+                    api_key,
+                    advanced_payload,
+                    timeout=args.timeout or 600,
+                    use_async_jobs=use_async_jobs,
+                    poll_timeout=args.poll_timeout,
+                    poll_interval=args.poll_interval,
+                )
             result["advanced_refinement"] = advanced_result
             result["recommended_next_step"] = "advanced_refinement_completed"
             maybe_save_json(
                 companion_json_path(args.save_payload, "advanced_payload"),
-                {
+                build_parallel_submitted_request(
+                    endpoint,
+                    advanced_payload,
+                    args.year_bands,
+                    use_async_jobs,
+                )
+                if args.year_bands
+                else {
                     "endpoint": endpoint,
                     "payload": advanced_payload,
                 },
@@ -1233,6 +1544,9 @@ def main():
         "mode": args.mode if args.queries_file or args.group else None,
         "strategy_used": result.get("strategy_used"),
         "elapsed_ms": result.get("elapsed_ms"),
+        "parallel_year_bands": result.get("parallel_year_bands"),
+        "year_band_results": result.get("year_band_results"),
+        "year_band_errors": result.get("year_band_errors"),
         "signal_terms": result.get("signal_terms"),
         "discovery_query": result.get("discovery_query"),
         "reported_total": result.get("total_found"),

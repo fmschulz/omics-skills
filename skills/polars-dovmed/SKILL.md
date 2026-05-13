@@ -20,6 +20,18 @@ Search execution has two modes:
 - Preferred when available: hosted API over `pmc`/OpenPMC, `biorxiv`, or `both`
 - Fallback: local `dovmed scan` over local parquet files for `pmc`, `biorxiv`, or `both`
 
+PMC is physically materialized into clean publication-year chunks:
+- `pre_2010`
+- `2010_2020`
+- `2021_2023`
+- `2024_plus`
+
+For latest-literature discovery, prefer the hosted API helper with parallel clean
+chunks: `--year-bands recent_split` for `2024_plus` plus `2021_2023`. Use
+`--year-bands clean_split` when the user needs broad coverage across all clean
+PMC chunks. Use a single `--year-band` only when the question is explicitly
+restricted to one era. Avoid the unmaterialized `2020_2023` split.
+
 Do not skip the structured-query authoring step unless the user explicitly supplies a ready query JSON file and asks to use it as-is.
 
 For every search prompt, create a dedicated run directory and save:
@@ -57,6 +69,7 @@ For every search prompt, create a dedicated run directory and save:
 5. Run the search.
    - API mode: read the query JSON and send its contents in the JSON request body under `primary_queries`. Do not upload the file itself.
    - Local mode: run `dovmed scan` against the local parquet files using the JSON query file.
+   - For PMC API searches over multiple eras, use `--year-bands` so the helper submits one async API job per materialized chunk and merges/deduplicates the results.
    - Save the exact submitted payload in the run directory before sending it.
    - Save the raw returned results in the run directory immediately after the search completes.
    - Default structured API path:
@@ -231,6 +244,26 @@ python skills/polars-dovmed/scripts/query_literature.py \
   --save-response runs/klosneuvirinae-hosts/results_details.json
 ```
 
+For PMC searches where speed and broad coverage both matter, fan out across
+recent clean chunks through the hosted async API:
+
+```bash
+python skills/polars-dovmed/scripts/query_literature.py \
+  --queries-file runs/klosneuvirinae-hosts/query.json \
+  --corpus pmc \
+  --mode discovery \
+  --year-bands recent_split \
+  --max-results 25 \
+  --save-payload runs/klosneuvirinae-hosts/payload_parallel_recent.json \
+  --save-response runs/klosneuvirinae-hosts/results_parallel_recent.json
+```
+
+Use `--year-bands clean_split` for all clean PMC chunks
+(`2024_plus,2021_2023,2010_2020,pre_2010`) when recall matters more than
+latency. The helper defaults to two concurrent API jobs because four concurrent
+full-text scans can saturate the backend. Use an explicit list when you need a
+custom sweep, for example `--year-bands 2024_plus,2010_2020`.
+
 Use `--corpus biorxiv` or `--corpus both` with the same helper to route hosted API requests to the bioRxiv corpus when the API key is available.
 
 ### Step 3B: Search Locally With dovmed scan
@@ -404,6 +437,9 @@ Expected success indicators in `summary.json`:
 | Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode="discovery"` |
 | Structured API endpoint | `POST /api/scan_literature_advanced` |
 | Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |
+| Fast recent PMC sweep | `--year-bands recent_split` |
+| Broad chunked PMC sweep | `--year-bands clean_split` |
+| Clean physical chunks | `2024_plus`, `2021_2023`, `2010_2020`, `pre_2010` |
 | Automatic second pass | discovery -> paper details -> grouped rerank |
 | Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus="biorxiv"` with `dois` |
 | Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
