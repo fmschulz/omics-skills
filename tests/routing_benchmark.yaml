@@ -182,15 +182,6 @@
   expected_agent: dataviz-artist
   expected_primary_skills: [implement-paper-auto]
 
-# ============================================================================
-# Orchestration / meta (codexloop)
-# ============================================================================
-
-- task: "resume the long-running coding loop and keep going until the plan tests pass"
-  platform: codex
-  expected_agent: codexloop
-  expected_primary_skills: [codexloop]
-
 - task: "automate browsing a website to download supplementary data"
   platform: codex
   expected_primary_skills: [agent-browser]

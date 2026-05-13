@@ -155,6 +155,20 @@
     ]
   },
   {
+    "source": "bio-annotation",
+    "target": "polars-dovmed",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u251c\u2500> /bio-annotation (playbook-guided discovery scan)"
+    ]
+  },
+  {
     "source": "bio-assembly-qc",
     "target": "bio-reads-qc-mapping",
     "type": "depend_on",
@@ -197,6 +211,20 @@
     ]
   },
   {
+    "source": "bio-gene-calling",
+    "target": "bio-viromics",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502   \u2514\u2500> /bio-viromics \u2192 /bio-gene-calling \u2192 /bio-annotation"
+    ]
+  },
+  {
     "source": "bio-logic",
     "target": "ai-scientist-evaluator",
     "type": "compose_with",
@@ -226,6 +254,20 @@
   },
   {
     "source": "bio-logic",
+    "target": "polars-dovmed",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "4. When findings need context, pair this reasoning with a literature-search skill such as `/polars-dovmed`, then revise hypotheses against the literature."
+    ]
+  },
+  {
+    "source": "bio-logic",
     "target": "proposal-review",
     "type": "compose_with",
     "source_type": "skill",
@@ -236,6 +278,76 @@
     ],
     "evidence": [
       "- `/proposal-review` \u2014 structured critique of funding proposals"
+    ]
+  },
+  {
+    "source": "bio-logic",
+    "target": "bio-protein-clustering-pangenome",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502           \u2514\u2500> /bio-logic (interesting findings)"
+    ]
+  },
+  {
+    "source": "bio-logic",
+    "target": "polars-dovmed",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2514\u2500> /bio-logic (rank interesting findings)"
+    ]
+  },
+  {
+    "source": "bio-phylogenomics",
+    "target": "bio-annotation",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "17. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`."
+    ]
+  },
+  {
+    "source": "bio-phylogenomics",
+    "target": "bio-protein-clustering-pangenome",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.75,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "17. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`."
+    ]
+  },
+  {
+    "source": "bio-phylogenomics",
+    "target": "bio-annotation",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
     ]
   },
   {
@@ -253,6 +365,62 @@
     ]
   },
   {
+    "source": "bio-phylogenomics",
+    "target": "polars-dovmed",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u251c\u2500> /bio-phylogenomics (appropriate relatives/markers)"
+    ]
+  },
+  {
+    "source": "bio-protein-clustering-pangenome",
+    "target": "bio-annotation",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "11. Annotate candidate orthogroups with `/bio-annotation`; for high-value unknowns, route representatives to `/bio-structure-annotation` when structure-based inference is appropriate."
+    ]
+  },
+  {
+    "source": "bio-protein-clustering-pangenome",
+    "target": "bio-phylogenomics",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "2. Build presence/absence matrix AND an integer copy-number matrix (orthogroup \u00d7 genome) covering the query AND the close relatives produced by `/bio-phylogenomics`."
+    ]
+  },
+  {
+    "source": "bio-protein-clustering-pangenome",
+    "target": "bio-structure-annotation",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "11. Annotate candidate orthogroups with `/bio-annotation`; for high-value unknowns, route representatives to `/bio-structure-annotation` when structure-based inference is appropriate."
+    ]
+  },
+  {
     "source": "bio-protein-clustering-pangenome",
     "target": "bio-gene-calling",
     "type": "depend_on",
@@ -267,6 +435,34 @@
     ]
   },
   {
+    "source": "bio-protein-clustering-pangenome",
+    "target": "bio-phylogenomics",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+    ]
+  },
+  {
+    "source": "bio-protein-clustering-pangenome",
+    "target": "polars-dovmed",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u251c\u2500> /bio-protein-clustering-pangenome (if supported by playbook)"
+    ]
+  },
+  {
     "source": "bio-stats-ml-reporting",
     "target": "bio-reads-qc-mapping",
     "type": "depend_on",
@@ -278,6 +474,34 @@
     ],
     "evidence": [
       "\u2502           \u2514\u2500> /bio-stats-ml-reporting"
+    ]
+  },
+  {
+    "source": "bio-structure-annotation",
+    "target": "bio-annotation",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "4. Annotate hits and route high-value unknowns back to `/bio-annotation` for sequence-side context, or to comparative analyses via `/bio-protein-clustering-pangenome`."
+    ]
+  },
+  {
+    "source": "bio-structure-annotation",
+    "target": "bio-protein-clustering-pangenome",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "4. Annotate hits and route high-value unknowns back to `/bio-annotation` for sequence-side context, or to comparative analyses via `/bio-protein-clustering-pangenome`."
     ]
   },
   {
@@ -602,6 +826,34 @@
     ],
     "evidence": [
       "- `/notebook-ai-agents-skill` \u2014 refactor Jupyter/agent notebooks if not starting from scratch"
+    ]
+  },
+  {
+    "source": "polars-dovmed",
+    "target": "bio-annotation",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
+    ]
+  },
+  {
+    "source": "polars-dovmed",
+    "target": "bio-logic",
+    "type": "depend_on",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.95,
+    "provenance": [
+      "workflow_decision_tree"
+    ],
+    "evidence": [
+      "\u2502       \u2514\u2500> /polars-dovmed when literature context is needed"
     ]
   },
   {

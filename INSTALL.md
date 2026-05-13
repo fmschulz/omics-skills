@@ -106,7 +106,6 @@ ln -sf $(pwd)/agents/omics-scientist.md ~/.claude/agents/
 ln -sf $(pwd)/agents/literature-expert.md ~/.claude/agents/
 ln -sf $(pwd)/agents/science-writer.md ~/.claude/agents/
 ln -sf $(pwd)/agents/dataviz-artist.md ~/.claude/agents/
-ln -sf $(pwd)/agents/codexloop.md ~/.claude/agents/
 
 # Link shared skills
 ln -sfn ~/.agents/skills ~/.claude/skills
@@ -122,7 +121,6 @@ ln -sf $(pwd)/agents/omics-scientist.md ~/.codex/agents/
 ln -sf $(pwd)/agents/literature-expert.md ~/.codex/agents/
 ln -sf $(pwd)/agents/science-writer.md ~/.codex/agents/
 ln -sf $(pwd)/agents/dataviz-artist.md ~/.codex/agents/
-ln -sf $(pwd)/agents/codexloop.md ~/.codex/agents/
 ```
 
 ---
@@ -169,32 +167,29 @@ After installation, you'll have:
 │   ├── omics-scientist.md          → (symlink/copy)
 │   ├── literature-expert.md        → (symlink/copy)
 │   ├── science-writer.md           → (symlink/copy)
-│   ├── dataviz-artist.md           → (symlink/copy)
-│   └── codexloop.md                → (symlink/copy)
+│   └── dataviz-artist.md           → (symlink/copy)
 └── skills/
     ├── bio-logic/                  → (symlink/copy)
     ├── bio-foundation-housekeeping/ → (symlink/copy)
     ├── bio-reads-qc-mapping/       → (symlink/copy)
-    └── ... (27 more skills)
+    └── ... (other skills)
 
 ~/.codex/
 ├── agents/
 │   ├── omics-scientist.md          → (symlink/copy)
 │   ├── literature-expert.md        → (symlink/copy)
 │   ├── science-writer.md           → (symlink/copy)
-│   ├── dataviz-artist.md           → (symlink/copy)
-│   └── codexloop.md                → (symlink/copy)
+│   └── dataviz-artist.md           → (symlink/copy)
 └── skills/
     ├── bio-logic/                  → (symlink/copy)
-    └── ... (29 more skills)
+    └── ... (other skills)
 ```
 
-### Agents Installed (5)
+### Agents installed (4)
 1. **omics-scientist.md** - Bioinformatics workflows
 2. **literature-expert.md** - Literature discovery and citation metadata
 3. **science-writer.md** - Scientific writing
 4. **dataviz-artist.md** - Data visualization
-5. **codexloop.md** - Plan-driven CodexLoop harness
 
 ### Skills Installed (31)
 
@@ -203,7 +198,7 @@ The shared skills directory includes every top-level folder in `skills/`, includ
 - Bioinformatics workflows such as `bio-reads-qc-mapping`, `bio-assembly-qc`, `bio-binning-qc`, `bio-annotation`, `bio-phylogenomics`, `bio-viromics`, and `tracking-taxonomy-updates`
 - Literature and writing skills such as `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup`, `scientific-impact-assessment`, `scientific-writing`, and `manuscript-review-council`
 - Visualization skills such as `notebook-ai-agents-skill`, `beautiful-data-viz`, and `plotly-dashboard-skill`
-- Agent tooling such as `codexloop`, `agent-browser`, `get-api-docs`, and `proposal-review`
+- Agent tooling such as `agent-browser`, `get-api-docs`, and `proposal-review`
 
 ---
 
@@ -226,12 +221,11 @@ Shared Skills:
 
 Claude Code:
   Agents directory: /home/user/.claude/agents
-  Omics-skills agents: 5/5 installed (20 total in directory)
+  Omics-skills agents: 4/4 installed (20 total in directory)
     ✓ omics-scientist.md (symlink)
     ✓ literature-expert.md (symlink)
     ✓ science-writer.md (symlink)
     ✓ dataviz-artist.md (symlink)
-    ✓ codexloop.md (symlink)
 
   Skills directory: /home/user/.claude/skills
   Linked to: /home/user/.agents/skills
@@ -478,7 +472,6 @@ rm ~/.claude/agents/omics-scientist.md
 rm ~/.claude/agents/literature-expert.md
 rm ~/.claude/agents/science-writer.md
 rm ~/.claude/agents/dataviz-artist.md
-rm ~/.claude/agents/codexloop.md
 
 # Remove skills
 rm -rf ~/.agents/skills/bio-logic

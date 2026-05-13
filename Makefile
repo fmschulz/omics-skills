@@ -3,7 +3,7 @@
 
 .PHONY: help install install-claude install-codex install-agents install-skills \
         install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
-        install-codex-tools build-catalog install-catalog install-hook uninstall-hook \
+        build-catalog install-catalog install-hook uninstall-hook \
         hook-status benchmark uninstall uninstall-claude \
         uninstall-codex uninstall-skills uninstall-catalog status check-deps clean test
 
@@ -14,7 +14,7 @@ SCRIPTS_DIR := $(CURDIR)/scripts
 CATALOG_DIR := $(CURDIR)/catalog
 
 # Specific agent files (flattened in agents/ directory)
-AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md dataviz-artist.md codexloop.md
+AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md dataviz-artist.md
 AGENT_COUNT := $(words $(AGENT_FILES))
 
 # Installation targets
@@ -29,9 +29,6 @@ AGENTS_CATALOG_DIR := $(AGENTS_HOME)/omics-skills
 CODEX_HOME := $(HOME)/.codex
 CODEX_AGENTS_DIR := $(CODEX_HOME)/agents
 CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
-CODEX_BIN_DIR := $(CODEX_HOME)/bin
-CODEXLOOP_LAUNCHER := $(CODEX_BIN_DIR)/codexloop
-
 # Installation method (symlink or copy)
 # Use INSTALL_METHOD=copy for copying instead of symlinking
 INSTALL_METHOD ?= symlink
@@ -96,10 +93,9 @@ install: check-deps install-claude install-codex ## Install for both Claude Code
 install-claude: build-catalog install-skills install-catalog install-claude-agents link-claude-skills ## Install for Claude Code only
 	@echo "$(GREEN)✓ Claude Code installation complete$(NC)"
 
-install-codex: build-catalog install-skills install-catalog install-codex-agents link-codex-skills install-codex-tools ## Install for Codex CLI only
+install-codex: build-catalog install-skills install-catalog install-codex-agents link-codex-skills ## Install for Codex CLI only
 	@echo "$(GREEN)✓ Codex CLI installation complete$(NC)"
 	@echo "  Skills linked at $(CODEX_SKILLS_DIR)"
-	@echo "  CodexLoop launcher: $(CODEXLOOP_LAUNCHER)"
 
 install-hook: ## Install the routing-hint hook for Claude Code + Codex CLI
 	@python3 $(SCRIPTS_DIR)/install_hook.py install
@@ -289,18 +285,6 @@ link-codex-skills: ## Link Codex skills dir to ~/.agents/skills
 	fi
 	@echo "  $(GREEN)✓$(NC) $(CODEX_SKILLS_DIR) -> $(AGENTS_SKILLS_DIR)"
 
-install-codex-tools: ## Install codexloop launcher to ~/.codex/bin
-	@echo "$(BLUE)Installing CodexLoop launcher...$(NC)"
-	@mkdir -p $(CODEX_BIN_DIR)
-	@printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'export PYTHONPATH="$$HOME/.codex/skills$${PYTHONPATH:+:$$PYTHONPATH}"' 'exec python3 -m codexloop "$$@"' > $(CODEXLOOP_LAUNCHER)
-	@chmod +x $(CODEXLOOP_LAUNCHER)
-	@echo "  $(GREEN)✓$(NC) $(CODEXLOOP_LAUNCHER)"
-	@if echo ":$$PATH:" | grep -q ":$(CODEX_BIN_DIR):"; then \
-		echo "  $(GREEN)✓$(NC) $(CODEX_BIN_DIR) is on PATH"; \
-	else \
-		echo "  $(YELLOW)Note: add $(CODEX_BIN_DIR) to PATH or call $(CODEXLOOP_LAUNCHER) directly$(NC)"; \
-	fi
-
 install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
 	@mkdir -p $(CODEX_AGENTS_DIR)
@@ -418,10 +402,6 @@ uninstall-codex: ## Uninstall from Codex CLI
 		printf "\r  $(GREEN)✓$(NC) Removed: $$current/$(AGENT_COUNT) agents\n"; \
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$current/$(AGENT_COUNT) agents"; \
-	fi
-	@if [ -f $(CODEXLOOP_LAUNCHER) ] || [ -L $(CODEXLOOP_LAUNCHER) ]; then \
-		rm $(CODEXLOOP_LAUNCHER); \
-		echo "  $(GREEN)✓$(NC) Removed $(CODEXLOOP_LAUNCHER)"; \
 	fi
 	@if [ -L $(CODEX_SKILLS_DIR) ]; then \
 		rm $(CODEX_SKILLS_DIR); \
@@ -563,13 +543,6 @@ status: ## Show installation status
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi
-	@echo ""
-	@echo "  CodexLoop launcher: $(CODEXLOOP_LAUNCHER)"
-	@if [ -x $(CODEXLOOP_LAUNCHER) ]; then \
-		echo "  $(GREEN)✓$(NC) Installed"; \
-	else \
-		echo "  $(RED)Not installed$(NC)"; \
-	fi
 
 ##@ Testing
 
@@ -597,7 +570,7 @@ endif
 validate: ## Validate installation
 	@echo "$(BLUE)Validating installation...$(NC)"
 	@errors=0; \
-	for agent in omics-scientist literature-expert science-writer dataviz-artist codexloop; do \
+	for agent in omics-scientist literature-expert science-writer dataviz-artist; do \
 		if ! [ -f $(CLAUDE_AGENTS_DIR)/$$agent.md ]; then \
 			echo "  $(RED)✗$(NC) Missing: $$agent.md in Claude Code"; \
 			errors=$$((errors + 1)); \

@@ -788,12 +788,15 @@ def ordered_dependencies(primary_skills: list[str], edges: list[dict[str, Any]])
 
     ordered: list[str] = []
     seen: set[str] = set()
+    on_path: set[str] = set()
 
     def visit(skill_name: str) -> None:
-        if skill_name in seen:
+        if skill_name in seen or skill_name in on_path:
             return
+        on_path.add(skill_name)
         for dependency in dependencies.get(skill_name, []):
             visit(dependency)
+        on_path.discard(skill_name)
         seen.add(skill_name)
         ordered.append(skill_name)
 

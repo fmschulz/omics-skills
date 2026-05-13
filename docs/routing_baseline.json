@@ -1,13 +1,13 @@
 {
   "summary": {
-    "total": 38,
-    "passed": 23,
-    "failed": 15,
-    "pass_rate": 0.605,
-    "agent_failures": 3,
-    "primary_skill_failures": 12,
+    "total": 36,
+    "passed": 35,
+    "failed": 1,
+    "pass_rate": 0.972,
+    "agent_failures": 0,
+    "primary_skill_failures": 1,
     "ordered_skill_failures": 0,
-    "forbidden_skill_leaks": 1
+    "forbidden_skill_leaks": 0
   },
   "rows": [
     {
@@ -20,8 +20,15 @@
           "bio-logic"
         ],
         "ordered_skills": [
-          "bio-logic",
-          "bio-reads-qc-mapping"
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic"
         ]
       }
     },
@@ -44,15 +51,24 @@
     },
     {
       "task": "predict genes in a newly assembled bacterial genome",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "bio-annotation",
+          "bio-gene-calling",
           "bio-assembly-qc"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
-          "bio-assembly-qc"
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "polars-dovmed",
+          "bio-annotation"
         ]
       }
     },
@@ -67,7 +83,12 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "bio-viromics",
           "bio-gene-calling",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "polars-dovmed",
           "bio-annotation"
         ]
       }
@@ -83,7 +104,12 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "bio-viromics",
           "bio-gene-calling",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "polars-dovmed",
+          "bio-annotation",
           "bio-phylogenomics"
         ]
       }
@@ -115,7 +141,12 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "bio-viromics",
           "bio-gene-calling",
+          "bio-logic",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
           "bio-protein-clustering-pangenome"
         ]
       }
@@ -132,9 +163,14 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "bio-viromics",
           "bio-gene-calling",
-          "bio-annotation",
-          "bio-structure-annotation"
+          "bio-structure-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "polars-dovmed",
+          "bio-annotation"
         ]
       }
     },
@@ -165,19 +201,28 @@
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "bio-binning-qc",
+          "bio-viromics",
           "bio-gene-calling",
-          "bio-annotation",
-          "tracking-taxonomy-updates"
+          "tracking-taxonomy-updates",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "polars-dovmed",
+          "bio-annotation"
         ]
       }
     },
     {
       "task": "scaffold a new bioinformatics project with reproducible environments",
-      "passed": false,
+      "passed": true,
       "actual": {
-        "agent": "dataviz-artist",
-        "primary_skills": [],
-        "ordered_skills": []
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-foundation-housekeeping"
+        ],
+        "ordered_skills": [
+          "bio-foundation-housekeeping"
+        ]
       }
     },
     {
@@ -188,25 +233,41 @@
         "primary_skills": [
           "bio-prefect-dask-nextflow",
           "bio-workflow-methods-docwriter",
-          "bio-assembly-qc"
+          "bio-assembly-qc",
+          "bio-logic"
         ],
         "ordered_skills": [
           "bio-prefect-dask-nextflow",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
-          "bio-workflow-methods-docwriter"
+          "bio-viromics",
+          "bio-gene-calling",
+          "bio-workflow-methods-docwriter",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic"
         ]
       }
     },
     {
       "task": "formulate a hypothesis for why certain strains outperform others and plan the experimental design",
-      "passed": false,
+      "passed": true,
       "actual": {
-        "agent": "science-writer",
+        "agent": "omics-scientist",
         "primary_skills": [
           "bio-logic"
         ],
         "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
           "bio-logic"
         ]
       }
@@ -226,16 +287,24 @@
     },
     {
       "task": "find recent biorxiv preprints on single-cell atlases",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
           "biorxiv-search",
-          "arxiv-search"
+          "polars-dovmed"
         ],
         "ordered_skills": [
-          "arxiv-search",
-          "biorxiv-search"
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "biorxiv-search",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "polars-dovmed"
         ]
       }
     },
@@ -245,9 +314,20 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "polars-dovmed"
+          "polars-dovmed",
+          "add-molab-badge"
         ],
         "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "marimo-notebook",
+          "add-molab-badge",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic",
           "polars-dovmed"
         ]
       }
@@ -286,54 +366,88 @@
         "primary_skills": [
           "scientific-writing",
           "bio-workflow-methods-docwriter",
-          "bio-binning-qc"
+          "bio-binning-qc",
+          "manuscript-review-council"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "bio-binning-qc",
           "bio-workflow-methods-docwriter",
+          "manuscript-review-council",
           "scientific-writing"
         ]
       }
     },
     {
       "task": "run a multi-reviewer critique on a submitted manuscript draft",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "science-writer",
         "primary_skills": [
+          "manuscript-review-council",
           "bio-logic",
           "scientific-writing"
         ],
         "ordered_skills": [
-          "bio-logic",
-          "scientific-writing"
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "manuscript-review-council",
+          "scientific-writing",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic"
         ]
       }
     },
     {
       "task": "review a research proposal for methodological rigor and feasibility",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "science-writer",
         "primary_skills": [
-          "bio-logic"
+          "proposal-review",
+          "bio-logic",
+          "manuscript-review-council"
         ],
         "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "manuscript-review-council",
+          "proposal-review",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
           "bio-logic"
         ]
       }
     },
     {
       "task": "evaluate the scientific rigor of an AI scientist output for evidence quality and bias",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "science-writer",
         "primary_skills": [
-          "bio-logic"
+          "bio-logic",
+          "ai-scientist-evaluator"
         ],
         "ordered_skills": [
+          "ai-scientist-evaluator",
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
           "bio-logic"
         ]
       }
@@ -381,14 +495,18 @@
     },
     {
       "task": "write a reproducible marimo notebook loading DuckDB data",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
-          "notebook-ai-agents-skill",
-          "scientific-writing"
+          "marimo-notebook",
+          "jupyter-to-marimo",
+          "scientific-writing",
+          "notebook-ai-agents-skill"
         ],
         "ordered_skills": [
+          "marimo-notebook",
+          "jupyter-to-marimo",
           "notebook-ai-agents-skill",
           "scientific-writing"
         ]
@@ -396,81 +514,68 @@
     },
     {
       "task": "convert a Jupyter notebook to a marimo notebook",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
-          "notebook-ai-agents-skill"
+          "jupyter-to-marimo",
+          "marimo-notebook"
         ],
         "ordered_skills": [
-          "notebook-ai-agents-skill"
+          "marimo-notebook",
+          "jupyter-to-marimo"
         ]
       }
     },
     {
       "task": "add an Open-in-molab badge to the README for a notebook",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
-          "notebook-ai-agents-skill"
+          "add-molab-badge"
         ],
         "ordered_skills": [
-          "notebook-ai-agents-skill"
+          "marimo-notebook",
+          "add-molab-badge"
         ]
       }
     },
     {
       "task": "generate an anywidget component for a marimo notebook",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
+          "anywidget",
+          "marimo-notebook",
+          "jupyter-to-marimo",
           "notebook-ai-agents-skill"
         ],
         "ordered_skills": [
+          "marimo-notebook",
+          "anywidget",
+          "jupyter-to-marimo",
           "notebook-ai-agents-skill"
         ]
       }
     },
     {
       "task": "reproduce a recent bioRxiv paper end-to-end in a marimo notebook",
-      "passed": false,
+      "passed": true,
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
-          "notebook-ai-agents-skill",
-          "biorxiv-search"
+          "biorxiv-search",
+          "marimo-notebook",
+          "implement-paper-auto",
+          "jupyter-to-marimo"
         ],
         "ordered_skills": [
           "biorxiv-search",
-          "notebook-ai-agents-skill"
-        ]
-      }
-    },
-    {
-      "task": "resume the long-running coding loop and keep going until the plan tests pass",
-      "passed": true,
-      "actual": {
-        "agent": "codexloop",
-        "primary_skills": [
-          "codexloop"
-        ],
-        "ordered_skills": [
-          "codexloop"
-        ]
-      }
-    },
-    {
-      "task": "ask a peer Codex pane for a second opinion on the current diff over tmux",
-      "passed": false,
-      "actual": {
-        "agent": "science-writer",
-        "primary_skills": [
-          "agent-collaboration"
-        ],
-        "ordered_skills": [
-          "agent-collaboration"
+          "marimo-notebook",
+          "implement-paper-auto",
+          "jupyter-to-marimo"
         ]
       }
     },
@@ -492,12 +597,8 @@
       "passed": false,
       "actual": {
         "agent": "science-writer",
-        "primary_skills": [
-          "agent-collaboration"
-        ],
-        "ordered_skills": [
-          "agent-collaboration"
-        ]
+        "primary_skills": [],
+        "ordered_skills": []
       }
     },
     {
@@ -510,8 +611,15 @@
           "bio-logic"
         ],
         "ordered_skills": [
-          "bio-logic",
-          "bio-reads-qc-mapping"
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic"
         ]
       }
     },
@@ -530,14 +638,22 @@
     },
     {
       "task": "reason about causation from a noisy observational dataset and plan follow-up experiments",
-      "passed": false,
+      "passed": true,
       "actual": {
-        "agent": "codexloop",
+        "agent": "omics-scientist",
         "primary_skills": [
-          "agent-collaboration"
+          "bio-logic"
         ],
         "ordered_skills": [
-          "agent-collaboration"
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "bio-viromics",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-phylogenomics",
+          "bio-protein-clustering-pangenome",
+          "bio-logic"
         ]
       }
     },

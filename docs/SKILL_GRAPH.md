@@ -160,16 +160,6 @@ The Codex agent prompt follows the same model as Claude:
 2. Restrict context to the returned agent file and `SKILL.md` files.
 3. Execute the task using that ordered set of skills.
 
-For long-running coding work, the separate `codexloop` skill adds a durable task graph over a repository plan:
-
-```bash
-~/.codex/bin/codexloop init .
-~/.codex/bin/codexloop plan --repo .
-~/.codex/bin/codexloop run --repo .
-```
-
-That is a different graph from the skill-routing graph. `codexloop` turns a project plan into executable tasks and worktrees; the shared skill graph decides which skills and agents fit a user request.
-
 ## What This Is Not
 
 This repository does not currently implement:

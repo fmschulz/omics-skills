@@ -24,14 +24,12 @@ SKILLS_DIR="$REPO_ROOT/skills"
 CATALOG_DIR="$REPO_ROOT/catalog"
 
 # Specific agent files
-AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
+AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md")
 AGENT_COUNT=${#AGENT_FILES[@]}
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_SKILLS_DIR="$HOME/.codex/skills"
-CODEX_BIN_DIR="$HOME/.codex/bin"
-CODEXLOOP_LAUNCHER="$CODEX_BIN_DIR/codexloop"
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 AGENTS_CATALOG_DIR="$HOME/.agents/omics-skills"
@@ -219,24 +217,6 @@ link_codex_skills() {
     echo -e "  ${GREEN}✓${NC} $CODEX_SKILLS_DIR -> $AGENTS_SKILLS_DIR"
 }
 
-install_codex_tools() {
-    echo -e "${BLUE}Installing CodexLoop launcher...${NC}"
-    mkdir -p "$CODEX_BIN_DIR"
-    cat > "$CODEXLOOP_LAUNCHER" <<EOF
-#!/usr/bin/env bash
-set -euo pipefail
-export PYTHONPATH="\$HOME/.codex/skills\${PYTHONPATH:+:\$PYTHONPATH}"
-exec python3 -m codexloop "\$@"
-EOF
-    chmod +x "$CODEXLOOP_LAUNCHER"
-    echo -e "  ${GREEN}✓${NC} $CODEXLOOP_LAUNCHER"
-    if [[ ":$PATH:" == *":$CODEX_BIN_DIR:"* ]]; then
-        echo -e "  ${GREEN}✓${NC} $CODEX_BIN_DIR is on PATH"
-    else
-        echo -e "  ${YELLOW}Note:${NC} add $CODEX_BIN_DIR to PATH or call $CODEXLOOP_LAUNCHER directly"
-    fi
-}
-
 check_deps() {
     echo -e "${BLUE}Checking dependencies...${NC}"
 
@@ -326,12 +306,6 @@ show_status() {
         echo -e "  ${RED}Not installed${NC}"
     fi
 
-    echo "  CodexLoop launcher: $CODEXLOOP_LAUNCHER"
-    if [ -x "$CODEXLOOP_LAUNCHER" ]; then
-        echo -e "  ${GREEN}✓${NC} Installed"
-    else
-        echo -e "  ${RED}Not installed${NC}"
-    fi
 }
 
 # Main installation
@@ -368,10 +342,8 @@ fi
 if [ "$INSTALL_TARGET" = "both" ] || [ "$INSTALL_TARGET" = "codex" ]; then
     install_agents "$CODEX_AGENTS_DIR" "Codex CLI"
     link_codex_skills
-    install_codex_tools
     echo -e "${GREEN}✓ Codex CLI installation complete${NC}"
     echo "  Skills linked at $CODEX_SKILLS_DIR"
-    echo "  CodexLoop launcher: $CODEXLOOP_LAUNCHER"
     echo ""
 fi
 
@@ -387,11 +359,9 @@ echo "     claude --agent omics-scientist"
 echo "     claude --agent literature-expert"
 echo "     claude --agent science-writer"
 echo "     claude --agent dataviz-artist"
-echo "     claude --agent codexloop"
 echo ""
 echo "  2. Or use in Codex:"
 echo "     codex --system-prompt ~/.codex/agents/omics-scientist.md"
-echo "     ~/.codex/bin/codexloop init /path/to/repo"
 echo ""
 echo "  3. Check a recommended workflow:"
 echo "     python3 ~/.agents/omics-skills/skill_index.py route \"assemble a metagenome and recover MAGs\""

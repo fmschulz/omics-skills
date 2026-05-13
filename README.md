@@ -1,18 +1,48 @@
 # omics-skills
 
-Agents and skills for bioinformatics, literature discovery, scientific writing,
-and data visualization. Runs under Claude Code and the Codex CLI.
+A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
 
-## Highlights
+## Scope
 
-- **Five agent personas** (`omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist`, `codexloop`) that orchestrate skills through a deterministic router rather than ad-hoc selection.
-- **2026 bioinformatics tooling**: IQ-TREE 3, VeryFastTree 4, BRAKER3, pyrodigal-gv, Infernal `cmsearch` with Rfam SSU/LSU models, vConTACT3, gvclass, metaMDBG, CheckM2 v1.1.0, OrthoFinder v3, Foldseek v9, Boltz-2.
-- **GPU-accelerated alternatives wired in** where they exist: MMseqs2-GPU for sequence and profile search, NVIDIA Parabricks `fq2bam` for short-read alignment, `mm2-fast` / `mm2-gb` for minimap2, Foldseek `--gpu 1`, ColabFold with MMseqs2-GPU MSA backend, XGBoost `device=cuda`, RAPIDS cuML.
-- **Comparative discovery axes** enforced when close relatives are available: genome-property frontier, marker-gene census, per-family copy-number expansion/contraction, synteny and conserved neighborhoods, and explicit non-coding RNA census — each producing persisted, side-by-side comparison artifacts.
-- **Scientific project loop**: hypothesis register (≥5 working hypotheses), intermediate-result reflection, literature-derived analysis playbooks, hypothesis revision, and a final synthesis that tracks ruled-out alternatives.
-- **Literature search with fallbacks**: `polars-dovmed` hosted API over PMC and bioRxiv corpora, local parquet `dovmed scan` as a fallback, then targeted `WebFetch` / `WebSearch` so endpoint outages do not silently skip the literature-context step.
+Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, statistics, manuscript drafting, and figure generation.
 
-## Install
+Agents are markdown system prompts; skills are markdown files with a defined input/output contract. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a given task and can be enabled as a hook so it runs on every user prompt.
+
+## Methodological commitments
+
+The bioinformatics workflow is structured around a small number of explicit commitments rather than an open-ended toolbox:
+
+- **Hypothesis register.** Exploratory work starts with at least five working hypotheses (biological mechanism, technical artifact, null, sampling or batch effect, database artifact). Each is revised as supported, weakened, ruled out, or unresolved with the evidence that changed its status.
+- **Intermediate reflection.** After each major result or QC gate the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
+- **Literature-derived analysis playbook.** Before deciding what is "interesting" the agent searches the literature for the inferred group and summarises which markers, comparison sets, plots, and outliers are diagnostic.
+- **Comparative discovery axes.** When close relatives are available, the agent runs the query against five axes — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, and non-coding RNA census — each producing a persisted side-by-side comparison artifact.
+- **Literature search with fallbacks.** `polars-dovmed` is queried against PMC and bioRxiv corpora through the hosted API, with a local parquet `dovmed scan` fallback and targeted `WebFetch` / `WebSearch` as final fallbacks so endpoint outages do not silently skip the literature-context step.
+
+## Tooling baseline
+
+Skills target current stable releases as of 2026 and document GPU alternatives where they exist.
+
+| Step | CPU baseline | GPU alternative |
+|---|---|---|
+| Read trimming (long) | Porechop_ABI, Pychopper | — |
+| Read mapping (short) | bwa-mem2, BBMap | NVIDIA Parabricks `fq2bam` |
+| Read mapping (long) | minimap2 v2.30 | `mm2-fast` (AVX-512), `mm2-gb`, `mm2-ax` |
+| Assembly | SPAdes 4 (Illumina), Flye 2.9 (long-read), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
+| Binning | QuickBin, SemiBin2 v2.2.1 | SemiBin2 + BASALT |
+| Bin QC | CheckM2 v1.1.0, EukCC v2.1.3, GUNC v1.0.6 | — |
+| Gene calling | pyrodigal, pyrodigal-gv, BRAKER3 | — |
+| ncRNA | tRNAscan-SE v2.0.12, Infernal v1.1.5 (`cmsearch` against Rfam SSU/LSU CMs) | — |
+| Annotation | DIAMOND v2.1.20+ (clusterednr preferred), eggNOG-mapper v2.1.13, InterProScan v5.77, pyhmmer, TaxonKit v0.20 | MMseqs2-GPU |
+| Phylogenetics | IQ-TREE v3.1.2 (≤2,000 taxa), VeryFastTree v4 (>2,000 taxa), MAFFT, trimAl, ete4 | — |
+| Orthology / pangenome | OrthoFinder v3, ProteinOrtho v6 (large pangenomes), MMseqs2 | MMseqs2-GPU |
+| Synteny | MCScanX, ntSynt, SibeliaZ | — |
+| Viromics | geNomad, CheckV, VirSorter2, vConTACT3 (prokaryotic-virus taxonomy), gvclass (Nucleocytoviricota) | — |
+| Structure | TM-Vec (triage), Boltz-2 (default predictor), ColabFold + MMseqs2-GPU MSA, ESMFold (pre-screen), Foldseek v9 | Boltz-2, Foldseek v9 `--gpu 1`, ColabFold, ESMFold |
+| Statistics / ML | DuckDB v1.1, scikit-learn, XGBoost v2.1 | XGBoost `device=cuda`, RAPIDS cuML |
+
+The full survey of versions, alternatives, and benchmarks is in [`docs/tooling-survey-2026.md`](docs/tooling-survey-2026.md).
+
+## Installation
 
 ```bash
 git clone https://github.com/fmschulz/omics-skills.git
@@ -20,46 +50,33 @@ cd omics-skills
 make install
 ```
 
-`make install` builds `catalog/` and symlinks skills and agents into
-`~/.claude/` and `~/.codex/`. Use `make install-claude` or `make install-codex`
-for a single runtime, and `make status` to report what's installed.
-`make install INSTALL_METHOD=copy` installs copies instead of symlinks.
+`make install` builds the routing catalog and symlinks agents and skills into `~/.claude/` and `~/.codex/`. Use `make install-claude` or `make install-codex` for a single runtime, `make install INSTALL_METHOD=copy` for copies instead of symlinks, and `make status` to report what is installed. See [INSTALL.md](INSTALL.md) for troubleshooting.
 
-Detailed install and troubleshooting notes: [INSTALL.md](INSTALL.md).
-
-## Enable the routing hook
-
-The router picks an agent and an ordered set of skills for a task. Without the
-hook it is a manual command; with the hook it runs on every user prompt and
-prepends a short routing hint to the model context.
+The routing hook attaches the router to every user prompt:
 
 ```bash
 make install-hook        # Claude Code + Codex CLI
-make hook-status         # check install state
-make uninstall-hook      # remove
+make hook-status
+make uninstall-hook
 ```
 
-Set `OMICS_SKILLS_AUTOROUTE=0` in the environment to suppress the hint for a
-session without uninstalling.
+Set `OMICS_SKILLS_AUTOROUTE=0` to suppress the hint for a session without uninstalling.
 
-## Using it
-
-Invoke an agent directly:
+## Usage
 
 ```bash
 claude --agent omics-scientist
 codex --system-prompt ~/.codex/agents/omics-scientist.md
 ```
 
-Query the router manually:
+Query the router directly:
 
 ```bash
 python3 scripts/skill_index.py route \
   "assemble a metagenome and recover MAGs"
 ```
 
-Skills are invocable individually as `/<skill-name>`. Agent files list which
-skills each agent exposes and how they compose.
+Skills are also invocable individually as `/<skill-name>`. Agent files list the skills each agent exposes and how they compose.
 
 ## Agents
 
@@ -69,52 +86,18 @@ skills each agent exposes and how they compose.
 | `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact | 7 |
 | `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 7 |
 | `dataviz-artist` | marimo notebooks, matplotlib/seaborn figures, Plotly Dash dashboards, widget and badge helpers | 9 |
-| `codexloop` | Plan-driven implementation harness with resumable Codex runs | 2 |
 
-Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how
-a specific agent routes a given task.
-
-## Scientific project discipline
-
-For exploratory omics work, `omics-scientist` keeps reasoning visible end-to-end:
-
-1. **Hypothesis register** — at least 5 distinct working hypotheses (biological, technical, null, batch, database) before the first analysis step.
-2. **Intermediate reflection** — after each major result or QC gate, state observation, QC status, supported and weakened hypotheses, remaining alternatives, and the next discriminating check.
-3. **Literature-derived analysis playbook** — before declaring what is "interesting", summarize what the literature considers diagnostic for the inferred group (markers, comparison sets, plots, outliers, tools).
-4. **Comparative discovery axes** (when relatives are available) — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, ncRNA census; each axis produces a persisted side-by-side artifact.
-5. **Hypothesis revision** — update each hypothesis as supported / weakened / ruled out / unresolved with the evidence that changed its status.
-6. **Final synthesis** — hypothesis history, literature context, revised ranking, limitations, and the next experiments that would best separate remaining alternatives.
-
-These behaviors are encoded in `AGENTS.md`, `agents/omics-scientist.md`, `skills/bio-logic/SKILL.md`, and the bio-* skills that produce annotations, viral calls, phylogenies, pangenomes, and final reports. With the default symlink install, updates apply immediately after `git pull`; with `INSTALL_METHOD=copy`, rerun `make install INSTALL_METHOD=copy`.
-
-## CodexLoop
-
-`codexloop` is a separate harness for long-running coding work that needs
-durable progress tracking. The agent file is `agents/codexloop.md`; the
-runtime lives in `skills/codexloop/`. After `make install`, use the launcher:
-
-```bash
-codexloop init /path/to/project      # scaffolds docs/plans/, MEMORY.md, .codexloop/
-codexloop plan --repo /path/to/project
-codexloop run  --repo /path/to/project
-codexloop resume --repo /path/to/project
-```
-
-`init` creates the project-local scaffold (implementation plan, doctor check,
-runtime state, per-project agent file). Planning uses Codex structured output
-to produce a task backlog; each task runs in its own Git worktree. Verification
-failures retry automatically until the task passes or the retry budget runs
-out.
+Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a specific agent routes a given task.
 
 ## Repository layout
 
 ```
-agents/                     5 agent definitions
-skills/                     36 skill directories; each has SKILL.md
+agents/                     4 agent definitions
+skills/                     skill directories; each has a SKILL.md
 catalog/                    generated router artifacts (catalog, relationships, routing)
 scripts/
   skill_index.py            router and catalog builder
-  routing_benchmark.py      regression harness (37 tasks)
+  routing_benchmark.py      regression harness
   emit_routing_hint.py      hook payload generator
   install_hook.py           idempotent hook installer
   install.sh                shell-script install (Makefile-free)
@@ -128,7 +111,7 @@ docs/
   ROUTING_IMPROVEMENTS.md   per-PR router deltas
   SKILL_GRAPH.md            routing model and graph
   routing_baseline.json     benchmark baseline
-  tooling-survey-2026.md    bioinformatics tooling survey (versions, GPU options, alternatives)
+  tooling-survey-2026.md    bioinformatics tooling survey
 Makefile                    install, catalog, hook, benchmark, uninstall targets
 ```
 
@@ -142,25 +125,20 @@ python3 scripts/skill_index.py build            # rebuild catalog artifacts
 
 Adding or modifying a skill:
 
-1. Create or edit `skills/<name>/SKILL.md`. The YAML `name` field must match
-   the directory name.
-2. Add the skill to the relevant agent's `Mandatory Skill Usage` and
-   `Task Recognition Patterns`.
+1. Create or edit `skills/<name>/SKILL.md`. The YAML `name` field must match the directory name.
+2. Add the skill to the relevant agent's `Mandatory Skill Usage` and `Task Recognition Patterns`.
 3. Rebuild the catalog and run the test suite.
-4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is
-   non-trivially discoverable by the router.
+4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is non-trivially discoverable by the router.
 
-See [AGENTS.md](AGENTS.md) for structural conventions and
-[docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and
-composes skills.
+See [AGENTS.md](AGENTS.md) for structural conventions and [docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and composes skills.
 
 ## Compatibility
 
 | Platform | Notes |
 |---|---|
-| Claude Code | Primary runtime; agents installed to `~/.claude/agents/`, skills to `~/.claude/skills/`. |
-| Codex CLI | Agents installed to `~/.codex/agents/`; skills to `~/.codex/skills/`; hook uses `~/.codex/hooks.json` with `[features] codex_hooks = true` in `~/.codex/config.toml`. |
-| Claude API | Agent markdown files can be loaded as system prompts. Skills remain readable as reference. |
+| Claude Code | Agents in `~/.claude/agents/`; skills in `~/.claude/skills/`. |
+| Codex CLI | Agents in `~/.codex/agents/`; skills in `~/.codex/skills/`; hook uses `~/.codex/hooks.json` with `[features] codex_hooks = true` in `~/.codex/config.toml`. |
+| Claude API | Agent markdown files load directly as system prompts; skill files are readable as reference. |
 
 ## License
 

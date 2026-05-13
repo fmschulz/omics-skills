@@ -201,7 +201,6 @@ class SkillIndexTests(unittest.TestCase):
             "literature-expert.md",
             "science-writer.md",
             "dataviz-artist.md",
-            "codexloop.md",
         ):
             text = (REPO_ROOT / "agents" / agent_name).read_text(encoding="utf-8")
             self.assertIn("## Skill Lookup", text)
@@ -266,7 +265,7 @@ class SkillRefPatternTests(unittest.TestCase):
     def test_matches_valid_skill_refs(self) -> None:
         self.assertEqual(self._find("Use /bio-annotation after QC"), ["bio-annotation"])
         self.assertEqual(self._find("- `/scientific-writing` - manuscript drafting"), ["scientific-writing"])
-        self.assertEqual(self._find("(/codexloop)"), ["codexloop"])
+        self.assertEqual(self._find("(/bio-annotation)"), ["bio-annotation"])
         self.assertEqual(self._find("/marimo-notebook at line start"), ["marimo-notebook"])
 
 

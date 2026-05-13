@@ -1,53 +1,6 @@
 {
   "agents": [
     {
-      "name": "codexloop",
-      "description": "Codex-native implementation harness agent for plan-driven execution with docs/plans tracking, MEMORY.md feedback, iterative verification, and resumable task loops.",
-      "path": "agents/codexloop.md",
-      "skills": [
-        "codexloop",
-        "get-api-docs"
-      ],
-      "task_patterns": [
-        {
-          "skill_name": "codexloop",
-          "phrases": [
-            "finish this plan",
-            "keep going until tests pass",
-            "resume the harness"
-          ]
-        },
-        {
-          "skill_name": "codexloop",
-          "phrases": [
-            "docs/plans",
-            "MEMORY.md",
-            "implementation loop",
-            "resumable Codex"
-          ]
-        },
-        {
-          "skill_name": "codexloop",
-          "phrases": [
-            "Mycelium-like",
-            "orchestrate Codex tasks",
-            "long-running coding loop"
-          ]
-        },
-        {
-          "skill_name": "get-api-docs",
-          "phrases": [
-            "api docs",
-            "sdk docs",
-            "fetch documentation",
-            "anthropic sdk",
-            "openai sdk",
-            "current API documentation"
-          ]
-        }
-      ]
-    },
-    {
       "name": "dataviz-artist",
       "description": "Expert data visualization specialist for publication-quality figures, dashboards, and reproducible analysis notebooks.",
       "path": "agents/dataviz-artist.md",
@@ -261,6 +214,7 @@
         "bio-viromics",
         "bio-workflow-methods-docwriter",
         "jgi-lakehouse",
+        "polars-dovmed",
         "tracking-taxonomy-updates"
       ],
       "task_patterns": [
@@ -279,6 +233,27 @@
             "causal",
             "observational",
             "follow-up experiments"
+          ]
+        },
+        {
+          "skill_name": "polars-dovmed",
+          "phrases": [
+            "literature",
+            "papers",
+            "prior work",
+            "context",
+            "known",
+            "reported"
+          ]
+        },
+        {
+          "skill_name": "bio-logic",
+          "phrases": [
+            "unexpected",
+            "surprising",
+            "intermediate result",
+            "QC result",
+            "revise hypothesis"
           ]
         },
         {
@@ -337,11 +312,31 @@
           ]
         },
         {
+          "skill_name": "bio-annotation",
+          "phrases": [
+            "interesting genes",
+            "notable genes",
+            "discovery",
+            "novel",
+            "unusual",
+            "candidate genes"
+          ]
+        },
+        {
           "skill_name": "bio-phylogenomics",
           "phrases": [
             "phylogeny",
             "tree",
             "alignment"
+          ]
+        },
+        {
+          "skill_name": "bio-phylogenomics",
+          "phrases": [
+            "closest relatives",
+            "nearest relatives",
+            "compare relatives",
+            "related genomes"
           ]
         },
         {
@@ -364,6 +359,16 @@
             "viral",
             "phage",
             "VirSorter"
+          ]
+        },
+        {
+          "skill_name": "bio-viromics",
+          "phrases": [
+            "giant virus",
+            "NCLDV",
+            "Mimivirus",
+            "large DNA virus",
+            "viral genome"
           ]
         },
         {
@@ -622,7 +627,13 @@
         "DIAMOND",
         "KEGG",
         "annotation",
-        "taxonomy"
+        "candidate genes",
+        "discovery",
+        "interesting genes",
+        "notable genes",
+        "novel",
+        "taxonomy",
+        "unusual"
       ],
       "platforms": [
         "claude",
@@ -712,6 +723,7 @@
         "science-writer"
       ],
       "task_patterns": [
+        "QC result",
         "bias",
         "causal",
         "causation",
@@ -723,12 +735,16 @@
         "formulate hypothesis",
         "how",
         "hypothesis",
+        "intermediate result",
         "interpret",
         "methodology",
         "observational",
         "reason",
         "review",
         "review evidence",
+        "revise hypothesis",
+        "surprising",
+        "unexpected",
         "why"
       ],
       "platforms": [
@@ -745,7 +761,11 @@
       ],
       "task_patterns": [
         "alignment",
+        "closest relatives",
+        "compare relatives",
+        "nearest relatives",
         "phylogeny",
+        "related genomes",
         "tree"
       ],
       "platforms": [
@@ -846,9 +866,14 @@
         "omics-scientist"
       ],
       "task_patterns": [
+        "Mimivirus",
+        "NCLDV",
         "VirSorter",
+        "giant virus",
+        "large DNA virus",
         "phage",
-        "viral"
+        "viral",
+        "viral genome"
       ],
       "platforms": [
         "claude",
@@ -896,29 +921,6 @@
       "path": "skills/biorxiv-search/SKILL.md"
     },
     {
-      "name": "codexloop",
-      "description": "Run a Codex-native planning and implementation loop with docs/plans progress tracking, MEMORY.md failure memory, per-task git worktrees, and iterative verification until tasks pass or need human intervention. Use when you want Mycelium-like orchestration for Codex without the Mycelium stack.",
-      "agents": [
-        "codexloop"
-      ],
-      "task_patterns": [
-        "MEMORY.md",
-        "Mycelium-like",
-        "docs/plans",
-        "finish this plan",
-        "implementation loop",
-        "keep going until tests pass",
-        "long-running coding loop",
-        "orchestrate Codex tasks",
-        "resumable Codex",
-        "resume the harness"
-      ],
-      "platforms": [
-        "codex"
-      ],
-      "path": "skills/codexloop/SKILL.md"
-    },
-    {
       "name": "crossref-lookup",
       "description": "Query the Crossref REST API for DOI validation, title search, citation metadata, and bibliography audits. Use when you need DOI lookup, title-to-DOI matching, or reference metadata cleanup.",
       "agents": [
@@ -940,17 +942,8 @@
     {
       "name": "get-api-docs",
       "description": "Fetch current API and SDK documentation with the chub CLI. Use when writing or reviewing code against fast-changing APIs, especially when the user asks for the latest or current docs.",
-      "agents": [
-        "codexloop"
-      ],
-      "task_patterns": [
-        "anthropic sdk",
-        "api docs",
-        "current API documentation",
-        "fetch documentation",
-        "openai sdk",
-        "sdk docs"
-      ],
+      "agents": [],
+      "task_patterns": [],
       "platforms": [
         "claude",
         "codex"
@@ -1093,7 +1086,8 @@
       "name": "polars-dovmed",
       "description": "Search the PMC Open Access literature with polars-dovmed. Author structured JSON queries directly, then use the hosted API when an API key is available or fall back to local dovmed scan over PMC, bioRxiv, or both parquet corpora.",
       "agents": [
-        "literature-expert"
+        "literature-expert",
+        "omics-scientist"
       ],
       "task_patterns": [
         "--corpus biorxiv",
@@ -1101,13 +1095,19 @@
         "PMC",
         "PMC plus bioRxiv",
         "bioRxiv screening",
+        "context",
         "dovmed scan",
         "find papers",
         "full-text bioRxiv screening",
+        "known",
+        "literature",
         "literature search",
         "local bioRxiv parquet",
+        "papers",
         "polars-dovmed",
+        "prior work",
         "publication trends",
+        "reported",
         "screen bioRxiv with polars-dovmed"
       ],
       "platforms": [

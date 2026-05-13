@@ -324,12 +324,11 @@ Guidelines for how to communicate with users
 ### Naming Conventions
 
 - **Agent files**: kebab-case (e.g., `omics-scientist.md`, `science-writer.md`)
-- **Five agents**:
+- **Four agents**:
   - `omics-scientist.md` - Bioinformatics workflows (14 bio-* skills)
   - `literature-expert.md` - Literature discovery, preprints, and citation lookup
   - `science-writer.md` - Scientific writing, revision, and peer review
   - `dataviz-artist.md` - Visualization (5 viz skills)
-  - `codexloop.md` - Plan-driven implementation harness for CodexLoop runs
 
 ### Agent Design Principles
 
@@ -437,7 +436,6 @@ make install INSTALL_METHOD=copy
 - `literature-expert.md` - Literature discovery, preprints, and DOI lookup
 - `science-writer.md` - Manuscript writing, revision, and review
 - `dataviz-artist.md` - Visualization, notebooks, dashboards
-- `codexloop.md` - Plan-driven implementation harness
 
 ### 2. Edit Agent File
 

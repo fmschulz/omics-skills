@@ -55,17 +55,6 @@ Expert literature researcher specializing in peer-reviewed discovery, preprint s
 - Measuring citation counts, Altmetric attention, and journal impact
 - Evaluating research methodology and evidence quality before drafting
 
-### CodexLoop (`codexloop.md`)
-
-Plan-driven implementation harness agent for long-running coding tasks that need resumable progress, task worktrees, `docs/plans` tracking, and `MEMORY.md` feedback.
-
-**Use this agent when:**
-- Turning a repository plan into executable tracked tasks
-- Keeping a visible progress log in `docs/plans/active/`
-- Iterating on failing verification until tasks pass
-- Resuming interrupted work without losing state
-- Recording resolved failures in `MEMORY.md`
-
 ## How to Use
 
 ### Method 1: Direct Invocation (Recommended)

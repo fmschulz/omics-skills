@@ -22,13 +22,11 @@ AGENTS_DIR="$REPO_ROOT/agents"
 SKILLS_DIR="$REPO_ROOT/skills"
 
 # Specific agent files
-AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md" "codexloop.md")
+AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_SKILLS_DIR="$HOME/.codex/skills"
-CODEX_BIN_DIR="$HOME/.codex/bin"
-CODEXLOOP_LAUNCHER="$CODEX_BIN_DIR/codexloop"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 AGENTS_CATALOG_DIR="$HOME/.agents/omics-skills"
 
@@ -115,11 +113,6 @@ uninstall_from_codex() {
     if [ -L "$CODEX_SKILLS_DIR" ]; then
         rm "$CODEX_SKILLS_DIR"
         echo -e "  ${GREEN}✓${NC} Removed Codex skills link"
-    fi
-
-    if [ -L "$CODEXLOOP_LAUNCHER" ] || [ -f "$CODEXLOOP_LAUNCHER" ]; then
-        rm "$CODEXLOOP_LAUNCHER"
-        echo -e "  ${GREEN}✓${NC} Removed CodexLoop launcher"
     fi
 
     echo -e "${GREEN}✓ Codex CLI uninstalled${NC}"
