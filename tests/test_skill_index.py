@@ -266,7 +266,7 @@ class SkillRefPatternTests(unittest.TestCase):
         self.assertEqual(self._find("Use /bio-annotation after QC"), ["bio-annotation"])
         self.assertEqual(self._find("- `/scientific-writing` - manuscript drafting"), ["scientific-writing"])
         self.assertEqual(self._find("(/bio-annotation)"), ["bio-annotation"])
-        self.assertEqual(self._find("/marimo-notebook at line start"), ["marimo-notebook"])
+        self.assertEqual(self._find("/notebooks at line start"), ["notebooks"])
 
 
 class CatalogConsistencyTests(unittest.TestCase):

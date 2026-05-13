@@ -5,64 +5,23 @@
       "description": "Expert data visualization specialist for publication-quality figures, dashboards, and reproducible analysis notebooks.",
       "path": "agents/dataviz-artist.md",
       "skills": [
-        "add-molab-badge",
         "agent-browser",
-        "anywidget",
         "beautiful-data-viz",
-        "implement-paper-auto",
-        "jupyter-to-marimo",
-        "marimo-notebook",
-        "notebook-ai-agents-skill",
+        "notebooks",
         "plotly-dashboard-skill"
       ],
       "task_patterns": [
         {
-          "skill_name": "marimo-notebook",
+          "skill_name": "notebooks",
           "phrases": [
-            "marimo notebook",
-            "reactive notebook",
-            "write a marimo"
-          ]
-        },
-        {
-          "skill_name": "jupyter-to-marimo",
-          "phrases": [
-            "convert",
-            "jupyter to marimo",
-            "ipynb to marimo",
-            "port notebook"
-          ]
-        },
-        {
-          "skill_name": "anywidget",
-          "phrases": [
-            "anywidget",
-            "custom widget",
-            "widget component"
-          ]
-        },
-        {
-          "skill_name": "implement-paper-auto",
-          "phrases": [
-            "reproduce paper",
-            "implement paper",
-            "rerun paper end-to-end"
-          ]
-        },
-        {
-          "skill_name": "add-molab-badge",
-          "phrases": [
-            "molab badge",
-            "open in molab",
-            "notebook badge"
-          ]
-        },
-        {
-          "skill_name": "notebook-ai-agents-skill",
-          "phrases": [
-            "refactor notebook",
-            "clean up notebook",
+            "notebook",
+            "marimo",
+            "jupyter",
+            "ipynb",
+            "convert notebook",
             "EDA",
+            "reactive notebook",
+            "executed notebook",
             "pixi kernel"
           ]
         },
@@ -506,23 +465,6 @@
   ],
   "skills": [
     {
-      "name": "add-molab-badge",
-      "description": "Add \"Open in molab\" badge(s) linking to marimo notebooks. Works with READMEs, docs, websites, or any markdown/HTML target.",
-      "agents": [
-        "dataviz-artist"
-      ],
-      "task_patterns": [
-        "molab badge",
-        "notebook badge",
-        "open in molab"
-      ],
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "path": "skills/add-molab-badge/SKILL.md"
-    },
-    {
       "name": "agent-browser",
       "description": "Browser automation via agent-browser CLI for web navigation, form filling, screenshots, scraping, login flows, and UI testing.",
       "agents": [
@@ -561,23 +503,6 @@
         "codex"
       ],
       "path": "skills/ai-scientist-evaluator/SKILL.md"
-    },
-    {
-      "name": "anywidget",
-      "description": "Generate anywidget components for marimo notebooks.",
-      "agents": [
-        "dataviz-artist"
-      ],
-      "task_patterns": [
-        "anywidget",
-        "custom widget",
-        "widget component"
-      ],
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "path": "skills/anywidget/SKILL.md"
     },
     {
       "name": "arxiv-search",
@@ -951,23 +876,6 @@
       "path": "skills/get-api-docs/SKILL.md"
     },
     {
-      "name": "implement-paper-auto",
-      "description": "Implement a research paper in a marimo notebook fully automatically without extra user input.",
-      "agents": [
-        "dataviz-artist"
-      ],
-      "task_patterns": [
-        "implement paper",
-        "reproduce paper",
-        "rerun paper end-to-end"
-      ],
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "path": "skills/implement-paper-auto/SKILL.md"
-    },
-    {
       "name": "jgi-lakehouse",
       "description": "Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG, Mycocosm, Phytozome. Downloads genome files from JGI filesystem using IMG taxon OIDs. Use when working with JGI data, GOLD projects, IMG annotations, or downloading genomes.",
       "agents": [
@@ -985,24 +893,6 @@
         "codex"
       ],
       "path": "skills/jgi-lakehouse/SKILL.md"
-    },
-    {
-      "name": "jupyter-to-marimo",
-      "description": "Convert a Jupyter notebook (.ipynb) to a marimo notebook (.py).",
-      "agents": [
-        "dataviz-artist"
-      ],
-      "task_patterns": [
-        "convert",
-        "ipynb to marimo",
-        "jupyter to marimo",
-        "port notebook"
-      ],
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "path": "skills/jupyter-to-marimo/SKILL.md"
     },
     {
       "name": "manuscript-review-council",
@@ -1029,39 +919,27 @@
       "path": "skills/manuscript-review-council/SKILL.md"
     },
     {
-      "name": "marimo-notebook",
-      "description": "Write a marimo notebook in a Python file in the right format.",
-      "agents": [
-        "dataviz-artist"
-      ],
-      "task_patterns": [
-        "marimo notebook",
-        "reactive notebook",
-        "write a marimo"
-      ],
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "path": "skills/marimo-notebook/SKILL.md"
-    },
-    {
-      "name": "notebook-ai-agents-skill",
-      "description": "Create/refactor reproducible analysis notebooks with Marimo (preferred) or Jupyter (minimal support). Use for interactive, narrative-first analyses.",
+      "name": "notebooks",
+      "description": "Author, execute, and deliver reproducible analysis notebooks in marimo (default) or Jupyter, with all cells run end-to-end and figures embedded. Also converts between marimo and Jupyter on request.",
       "agents": [
         "dataviz-artist"
       ],
       "task_patterns": [
         "EDA",
-        "clean up notebook",
+        "convert notebook",
+        "executed notebook",
+        "ipynb",
+        "jupyter",
+        "marimo",
+        "notebook",
         "pixi kernel",
-        "refactor notebook"
+        "reactive notebook"
       ],
       "platforms": [
         "claude",
         "codex"
       ],
-      "path": "skills/notebook-ai-agents-skill/SKILL.md"
+      "path": "skills/notebooks/SKILL.md"
     },
     {
       "name": "plotly-dashboard-skill",

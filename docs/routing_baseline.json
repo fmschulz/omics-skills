@@ -1,9 +1,9 @@
 {
   "summary": {
-    "total": 36,
-    "passed": 35,
+    "total": 33,
+    "passed": 32,
     "failed": 1,
-    "pass_rate": 0.972,
+    "pass_rate": 0.97,
     "agent_failures": 0,
     "primary_skill_failures": 1,
     "ordered_skill_failures": 0,
@@ -314,16 +314,13 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "polars-dovmed",
-          "add-molab-badge"
+          "polars-dovmed"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "bio-viromics",
           "bio-gene-calling",
-          "marimo-notebook",
-          "add-molab-badge",
           "bio-annotation",
           "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
@@ -499,16 +496,10 @@
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
-          "marimo-notebook",
-          "jupyter-to-marimo",
-          "scientific-writing",
-          "notebook-ai-agents-skill"
+          "notebooks"
         ],
         "ordered_skills": [
-          "marimo-notebook",
-          "jupyter-to-marimo",
-          "notebook-ai-agents-skill",
-          "scientific-writing"
+          "notebooks"
         ]
       }
     },
@@ -518,64 +509,10 @@
       "actual": {
         "agent": "dataviz-artist",
         "primary_skills": [
-          "jupyter-to-marimo",
-          "marimo-notebook"
+          "notebooks"
         ],
         "ordered_skills": [
-          "marimo-notebook",
-          "jupyter-to-marimo"
-        ]
-      }
-    },
-    {
-      "task": "add an Open-in-molab badge to the README for a notebook",
-      "passed": true,
-      "actual": {
-        "agent": "dataviz-artist",
-        "primary_skills": [
-          "add-molab-badge"
-        ],
-        "ordered_skills": [
-          "marimo-notebook",
-          "add-molab-badge"
-        ]
-      }
-    },
-    {
-      "task": "generate an anywidget component for a marimo notebook",
-      "passed": true,
-      "actual": {
-        "agent": "dataviz-artist",
-        "primary_skills": [
-          "anywidget",
-          "marimo-notebook",
-          "jupyter-to-marimo",
-          "notebook-ai-agents-skill"
-        ],
-        "ordered_skills": [
-          "marimo-notebook",
-          "anywidget",
-          "jupyter-to-marimo",
-          "notebook-ai-agents-skill"
-        ]
-      }
-    },
-    {
-      "task": "reproduce a recent bioRxiv paper end-to-end in a marimo notebook",
-      "passed": true,
-      "actual": {
-        "agent": "dataviz-artist",
-        "primary_skills": [
-          "biorxiv-search",
-          "marimo-notebook",
-          "implement-paper-auto",
-          "jupyter-to-marimo"
-        ],
-        "ordered_skills": [
-          "biorxiv-search",
-          "marimo-notebook",
-          "implement-paper-auto",
-          "jupyter-to-marimo"
+          "notebooks"
         ]
       }
     },

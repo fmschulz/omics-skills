@@ -85,7 +85,7 @@ Skills are also invocable individually as `/<skill-name>`. Agent files list the 
 | `omics-scientist` | Sequencing reads, assembly, binning, annotation, phylogenomics, MAG recovery, JGI access | 16 |
 | `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact | 7 |
 | `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 7 |
-| `dataviz-artist` | marimo notebooks, matplotlib/seaborn figures, Plotly Dash dashboards, widget and badge helpers | 9 |
+| `dataviz-artist` | marimo and Jupyter notebooks (executed end-to-end), matplotlib/seaborn figures, Plotly Dash dashboards | 4 |
 
 Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a specific agent routes a given task.
 

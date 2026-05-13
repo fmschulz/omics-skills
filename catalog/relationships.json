@@ -1,47 +1,5 @@
 [
   {
-    "source": "add-molab-badge",
-    "target": "implement-paper-auto",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/implement-paper-auto` \u2014 paper-reproduction notebook badging"
-    ]
-  },
-  {
-    "source": "add-molab-badge",
-    "target": "marimo-notebook",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/marimo-notebook` \u2014 the notebook being advertised"
-    ]
-  },
-  {
-    "source": "add-molab-badge",
-    "target": "marimo-notebook",
-    "type": "depend_on",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.95,
-    "provenance": [
-      "workflow_decision_tree"
-    ],
-    "evidence": [
-      "\u2502   \u2514\u2500 Advertising it with a badge? \u2192 /add-molab-badge"
-    ]
-  },
-  {
     "source": "ai-scientist-evaluator",
     "target": "bio-logic",
     "type": "compose_with",
@@ -81,34 +39,6 @@
     ],
     "evidence": [
       "- `/scientific-writing` \u2014 draft the evaluation writeup"
-    ]
-  },
-  {
-    "source": "anywidget",
-    "target": "marimo-notebook",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/marimo-notebook` \u2014 the host notebook that embeds the widget"
-    ]
-  },
-  {
-    "source": "anywidget",
-    "target": "marimo-notebook",
-    "type": "depend_on",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.95,
-    "provenance": [
-      "workflow_decision_tree"
-    ],
-    "evidence": [
-      "\u2502   \u251c\u2500 Need a custom widget? \u2192 /anywidget"
     ]
   },
   {
@@ -603,104 +533,6 @@
     ]
   },
   {
-    "source": "implement-paper-auto",
-    "target": "add-molab-badge",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/add-molab-badge` \u2014 advertise the reproduction notebook"
-    ]
-  },
-  {
-    "source": "implement-paper-auto",
-    "target": "arxiv-search",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.75,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/arxiv-search` \u2014 locate the paper on arXiv before reproducing"
-    ]
-  },
-  {
-    "source": "implement-paper-auto",
-    "target": "biorxiv-search",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.75,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/biorxiv-search` \u2014 locate the paper on bioRxiv before reproducing"
-    ]
-  },
-  {
-    "source": "implement-paper-auto",
-    "target": "marimo-notebook",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/marimo-notebook` \u2014 target format for the reproduction notebook"
-    ]
-  },
-  {
-    "source": "implement-paper-auto",
-    "target": "marimo-notebook",
-    "type": "depend_on",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.95,
-    "provenance": [
-      "workflow_decision_tree"
-    ],
-    "evidence": [
-      "\u2502   \u251c\u2500 Reproducing a paper? \u2192 /implement-paper-auto"
-    ]
-  },
-  {
-    "source": "jupyter-to-marimo",
-    "target": "marimo-notebook",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.75,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/marimo-notebook` \u2014 author the target notebook in marimo style after conversion"
-    ]
-  },
-  {
-    "source": "jupyter-to-marimo",
-    "target": "marimo-notebook",
-    "type": "depend_on",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.95,
-    "provenance": [
-      "workflow_decision_tree"
-    ],
-    "evidence": [
-      "\u2502   \u251c\u2500 Converting a Jupyter notebook? \u2192 /jupyter-to-marimo"
-    ]
-  },
-  {
     "source": "manuscript-review-council",
     "target": "ai-scientist-evaluator",
     "type": "compose_with",
@@ -756,76 +588,6 @@
     "evidence": [
       "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.",
       "- `/scientific-writing` \u2014 apply the reviewer feedback to the manuscript"
-    ]
-  },
-  {
-    "source": "marimo-notebook",
-    "target": "add-molab-badge",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/add-molab-badge` \u2014 advertise the notebook with an Open-in-molab badge"
-    ]
-  },
-  {
-    "source": "marimo-notebook",
-    "target": "anywidget",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/anywidget` \u2014 generate a custom widget component for the notebook"
-    ]
-  },
-  {
-    "source": "marimo-notebook",
-    "target": "implement-paper-auto",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/implement-paper-auto` \u2014 reproduce a paper end-to-end in a marimo notebook"
-    ]
-  },
-  {
-    "source": "marimo-notebook",
-    "target": "jupyter-to-marimo",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/jupyter-to-marimo` \u2014 convert an existing .ipynb to marimo"
-    ]
-  },
-  {
-    "source": "marimo-notebook",
-    "target": "notebook-ai-agents-skill",
-    "type": "compose_with",
-    "source_type": "skill",
-    "target_type": "skill",
-    "confidence": 0.6,
-    "provenance": [
-      "skill_body_reference"
-    ],
-    "evidence": [
-      "- `/notebook-ai-agents-skill` \u2014 refactor Jupyter/agent notebooks if not starting from scratch"
     ]
   },
   {

@@ -160,27 +160,12 @@
 - task: "write a reproducible marimo notebook loading DuckDB data"
   platform: codex
   expected_agent: dataviz-artist
-  expected_primary_skills: [marimo-notebook]
+  expected_primary_skills: [notebooks]
 
 - task: "convert a Jupyter notebook to a marimo notebook"
   platform: codex
   expected_agent: dataviz-artist
-  expected_primary_skills: [jupyter-to-marimo]
-
-- task: "add an Open-in-molab badge to the README for a notebook"
-  platform: codex
-  expected_agent: dataviz-artist
-  expected_primary_skills: [add-molab-badge]
-
-- task: "generate an anywidget component for a marimo notebook"
-  platform: codex
-  expected_agent: dataviz-artist
-  expected_primary_skills: [anywidget]
-
-- task: "reproduce a recent bioRxiv paper end-to-end in a marimo notebook"
-  platform: codex
-  expected_agent: dataviz-artist
-  expected_primary_skills: [implement-paper-auto]
+  expected_primary_skills: [notebooks]
 
 - task: "automate browsing a website to download supplementary data"
   platform: codex

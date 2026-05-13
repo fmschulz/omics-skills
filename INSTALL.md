@@ -197,7 +197,7 @@ The shared skills directory includes every top-level folder in `skills/`, includ
 
 - Bioinformatics workflows such as `bio-reads-qc-mapping`, `bio-assembly-qc`, `bio-binning-qc`, `bio-annotation`, `bio-phylogenomics`, `bio-viromics`, and `tracking-taxonomy-updates`
 - Literature and writing skills such as `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup`, `scientific-impact-assessment`, `scientific-writing`, and `manuscript-review-council`
-- Visualization skills such as `notebook-ai-agents-skill`, `beautiful-data-viz`, and `plotly-dashboard-skill`
+- Visualization skills such as `notebooks`, `beautiful-data-viz`, and `plotly-dashboard-skill`
 - Agent tooling such as `agent-browser`, `get-api-docs`, and `proposal-review`
 
 ---

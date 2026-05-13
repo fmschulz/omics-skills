@@ -229,7 +229,7 @@ Marketplaces look for:
      - `bio-logic` (universal reasoning skill)
      - `scientific-writing` (manuscript generation)
      - `beautiful-data-viz` (publication figures)
-     - `notebook-ai-agents-skill` (Marimo-first notebooks)
+     - `notebooks` (marimo-first notebooks; Jupyter supported)
      - `bio-reads-qc-mapping` (sequencing data QC)
    - Add to `skills/` directory
    - Submit pull request with description

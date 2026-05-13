@@ -151,7 +151,7 @@ skills/
 - **Skill prefixes**:
   - `bio-*` - Bioinformatics workflows
   - `scientific-writing`, `polars-dovmed`, `agent-browser` - Writing/research
-- `beautiful-data-viz`, `plotly-dashboard-skill`, `notebook-ai-agents-skill` - Visualization (Marimo-first notebooks)
+- `beautiful-data-viz`, `plotly-dashboard-skill`, `notebooks` - Visualization (marimo-first notebooks; Jupyter supported)
 - **SKILL.md**: Always uppercase, always this exact filename
 - **SKILL frontmatter `name`**: lowercase letters/numbers and hyphens only, no consecutive hyphens, <=64 chars, and must match the directory name
 - **Documentation**: markdown files in `docs/`; prefer lowercase with hyphens, `README.md` acceptable for overviews

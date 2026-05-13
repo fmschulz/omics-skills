@@ -288,7 +288,7 @@ Small = <1Gbp total data, Large = >10Gbp or >100 genomes
 | Literature discovery | `/polars-dovmed` | Before starting |
 | Custom plots | `/beautiful-data-viz` | After `/bio-stats-ml-reporting` |
 | Dashboards | `/plotly-dashboard-skill` | After analysis |
-| Notebooks | `/notebook-ai-agents-skill` | Marimo-first reproducible EDA |
+| Notebooks | `/notebooks` | marimo (default) or Jupyter, executed end-to-end with figures embedded |
 
 ## Agent Invocation
 

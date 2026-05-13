@@ -115,7 +115,7 @@ The omics-scientist agent has access to the full skill set in this repository:
 | `polars-dovmed` | Literature search | Search queries | PMC papers, DOIs, metadata |
 | `scientific-writing` | Manuscript writing | Artifact bundle, citations | Drafts, review notes, revised text |
 | `agent-browser` | Web automation | URLs, targets | Screenshots, scraped data |
-| `notebook-ai-agents-skill` | Notebooks | Data + goals | Marimo-first notebooks |
+| `notebooks` | Notebooks | Data + goals | marimo-first notebooks (Jupyter supported); executes end-to-end and embeds figures |
 | `beautiful-data-viz` | Figures | Data | Publication-ready charts |
 | `plotly-dashboard-skill` | Dashboards | Data + requirements | Interactive apps |
 
@@ -228,7 +228,7 @@ The omics-scientist agent can seamlessly integrate with:
 - `/agent-browser` - Web data retrieval
 - `/beautiful-data-viz` - Publication figures
 - `/plotly-dashboard-skill` - Interactive dashboards
-- `/notebook-ai-agents-skill` - Marimo-first analysis notebooks (Jupyter legacy)
+- `/notebooks` - marimo (default) or Jupyter notebooks, executed end-to-end with figures embedded; converts between formats on request
 
 ## Tips
 
