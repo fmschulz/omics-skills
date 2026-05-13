@@ -18,7 +18,7 @@ This directory contains practical documentation for the tools used in the bio-bi
 
 ### Binning tools (in recommended order)
 - [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.52+**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
-- [semibin2.md](semibin2.md) - **SemiBin2 v2.2.1+**: deep-learning binner with pre-trained models; preferred for diverse or long-read metagenomes (GPU mode available via BASALT)
+- [semibin2.md](semibin2.md) - **SemiBin2 v2.2.1+**: deep-learning binner with pre-trained models; use as the GPU alternative to QuickBin on CUDA-equipped nodes
 - [metabat2.md](metabat2.md) - MetaBAT2 v2.15+: legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
 
 ### Quality-control tools
@@ -54,10 +54,11 @@ export EUKCC2_DB=$(realpath eukcc2_db_ver_1.2)
 # 1. Compute coverage from BAM files
 coverm contig --bam-files *.bam -m mean variance -o depth.txt
 
-# 2. Run binners (QuickBin as default; add SemiBin2 for diverse or long-read data)
+# 2. Bin (QuickBin by default; SemiBin2 only when a CUDA GPU is available)
 quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam xstrict
-SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment human_gut -o semibin/ -p 16
-# MetaBAT2 only when reproducing prior pipelines:
+# GPU alternative:
+# SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment human_gut -o semibin/ -p 16
+# Legacy only, to reproduce prior pipelines:
 # metabat2 -i contigs.fasta -a depth.txt -o metabat/bin -t 16
 
 # 3. Classify bins by domain (bacteria/archaea vs eukaryotes)
@@ -86,8 +87,8 @@ gunc run --input_dir prokaryotic_bins/ --db_file gunc_db/gunc_db_progenomes2.1.d
 
 **Choose binning tool based on:**
 - **QuickBin (default)**: high precision, low contamination; performs well on both short-read and long-read assemblies; CheckM2-agnostic.
-- **SemiBin2 (preferred for diverse or long-read metagenomes)**: deep learning; pre-trained models for known environments; GPU mode via BASALT when CUDA is available.
-- **MetaBAT2 (legacy fallback)**: only when reproducing prior pipelines; otherwise prefer QuickBin or SemiBin2.
+- **SemiBin2 (GPU alternative)**: deep-learning binner with pre-trained models; preferred over QuickBin only when a CUDA GPU is available and SemiBin2's pre-trained environment models fit the dataset.
+- **MetaBAT2 (legacy fallback)**: only when reproducing prior pipelines; otherwise prefer QuickBin.
 
 **Choose QC tool based on domain:**
 - **Bacteria/Archaea**: CheckM2 (completeness/contamination) + GUNC (chimerism)

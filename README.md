@@ -8,15 +8,15 @@ Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`
 
 Agents are markdown system prompts; skills are markdown files with a defined input/output contract. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a given task and can be enabled as a hook so it runs on every user prompt.
 
-## Methodological commitments
+## How analyses are run
 
-The bioinformatics workflow is structured around a small number of explicit commitments rather than an open-ended toolbox:
+Rather than an open-ended toolbox, the bio-* skills enforce a short set of conventions:
 
-- **Hypothesis register.** Exploratory work starts with at least five working hypotheses (biological mechanism, technical artifact, null, sampling or batch effect, database artifact). Each is revised as supported, weakened, ruled out, or unresolved with the evidence that changed its status.
-- **Intermediate reflection.** After each major result or QC gate the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
-- **Literature-derived analysis playbook.** Before deciding what is "interesting" the agent searches the literature for the inferred group and summarises which markers, comparison sets, plots, and outliers are diagnostic.
-- **Comparative discovery axes.** When close relatives are available, the agent runs the query against five axes — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, and non-coding RNA census — each producing a persisted side-by-side comparison artifact.
-- **Literature search with fallbacks.** `polars-dovmed` is queried against PMC and bioRxiv corpora through the hosted API, with a local parquet `dovmed scan` fallback and targeted `WebFetch` / `WebSearch` as final fallbacks so endpoint outages do not silently skip the literature-context step.
+- **Hypothesis register.** Exploratory work starts with at least five working hypotheses (biological mechanism, technical artifact, null, sampling or batch effect, database artifact). Each is revised as supported, weakened, ruled out, or unresolved, with the evidence that changed its status.
+- **Reflection after each step.** After each major result or QC gate, the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
+- **Literature-derived analysis plan.** Before deciding what is "interesting" the agent reads the literature for the inferred group and summarises which markers, comparison sets, plots, and outliers are diagnostic.
+- **Comparative axes against close relatives.** When relatives are available, the query is run through five axes — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, and non-coding RNA census — each producing a side-by-side comparison file.
+- **Literature search with fallbacks.** `polars-dovmed` queries PMC and bioRxiv through the hosted API, falls back to a local parquet `dovmed scan`, and finally to targeted `WebFetch` / `WebSearch` so endpoint outages do not silently skip the literature step.
 
 ## Tooling baseline
 
@@ -28,7 +28,7 @@ Skills target current stable releases as of 2026 and document GPU alternatives w
 | Read mapping (short) | bwa-mem2, BBMap | NVIDIA Parabricks `fq2bam` |
 | Read mapping (long) | minimap2 v2.30 | `mm2-fast` (AVX-512), `mm2-gb`, `mm2-ax` |
 | Assembly | SPAdes 4 (Illumina), Flye 2.9 (long-read), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
-| Binning | QuickBin, SemiBin2 v2.2.1 | SemiBin2 + BASALT |
+| Binning | QuickBin | SemiBin2 v2.2.1 (CUDA-backed PyTorch) |
 | Bin QC | CheckM2 v1.1.0, EukCC v2.1.3, GUNC v1.0.6 | — |
 | Gene calling | pyrodigal, pyrodigal-gv, BRAKER3 | — |
 | ncRNA | tRNAscan-SE v2.0.12, Infernal v1.1.5 (`cmsearch` against Rfam SSU/LSU CMs) | — |

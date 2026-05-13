@@ -10,7 +10,7 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 ## Instructions
 
 1. Compute per-sample depth/coverage with CoverM v0.7.0+ (or BBMap for short reads, minimap2 for long reads).
-2. Bin contigs. Default to **QuickBin** (high-fidelity, CheckM2-agnostic, scales well, works on both short-read and long-read assemblies). For diverse or long-read metagenomes also run **SemiBin2 v2.2.1+** (self-supervised contrastive learning; enable GPU mode via BASALT when CUDA is available). Keep MetaBAT2 v2.15+ as a legacy fallback only when reproducing prior pipelines.
+2. Bin contigs with **QuickBin** (high-fidelity, CheckM2-agnostic; scales well on both short-read and long-read assemblies). On a GPU node, run **SemiBin2 v2.2.1+** instead — self-supervised contrastive learning with CUDA-backed PyTorch. MetaBAT2 v2.15+ is kept only as a legacy fallback for reproducing prior pipelines.
 3. Classify bins by domain (bacteria/archaea vs eukaryotes).
 4. Run domain-specific QC:
    - CheckM2 v1.1.0+ for bacterial and archaeal bins (note: v1.1.0 is a breaking upgrade — new DIAMOND v3 database from Zenodo DOI 10.5281/zenodo.14897628 and new dependency tree; re-install via mamba and refresh the DB).
