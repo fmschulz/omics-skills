@@ -50,7 +50,11 @@ These tools are used together in the bio-annotation workflow:
 ### DIAMOND + TaxonKit Pipeline
 ```bash
 # Sequence alignment with taxonomy
-diamond blastp --query proteins.faa --db nr.dmnd \
+# Prefer a clustered nr database (e.g. clusterednr) for much faster search at
+# comparable sensitivity. Check whether a clusterednr build is available under
+# $BIO_DB_ROOT before running; if not, build one from a clustered FASTA or
+# fall back to full nr and note the choice in the run log.
+diamond blastp --query proteins.faa --db clusterednr.dmnd \
   --out results.tsv --outfmt 6 qseqid sseqid staxids evalue bitscore \
   --threads 32 --sensitive
 
@@ -98,6 +102,7 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 
 ### DIAMOND
 - **NCBI nr**: ~100-200GB (DIAMOND format)
+- **Clustered nr (preferred)**: a sequence-clustered build of nr (e.g. `clusterednr`) — substantially smaller and faster to search at comparable sensitivity. Check whether one is already available under `$BIO_DB_ROOT` before downloading or building. If absent, build with `diamond makedb` from an MMseqs2/CD-HIT-reduced nr FASTA (cluster identity e.g. 70-90% depending on use case).
 - **Custom databases**: Variable size
 - **Update frequency**: Monthly recommended
 

@@ -13,7 +13,15 @@ Functional annotation and taxonomy inference from sequence homology.
 2. For InterProScan, read `docs/interproscan-usage.md` and validate the exact CLI with `--help` or `--version`.
 3. Run InterProScan for domain/family annotation.
 4. Run eggnog-mapper for orthology-based annotation.
-5. Run DIAMOND and resolve taxonomy with TaxonKit.
+5. Run DIAMOND and resolve taxonomy with TaxonKit. For any search against NCBI **nr**, prefer a clustered nr database (e.g., a `clusterednr` build under `$BIO_DB_ROOT`) — it is dramatically faster than full nr at comparable sensitivity for most annotation tasks. Before running, check whether a clusterednr build is available under the reference root; if not, either build one with `diamond makedb` from a clustered FASTA (MMseqs2/CD-HIT-reduced nr) or fall back to full nr and record the choice in the run log.
+6. For group-appropriate marker families, run HMM searches against the relevant profile libraries (Pfam, TIGRFAM, COG/arCOG, PHROG/NCVOG for viruses, eukaryotic ribosomal/structural HMMs when applicable). The choice of libraries is derived from the literature-derived playbook for the inferred group.
+7. Build an annotation-wide feature inventory by genome/contig and by gene family/domain/pathway.
+8. **Marker-gene census** — from the literature-derived playbook, list the diagnostic marker / machinery categories for the inferred group (e.g., replication, transcription, translation-related such as ribosomal proteins and translation factors, packaging, capsid/structural, chromatin/SMC/topoisomerase, host-interaction). For EACH query genome and each comparison-set genome supplied, record presence and copy number per category. Save as `marker_census.tsv` (columns: genome, category, family_id, family_name, copy_number, evidence_source, e_value, notes). Expected-but-absent markers are first-class rows, not silent omissions.
+9. **Per-family copy-number matrix** — build a Pfam/InterPro/HMM-family × genome integer matrix covering queries AND the supplied relatives. Persist as `family_copy_number_matrix.parquet`. Compute per-family fold change vs the relative median; flag query-specific families, missing-expected families, expansions, and contractions in `family_expansion_candidates.tsv`.
+10. For exploratory work, read the literature-derived analysis playbook for the inferred organism or virus group before deciding what to flag.
+11. Mine the inventory for discovery candidates relative to that playbook: expected features, missing expected features, rare or expanded families, unusual combinations, annotation/taxonomy conflicts, and high-value unknowns.
+12. For specialized inputs such as viruses, organelles, symbionts, pathogens, or poorly characterized lineages, use the feature classes and outlier dimensions reported in the relevant literature rather than a fixed global checklist.
+13. Rank discovery candidates by evidence strength, novelty relative to the comparison baseline, confidence, and follow-up value.
 
 ## Quick Reference
 
@@ -38,6 +46,11 @@ Inputs:
 
 - results/bio-annotation/annotations.parquet
 - results/bio-annotation/taxonomy.parquet
+- results/bio-annotation/feature_inventory.parquet
+- results/bio-annotation/marker_census.tsv
+- results/bio-annotation/family_copy_number_matrix.parquet
+- results/bio-annotation/family_expansion_candidates.tsv
+- results/bio-annotation/discovery_candidates.tsv
 - results/bio-annotation/annotation_report.md
 - results/bio-annotation/logs/
 
@@ -52,6 +65,11 @@ Inputs:
 - [ ] Verify required InterProScan helper binaries are resolvable, especially `ps_scan.pl`, `pfscan`, and `pfsearch`.
 - [ ] Run a small login-node smoke test on 1-2 proteins before submitting a large cluster job.
 - [ ] Verify required reference DBs exist under the reference root.
+- [ ] Feature inventory summarizes all annotated and unannotated proteins, not only top hits.
+- [ ] `marker_census.tsv` covers every literature-derived marker category for the inferred group with explicit zero rows for absent markers.
+- [ ] `family_copy_number_matrix.parquet` includes the query AND the supplied relatives, and `family_expansion_candidates.tsv` flags query-specific, missing-expected, expanded, and contracted families with fold-change vs the relative median.
+- [ ] Discovery candidates include evidence fields: gene/protein ID, annotation source, confidence, why notable, and recommended validation.
+- [ ] Discovery candidates are justified against the literature-derived playbook and comparison baseline, not only by generic keyword matches.
 
 ## Examples
 

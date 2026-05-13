@@ -21,6 +21,11 @@ Build marker gene alignments and phylogenetic trees.
 10. Filter by bootstrap support values
 11. Add taxonomic or trait annotations
 12. Generate publication-quality visualizations
+13. Use the literature-derived analysis playbook to choose markers, reference sampling, rooting, and placement strategy appropriate for the inferred group.
+14. Identify nearest neighbors and closest named relatives for each query sequence/genome when the chosen marker/reference set supports that interpretation.
+15. Export a closest-relatives table with support values, distances, taxonomy, reference accessions, and uncertainty notes.
+16. **Fetch and persist the close-relative genomes and proteomes** that downstream comparative analyses will use. Save under `results/bio-phylogenomics/relatives/{accession}/genome.fna` and `proteins.faa`, plus `relatives_manifest.tsv` recording accession, source DB, taxonomy, genome size, gene count, and the reason for inclusion. If a relative cannot be downloaded, record the failure explicitly. Without this artifact, the comparative axes downstream cannot run.
+17. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`.
 
 ## Quick Reference
 
@@ -43,6 +48,10 @@ Inputs:
 
 - results/bio-phylogenomics/alignments/
 - results/bio-phylogenomics/trees/
+- results/bio-phylogenomics/closest_relatives.tsv
+- results/bio-phylogenomics/relatives/{accession}/genome.fna
+- results/bio-phylogenomics/relatives/{accession}/proteins.faa
+- results/bio-phylogenomics/relatives_manifest.tsv
 - results/bio-phylogenomics/phylo_report.md
 - results/bio-phylogenomics/logs/
 
@@ -52,6 +61,10 @@ Inputs:
 - [ ] Bootstrap support summary meets project thresholds.
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Verify markers.faa is non-empty and aligned sequences are consistent.
+- [ ] Marker and reference choices are justified against the literature-derived analysis playbook.
+- [ ] Closest relatives are reported with support/distance metrics or uncertainty is stated.
+- [ ] Tree interpretation distinguishes well-supported nearest relatives from weakly supported placements.
+- [ ] `relatives_manifest.tsv` is populated and the matching genome/proteome files are present on disk (or each failure is recorded with a reason).
 
 ## Examples
 

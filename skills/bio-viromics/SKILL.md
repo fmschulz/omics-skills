@@ -11,7 +11,13 @@ Detect, classify, and QC viral contigs.
 
 1. Run virus detection (geNomad).
 2. Run CheckV for completeness/contamination.
-3. Assign taxonomy and cluster genomes (vConTACT3 for hierarchical classification and gene-sharing network analysis).
+3. Infer the likely viral group from detection output, taxonomy hints, genome statistics, and marker/similarity evidence.
+4. Search the literature for that viral group and write a short analysis playbook: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by scientists studying that group.
+5. Choose taxonomy, clustering, phylogenetic, and comparative methods from the playbook. Use vConTACT3 only for phage/prokaryotic-virus contexts where the literature supports gene-sharing classification; do not use it as the default for NCLDV-style giant viruses or unrelated viral groups.
+6. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed, then inspect the annotation set according to the playbook rather than a fixed global feature list.
+7. Compare each query viral genome to the literature-supported reference set. Report what matches expectations, what is missing, what is expanded, what is query-specific, and which patterns are likely artifacts.
+8. **Genome-size frontier** — for each query, compute where the genome size and gene count sit within the distribution of close relatives AND the literature-reported extremes for the inferred viral group. State percentile, distance from the group median, and whether the query approaches or exceeds known record-class sizes (cite the paper that defines that record). This applies even when the query is mid-distribution — the placement itself is the finding.
+9. Produce an interesting-findings table. If no strong discovery candidates are found, state that explicitly and list the literature-derived checks performed.
 
 ## Quick Reference
 
@@ -35,9 +41,14 @@ Inputs:
 
 - results/bio-viromics/viral_contigs.fasta
 - results/bio-viromics/checkv_results/
-- results/bio-viromics/vcontact3_results/
+- results/bio-viromics/group_comparison_results/
+- results/bio-viromics/analysis_playbook.md
 - results/bio-viromics/viral_taxonomy.tsv
-- results/bio-viromics/genome_clusters.tsv
+- results/bio-viromics/comparison_baseline.tsv
+- results/bio-viromics/closest_relatives.tsv
+- results/bio-viromics/viral_discovery_candidates.tsv
+- results/bio-viromics/viral_feature_inventory.tsv
+- results/bio-viromics/genome_size_frontier.tsv
 - results/bio-viromics/viromics_report.md
 - results/bio-viromics/logs/
 
@@ -48,6 +59,12 @@ Inputs:
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Verify contigs.fasta is non-empty.
 - [ ] Verify viral reference DBs exist under the reference root.
+- [ ] Literature-derived analysis playbook names the inferred viral group, cited sources, standard analyses, and chosen/skipped methods.
+- [ ] Chosen comparison method is appropriate for the inferred viral group; phage-oriented tools are not used for non-phage groups without literature support.
+- [ ] Discovery scan covers the feature classes and outlier dimensions identified in the playbook.
+- [ ] Closest-relative or reference-set context is reported for every high-quality viral genome where references are available.
+- [ ] `genome_size_frontier.tsv` places each query in the size/gene-count distribution of close relatives and the literature-defined group extremes, with cited references.
+- [ ] Report includes candidate discoveries with evidence, confidence, relative comparison, and follow-up checks, or a credible negative finding.
 
 ## Examples
 

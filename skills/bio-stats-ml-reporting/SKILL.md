@@ -12,6 +12,20 @@ Aggregate results, train ML models, and produce reports with validated reference
 1. Join outputs in DuckDB and build feature tables.
 2. Train baseline models and evaluate with cross-validation.
 3. Generate reports and validate references.
+4. For exploratory omics projects, aggregate discovery evidence across the literature-derived analysis playbook, annotation, phylogenomics, viromics, and comparative-genomics outputs.
+5. **Comparative-axes rollup** — join the per-axis comparison artifacts produced by upstream skills into a single `comparative_axes_summary.tsv`. The rollup must have one row per (query genome, axis) and include:
+   - `genome-property frontier` (size, gene count, etc. — link to `relative_genome_metrics.tsv` and `genome_size_frontier.tsv`)
+   - `marker-gene census` (link to `marker_census.tsv`)
+   - `family copy-number expansions/contractions` (link to `family_copy_number_comparison.tsv` and `family_expansion_candidates.tsv`)
+   - `synteny / conserved neighborhoods` (link to `conserved_neighborhoods.tsv`)
+   - `non-coding RNA census` (link to `ncRNA_census.tsv`)
+   Each row records observation, comparison baseline, literature reference, status (notable / conserved / artifact / negative), and a follow-up test.
+6. Produce an interesting-findings section that ranks candidate discoveries relative to the literature-derived baseline and separates:
+   - strong candidates with multiple evidence types
+   - plausible candidates needing validation
+   - likely artifacts or conserved lineage features
+   - explicit negative findings where nothing notable was detected
+7. Include the comparison baseline, literature context, confidence, and next discriminating analyses for each candidate.
 
 ## Quick Reference
 
@@ -35,6 +49,8 @@ Inputs:
 
 - results/bio-stats-ml-reporting/models/
 - results/bio-stats-ml-reporting/metrics.tsv
+- results/bio-stats-ml-reporting/comparative_axes_summary.tsv
+- results/bio-stats-ml-reporting/discovery_summary.tsv
 - results/bio-stats-ml-reporting/report.md
 - results/bio-stats-ml-reporting/logs/
 
@@ -44,6 +60,9 @@ Inputs:
 - [ ] Reference validation passes.
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Verify input tables are readable and schema-consistent.
+- [ ] Discovery summary joins candidate genes/features to annotation evidence, comparison baseline, literature context, and confidence.
+- [ ] `comparative_axes_summary.tsv` covers all five mandatory axes (genome-property frontier, marker-gene census, family copy-number, synteny/neighborhoods, ncRNA census) for every query genome, with rows for axes that produced negative findings.
+- [ ] Final report states what is interesting, what is conserved/expected, what is likely artifact, and what should be tested next.
 
 ## Examples
 

@@ -249,8 +249,11 @@ Example formats:
 
 ### DIAMOND + TaxonKit Pipeline
 ```bash
-# Run DIAMOND with taxonomy
-diamond blastp --query proteins.faa --db nr.dmnd \
+# Run DIAMOND with taxonomy.
+# Prefer clusterednr.dmnd over full nr.dmnd when available (check $BIO_DB_ROOT
+# first; build from a clustered nr FASTA if missing) — far faster, comparable
+# taxonomy assignment quality for typical annotation tasks.
+diamond blastp --query proteins.faa --db clusterednr.dmnd \
   --out results.tsv --outfmt 6 qseqid sseqid staxids evalue bitscore \
   --threads 32
 

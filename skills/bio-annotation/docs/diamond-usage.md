@@ -127,14 +127,20 @@ Available fields:
 
 ### Basic protein annotation
 ```bash
-diamond blastp --query proteins.faa --db nr.dmnd \
+# Prefer a clustered nr database (e.g. clusterednr) for much faster search at
+# comparable sensitivity. Check whether one is available under $BIO_DB_ROOT
+# before running; if not, build one from a sequence-clustered nr FASTA or
+# fall back to full nr and record the choice in the run log.
+diamond blastp --query proteins.faa --db clusterednr.dmnd \
   --out annotations.tsv --outfmt 6 --threads 16 \
   --max-target-seqs 1 --evalue 1e-5
 ```
 
 ### Sensitive search with taxonomy
 ```bash
-diamond blastp --query proteins.faa --db nr.dmnd \
+# Prefer clusterednr.dmnd over full nr.dmnd when available — same sensitivity
+# in most annotation contexts, far less runtime.
+diamond blastp --query proteins.faa --db clusterednr.dmnd \
   --out annotations.tsv --threads 16 --sensitive \
   --outfmt 6 qseqid sseqid pident length evalue bitscore staxids sscinames \
   --max-target-seqs 5
