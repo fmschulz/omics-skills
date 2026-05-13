@@ -2,25 +2,36 @@
 
 Last updated: 2026-02-01
 
-## Assembly Tools
+## Assembly tools
 
-### SPAdes v4.2.0
-Versatile genome assembler for short-read data (Illumina, IonTorrent) with support for hybrid assembly using long reads.
+### SPAdes v4.0.0+
+Versatile genome assembler for short-read data (Illumina, IonTorrent) with support for hybrid assembly using long reads. v4.0.0 is the final feature release; the project continues with bug-fix-only updates.
 
 - Documentation: [spades.md](spades.md)
 - Official website: https://github.com/ablab/spades
-- Use cases: Bacterial genomes, metagenomes, plasmids, single-cell, hybrid assemblies
+- Use cases: bacterial genomes, metagenomes, plasmids, single-cell, hybrid assemblies
 
-### Flye v2.9.6
-Long-read assembler optimized for PacBio and Oxford Nanopore data with sophisticated repeat resolution.
+### Flye / metaFlye v2.9.5+
+Long-read assembler for PacBio and Oxford Nanopore data with sophisticated repeat resolution. metaFlye mode (`--meta`) is the baseline for long-read metagenome assembly when HiFi-tuned alternatives are not available.
 
 - Documentation: [flye.md](flye.md)
 - Official website: https://github.com/fenderglass/Flye
-- Use cases: PacBio/ONT genomes, metagenomes, high-quality long-read assemblies
+- Use cases: PacBio/ONT isolates and metagenomes; ONT-only HiFi-poor datasets
+
+### metaMDBG v1.1 (preferred for HiFi metagenomes)
+Minimizer-based de Bruijn graph assembler tuned for PacBio HiFi metagenomes. Produces ~2× more circularized high-quality MAGs than metaFlye on HiFi data and recovers more viruses and plasmids (*Nature Biotechnology* 2024, DOI: 10.1038/s41587-023-01983-6).
+
+- Official website: https://github.com/GaetanBenoitDev/metaMDBG
+- Use cases: PacBio HiFi metagenomes (preferred over metaFlye for this read type)
+
+### myloasm (optional, large or diverse long-read datasets)
+Fast long-read metagenome assembler released in 2025. Consider when runtime is the binding constraint on diverse or very large datasets and the read profile matches its assumptions. Document the choice in the run log.
+
+- Source: see preprint and project repo when adding to your environment
 
 ## Quality Control Tools
 
-### QUAST v5.3.0
+### QUAST v5.3+
 Comprehensive assembly quality assessment tool providing contiguity, completeness, and correctness metrics.
 
 - Documentation: [quast.md](quast.md)
@@ -41,16 +52,18 @@ flye --nano-hq ont_reads.fastq.gz --genome-size 5m --out-dir flye_out --threads 
 quast.py spades_out/contigs.fasta -r reference.fasta -o qc_results -t 8
 ```
 
-## Tool Selection Guide
+## Tool selection guide
 
-| Read Type | Genome Type | Recommended Tool | Alternative |
+| Read type | Genome type | Recommended tool | Alternative |
 |-----------|-------------|------------------|-------------|
-| Illumina paired-end | Bacterial | SPAdes --isolate | - |
-| Illumina paired-end | Metagenomic | SPAdes --meta | - |
-| PacBio HiFi | Any | Flye --pacbio-hifi | SPAdes (hybrid) |
-| ONT Q20+ | Any | Flye --nano-hq | SPAdes (hybrid) |
-| Illumina + PacBio | Any | SPAdes (hybrid) | Flye + polishing |
-| Illumina + ONT | Any | SPAdes (hybrid) | Flye + polishing |
+| Illumina paired-end | Bacterial isolate | `spades.py --isolate` | — |
+| Illumina paired-end | Metagenomic | `spades.py --meta` | — |
+| PacBio HiFi | Isolate | `flye --pacbio-hifi` | — |
+| PacBio HiFi | Metagenomic | **metaMDBG v1.1** | metaFlye `--meta --pacbio-hifi` |
+| ONT Q20+ | Isolate | `flye --nano-hq` | — |
+| ONT Q20+ | Metagenomic | metaFlye `--meta --nano-hq` | myloasm (when speed-bound) |
+| Illumina + PacBio | Hybrid | SPAdes (hybrid) | Flye + short-read polishing |
+| Illumina + ONT | Hybrid | SPAdes (hybrid) | Flye + short-read polishing |
 
 ## Performance Considerations
 

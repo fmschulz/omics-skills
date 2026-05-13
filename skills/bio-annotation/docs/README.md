@@ -9,41 +9,53 @@ Each tool has a dedicated markdown file with comprehensive usage information inc
 ## Available Tool Guides
 
 ### [DIAMOND](diamond-usage.md)
-**Version**: v2.1.6+
-**Purpose**: Accelerated BLAST-compatible sequence aligner
-**Key Features**: 100x-10,000x faster than BLAST, protein and translated DNA searches
+**Version**: v2.1.20+
+**Purpose**: Accelerated BLAST-compatible sequence aligner (CPU)
+**Key features**: 100×–10,000× faster than BLAST; protein and translated-DNA searches
 **Documentation**: [diamond-usage.md](diamond-usage.md)
-**Official Site**: http://www.diamondsearch.org
+**Official site**: http://www.diamondsearch.org
+
+### MMseqs2 / MMseqs2-GPU (alternative to DIAMOND on CUDA nodes)
+**Version**: v15-6f452+
+**Purpose**: Iterative sequence search; GPU-accelerated since the 2025 release
+**Key features**: ~20× faster than CPU MMseqs2 and 177–199× faster than JackHMMER on CUDA Turing or newer; near-identical sensitivity. Reference: Kallenborn et al., *Nature Methods* 2025, DOI 10.1038/s41592-025-02819-8.
+**Use when**: a GPU is available, or when iterative profile searches are needed in place of JackHMMER.
 
 ### [TaxonKit](taxonkit-usage.md)
-**Version**: v0.14.2-v0.20.0
-**Purpose**: NCBI Taxonomy data manipulation toolkit
-**Key Features**: Taxonomy resolution, lineage queries, TaxID conversion
+**Version**: v0.20.0+ (required for the March 2025 NCBI rank update: "superkingdom" → "domain", added "realm" for viruses)
+**Purpose**: NCBI taxonomy data manipulation toolkit
+**Key features**: Taxonomy resolution, lineage queries, TaxID conversion
 **Documentation**: [taxonkit-usage.md](taxonkit-usage.md)
-**Official Site**: https://bioinf.shenwei.me/taxonkit/
+**Official site**: https://bioinf.shenwei.me/taxonkit/
 
 ### [InterProScan](interproscan-usage.md)
-**Version**: v5-6
+**Version**: v5.77-108.0 (stable); InterProScan 6 (Nextflow) is the forward migration path
 **Purpose**: Protein function classification and domain prediction
-**Key Features**: Integrates multiple signature databases, GO terms, pathway annotations
+**Key features**: Integrates multiple signature databases, GO terms, pathway annotations
 **Documentation**: [interproscan-usage.md](interproscan-usage.md)
-**Official Site**: https://www.ebi.ac.uk/interpro/
+**Official site**: https://www.ebi.ac.uk/interpro/
 
 ### [eggNOG-mapper](eggnog-mapper-usage.md)
-**Version**: v2.1.13
+**Version**: v2.1.13+
 **Purpose**: Functional annotation through orthology assignment
-**Key Features**: Fast genome-wide annotation, COG categories, KEGG pathways
+**Key features**: Fast genome-wide annotation, COG categories, KEGG pathways; supports MMseqs2 as an internal search backend.
 **Documentation**: [eggnog-mapper-usage.md](eggnog-mapper-usage.md)
-**Official Site**: http://eggnog-mapper.embl.de/
+**Official site**: http://eggnog-mapper.embl.de/
 
-## Workflow Integration
+### pyhmmer (preferred HMMER interface)
+**Version**: v0.10+
+**Purpose**: Python bindings around HMMER 3.4 for profile HMM search
+**Key features**: Native SIMD, batch-friendly APIs, no temporary-file overhead. Use for Pfam/TIGRFAM/PHROG/NCVOG/COG scans by default; fall back to `hmmsearch`/`hmmscan` only when an upstream tool requires the CLI.
+
+## Workflow integration
 
 These tools are used together in the bio-annotation workflow:
 
-1. **InterProScan**: Domain and family annotation from protein signatures
-2. **eggNOG-mapper**: Orthology-based functional annotation with GO, COG, and KEGG
-3. **DIAMOND**: Fast sequence similarity search for taxonomy assignment
-4. **TaxonKit**: Resolve taxonomy from DIAMOND TaxIDs to full lineages
+1. **InterProScan**: domain and family annotation from protein signatures.
+2. **eggNOG-mapper**: orthology-based functional annotation with GO, COG, and KEGG.
+3. **DIAMOND** (CPU) or **MMseqs2-GPU** (when a GPU is available): sequence similarity search for taxonomy and homology assignment.
+4. **pyhmmer**: HMM-based marker-gene and domain-family searches.
+5. **TaxonKit**: resolve taxonomy from search-result TaxIDs to full lineages.
 
 ## Quick Start Examples
 

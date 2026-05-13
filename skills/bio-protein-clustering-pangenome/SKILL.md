@@ -9,7 +9,10 @@ Cluster proteins into orthogroups and derive pangenome matrices.
 
 ## Instructions
 
-1. Cluster proteins with MMseqs2 or ProteinOrtho.
+1. Cluster proteins. Choose the tool by dataset size and goal:
+   - Default for orthology inference up to a few hundred genomes: **OrthoFinder v3** (improved accuracy and lower RAM at scale, supports MSA-based gene trees; supersedes OrthoFinder v2 and OrthoMCL workflows).
+   - Very large pangenomes where OrthoFinder is too RAM-heavy: **ProteinOrtho v6.1.7+** as the fast, scalable alternative.
+   - Sequence clustering (not strict orthology) and similarity search backbones: **MMseqs2** v15-6f452+. Enable GPU mode (`mmseqs ... --gpu`) on CUDA Turing+ nodes for a ~20× speedup at near-identical sensitivity.
 2. Build presence/absence matrix AND an integer copy-number matrix (orthogroup × genome) covering the query AND the close relatives produced by `/bio-phylogenomics`.
 3. Compute core/accessory/cloud/singleton partitions.
 4. Identify single-copy orthologs for phylogenetic analysis.
@@ -17,7 +20,11 @@ Cluster proteins into orthogroups and derive pangenome matrices.
 6. Calculate pangenome statistics (completeness, orthogroup occupancy).
 7. When a query genome or genome set is under study, use the literature-derived analysis playbook to choose an appropriate comparison baseline: closest relatives, a broader clade, environmental references, or a negative/control set.
 8. **Genome-property frontier table** — produce `relative_genome_metrics.tsv` with one row per (query + relative) and columns for genome size, contig count, N50, gene count, coding density, GC, tRNA count, rRNA count, and any group-relevant property. Add a column that places the query in the relative distribution (percentile, min/median/max, "record-class" tag) and a column citing the literature reference defining the group's known range.
-9. **Synteny / conserved neighborhoods** — for each pair (query, relative) compute conserved gene neighborhoods (e.g., ≥2 collinear orthologs) using a tool such as MCScanX, SibeliaZ, or a custom collinearity script. Save as `conserved_neighborhoods.tsv` with columns: query_block_id, relative, relative_block_id, members (ortholog IDs), intergenic_spacing_query, intergenic_spacing_relative, spacing_ratio, notes. Flag conserved gene pairs and unusual spacing/expansions.
+9. **Synteny / conserved neighborhoods** — for each pair (query, relative) compute conserved gene neighborhoods (e.g., ≥2 collinear orthologs). Tool selection:
+   - Pairwise / classical: MCScanX (*Nature Protocols* 2024 updated protocol).
+   - Multi-genome at scale (>2 assemblies, up to >3 Gbp, >15% divergence): **ntSynt** (*BMC Biology* 2025, DOI: 10.1186/s12915-025-02455-w) — alignment-free minimizer-graph approach; does not detect duplications.
+   - Strain-level work where duplication detection matters: SibeliaZ.
+   Save results as `conserved_neighborhoods.tsv` with columns: query_block_id, relative, relative_block_id, members (ortholog IDs), intergenic_spacing_query, intergenic_spacing_relative, spacing_ratio, notes. Flag conserved gene pairs and unusual spacing/expansions.
 10. Identify discovery-relevant differences defined by the playbook, including query-specific families, missing expected families, expansions/contractions, unusual sharing patterns, and high-value unknowns. Persist as `family_copy_number_comparison.tsv` (query vs relative-median fold change per family) — coordinated with `bio-annotation`'s family matrix.
 11. Annotate candidate orthogroups with `/bio-annotation`; for high-value unknowns, route representatives to `/bio-structure-annotation` when structure-based inference is appropriate.
 12. Produce a comparison summary that separates conserved lineage features from unusual or query-specific features and states the baseline used. The summary must report ALL of: genome-property frontier, marker-category presence/copy, family expansions/contractions, synteny conservation/breakage, and ncRNA counts side-by-side with relatives.

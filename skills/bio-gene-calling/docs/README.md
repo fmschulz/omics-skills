@@ -8,51 +8,51 @@ This directory contains practical usage guides for gene calling tools used in th
 
 ## Tools
 
-### Prokaryotic Gene Calling
+### Prokaryotic and viral gene calling
 
-- **[pyrodigal.md](pyrodigal.md)** - Python binding to Prodigal (v3.7.0)
+- **[pyrodigal.md](pyrodigal.md)** - Python bindings around Prodigal (v3.7.0+) for bacteria and archaea
   - Fast prokaryotic gene prediction
   - Metagenomic and single-genome modes
   - Thread-safe parallel processing
   - Source: https://github.com/althonos/pyrodigal
 
-- **[prodigal-gv.md](prodigal-gv.md)** - Modified Prodigal for viruses (v2.11.0)
-  - Optimized for giant viruses
-  - Additional metagenomic models
-  - Compatible with standard Prodigal
-  - Source: https://github.com/apcamargo/prodigal-gv
+- **[pyrodigal-gv.md](pyrodigal-gv.md)** - SIMD-accelerated Python bindings around prodigal-gv for viruses, including giant viruses
+  - Replaces the standalone `prodigal-gv` C binary
+  - Same model set, much faster, actively maintained
+  - Source: https://github.com/althonos/pyrodigal-gv
 
-### Eukaryotic Gene Calling
+### Eukaryotic gene calling
 
-- **[braker.md](braker.md)** - Pipeline for eukaryotic annotation (v3.0.8)
-  - Combines GeneMark and AUGUSTUS
-  - RNA-Seq and protein evidence integration
+- **[braker.md](braker.md)** - BRAKER3 (*Genome Research* 2024) — fully automated eukaryotic annotation pipeline
+  - Combines GeneMark-ETP and AUGUSTUS internally (AUGUSTUS is not run as a standalone tool)
+  - RNA-seq and protein evidence integration
   - Automated training
   - Source: https://github.com/Gaius-Augustus/BRAKER
 
-- **[augustus.md](augustus.md)** - Eukaryotic gene prediction (v3.5.0)
-  - Probabilistic modeling
-  - 90+ trained species
-  - Evidence integration
-  - Source: https://github.com/Gaius-Augustus/Augustus
+### RNA gene detection
 
-### RNA Gene Detection
-
-- **[trnascan-se.md](trnascan-se.md)** - tRNA detection (v2.0.12)
-  - Covariance model-based
+- **[trnascan-se.md](trnascan-se.md)** - tRNA detection (v2.0.12+)
+  - Covariance model-based; isotype-specific models
   - Bacterial, archaeal, eukaryotic modes
-  - Uses Infernal v1.1
+  - Uses Infernal v1.1.5
   - Source: https://github.com/UCSC-LoweLab/tRNAscan-SE
 
-## Quick Reference
+- **[infernal.md](infernal.md)** - rRNA and other ncRNA detection via `cmsearch` against Rfam covariance models
+  - Replaces barrnap as the default rRNA caller in this workflow
+  - Domain-appropriate Rfam models (SSU, LSU, 5S, 5.8S; mitochondrial 12S/16S where applicable) — see SKILL.md for the model list
+  - Source: http://eddylab.org/infernal/
 
-| Tool | Organism Type | Mode | Typical Use Case |
+## Quick reference
+
+| Tool | Organism type | Mode | Typical use case |
 |------|---------------|------|------------------|
-| pyrodigal | Bacteria, Archaea | Meta/Single | Fast prokaryotic gene calling |
-| prodigal-gv | Viruses | Meta | Viral genomes, especially giants |
-| BRAKER | Eukaryotes | Evidence-based | High-quality eukaryotic annotation |
-| AUGUSTUS | Eukaryotes | Ab initio + hints | Eukaryotic gene prediction |
+| pyrodigal | Bacteria, archaea | Meta / single | Fast prokaryotic gene calling |
+| pyrodigal-gv | Viruses (including giants) | Meta | Viral genomes |
+| BRAKER3 | Eukaryotes | Evidence-based | High-quality eukaryotic annotation |
 | tRNAscan-SE | All domains | Domain-specific | tRNA detection |
+| Infernal `cmsearch` | All domains | Rfam covariance models | rRNA (SSU/LSU/5S/5.8S) and other ncRNA |
+
+> **Retired from this workflow:** AUGUSTUS as a standalone tool (now invoked only through BRAKER3); standalone `prodigal-gv` (use pyrodigal-gv); `barrnap` (replaced by Infernal `cmsearch` against domain-specific Rfam models).
 
 ## Documentation Format
 

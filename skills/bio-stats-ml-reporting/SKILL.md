@@ -9,8 +9,10 @@ Aggregate results, train ML models, and produce reports with validated reference
 
 ## Instructions
 
-1. Join outputs in DuckDB and build feature tables.
+1. Join outputs in DuckDB v1.1+ and build feature tables. Arrow / DuckLake integration is the recommended bridge into ML pipelines for large datasets.
 2. Train baseline models and evaluate with cross-validation.
+   - CPU baseline: scikit-learn v1.5+ for linear/tree/clustering baselines; XGBoost v2.1.4+ for gradient boosting.
+   - GPU node available (CUDA): set `device="cuda"` on XGBoost (native since v2.0) by default. For sklearn-compatible estimators (random forest, k-means, PCA, UMAP), use **RAPIDS cuML** as a drop-in replacement and record the device in the run log.
 3. Generate reports and validate references.
 4. For exploratory omics projects, aggregate discovery evidence across the literature-derived analysis playbook, annotation, phylogenomics, viromics, and comparative-genomics outputs.
 5. **Comparative-axes rollup** — join the per-axis comparison artifacts produced by upstream skills into a single `comparative_axes_summary.tsv`. The rollup must have one row per (query genome, axis) and include:

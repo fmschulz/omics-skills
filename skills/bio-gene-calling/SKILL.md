@@ -9,13 +9,22 @@ Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.
 
 ## Instructions
 
-1. Select gene caller by organism class.
+1. Select gene caller by organism class:
+   - Prokaryotes and viruses (including giant viruses): **pyrodigal-gv** v0.3+ (SIMD-accelerated Cython bindings around prodigal-gv; same model set, much faster, actively maintained).
+   - Eukaryotes: **BRAKER3** (*Genome Research* 2024, DOI: 10.1101/gr.278090.123) as the fully-automated pipeline. BRAKER3 invokes AUGUSTUS internally; do not run AUGUSTUS as a standalone caller.
 2. Run gene calling and produce GFF/FAA/FNA.
-3. Always run tRNA detection (ARAGORN or tRNAscan-SE) and rRNA detection (barrnap; also try Infernal+Rfam for divergent or eukaryotic/viral cases). Report counts per class per assembly. If no hits are found at default thresholds, rerun with relaxed thresholds and explicitly record the negative finding — silence on ncRNA is not acceptable.
+3. Always run tRNA detection and rRNA detection on every assembly, and report counts per class. Negative findings (zero hits at default and relaxed thresholds) are required results — never leave ncRNA presence/absence unstated.
+   - tRNA: tRNAscan-SE v2.0.12+ (preferred; isotype-specific covariance models) or ARAGORN v1.2.41+ for tmRNA where appropriate.
+   - rRNA: Infernal v1.1.5+ `cmsearch` against the relevant Rfam covariance models. Pick the model set by domain of life:
+     - Bacteria: RF00177 (SSU 16S), RF02541 (LSU 23S), RF00001 (5S).
+     - Archaea: RF01959 (SSU 16S), RF02540 (LSU 23S), RF00001 (5S).
+     - Eukaryotes: RF01960 (SSU 18S), RF02543 (LSU 28S), RF00002 (5.8S), RF00001 (5S).
+     - Metazoan mitochondria, when applicable: RF02555 (12S), RF02546 (16S).
+     `cmsearch --rfam --cut_ga --nohmmonly` is a sensible default; if no hits, rerun without `--cut_ga` and record both results.
 4. For viral or otherwise specialized genomes, choose the gene caller and mode from tool documentation and the literature-derived analysis playbook for the inferred group; record the rationale.
 5. Summarize gene count, gene density, coding fraction, ORF length distribution, unusually long ORFs, overlapping genes, tRNAs, rRNAs, and other features that may affect downstream discovery.
 6. Flag gene-calling anomalies relative to the inferred group and data type, including patterns that could hide interesting biology or indicate artifacts.
-7. Produce a `ncRNA_census.tsv` with columns: assembly, class (tRNA/rRNA/other), tool, threshold (default/relaxed), count, notes. This file is required even when all counts are zero.
+7. Produce a `ncRNA_census.tsv` with columns: assembly, class (tRNA/rRNA/tmRNA/other), tool, model (Rfam accession when applicable), threshold (default/relaxed), count, notes. This file is required even when all counts are zero.
 
 ## Quick Reference
 

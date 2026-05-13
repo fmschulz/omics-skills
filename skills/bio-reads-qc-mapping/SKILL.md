@@ -10,9 +10,12 @@ Ingest, QC, and map reads with reproducible outputs. Use for raw read processing
 ## Instructions
 
 1. Parse sample sheet and validate inputs.
-2. For short reads: Run QC/trimming (bbduk).
-3. For long reads: Trim adapters (Porechop) and filter by quality/length (Filtlong).
-4. Map reads (bbmap or minimap2) and generate coverage tables.
+2. For short reads: run QC and adapter/quality trimming with `bbduk` or `fastp` v1.3.3+.
+3. For long reads: trim adapters with `Porechop_ABI` (preferred; the original `Porechop` is unmaintained and ships stale adapter sets) or `Pychopper` for full-length cDNA. Filter by quality and length with `filtlong` v0.2.1.
+4. Map reads and produce coverage tables:
+   - Short reads, CPU: `bbmap` or `bwa-mem2` v2.2.1+. Short reads, GPU node available: NVIDIA Parabricks `fq2bam` (wraps `bwa-mem2` + GATK markdup; typically 3–4× faster than `bwa-mem2` on 8 cores and up to ~80× over a 96-core CPU pipeline).
+   - Long reads, CPU: `minimap2` v2.30+. AVX-512 hardware: `mm2-fast` as a drop-in replacement (~1.8× speedup). GPU node available: `mm2-gb` or `mm2-ax` for CUDA-accelerated long-read alignment.
+5. Record the tool, version, and any GPU device used in the run log.
 
 ## Quick Reference
 

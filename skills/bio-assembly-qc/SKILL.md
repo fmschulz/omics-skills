@@ -9,9 +9,14 @@ Assemble genomes/metagenomes and produce assembly QC artifacts.
 
 ## Instructions
 
-1. Select assembler based on read type and genome size.
-2. Run assembly with resource-aware settings.
-3. Run QUAST/MetaQUAST and summarize metrics.
+1. Select an assembler based on read type, genome/metagenome scope, and sample diversity:
+   - Illumina short-read isolates and hybrid assemblies: SPAdes v4.0.0+ (final feature release; bug-fix-only series continues). Use `metaSPAdes` for short-read metagenomes.
+   - Long-read isolates (PacBio CLR, ONT): Flye v2.9.5+.
+   - Long-read metagenomes: Flye v2.9.5+ in `--meta` mode (metaFlye) as the baseline.
+   - HiFi metagenomes: prefer **metaMDBG v1.1** (~2× more circularized high-quality MAGs vs metaFlye on HiFi, better virus/plasmid recovery; *Nature Biotechnology* 2024, DOI: 10.1038/s41587-023-01983-6). Keep metaFlye as a comparator when a per-sample failure mode is suspected.
+   - Diverse or very large long-read datasets where speed dominates: **myloasm** (2025) as a faster long-read metagenome assembler when its profile matches the dataset; document the choice in the run log.
+2. Run assembly with resource-aware settings and record exact CLI, version, thread count, and RAM ceiling.
+3. Run QUAST v5.3+ (use MetaQUAST for metagenomes) and summarize metrics.
 
 ## Quick Reference
 
@@ -29,7 +34,7 @@ Prerequisites:
 - Sufficient disk and RAM for chosen assembler.
 Inputs:
 - reads/*.fastq.gz (raw reads).
-- assembler choice (spades | flye).
+- assembler choice (spades | flye | metamdbg | myloasm).
 
 ## Output
 

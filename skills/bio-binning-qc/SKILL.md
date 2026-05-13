@@ -9,13 +9,13 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 
 ## Instructions
 
-1. Compute depth/coverage per sample.
-2. Run multiple binners (MetaBAT2, SemiBin2, QuickBin).
+1. Compute per-sample depth/coverage with CoverM v0.7.0+ (or BBMap for short reads, minimap2 for long reads).
+2. Bin contigs. Default to **QuickBin** (high-fidelity, CheckM2-agnostic, scales well, works on both short-read and long-read assemblies). For diverse or long-read metagenomes also run **SemiBin2 v2.2.1+** (self-supervised contrastive learning; enable GPU mode via BASALT when CUDA is available). Keep MetaBAT2 v2.15+ as a legacy fallback only when reproducing prior pipelines.
 3. Classify bins by domain (bacteria/archaea vs eukaryotes).
 4. Run domain-specific QC:
-5. CheckM2 for bacterial and archaeal bins
-6. EukCC for eukaryotic bins
-7. GUNC for contamination detection (all domains).
+   - CheckM2 v1.1.0+ for bacterial and archaeal bins (note: v1.1.0 is a breaking upgrade — new DIAMOND v3 database from Zenodo DOI 10.5281/zenodo.14897628 and new dependency tree; re-install via mamba and refresh the DB).
+   - EukCC v2.1.3+ for eukaryotic bins.
+   - GUNC v1.0.6+ for contamination detection across all domains; treat it as a complement to CheckM2 (improves recall of chimeric bins).
 
 ## Quick Reference
 

@@ -16,19 +16,19 @@ This directory contains practical documentation for the tools used in the bio-bi
 ### Coverage Computation
 - [coverm.md](coverm.md) - CoverM v0.7.0: Read alignment statistics and coverage computation
 
-### Binning Tools
-- [metabat2.md](metabat2.md) - MetaBAT2 v2.18: Coverage-based binning
-- [semibin2.md](semibin2.md) - SemiBin2 v2.2.1: Deep learning binning with pre-trained models
-- [quickbin.md](quickbin.md) - QuickBin (BBTools) v39.52: High-fidelity neural network binning
+### Binning tools (in recommended order)
+- [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.52+**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
+- [semibin2.md](semibin2.md) - **SemiBin2 v2.2.1+**: deep-learning binner with pre-trained models; preferred for diverse or long-read metagenomes (GPU mode available via BASALT)
+- [metabat2.md](metabat2.md) - MetaBAT2 v2.15+: legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
 
-### Quality Control Tools
+### Quality-control tools
 
-#### Domain-Specific QC
-- [checkm2.md](checkm2.md) - CheckM2 v1.0.2: Completeness/contamination for bacteria and archaea
-- [eukcc.md](eukcc.md) - EukCC v2.x: Quality assessment for eukaryotic MAGs
+#### Domain-specific QC
+- [checkm2.md](checkm2.md) - **CheckM2 v1.1.0+**: completeness/contamination for bacteria and archaea. v1.1.0 is a breaking upgrade — new DIAMOND v3 database from Zenodo (DOI 10.5281/zenodo.14897628) and new dependency tree; refresh the install and DB before use.
+- [eukcc.md](eukcc.md) - EukCC v2.1.3+: quality assessment for eukaryotic MAGs
 
-#### Contamination Detection
-- [gunc.md](gunc.md) - GUNC v1.0.6: Chimerism and contamination detection for prokaryotes
+#### Contamination detection
+- [gunc.md](gunc.md) - GUNC v1.0.6+: chimerism and contamination detection across all domains
 
 ## Quick Reference
 
@@ -54,10 +54,11 @@ export EUKCC2_DB=$(realpath eukcc2_db_ver_1.2)
 # 1. Compute coverage from BAM files
 coverm contig --bam-files *.bam -m mean variance -o depth.txt
 
-# 2. Run multiple binners
-metabat2 -i contigs.fasta -a depth.txt -o metabat/bin -t 16
-SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment human_gut -o semibin/ -p 16
+# 2. Run binners (QuickBin as default; add SemiBin2 for diverse or long-read data)
 quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam xstrict
+SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment human_gut -o semibin/ -p 16
+# MetaBAT2 only when reproducing prior pipelines:
+# metabat2 -i contigs.fasta -a depth.txt -o metabat/bin -t 16
 
 # 3. Classify bins by domain (bacteria/archaea vs eukaryotes)
 # Use appropriate classifier tool
@@ -81,12 +82,12 @@ gunc run --input_dir prokaryotic_bins/ --db_file gunc_db/gunc_db_progenomes2.1.d
 | Medium | ≥50% | ≤10% | - |
 | Low | <50% | <10% | - |
 
-### Tool Selection Guide
+### Tool selection guide
 
 **Choose binning tool based on:**
-- **MetaBAT2**: Fast, robust, well-established; best with 3+ samples
-- **SemiBin2**: Deep learning; excellent with pre-trained models for known environments
-- **QuickBin**: High precision, low contamination; conservative merging for high-fidelity bins
+- **QuickBin (default)**: high precision, low contamination; performs well on both short-read and long-read assemblies; CheckM2-agnostic.
+- **SemiBin2 (preferred for diverse or long-read metagenomes)**: deep learning; pre-trained models for known environments; GPU mode via BASALT when CUDA is available.
+- **MetaBAT2 (legacy fallback)**: only when reproducing prior pipelines; otherwise prefer QuickBin or SemiBin2.
 
 **Choose QC tool based on domain:**
 - **Bacteria/Archaea**: CheckM2 (completeness/contamination) + GUNC (chimerism)

@@ -10,17 +10,17 @@ Build marker gene alignments and phylogenetic trees.
 ## Instructions
 
 1. Extract marker genes or SSU rRNA sequences.
-2. Align and trim sequences using project-standard workflows.
-3. Build ML trees with bootstraps:
-4. Standard accuracy: Use IQ-TREE (comprehensive model selection, publication-quality)
-5. Fast mode: Use IQ-TREE -fast (exploratory analysis, large datasets >10K sequences)
-6. Very large datasets: Use VeryFastTree (>100K sequences, ultra-fast)
-7. Post-process trees with ETE Toolkit:
-8. Calculate tree statistics (branch lengths, distances, topology metrics)
-9. Root, prune, or collapse nodes as needed
-10. Filter by bootstrap support values
-11. Add taxonomic or trait annotations
-12. Generate publication-quality visualizations
+2. Align with MAFFT v7.5+ and trim with trimAl v1.4 (or ClipKIT when phylogenetically-informed trimming is preferred).
+3. Build ML trees with bootstraps. Choose by leaf count:
+   - Up to ~2,000 taxa: IQ-TREE v3 (v3.1.2+) for comprehensive model selection, MAST/GTRpmix, and publication-quality inference.
+   - Above ~2,000 taxa: VeryFastTree v4.0 (multi-threaded, SIMD, "disk computing" for >1M taxa).
+   - For exploratory or large alignments where IQ-TREE 3 is too slow: `iqtree3 -fast`.
+4. Post-process trees with ETE v4 (`ete4`):
+   - Compute tree statistics (branch lengths, distances, topology metrics).
+   - Root, prune, or collapse nodes as needed.
+   - Filter by bootstrap support.
+   - Add taxonomic or trait annotations.
+   - Generate publication-quality visualizations.
 13. Use the literature-derived analysis playbook to choose markers, reference sampling, rooting, and placement strategy appropriate for the inferred group.
 14. Identify nearest neighbors and closest named relatives for each query sequence/genome when the chosen marker/reference set supports that interpretation.
 15. Export a closest-relatives table with support values, distances, taxonomy, reference accessions, and uncertainty notes.

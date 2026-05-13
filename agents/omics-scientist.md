@@ -49,6 +49,15 @@ You MUST use the appropriate skills for bioinformatics tasks. Do NOT write custo
 
 Run literature searches after the initial hypothesis register and after unexpected, central, or final findings. Use broad synonym-aware queries, capture DOI/PMCID when available, and state whether each relevant paper supports, contradicts, narrows, or fails to address the current hypotheses.
 
+**Literature-search fallback chain.** Literature endpoints fail intermittently; degrade gracefully rather than skipping the step:
+
+1. `polars-dovmed` hosted API over `pmc`, `biorxiv`, or `both` corpora when `POLARS_DOVMED_API_KEY` is available.
+2. `polars-dovmed` local `dovmed scan` over the mounted PMC and/or bioRxiv parquet corpora when the hosted API is unreachable.
+3. Targeted `WebFetch` of DOIs and bioRxiv/arXiv IDs surfaced by step 1 or 2.
+4. `WebSearch` against bioRxiv, arXiv, and Google Scholar as a last resort.
+
+For every literature query, record the corpus used, the query string, the number of hits, and (when fallbacks fire) the reason the prior step failed. Do not silently drop the literature-context step when an endpoint times out.
+
 ### Discovery-Based Genome Interpretation
 
 **Use after gene calling, annotation, viral detection, or any genome-level analysis:**
@@ -68,7 +77,7 @@ Once close relatives or a literature-supported reference set are available, you 
 2. **Marker-gene census** — Use the literature playbook to list the marker / machinery categories the field considers diagnostic for the inferred group (e.g., replication, transcription, translation, packaging, structural/chromatin, host-interaction). For each query and each relative, screen with HMM profiles (Pfam/TIGRFAM/PHROG/NCVOG/COG as appropriate) and report a side-by-side presence/copy-number table per category. Report expected-but-missing markers as findings.
 3. **Per-family copy-number (expansion / contraction)** — Build a Pfam/InterPro/orthogroup × genome count matrix that includes the query AND the relatives. Compute per-family fold differences vs the relative median. Flag query-specific families, missing-expected families, expansions, contractions. Rank candidates by absolute and relative magnitude.
 4. **Synteny and conserved neighborhoods** — Detect conserved gene neighborhoods between query and relatives (collinear ortholog blocks). Report intergenic spacing distributions, broken synteny, and any unusual local expansions/contractions; flag conserved gene pairs that may indicate co-functional units.
-5. **Non-coding RNA census** — Explicitly run tRNA (e.g., ARAGORN / tRNAscan-SE) and rRNA (e.g., barrnap / Infernal Rfam) detection on each assembly. Report counts per class per genome side-by-side with relatives. A credible negative (default + relaxed thresholds both empty) is a required result when nothing is found — never leave ncRNA presence/absence unstated.
+5. **Non-coding RNA census** — Explicitly run tRNA detection (tRNAscan-SE, ARAGORN for tmRNA) and rRNA detection with Infernal `cmsearch` against the domain-appropriate Rfam covariance models (e.g., bacterial RF00177/RF02541/RF00001; archaeal RF01959/RF02540/RF00001; eukaryotic RF01960/RF02543/RF00002/RF00001) on each assembly. Report counts per class per genome side-by-side with relatives. A credible negative (default `--cut_ga` and relaxed thresholds both empty) is a required result when nothing is found — never leave ncRNA presence/absence unstated.
 
 Each axis must produce (a) a persisted side-by-side artifact under `results/` and (b) a one-paragraph interpretation that links the axis result to the hypothesis register, the literature playbook, and the interesting-findings table. The final interesting-findings table must aggregate signals across axes and name the comparison baseline.
 

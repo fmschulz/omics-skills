@@ -9,15 +9,19 @@ Detect, classify, and QC viral contigs.
 
 ## Instructions
 
-1. Run virus detection (geNomad).
-2. Run CheckV for completeness/contamination.
+1. Run virus detection with geNomad v1.8+ (use as primary plasmid-and-virus classifier).
+2. Run CheckV v1.0.1 for completeness, contamination, and host-removal QC.
 3. Infer the likely viral group from detection output, taxonomy hints, genome statistics, and marker/similarity evidence.
 4. Search the literature for that viral group and write a short analysis playbook: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by scientists studying that group.
-5. Choose taxonomy, clustering, phylogenetic, and comparative methods from the playbook. Use vConTACT3 only for phage/prokaryotic-virus contexts where the literature supports gene-sharing classification; do not use it as the default for NCLDV-style giant viruses or unrelated viral groups.
-6. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed, then inspect the annotation set according to the playbook rather than a fixed global feature list.
-7. Compare each query viral genome to the literature-supported reference set. Report what matches expectations, what is missing, what is expanded, what is query-specific, and which patterns are likely artifacts.
-8. **Genome-size frontier** — for each query, compute where the genome size and gene count sit within the distribution of close relatives AND the literature-reported extremes for the inferred viral group. State percentile, distance from the group median, and whether the query approaches or exceeds known record-class sizes (cite the paper that defines that record). This applies even when the query is mid-distribution — the placement itself is the finding.
-9. Produce an interesting-findings table. If no strong discovery candidates are found, state that explicitly and list the literature-derived checks performed.
+5. Choose taxonomy, clustering, phylogenetic, and comparative methods from the playbook:
+   - For bacteriophage and prokaryotic-virus gene-sharing taxonomy: vConTACT3 v3.0 (hierarchical genus-to-order assignment, >95% ICTV agreement; supersedes vConTACT2).
+   - For Nucleocytoviricota / giant viruses: gvclass v1.0 for genus-level classification combined with marker-gene phylogenies of NCLDV core genes.
+   - For RNA viruses, ssDNA viruses, or other groups not well-served by vConTACT3: use group-specific markers, phylogenomics, and protein-family approaches from the literature playbook rather than forcing a phage-oriented workflow.
+6. For prokaryotic-virus discovery, VirSorter2 v2.2.4 is a complementary detector to geNomad; combine with CheckV QC to remove false positives.
+7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed, then inspect the annotation set according to the playbook rather than a fixed global feature list.
+8. Compare each query viral genome to the literature-supported reference set. Report what matches expectations, what is missing, what is expanded, what is query-specific, and which patterns are likely artifacts.
+9. **Genome-size frontier** — for each query, compute where the genome size and gene count sit within the distribution of close relatives AND the literature-reported extremes for the inferred viral group. State percentile, distance from the group median, and whether the query approaches or exceeds known record-class sizes (cite the paper that defines that record). This applies even when the query is mid-distribution — the placement itself is the finding.
+10. Produce an interesting-findings table. If no strong discovery candidates are found, state that explicitly and list the literature-derived checks performed.
 
 ## Quick Reference
 

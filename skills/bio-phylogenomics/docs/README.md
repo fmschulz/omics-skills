@@ -6,41 +6,39 @@ Documentation for phylogenetic tree inference and post-processing tools.
 
 ## Documentation Files
 
-### Tree Inference Tools
+### Tree inference tools
 
-- **[iqtree.md](iqtree.md)** - IQ-TREE v3.0.1 usage guide
-  - Maximum likelihood tree inference with model selection
-  - Standard mode for publication-quality trees (<10K sequences)
-  - Fast mode for exploratory analysis (10K-100K sequences)
-  - Comprehensive bootstrap and support value options
+- **[iqtree.md](iqtree.md)** - IQ-TREE v3.1.2+ usage guide
+  - Maximum likelihood tree inference with comprehensive model selection
+  - MAST and GTRpmix models (new in v3)
+  - Default choice for up to ~2,000 taxa
+  - UFBoot, SH-aLRT, and standard bootstrap support
 
 - **[veryfasttree.md](veryfasttree.md)** - VeryFastTree v4.0+ usage guide
-  - Ultra-fast tree inference for massive datasets (>100K sequences)
-  - Parallelization and vectorization optimizations
-  - Memory-efficient disk computing options
-  - FastTree-2 compatible command-line interface
+  - Default choice when leaf count exceeds ~2,000
+  - Parallelization and SIMD optimizations
+  - "Disk computing" mode scales to >1M taxa
+  - Drop-in replacement for FastTree-2 (FastTree itself is no longer recommended)
 
-### Tree Post-Processing
+### Tree post-processing
 
-- **[ete-toolkit.md](ete-toolkit.md)** - ETE Toolkit (ete3/ete4) usage guide
+- **[ete-toolkit.md](ete-toolkit.md)** - ETE v4 (`ete4`) usage guide
   - Python API for tree manipulation and analysis
   - Tree statistics, rooting, pruning, filtering
   - Distance calculations and topology comparison
   - Annotation and visualization capabilities
+  - `ete4` replaces `ete3`; use `from ete4 import Tree`
 
-## Tool Selection Guide
+## Tool selection guide
 
-### When to Use Each Tree Inference Tool
+### When to use each tree inference tool
 
-| Dataset Size | Accuracy Required | Recommended Tool | Typical Runtime |
-|-------------|-------------------|------------------|-----------------|
-| <1K sequences | High (publication) | IQ-TREE standard | Minutes |
-| <1K sequences | Medium (exploratory) | IQ-TREE -fast | Minutes |
-| 1K-10K sequences | High (publication) | IQ-TREE standard | Minutes-Hours |
-| 1K-10K sequences | Medium (exploratory) | IQ-TREE -fast | Minutes |
-| 10K-100K sequences | High | IQ-TREE standard | Hours |
-| 10K-100K sequences | Medium/Fast | IQ-TREE -fast or VeryFastTree | Minutes-Hours |
-| >100K sequences | Any | VeryFastTree | Hours-Days |
+| Leaf count | Recommended tool | Notes |
+|-----------|------------------|-------|
+| Up to ~2,000 | IQ-TREE v3 standard | Full model selection (`-m MFP`), UFBoot. Publication-quality. |
+| Up to ~2,000, exploratory | `iqtree3 -fast` | Cuts runtime sharply at small accuracy cost. |
+| ~2,000 to ~100,000 | VeryFastTree v4 | Default beyond the IQ-TREE 3 sweet spot. |
+| >100,000 | VeryFastTree v4 with `--disk-computing` | Scales to >1M taxa. |
 
 ### When to Use ETE Toolkit
 

@@ -6,52 +6,49 @@ This directory contains practical usage guides for protein clustering and pangen
 
 ## Available Tools
 
-### Primary Clustering Tools
+### Primary clustering tools
 
-| Tool | Best For | Speed | Documentation |
+| Tool | Best for | Speed | Documentation |
 |------|----------|-------|---------------|
-| **MMseqs2** | Large datasets (>500 genomes) | Very Fast | [mmseqs2.md](mmseqs2.md) |
-| **ProteinOrtho** | Medium datasets (50-500 genomes) | Fast | [proteinortho.md](proteinortho.md) |
-| **OrthoFinder** | Phylogenetic analysis, gene trees | Medium | [orthofinder.md](orthofinder.md) |
-| **OrthoMCL** | Rigorous ortholog detection | Slow | [orthomcl.md](orthomcl.md) |
+| **OrthoFinder v3** | Default orthology inference, gene + species trees | Medium | [orthofinder.md](orthofinder.md) |
+| **MMseqs2 (CPU or GPU)** | Sequence clustering and search backbones; very large datasets | Very fast | [mmseqs2.md](mmseqs2.md) |
+| **ProteinOrtho v6+** | Large pangenomes where OrthoFinder is RAM-limited | Fast | [proteinortho.md](proteinortho.md) |
 
-### Quick Selection Guide
+### Quick selection guide
 
-**Choose based on your needs:**
+- Default orthology inference up to a few hundred genomes → **OrthoFinder v3** (7% accuracy gain over v2, lower RAM at scale).
+- Very large pangenomes where OrthoFinder is too RAM-heavy → **ProteinOrtho v6** (graph-based RBH; PoFF extension adds synteny support).
+- Sequence clustering at any scale → **MMseqs2** v15-6f452+ (`easy-cluster` or `easy-linclust`). Add `--gpu` on CUDA Turing+ for ~20× speedup at near-identical sensitivity.
+- Synteny across many genomes → run alongside `ntSynt` or MCScanX (see SKILL.md).
 
-- **Speed is priority** → MMseqs2 (linear-time clustering)
-- **Phylogenetic trees needed** → OrthoFinder (gene trees + species tree)
-- **Balanced accuracy/speed** → ProteinOrtho (graph-based RBH)
-- **Maximum rigor** → OrthoMCL (database-backed, well-established)
-- **Very large scale (>1000 genomes)** → MMseqs2 easy-linclust
-- **Synteny analysis** → ProteinOrtho with PoFF extension
+> **Retired:** OrthoMCL has been dropped from this workflow. Existing pipelines should migrate to OrthoFinder v3.
 
-## Tool Comparison
+## Tool comparison
 
 ### Features
 
-| Feature | MMseqs2 | ProteinOrtho | OrthoFinder | OrthoMCL |
-|---------|---------|--------------|-------------|----------|
-| Installation | Easy | Easy | Easy | Complex |
-| Dependencies | Minimal | Minimal | Moderate | High (MySQL) |
-| Scalability | Excellent | Good | Good | Moderate |
-| Gene Trees | No | No | Yes | No |
-| Synteny Support | No | Yes | No | No |
-| Paralog Detection | Basic | Good | Excellent | Good |
-| Speed (1000 genomes) | Hours | Days | Days | Weeks |
+| Feature | MMseqs2 | ProteinOrtho | OrthoFinder |
+|---------|---------|--------------|-------------|
+| Installation | Easy | Easy | Easy |
+| Dependencies | Minimal | Minimal | Moderate |
+| Scalability | Excellent (GPU optional) | Good | Good |
+| Gene trees | No | No | Yes |
+| Synteny support | No | Yes (PoFF) | No |
+| Paralog detection | Basic | Good | Excellent |
+| Speed (1000 genomes) | Hours | Days | Days |
 
-### Typical Runtimes
+### Typical runtimes
 
 **Dataset: 100 bacterial genomes, ~300k proteins, 16 CPU cores**
 
-| Tool | Approximate Runtime |
+| Tool | Approximate runtime |
 |------|---------------------|
-| MMseqs2 (easy-linclust) | 10-30 minutes |
-| MMseqs2 (easy-cluster) | 1-3 hours |
-| ProteinOrtho (Diamond) | 2-6 hours |
-| OrthoFinder (Diamond) | 4-12 hours |
-| OrthoFinder (MSA mode) | 12-48 hours |
-| OrthoMCL | 6-24 hours |
+| MMseqs2 (easy-linclust) | 10–30 minutes |
+| MMseqs2 (easy-cluster) | 1–3 hours |
+| MMseqs2 (easy-cluster, GPU) | ~5–10 minutes (CUDA Turing+) |
+| ProteinOrtho (DIAMOND) | 2–6 hours |
+| OrthoFinder v3 (DIAMOND) | 3–10 hours |
+| OrthoFinder v3 (MSA mode) | 10–40 hours |
 
 ## Documentation Contents
 
@@ -152,10 +149,6 @@ orthofinder --core Results_Core/ --assign AllMAGs/ -t 64
 - **Phylogenomics**: `-S diamond -M msa`
 - **Large-scale (>100 species)**: Core + assign workflow
 
-#### OrthoMCL
-- **Same species**: `identity=95, match=90, inflation=1.5`
-- **Same genus**: `identity=70, match=70, inflation=2.0`
-- **Distant**: `identity=30, match=50, inflation=3.0`
 
 ## Output Analysis
 

@@ -8,38 +8,45 @@ This directory contains practical usage guides for structure prediction and anno
 
 ## Tools
 
-### Structure Prediction
+### Structure prediction
 
-- **[boltz](boltz.md)** - Biomolecular interaction prediction with binding affinity estimation
+- **[boltz](boltz.md)** - Boltz-2 (MIT license, CUDA, NVIDIA cuEquivariance kernels)
   - GitHub: https://github.com/jwohlwend/boltz
-  - Use for: Protein-ligand complexes, affinity screening, drug discovery
+  - Use for: default structure and complex prediction, protein-ligand binding affinity, drug discovery
+  - Notes: replaces Boltz-1; ~1000× faster than FEP for affinity; benchmarked competitively with AlphaFold3
 
-- **[colabfold](colabfold.md)** - Fast AlphaFold2/RoseTTAFold with optimized MSA generation
+- **[colabfold](colabfold.md)** - ColabFold with MMseqs2-GPU MSA backend
   - GitHub: https://github.com/sokrypton/ColabFold
-  - Use for: Protein structure prediction, complexes, accessible GPU computing
+  - Use for: cases where a wider MSA than Boltz-2 builds is needed
+  - Notes: MMseqs2-GPU backend provides ~31.8× MSA-generation speedup over the standard AF2 pipeline
 
-### Structure Search & Annotation
+- **ESMFold** - fast monomer pre-screening only (15–20 GB VRAM)
+  - Not used for final predictions; route ESMFold candidates to Boltz-2
 
-- **[foldseek](foldseek.md)** - Fast protein structure search using 3Di structural alphabet
+> AlphaFold3 is intentionally not part of this stack (non-commercial license, 40–80 GB VRAM, no clear quality gap for the workflows here). Use Boltz-2.
+
+### Structure search and annotation
+
+- **[foldseek](foldseek.md)** - Foldseek v9+ with `--gpu 1` mode (ProstT5 on CUDA Turing+)
   - GitHub: https://github.com/steineggerlab/foldseek
-  - Use for: Structure similarity search, clustering, large-scale database searches
+  - Use for: structure similarity search, clustering, large-scale database searches; ~4–27× speedup over CPU Foldseek
 
 - **[tm-vec](tm-vec.md)** - Transformer-based structure embedding for rapid similarity search
   - GitHub: https://github.com/tymor22/tm-vec
-  - Use for: Fast pre-screening, large-scale structure comparisons, vector-based search
+  - Use for: fast pre-screening, large-scale structure comparisons, vector-based search
 
-## Quick Reference
+## Quick reference
 
-### When to Use Each Tool
+### When to use each tool
 
 | Task | Tool | Reason |
 |------|------|--------|
-| Fast structure pre-screening | tm-vec | Vector-based search is fastest |
-| Detailed structure search | foldseek | High sensitivity, structural alignment |
-| Protein structure prediction | colabfold | Accessible, well-established, fast MSA |
-| Protein-ligand affinity | boltz | Specialized for binding predictions |
-| Complex structure prediction | colabfold or boltz | Both support multi-chain systems |
-| Structure clustering | foldseek | Built-in clustering algorithms |
+| Fast structure pre-screening (embedding) | TM-Vec | Vector-based search; seconds across millions of proteins |
+| Fast monomer pre-screening (structure) | ESMFold | Lowest VRAM; lower accuracy — triage only |
+| Default structure + complex + affinity | Boltz-2 | MIT license; CUDA-native; strong benchmark performance |
+| Wider MSA than Boltz-2 builds | ColabFold + MMseqs2-GPU | Fastest MSA pipeline for AF2-style runs |
+| Detailed structure search | Foldseek v9 (`--gpu 1`) | High sensitivity, GPU-accelerated structural alignment |
+| Structure clustering | Foldseek | Built-in clustering algorithms |
 
 ### Installation Quick Start
 
@@ -68,12 +75,13 @@ pip install boltz[cuda] -U
    - Reduces search space for detailed analysis
 
 2. **Structure prediction**
-   - Use colabfold for general protein structure prediction
-   - Use boltz if ligand binding or affinity is important
+   - Default: Boltz-2 (structure, complex, and binding affinity)
+   - Wider MSA needed: ColabFold with MMseqs2-GPU backend
+   - Triage only: ESMFold
 
 3. **Detailed structure search**
-   - Use foldseek against PDB, AlphaFoldDB, or custom databases
-   - High sensitivity mode for distant homologs
+   - Use Foldseek v9 (`--gpu 1` on Turing+ GPUs) against PDB, AlphaFoldDB, or custom databases
+   - High-sensitivity mode for distant homologs
    - Fast mode for close homologs
 
 4. **Clustering** (for large result sets)

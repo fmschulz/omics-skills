@@ -11,7 +11,7 @@ This directory contains comprehensive usage guides for the bioinformatics tools 
 - **[bbmap.md](bbmap.md)** - Short read alignment to reference genomes
 
 ### Long Read Processing
-- **[porechop.md](porechop.md)** - Oxford Nanopore adapter trimming and demultiplexing
+- **[porechop_abi.md](porechop_abi.md)** - Oxford Nanopore adapter trimming and demultiplexing
 - **[filtlong.md](filtlong.md)** - Long read quality filtering (Nanopore/PacBio)
 
 ### Universal Read Mapping
@@ -23,7 +23,7 @@ This directory contains comprehensive usage guides for the bioinformatics tools 
 |------|-------------|-------|--------|
 | bbduk | Short read QC/trimming | FASTQ | FASTQ |
 | bbmap | Short read mapping | FASTQ | SAM/BAM |
-| Porechop | ONT adapter trimming | FASTQ | FASTQ |
+| Porechop_ABI | ONT adapter trimming | FASTQ | FASTQ |
 | Filtlong | Long read filtering | FASTQ | FASTQ |
 | minimap2 | Universal read mapping | FASTQ/FASTA | SAM/PAF |
 
@@ -42,7 +42,7 @@ bbmap.sh ref=reference.fa in1=clean_R1.fq in2=clean_R2.fq out=mapped.sam
 ### Nanopore Read QC and Mapping
 ```bash
 # 1. Trim adapters
-porechop -i raw.fastq -o trimmed.fastq -t 16
+porechop_abi -i raw.fastq -o trimmed.fastq -t 16
 
 # 2. Quality filter
 filtlong --min_length 1000 --keep_percent 90 trimmed.fastq | gzip > filtered.fastq.gz
@@ -66,10 +66,10 @@ All tools can be installed via conda/mamba or pixi:
 
 ```bash
 # Individual tools
-conda install -c bioconda bbtools minimap2 filtlong porechop
+conda install -c bioconda bbtools minimap2 filtlong porechop_abi
 
 # Or via pixi (recommended for this skill)
-pixi add bbtools minimap2 filtlong porechop
+pixi add bbtools minimap2 filtlong porechop_abi
 ```
 
 ## Documentation Sources
@@ -77,7 +77,7 @@ pixi add bbtools minimap2 filtlong porechop
 - **bbduk/bbmap**: [BBTools JGI DOE](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/) | [GitHub](https://github.com/BioInfoTools/BBMap)
 - **minimap2**: [GitHub](https://github.com/lh3/minimap2) | [Manual](https://lh3.github.io/minimap2/minimap2.html)
 - **Filtlong**: [GitHub](https://github.com/rrwick/Filtlong)
-- **Porechop**: [GitHub](https://github.com/rrwick/Porechop)
+- **Porechop_ABI**: [GitHub](https://github.com/bonsai-team/Porechop_ABI) (actively maintained successor to the unmaintained Porechop)
 
 ## Performance Guidelines
 
@@ -88,12 +88,12 @@ pixi add bbtools minimap2 filtlong porechop
 | bbmap | 4-32 GB | Depends on reference size |
 | minimap2 | 4-16 GB | Use -I flag to limit memory |
 | Filtlong | 10-20x input | ~10-20 bytes per input base |
-| Porechop | <2 GB | Modest requirements |
+| Porechop_ABI | <2 GB | Modest requirements |
 
 ### Threading Recommendations
 - **bbduk/bbmap**: 4-12 threads (diminishing returns beyond 12)
 - **minimap2**: 8-16 threads optimal
-- **Porechop**: 8-16 threads optimal
+- **Porechop_ABI**: 8-16 threads optimal
 - **Filtlong**: Single-threaded only
 
 ### Speed Optimization Tips
@@ -105,7 +105,7 @@ pixi add bbtools minimap2 filtlong porechop
 
 ## File Format Support
 
-| Format | bbduk | bbmap | minimap2 | Filtlong | Porechop |
+| Format | bbduk | bbmap | minimap2 | Filtlong | Porechop_ABI |
 |--------|-------|-------|----------|----------|----------|
 | FASTQ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | FASTQ.gz | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -123,7 +123,7 @@ bbduk.sh --help
 bbmap.sh --help
 minimap2 --help
 filtlong --help
-porechop --help
+porechop_abi --help
 ```
 
 For detailed usage examples and parameter recommendations, see the individual tool documentation files in this directory.
