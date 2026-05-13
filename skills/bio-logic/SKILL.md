@@ -9,9 +9,23 @@ Use structured frameworks to evaluate scientific claims, methodology, and eviden
 
 ## Instructions
 
-1. Identify the task (claim assessment, paper critique, study design review).
-2. Apply the relevant checklist below.
-3. Structure output using the provided format.
+1. Identify the task (claim assessment, paper critique, study design review, project interpretation, or hypothesis revision).
+2. For project work, maintain a hypothesis register with at least 5 distinct active hypotheses until the project is no longer exploratory.
+3. After each major intermediate result, reflect on what changed, revise hypothesis status, and identify the next discriminating check.
+4. When findings need context, pair this reasoning with a literature-search skill such as `/polars-dovmed`, then revise hypotheses against the literature.
+5. Apply the relevant checklist below.
+6. Structure output using the provided format.
+
+### Project Hypothesis Loop
+
+Use this loop for omics projects, unexpected results, exploratory analyses, and any request that asks what results mean.
+
+1. **Initialize**: create at least 5 working hypotheses. Include biological mechanisms, technical artifacts, null explanations, sampling/batch effects, and annotation/database artifacts where relevant.
+2. **Build an analysis playbook**: search the literature for the inferred organism, virus group, data type, or closest lineage. Summarize typical analyses, comparison baselines, markers/features, plots, and outlier criteria used by scientists in that literature.
+3. **Reflect**: for every major intermediate result or QC gate, state the observation, QC status, strongest interpretation, remaining alternatives, and what evidence would separate them.
+4. **Contextualize**: compare findings against the playbook and run additional literature searches for central or unexpected findings. Use broad synonym-aware queries and cite DOI/PMCID when available.
+5. **Revise**: update each hypothesis as supported, weakened, ruled out, or unresolved. Keep ruled-out hypotheses visible with the evidence that changed their status.
+6. **Replace**: if fewer than 5 active hypotheses remain during exploratory work, add plausible replacements or explicitly state why no additional plausible alternatives exist.
 
 ### Critique Checklist
 
@@ -86,6 +100,34 @@ Use relevant sections based on the review scope. Skip items not applicable to th
 [What can/cannot be concluded from this evidence]
 ```
 
+### Project Reasoning Output Format
+
+```markdown
+## Current Result
+[Observed intermediate/final result and QC status]
+
+## Hypothesis Register
+| Rank | Hypothesis | Status | Evidence For | Evidence Against | Next Discriminating Check |
+|------|------------|--------|--------------|------------------|---------------------------|
+| 1 | [Hypothesis] | supported/weakened/ruled out/unresolved | [Evidence] | [Evidence] | [Test] |
+| 2 | [Hypothesis] | ... | ... | ... | ... |
+| 3 | [Hypothesis] | ... | ... | ... | ... |
+| 4 | [Hypothesis] | ... | ... | ... | ... |
+| 5 | [Hypothesis] | ... | ... | ... | ... |
+
+## Literature Context
+- [Paper or search result, DOI/PMCID if available]: supports/contradicts/narrows [hypothesis] because [reason].
+
+## Analysis Playbook
+- [Literature-derived analysis/comparison/outlier check and why it applies]
+
+## Revision
+[What changed since the previous register and why]
+
+## Next Step
+[Most informative analysis, control, or experiment]
+```
+
 ## Quick Reference
 
 | Task | Action |
@@ -114,6 +156,10 @@ Use relevant sections based on the review scope. Skip items not applicable to th
 - [ ] Claim type matches evidence type
 - [ ] Key methodological risks are identified
 - [ ] Evidence rating is justified with concrete issues
+- [ ] Exploratory project work includes at least 5 active hypotheses or explains why fewer are plausible
+- [ ] Discovery work includes a literature-derived analysis playbook before selecting analyses
+- [ ] Intermediate results update hypothesis status before the next workflow step
+- [ ] Central or unexpected findings are checked against the literature before final interpretation
 
 ## Examples
 

@@ -3,6 +3,15 @@
 Agents and skills for bioinformatics, literature discovery, scientific writing,
 and data visualization. Runs under Claude Code and the Codex CLI.
 
+## Highlights
+
+- **Five agent personas** (`omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist`, `codexloop`) that orchestrate skills through a deterministic router rather than ad-hoc selection.
+- **2026 bioinformatics tooling**: IQ-TREE 3, VeryFastTree 4, BRAKER3, pyrodigal-gv, Infernal `cmsearch` with Rfam SSU/LSU models, vConTACT3, gvclass, metaMDBG, CheckM2 v1.1.0, OrthoFinder v3, Foldseek v9, Boltz-2.
+- **GPU-accelerated alternatives wired in** where they exist: MMseqs2-GPU for sequence and profile search, NVIDIA Parabricks `fq2bam` for short-read alignment, `mm2-fast` / `mm2-gb` for minimap2, Foldseek `--gpu 1`, ColabFold with MMseqs2-GPU MSA backend, XGBoost `device=cuda`, RAPIDS cuML.
+- **Comparative discovery axes** enforced when close relatives are available: genome-property frontier, marker-gene census, per-family copy-number expansion/contraction, synteny and conserved neighborhoods, and explicit non-coding RNA census — each producing persisted, side-by-side comparison artifacts.
+- **Scientific project loop**: hypothesis register (≥5 working hypotheses), intermediate-result reflection, literature-derived analysis playbooks, hypothesis revision, and a final synthesis that tracks ruled-out alternatives.
+- **Literature search with fallbacks**: `polars-dovmed` hosted API over PMC and bioRxiv corpora, local parquet `dovmed scan` as a fallback, then targeted `WebFetch` / `WebSearch` so endpoint outages do not silently skip the literature-context step.
+
 ## Install
 
 ```bash
@@ -65,6 +74,19 @@ skills each agent exposes and how they compose.
 Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how
 a specific agent routes a given task.
 
+## Scientific project discipline
+
+For exploratory omics work, `omics-scientist` keeps reasoning visible end-to-end:
+
+1. **Hypothesis register** — at least 5 distinct working hypotheses (biological, technical, null, batch, database) before the first analysis step.
+2. **Intermediate reflection** — after each major result or QC gate, state observation, QC status, supported and weakened hypotheses, remaining alternatives, and the next discriminating check.
+3. **Literature-derived analysis playbook** — before declaring what is "interesting", summarize what the literature considers diagnostic for the inferred group (markers, comparison sets, plots, outliers, tools).
+4. **Comparative discovery axes** (when relatives are available) — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, ncRNA census; each axis produces a persisted side-by-side artifact.
+5. **Hypothesis revision** — update each hypothesis as supported / weakened / ruled out / unresolved with the evidence that changed its status.
+6. **Final synthesis** — hypothesis history, literature context, revised ranking, limitations, and the next experiments that would best separate remaining alternatives.
+
+These behaviors are encoded in `AGENTS.md`, `agents/omics-scientist.md`, `skills/bio-logic/SKILL.md`, and the bio-* skills that produce annotations, viral calls, phylogenies, pangenomes, and final reports. With the default symlink install, updates apply immediately after `git pull`; with `INSTALL_METHOD=copy`, rerun `make install INSTALL_METHOD=copy`.
+
 ## CodexLoop
 
 `codexloop` is a separate harness for long-running coding work that needs
@@ -106,6 +128,7 @@ docs/
   ROUTING_IMPROVEMENTS.md   per-PR router deltas
   SKILL_GRAPH.md            routing model and graph
   routing_baseline.json     benchmark baseline
+  tooling-survey-2026.md    bioinformatics tooling survey (versions, GPU options, alternatives)
 Makefile                    install, catalog, hook, benchmark, uninstall targets
 ```
 
