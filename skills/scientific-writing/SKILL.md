@@ -1,26 +1,45 @@
 ---
 name: scientific-writing
-description: Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, or manuscript QA when claims must stay grounded in supplied artifacts.
+description: Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, manuscript QA, or sentence-level writing reviews when claims must stay grounded in supplied artifacts.
 ---
 
 # Scientific Writing
 
-Use this as the single scientific-writing skill for both Codex and Claude Code. It replaces the older duplicate writing skill and keeps the workflow grounded in manuscript artifacts rather than free-form background knowledge.
+Use this as the single scientific-writing skill for both Codex and Claude Code. It covers two related modes of work:
+
+- **Drafting and revision** — produce a manuscript or rebuttal from authoritative artifacts and iterate it through review-revise loops.
+- **Sentence-level writing review** — audit existing prose for clarity, voice, sentence architecture, terminology consistency, and numerical integrity, without changing the underlying science.
+
+The two modes share the same role set and the same hard rules. Pick the entry point that matches the request; the workflow then routes accordingly.
 
 ## State Assumptions First
 
-Before drafting, state:
+Before drafting or reviewing, state:
 
-- manuscript mode: new draft, revision, rebuttal, review response, or section rewrite
+- manuscript mode: new draft, revision, rebuttal, review response, section rewrite, or writing review
+- review mode when this is a writing review: `full-review`, `section-review`, `targeted`, or `interactive` (see below)
 - target venue or formatting target when known
 - authoritative artifacts available
 - missing artifacts that block specific claims
 
 If a required input is missing, name the gap and keep the prose conservative.
 
+## Review Modes
+
+When the request is a writing review of existing prose, choose one mode:
+
+| Mode | Trigger | Behavior |
+|---|---|---|
+| `full-review` | "review my manuscript", "writing review" | Run all five prose-quality audits on the whole document and emit a structured report. Default when ambiguous. |
+| `section-review` | "review the Introduction", "check the Discussion" | Run all five audits on a single section. |
+| `targeted` | "fix passive voice", "strip the clutter" | Run only the requested audit pass(es). |
+| `interactive` | "walk me through improving this" | Go paragraph by paragraph: show original, show revision, explain changes, wait for confirmation. |
+
+Both drafting and review work share the same auditable artifact set (plan, draft, citation audit, review notes, revision notes).
+
 ## Instructions
 
-1. Inventory the artifact bundle before writing. See `references/workflow.md`.
+1. Inventory the artifact bundle before writing or reviewing. See `references/workflow.md`.
 2. Choose a runtime pattern:
    - On Codex, use spawned subagents when available, otherwise run the same roles sequentially.
    - On Claude Code, use worker agents when available, otherwise run the same roles sequentially.
@@ -32,15 +51,36 @@ If a required input is missing, name the gap and keep the prose conservative.
    - citation-auditor
    - reviewer
    - reviser
-4. Draft in a fixed order: Methods, structure outline, manuscript prose, citation audit.
-5. Run an explicit `review -> revise -> review` loop until one of these is true:
+4. **For drafting work**: produce content in a fixed order — Methods, structure outline, manuscript prose, citation audit.
+5. **For writing-review work**: run the prose-quality audits described in `references/writing-quality.md`. Five passes, applied in order: clutter; voice and verbs; sentence architecture; terminology and keywords; numbers and citations. Each finding carries a severity tag (CRITICAL / MAJOR / MINOR) and a concrete revision — never a vague "consider improving" suggestion.
+6. Run an explicit `review -> revise -> review` loop until one of these is true:
    - no fixable major issues remain
    - only minor edits remain
    - the remaining issues require missing evidence
    - another loop would only repeat the same findings without material improvement
-6. Keep intermediate artifacts auditable: plan, methods draft, outline, manuscript draft, citation audit, review notes, and revision notes.
-7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.
-8. Return unresolved evidence gaps explicitly instead of smoothing them over.
+7. Keep intermediate artifacts auditable: plan, methods draft, outline, manuscript draft, citation audit, review notes, and revision notes.
+8. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.
+9. Return unresolved evidence gaps explicitly instead of smoothing them over.
+
+## Prose-Quality Audits
+
+When the reviewer pass runs, it applies five sequential audits. The full audit tables, examples, and constraints live in `references/writing-quality.md`. Summary:
+
+1. **Clutter** — strip dead-weight phrases, dead openers, and redundancy.
+2. **Voice and verb vitality** — convert obscuring passive constructions to active; resurrect smothered verbs ("provides a description of" → "describes"). Passive is acceptable when the actor is unknown or when Methods house style requires it.
+3. **Sentence architecture** — flag buried predicates (>~12 words between subject and verb), use colons/dashes/semicolons for compression, vary sentence length.
+4. **Terminology and keywords** — enforce the Banana Rule (don't paraphrase defined terms), audit acronym definitions at every first use (Abstract, body, every legend), reject author-convenience acronyms.
+5. **Numbers and citations** — check N, percentages, and significant figures across Abstract, text, tables, and figures; flag "telephone-game" statistics cited only through reviews or textbooks.
+
+Output: every finding includes file/section reference, original text, concrete revision, the audit pass it triggers, and a severity tag.
+
+## Severity Tags
+
+Used by both reviewer and reviser. Reviser addresses CRITICAL and MAJOR first.
+
+- **CRITICAL** — actively misleads the reader (wrong number, term inconsistency implying a different variable, passive voice hiding important accountability).
+- **MAJOR** — significantly impairs clarity (buried predicates, heavy nominalization, dense clutter, inconsistent acronym definitions, secondary-source statistics).
+- **MINOR** — worth fixing but does not impede understanding.
 
 ## Quick Reference
 
@@ -90,6 +130,10 @@ If a required input is missing, name the gap and keep the prose conservative.
 - Do not silently mutate `.bib` files; describe or stage citation edits explicitly.
 - Final manuscript text should be paragraph prose, not bullet outlines, except for planning artifacts.
 - If reviewer feedback would require new evidence, say so directly.
+- **Do not alter scientific content during a writing review.** Improve delivery, not substance. Flag a claim that looks wrong rather than rewriting it.
+- **Respect disciplinary and journal conventions.** Some fields require passive voice in Methods; some journals have specific style rules. Ask about the target venue when it is not stated.
+- **Preserve author voice.** Aim for clarity, not homogeneity. A sentence that is clear and effective despite breaking one of the audit rules should be left alone.
+- **Be specific.** Every reviewer finding must include the original text and a concrete revision. "Consider tightening the language" is not an acceptable finding.
 
 ## Examples
 
@@ -116,6 +160,7 @@ Use `/crossref-lookup` for DOI validation, title matching, and bibliography audi
 
 - Workflow and checkpoints: `references/workflow.md`
 - Role contracts: `references/agent-prompts.md`
+- Prose-quality audits, severity tags, dead-weight phrase tables, banana rule, telephone-game audit: `references/writing-quality.md`
 - Supporting skills to invoke when available: `references/supporting-skills.md`
 - Reporting and citation shortcuts: `references/reporting-shortcuts.md`
 

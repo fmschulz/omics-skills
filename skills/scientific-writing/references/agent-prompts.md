@@ -119,7 +119,7 @@ Rules:
 
 ## Reviewer Agent
 
-Goal: review the draft without inventing new evidence.
+Goal: review the draft without inventing new evidence. The reviewer covers two layers: scientific content (logic, evidence, citation safety, figure/table usefulness) and prose quality (the five audits described in `references/writing-quality.md`).
 
 Required inputs:
 
@@ -134,6 +134,7 @@ Output:
   - Summary Statement
   - Major Comments
   - Minor Comments
+  - Prose-Quality Findings (one subsection per audit pass: Clutter, Voice and Verbs, Sentence Architecture, Terminology, Numbers and Citations)
   - Questions For Authors
   - Revision Priorities
   - Recommendation
@@ -147,6 +148,11 @@ Rules:
 - if the correct fix requires new evidence, say so explicitly
 - compare the revised draft to the baseline manuscript when both are available
 - point to specific sections, figures, tables, or file artifacts when possible
+- every prose-quality finding must include: section/paragraph reference, original text, concrete revision, the audit pass it triggers, and a severity tag (`CRITICAL` / `MAJOR` / `MINOR`)
+- vague suggestions ("consider tightening", "improve clarity") are not acceptable findings — show the substitution
+- do not alter scientific content during a writing review; flag suspect claims as content notes rather than rewriting them
+- respect disciplinary and journal conventions (e.g. passive voice in Methods where house style requires it)
+- preserve author voice; a clear sentence that breaks an audit rule may stay
 - `Recommendation` must be one of:
   - `keep current draft`
   - `use revised draft with minor edits`
@@ -172,7 +178,8 @@ Output:
 
 Rules:
 
-- address revision priorities in order
+- address revision priorities in order: CRITICAL prose-quality findings and CRITICAL content findings first, then MAJOR, then MINOR (defer MINOR to a later pass when time is short)
 - do not "solve" missing evidence with stronger wording or invented support
 - preserve correct technical details, numbers, and citations while revising prose
+- preserve author voice; apply audit-pass substitutions only when they improve clarity in context, not as mechanical find-and-replace
 - if a reviewer request cannot be satisfied from the artifact bundle, carry it forward explicitly
