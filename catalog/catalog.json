@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "source_repo": "/home/fschulz/dev/scichallenge/benchmark/06mega/cc-omicsskills/omics-skills",
-    "built_at": "2026-05-13T06:26:21+00:00",
+    "source_repo": "/home/fschulz/dev/omics-skills",
+    "built_at": "2026-05-15T14:30:54+00:00",
     "skill_count": 30,
     "agent_count": 4,
-    "edge_count": 106
+    "edge_count": 120
   },
   "skills": [
     {
@@ -165,9 +165,19 @@
         "unusual"
       ],
       "internal_references": [
-        "media"
+        "bio-viromics",
+        "media",
+        "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
+        "tracking-taxonomy-updates": [
+          "2. When a nucleotide assembly, MAG, genome, or contig FASTA is available, run `/tracking-taxonomy-updates` first for the BBTools-container QuickClade `percontig` domain screen. Use that routing table to choose the right taxonomy/QC path before interpreting protein annotations."
+        ],
+        "bio-viromics": [
+          "- Viral/phage -> route to `/bio-viromics`; use PHROG/NCVOG markers and vConTACT3 only for phage/prokaryotic-virus contexts.",
+          "- Giant-virus/Nucleocytoviricota -> route to `/bio-viromics` with GVClass and NCLDV marker-gene phylogeny.",
+          "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota."
+        ],
         "media": [
           "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
@@ -194,13 +204,31 @@
         "assembly",
         "contigs"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "bio-annotation",
+        "bio-gene-calling",
+        "bio-viromics",
+        "tracking-taxonomy-updates"
+      ],
+      "reference_contexts": {
+        "tracking-taxonomy-updates": [
+          "4. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows."
+        ],
+        "bio-gene-calling": [
+          "- Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment."
+        ],
+        "bio-annotation": [
+          "- Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment."
+        ],
+        "bio-viromics": [
+          "- Viral or virus-like -> `/bio-viromics` before prokaryotic MAG tooling."
+        ]
+      }
     },
     {
       "name": "bio-binning-qc",
       "title": "Bio Binning QC",
-      "description": "Perform metagenomic binning, refinement, and QC with completeness/contamination checks.",
+      "description": "Perform metagenomic binning with QuickBin, refinement, and QC with completeness/contamination checks.",
       "path": "skills/bio-binning-qc/SKILL.md",
       "platforms": [
         "claude",
@@ -215,12 +243,24 @@
       "task_patterns": [
         "CheckM",
         "MAGs",
-        "binning"
+        "QuickBin",
+        "bin",
+        "binning",
+        "bins"
       ],
       "internal_references": [
-        "media"
+        "bio-viromics",
+        "media",
+        "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
+        "tracking-taxonomy-updates": [
+          "3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible."
+        ],
+        "bio-viromics": [
+          "- Viral or virus-like -> remove from MAG QC and route candidate contigs/genomes to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus evidence and GVClass for giant-virus/Nucleocytoviricota candidates.",
+          "- [ ] Viral/virus-like bins are routed to `/bio-viromics` instead of reported as MAGs."
+        ],
         "media": [
           "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
@@ -546,6 +586,7 @@
         "omics-scientist"
       ],
       "sections": [
+        "Assembly",
         "Viral Analysis"
       ],
       "task_patterns": [
@@ -559,9 +600,13 @@
         "viral genome"
       ],
       "internal_references": [
-        "media"
+        "media",
+        "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
+        "tracking-taxonomy-updates": [
+          "1. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not already been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial/archaeal and eukaryotic rows stay on their domain-specific routes unless later evidence contradicts the triage."
+        ],
         "media": [
           "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
@@ -885,16 +930,14 @@
           "| Structured API endpoint | `POST /api/scan_literature_advanced` |",
           "| Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |",
           "| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` with `dois` |",
-          "- `POST /api/scan_literature_advanced`",
-          "- `POST /api/get_paper_details`"
+          "- Search endpoint: `POST /api/scan_literature_advanced`",
+          "- Details endpoint: `POST /api/get_paper_details`"
         ],
         "media": [
           "- `--corpus pmc`: `/media/shared-expansion/db/pubmed_central/parquet_files/**/*.parquet` when mounted, otherwise the repo-local PMC parquet directory"
         ],
         "mnt": [
-          "- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`",
-          "- latest-version search corpus: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`",
-          "- version-history parquet: `/mnt/taskmaster2/biorxiv/parquet/versions/year=YYYY/month=MM/`"
+          "- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`"
         ]
       }
     },
@@ -976,7 +1019,7 @@
     {
       "name": "scientific-writing",
       "title": "Scientific Writing",
-      "description": "Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, or manuscript QA when claims must stay grounded in supplied artifacts.",
+      "description": "Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, manuscript QA, or sentence-level writing reviews when claims must stay grounded in supplied artifacts.",
       "path": "skills/scientific-writing/SKILL.md",
       "platforms": [
         "claude",
@@ -1004,7 +1047,7 @@
       ],
       "reference_contexts": {
         "crossref-lookup": [
-          "7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
+          "8. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
           "| Validate citations | `/crossref-lookup` |",
           "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
           "- `/crossref-lookup` \u2014 validate every cited DOI"
@@ -1033,15 +1076,33 @@
         "omics-scientist"
       ],
       "sections": [
+        "Assembly",
         "Taxonomy Updates & Reconciliation"
       ],
       "task_patterns": [
+        "EukCC",
         "GTDB",
+        "GTDB-Tk",
+        "GVClass",
         "ICTV",
-        "taxonomy updates"
+        "QuickClade",
+        "domain triage",
+        "domain-level taxonomy",
+        "per-contig taxonomy",
+        "percontig",
+        "route MAGs",
+        "route assemblies",
+        "taxonomy updates",
+        "vConTACT3"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "bio-viromics"
+      ],
+      "reference_contexts": {
+        "bio-viromics": [
+          "- Viral or virus-like -> route to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus gene-sharing taxonomy and GVClass for giant-virus/Nucleocytoviricota candidates."
+        ]
+      }
     }
   ],
   "agents": [
@@ -1226,7 +1287,9 @@
       "path": "agents/omics-scientist.md",
       "skill_sections": {
         "Assembly": [
-          "bio-assembly-qc"
+          "bio-assembly-qc",
+          "bio-viromics",
+          "tracking-taxonomy-updates"
         ],
         "Binning & MAG Recovery": [
           "bio-binning-qc"
@@ -1317,33 +1380,38 @@
         },
         {
           "source": "bio-assembly-qc",
-          "target": "bio-binning-qc",
-          "evidence": "\u2502       \u2502       \u2502   \u2514\u2500> /bio-binning-qc"
+          "target": "tracking-taxonomy-updates",
+          "evidence": "\u2502       \u2502       \u2514\u2500> /tracking-taxonomy-updates (QuickClade per-contig domain gate)"
         },
         {
-          "source": "bio-assembly-qc",
+          "source": "tracking-taxonomy-updates",
+          "target": "bio-binning-qc",
+          "evidence": "\u2502       \u2502           \u2502   \u2514\u2500> /bio-binning-qc"
+        },
+        {
+          "source": "tracking-taxonomy-updates",
           "target": "bio-gene-calling",
-          "evidence": "\u2502       \u2502       \u2514\u2500> /bio-gene-calling"
+          "evidence": "\u2502       \u2502           \u2514\u2500> /bio-gene-calling"
         },
         {
           "source": "bio-gene-calling",
           "target": "bio-annotation",
-          "evidence": "\u2502       \u2502           \u251c\u2500> /bio-annotation"
+          "evidence": "\u2502       \u2502               \u251c\u2500> /bio-annotation"
         },
         {
           "source": "bio-gene-calling",
           "target": "bio-protein-clustering-pangenome",
-          "evidence": "\u2502       \u2502           \u251c\u2500> /bio-protein-clustering-pangenome"
+          "evidence": "\u2502       \u2502               \u251c\u2500> /bio-protein-clustering-pangenome"
         },
         {
           "source": "bio-gene-calling",
           "target": "bio-structure-annotation",
-          "evidence": "\u2502       \u2502           \u251c\u2500> /bio-structure-annotation"
+          "evidence": "\u2502       \u2502               \u251c\u2500> /bio-structure-annotation"
         },
         {
           "source": "bio-gene-calling",
           "target": "bio-phylogenomics",
-          "evidence": "\u2502       \u2502           \u2514\u2500> /bio-phylogenomics"
+          "evidence": "\u2502       \u2502               \u2514\u2500> /bio-phylogenomics"
         },
         {
           "source": "bio-reads-qc-mapping",
@@ -1353,27 +1421,32 @@
         {
           "source": "bio-annotation",
           "target": "bio-phylogenomics",
-          "evidence": "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+          "evidence": "\u2502       \u2502   \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
         },
         {
           "source": "bio-phylogenomics",
           "target": "bio-protein-clustering-pangenome",
-          "evidence": "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+          "evidence": "\u2502       \u2502   \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
         },
         {
           "source": "bio-protein-clustering-pangenome",
           "target": "bio-logic",
-          "evidence": "\u2502           \u2514\u2500> /bio-logic (interesting findings)"
+          "evidence": "\u2502       \u2502       \u2514\u2500> /bio-logic (interesting findings)"
+        },
+        {
+          "source": "tracking-taxonomy-updates",
+          "target": "bio-viromics",
+          "evidence": "\u2502       \u251c\u2500 Viral/phage? -> /bio-viromics -> vConTACT3 when appropriate"
         },
         {
           "source": "bio-viromics",
           "target": "bio-gene-calling",
-          "evidence": "\u2502   \u2514\u2500> /bio-viromics \u2192 /bio-gene-calling \u2192 /bio-annotation"
+          "evidence": "\u2502           \u2514\u2500> /bio-gene-calling \u2192 /bio-annotation"
         },
         {
           "source": "bio-annotation",
           "target": "polars-dovmed",
-          "evidence": "\u2502       \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
+          "evidence": "\u2502               \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
         }
       ],
       "task_patterns": [
@@ -1436,9 +1509,28 @@
         {
           "skill_name": "bio-binning-qc",
           "phrases": [
+            "bin",
+            "bins",
             "binning",
             "MAGs",
+            "QuickBin",
             "CheckM"
+          ]
+        },
+        {
+          "skill_name": "tracking-taxonomy-updates",
+          "phrases": [
+            "QuickClade",
+            "domain triage",
+            "domain-level taxonomy",
+            "per-contig taxonomy",
+            "percontig",
+            "route assemblies",
+            "route MAGs",
+            "GTDB-Tk",
+            "EukCC",
+            "vConTACT3",
+            "GVClass"
           ]
         },
         {
@@ -1750,6 +1842,36 @@
     },
     {
       "source": "bio-annotation",
+      "target": "bio-viromics",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Viral/phage -> route to `/bio-viromics`; use PHROG/NCVOG markers and vConTACT3 only for phage/prokaryotic-virus contexts.",
+        "- Giant-virus/Nucleocytoviricota -> route to `/bio-viromics` with GVClass and NCLDV marker-gene phylogeny.",
+        "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota."
+      ]
+    },
+    {
+      "source": "bio-annotation",
+      "target": "tracking-taxonomy-updates",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "2. When a nucleotide assembly, MAG, genome, or contig FASTA is available, run `/tracking-taxonomy-updates` first for the BBTools-container QuickClade `percontig` domain screen. Use that routing table to choose the right taxonomy/QC path before interpreting protein annotations."
+      ]
+    },
+    {
+      "source": "bio-annotation",
       "target": "bio-gene-calling",
       "type": "depend_on",
       "source_type": "skill",
@@ -1759,7 +1881,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u251c\u2500> /bio-annotation"
+        "\u2502       \u2502               \u251c\u2500> /bio-annotation"
       ]
     },
     {
@@ -1787,7 +1909,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+        "\u2502       \u2502   \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
       ]
     },
     {
@@ -1801,7 +1923,63 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
+        "\u2502               \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
+      ]
+    },
+    {
+      "source": "bio-assembly-qc",
+      "target": "bio-annotation",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment."
+      ]
+    },
+    {
+      "source": "bio-assembly-qc",
+      "target": "bio-gene-calling",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment."
+      ]
+    },
+    {
+      "source": "bio-assembly-qc",
+      "target": "bio-viromics",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Viral or virus-like -> `/bio-viromics` before prokaryotic MAG tooling."
+      ]
+    },
+    {
+      "source": "bio-assembly-qc",
+      "target": "tracking-taxonomy-updates",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "4. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows."
       ]
     },
     {
@@ -1820,7 +1998,7 @@
     },
     {
       "source": "bio-assembly-qc",
-      "target": "bio-binning-qc",
+      "target": "tracking-taxonomy-updates",
       "type": "workflow_next",
       "source_type": "skill",
       "target_type": "skill",
@@ -1829,40 +2007,26 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502       \u2502   \u2514\u2500> /bio-binning-qc"
-      ]
-    },
-    {
-      "source": "bio-assembly-qc",
-      "target": "bio-gene-calling",
-      "type": "workflow_next",
-      "source_type": "skill",
-      "target_type": "skill",
-      "confidence": 0.95,
-      "provenance": [
-        "workflow_decision_tree"
-      ],
-      "evidence": [
-        "\u2502       \u2502       \u2514\u2500> /bio-gene-calling"
+        "\u2502       \u2502       \u2514\u2500> /tracking-taxonomy-updates (QuickClade per-contig domain gate)"
       ]
     },
     {
       "source": "bio-binning-qc",
-      "target": "bio-assembly-qc",
-      "type": "depend_on",
+      "target": "tracking-taxonomy-updates",
+      "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.95,
+      "confidence": 0.6,
       "provenance": [
-        "workflow_decision_tree"
+        "skill_body_reference"
       ],
       "evidence": [
-        "\u2502       \u2502       \u2502   \u2514\u2500> /bio-binning-qc"
+        "3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible."
       ]
     },
     {
-      "source": "bio-gene-calling",
-      "target": "bio-assembly-qc",
+      "source": "bio-binning-qc",
+      "target": "tracking-taxonomy-updates",
       "type": "depend_on",
       "source_type": "skill",
       "target_type": "skill",
@@ -1871,7 +2035,22 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502       \u2514\u2500> /bio-gene-calling"
+        "\u2502       \u2502           \u2502   \u2514\u2500> /bio-binning-qc"
+      ]
+    },
+    {
+      "source": "bio-binning-qc",
+      "target": "bio-viromics",
+      "type": "similar_to",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.8,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Viral or virus-like -> remove from MAG QC and route candidate contigs/genomes to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus evidence and GVClass for giant-virus/Nucleocytoviricota candidates.",
+        "- [ ] Viral/virus-like bins are routed to `/bio-viromics` instead of reported as MAGs."
       ]
     },
     {
@@ -1885,7 +2064,21 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502   \u2514\u2500> /bio-viromics \u2192 /bio-gene-calling \u2192 /bio-annotation"
+        "\u2502           \u2514\u2500> /bio-gene-calling \u2192 /bio-annotation"
+      ]
+    },
+    {
+      "source": "bio-gene-calling",
+      "target": "tracking-taxonomy-updates",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2502           \u2514\u2500> /bio-gene-calling"
       ]
     },
     {
@@ -1899,7 +2092,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u251c\u2500> /bio-annotation"
+        "\u2502       \u2502               \u251c\u2500> /bio-annotation"
       ]
     },
     {
@@ -1913,7 +2106,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u2514\u2500> /bio-phylogenomics"
+        "\u2502       \u2502               \u2514\u2500> /bio-phylogenomics"
       ]
     },
     {
@@ -1927,7 +2120,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u251c\u2500> /bio-protein-clustering-pangenome"
+        "\u2502       \u2502               \u251c\u2500> /bio-protein-clustering-pangenome"
       ]
     },
     {
@@ -1941,7 +2134,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u251c\u2500> /bio-structure-annotation"
+        "\u2502       \u2502               \u251c\u2500> /bio-structure-annotation"
       ]
     },
     {
@@ -2011,7 +2204,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502           \u2514\u2500> /bio-logic (interesting findings)"
+        "\u2502       \u2502       \u2514\u2500> /bio-logic (interesting findings)"
       ]
     },
     {
@@ -2081,7 +2274,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+        "\u2502       \u2502   \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
       ]
     },
     {
@@ -2095,7 +2288,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u2514\u2500> /bio-phylogenomics"
+        "\u2502       \u2502               \u2514\u2500> /bio-phylogenomics"
       ]
     },
     {
@@ -2123,7 +2316,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+        "\u2502       \u2502   \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
       ]
     },
     {
@@ -2179,7 +2372,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u251c\u2500> /bio-protein-clustering-pangenome"
+        "\u2502       \u2502               \u251c\u2500> /bio-protein-clustering-pangenome"
       ]
     },
     {
@@ -2193,7 +2386,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
+        "\u2502       \u2502   \u2514\u2500> /bio-phylogenomics \u2192 /bio-protein-clustering-pangenome"
       ]
     },
     {
@@ -2221,7 +2414,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502           \u2514\u2500> /bio-logic (interesting findings)"
+        "\u2502       \u2502       \u2514\u2500> /bio-logic (interesting findings)"
       ]
     },
     {
@@ -2305,7 +2498,35 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2502           \u251c\u2500> /bio-structure-annotation"
+        "\u2502       \u2502               \u251c\u2500> /bio-structure-annotation"
+      ]
+    },
+    {
+      "source": "bio-viromics",
+      "target": "tracking-taxonomy-updates",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "1. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not already been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial/archaeal and eukaryotic rows stay on their domain-specific routes unless later evidence contradicts the triage."
+      ]
+    },
+    {
+      "source": "bio-viromics",
+      "target": "tracking-taxonomy-updates",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u251c\u2500 Viral/phage? -> /bio-viromics -> vConTACT3 when appropriate"
       ]
     },
     {
@@ -2319,7 +2540,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502   \u2514\u2500> /bio-viromics \u2192 /bio-gene-calling \u2192 /bio-annotation"
+        "\u2502           \u2514\u2500> /bio-gene-calling \u2192 /bio-annotation"
       ]
     },
     {
@@ -2867,7 +3088,7 @@
         "workflow_decision_tree"
       ],
       "evidence": [
-        "\u2502       \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
+        "\u2502               \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
       ]
     },
     {
@@ -3135,7 +3356,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "7. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
+        "8. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
         "| Validate citations | `/crossref-lookup` |",
         "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
         "- `/crossref-lookup` \u2014 validate every cited DOI"
@@ -3167,6 +3388,76 @@
       ],
       "evidence": [
         "- `/proposal-review` \u2014 switch here for funding-proposal critique"
+      ]
+    },
+    {
+      "source": "tracking-taxonomy-updates",
+      "target": "bio-viromics",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Viral or virus-like -> route to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus gene-sharing taxonomy and GVClass for giant-virus/Nucleocytoviricota candidates."
+      ]
+    },
+    {
+      "source": "tracking-taxonomy-updates",
+      "target": "bio-assembly-qc",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2502       \u2514\u2500> /tracking-taxonomy-updates (QuickClade per-contig domain gate)"
+      ]
+    },
+    {
+      "source": "tracking-taxonomy-updates",
+      "target": "bio-binning-qc",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2502           \u2502   \u2514\u2500> /bio-binning-qc"
+      ]
+    },
+    {
+      "source": "tracking-taxonomy-updates",
+      "target": "bio-gene-calling",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2502           \u2514\u2500> /bio-gene-calling"
+      ]
+    },
+    {
+      "source": "tracking-taxonomy-updates",
+      "target": "bio-viromics",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u251c\u2500 Viral/phage? -> /bio-viromics -> vConTACT3 when appropriate"
       ]
     }
   ]

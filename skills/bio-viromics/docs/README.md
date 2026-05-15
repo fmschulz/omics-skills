@@ -46,6 +46,10 @@ Specialized tool for giant virus (Nucleocytoviricota) identification and taxonom
 
 ## Typical Workflow Integration
 
+0. **Domain Triage** (QuickClade via `/tracking-taxonomy-updates`)
+   - Input: Assembled contigs, genomes, MAGs, or bin directories
+   - Output: Per-contig domain routing table; viral/virus-like rows proceed here
+
 1. **Viral Detection** (geNomad)
    - Input: Assembled contigs
    - Output: Candidate viral sequences

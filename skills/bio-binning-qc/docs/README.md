@@ -2,7 +2,7 @@
 
 Comprehensive usage guides for metagenomic binning and quality control tools.
 
-Last updated: 2026-02-01
+Last updated: 2026-05-15
 
 ## Overview
 
@@ -17,7 +17,7 @@ This directory contains practical documentation for the tools used in the bio-bi
 - [coverm.md](coverm.md) - CoverM v0.7.0: Read alignment statistics and coverage computation
 
 ### Binning tools (in recommended order)
-- [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.52+**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
+- [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.84 via `bryce911/bbtools`)**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
 - [semibin2.md](semibin2.md) - **SemiBin2 v2.2.1+**: deep-learning binner with pre-trained models; use as the GPU alternative to QuickBin on CUDA-equipped nodes
 - [metabat2.md](metabat2.md) - MetaBAT2 v2.15+: legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
 
@@ -38,7 +38,10 @@ This directory contains practical documentation for the tools used in the bio-bi
 # Install all tools via conda/mamba
 mamba create -n binning-qc python=3.10
 mamba install -c bioconda -c conda-forge \
-  coverm metabat2 semibin checkm2 gunc bbtools
+  coverm metabat2 semibin checkm2 gunc
+
+# QuickBin is provided by Bryce Foster's official BBTools container
+docker pull bryce911/bbtools:39.84
 
 # Download databases
 checkm2 database --download
@@ -55,7 +58,11 @@ export EUKCC2_DB=$(realpath eukcc2_db_ver_1.2)
 coverm contig --bam-files *.bam -m mean variance -o depth.txt
 
 # 2. Bin (QuickBin by default; SemiBin2 only when a CUDA GPU is available)
-quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam xstrict
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam xstrict
 # GPU alternative:
 # SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment human_gut -o semibin/ -p 16
 # Legacy only, to reproduce prior pipelines:
@@ -123,14 +130,22 @@ gunc run --input_dir prokaryotic_bins/ --db_file gunc_db/gunc_db_progenomes2.1.d
 ### Single-Sample Binning
 ```bash
 coverm contig --bam-files sample.bam -m mean variance -o depth.txt
-metabat2 -i contigs.fasta -a depth.txt -o bins/bin -t 16
+mkdir -p bins
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=bins/bin%.fa sample.bam strict
 checkm2 predict --input bins/ --output-directory qc/ -t 16
 ```
 
 ### Multi-Sample Binning (Recommended)
 ```bash
 coverm contig --bam-files sample*.bam -m mean variance -o depth.txt
-metabat2 -i contigs.fasta -a depth.txt -o bins/bin -t 16
+mkdir -p bins
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=bins/bin%.fa sample*.bam xstrict
 checkm2 predict --input bins/ --output-directory qc/ -t 16
 gunc run --input_dir bins/ --db_file gunc_db/gunc_db_progenomes2.1.dmnd -o gunc_qc/ -t 16
 ```
@@ -140,7 +155,11 @@ gunc run --input_dir bins/ --db_file gunc_db/gunc_db_progenomes2.1.dmnd -o gunc_
 # Run multiple binners
 metabat2 -i contigs.fasta -a depth.txt -o metabat/bin -t 16
 SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment soil -o semibin/ -p 16
-quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam
 
 # Combine with DAS Tool or similar
 # Then QC

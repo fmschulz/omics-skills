@@ -28,6 +28,11 @@
   expected_primary_skills: [bio-assembly-qc]
   expected_ordered_includes: [bio-reads-qc-mapping, bio-assembly-qc, bio-binning-qc]
 
+- task: "bin contigs with QuickBin using the Bryce BBTools Docker container"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-binning-qc]
+
 - task: "predict genes in a newly assembled bacterial genome"
   platform: codex
   expected_agent: omics-scientist
@@ -67,6 +72,12 @@
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [tracking-taxonomy-updates]
+
+- task: "run QuickClade first on an assembly and route bacteria archaea viral giant-virus and eukaryotic contigs to GTDB-Tk vConTACT3 GVClass or EukCC"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [tracking-taxonomy-updates]
+  expected_ordered_includes: [bio-assembly-qc]
 
 - task: "scaffold a new bioinformatics project with reproducible environments"
   platform: codex

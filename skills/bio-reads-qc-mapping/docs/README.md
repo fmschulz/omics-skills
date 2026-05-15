@@ -2,7 +2,7 @@
 
 This directory contains comprehensive usage guides for the bioinformatics tools used in the bio-reads-qc-mapping skill.
 
-**Last Updated:** 2026-02-01
+**Last Updated:** 2026-05-15
 
 ## Tools Covered
 
@@ -31,12 +31,18 @@ This directory contains comprehensive usage guides for the bioinformatics tools 
 
 ### Short Read QC and Mapping
 ```bash
+bbtools() {
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -v "$PWD":/work -w /work \
+    bryce911/bbtools:39.84 "$@"
+}
+
 # 1. Quality control and adapter trimming
-bbduk.sh in1=R1.fq in2=R2.fq out1=clean_R1.fq out2=clean_R2.fq \
+bbtools bbduk.sh in1=R1.fq in2=R2.fq out1=clean_R1.fq out2=clean_R2.fq \
   ref=adapters.fa ktrim=r k=23 mink=11 hdist=1 qtrim=rl trimq=20
 
 # 2. Map to reference
-bbmap.sh ref=reference.fa in1=clean_R1.fq in2=clean_R2.fq out=mapped.sam
+bbtools bbmap.sh ref=reference.fa in1=clean_R1.fq in2=clean_R2.fq out=mapped.sam
 ```
 
 ### Nanopore Read QC and Mapping
@@ -62,14 +68,19 @@ minimap2 -ax map-hifi reference.fa filtered.fastq.gz > mapped.sam
 
 ## Installation
 
-All tools can be installed via conda/mamba or pixi:
+Run BBTools programs through Bryce Foster's official Docker image. As of
+2026-05-15, `bryce911/bbtools:39.84` and `latest` point to digest
+`sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
+
+Install non-BBTools dependencies via conda/mamba or pixi:
 
 ```bash
-# Individual tools
-conda install -c bioconda bbtools minimap2 filtlong porechop_abi
+# BBTools container
+docker pull bryce911/bbtools:39.84
 
-# Or via pixi (recommended for this skill)
-pixi add bbtools minimap2 filtlong porechop_abi
+# Other tools
+conda install -c bioconda minimap2 filtlong porechop_abi
+pixi add minimap2 filtlong porechop_abi
 ```
 
 ## Documentation Sources
@@ -119,8 +130,14 @@ pixi add bbtools minimap2 filtlong porechop_abi
 Each tool provides built-in help:
 
 ```bash
-bbduk.sh --help
-bbmap.sh --help
+bbtools() {
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -v "$PWD":/work -w /work \
+    bryce911/bbtools:39.84 "$@"
+}
+
+bbtools bbduk.sh --help
+bbtools bbmap.sh --help
 minimap2 --help
 filtlong --help
 porechop_abi --help

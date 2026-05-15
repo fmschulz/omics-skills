@@ -11,6 +11,8 @@ Use this before delivering results.
 
 ## Environment hygiene
 - [ ] QuickClade runs note the **container image tag** (and digest if available).
+- [ ] QuickClade was run with `percontig` for assemblies or mixed-bin inputs.
+- [ ] GTDB-Tk routes passed `gtdbtk check_install` with the intended `GTDBTK_DATA_PATH`.
 - [ ] Pixi environment is reproducible (pixi.toml present; lockfile if used).
 
 ## Identifier hygiene

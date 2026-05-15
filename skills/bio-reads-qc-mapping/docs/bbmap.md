@@ -13,15 +13,23 @@ BBMap is a fast, accurate splice-aware aligner for DNA and RNA sequencing reads.
 
 ## Installation
 
-BBMap is part of BBTools suite:
+BBMap is part of the BBTools suite. Prefer Bryce Foster's official BBTools
+container for reproducible runs:
 
 ```bash
-# Via conda/mamba
-conda install -c bioconda bbtools
+docker pull bryce911/bbtools:39.84
 
-# Via pixi (recommended for this workflow)
-pixi add bbtools
+bbtools() {
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -v "$PWD":/work -w /work \
+    bryce911/bbtools:39.84 "$@"
+}
+
+bbtools bbmap.sh --help
 ```
+
+As of 2026-05-15, `bryce911/bbtools:39.84` and `latest` point to digest
+`sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
 
 ## Key Command-Line Flags
 
@@ -78,13 +86,13 @@ pixi add bbtools
 ### Basic Mapping (Single-End)
 
 ```bash
-bbmap.sh ref=reference.fa in=reads.fq out=mapped.sam
+bbtools bbmap.sh ref=reference.fa in=reads.fq out=mapped.sam
 ```
 
 ### Paired-End Mapping
 
 ```bash
-bbmap.sh ref=reference.fa \
+bbtools bbmap.sh ref=reference.fa \
   in1=read1.fq in2=read2.fq \
   out=mapped.sam
 ```
@@ -92,7 +100,7 @@ bbmap.sh ref=reference.fa \
 ### Fast Mapping Mode
 
 ```bash
-bbmap.sh ref=reference.fa \
+bbtools bbmap.sh ref=reference.fa \
   in=reads.fq out=mapped.sam \
   fast=t
 ```
@@ -100,7 +108,7 @@ bbmap.sh ref=reference.fa \
 ### High Sensitivity Mapping
 
 ```bash
-bbmap.sh ref=reference.fa \
+bbtools bbmap.sh ref=reference.fa \
   in=reads.fq out=mapped.sam \
   slow=t minid=0.90
 ```
@@ -108,7 +116,7 @@ bbmap.sh ref=reference.fa \
 ### Mapping with Coverage Statistics
 
 ```bash
-bbmap.sh ref=reference.fa \
+bbtools bbmap.sh ref=reference.fa \
   in1=read1.fq in2=read2.fq \
   out=mapped.sam \
   covstats=coverage.txt \
@@ -118,7 +126,7 @@ bbmap.sh ref=reference.fa \
 ### Mapping Long Reads (PacBio)
 
 ```bash
-bbmap.sh -Xmx20g \
+bbtools bbmap.sh -Xmx20g \
   ref=reference.fa in=pacbio.fastq \
   out=mapped.sam \
   k=7 maxlen=1000 minlen=200 \
@@ -130,16 +138,16 @@ bbmap.sh -Xmx20g \
 
 ```bash
 # Build index
-bbmap.sh ref=reference.fa
+bbtools bbmap.sh ref=reference.fa
 
 # Map reads using existing index
-bbmap.sh in=reads.fq out=mapped.sam
+bbtools bbmap.sh in=reads.fq out=mapped.sam
 ```
 
 ### Filter by Identity and Length
 
 ```bash
-bbmap.sh ref=reference.fa \
+bbtools bbmap.sh ref=reference.fa \
   in=reads.fq out=mapped.sam \
   minid=0.95 minlength=100
 ```
@@ -147,7 +155,7 @@ bbmap.sh ref=reference.fa \
 ### Output BAM Format
 
 ```bash
-bbmap.sh ref=reference.fa \
+bbtools bbmap.sh ref=reference.fa \
   in=reads.fq out=mapped.bam
 ```
 

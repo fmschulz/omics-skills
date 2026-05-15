@@ -42,7 +42,9 @@ Columns:
 Minimum columns:
 - sample_id
 - query_id (bin/contig/genome)
+- contig_id (for assembly-level `percontig` screens; blank for whole-genome rows)
 - domain_guess
+- route
 - tool
 - tool_version
 - db_source
@@ -54,6 +56,11 @@ Minimum columns:
 - lineage_taxids
 - confidence (numeric or categorical)
 - notes (conflicts, merges, caveats)
+
+Required artifacts for assignment workflows:
+- `quickclade_percontig.tsv`
+- `domain_routing.tsv`
+- downstream tool result directories for every routed domain present in the input
 
 ### Validation notes (required)
 - conflicts across sources (GTDB vs NCBI, ICTV vs NCBI names, etc.)

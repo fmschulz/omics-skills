@@ -91,6 +91,8 @@ Each axis must produce (a) a persisted side-by-side artifact under `results/` an
 **For genome/metagenome assembly, use:**
 - `/bio-assembly-qc` - Assembly and quality assessment
 
+After any assembly, MAG, SAG, isolate genome, bin set, or unbinned contig FASTA is available, run `/tracking-taxonomy-updates` as a domain-level triage gate before choosing downstream taxonomy/QC tools. The default first pass is BBTools-container QuickClade with `percontig` output persisted. Route Bacteria/Archaea to GTDB-Tk, viral/phage candidates to `/bio-viromics` and vConTACT3, giant-virus/Nucleocytoviricota candidates to `/bio-viromics` and GVClass, and Eukaryota to EukCC.
+
 ### Binning & MAG Recovery
 
 **For metagenomic binning, use:**
@@ -153,6 +155,8 @@ For viral genomes, first infer the likely viral group, then search the literatur
 **For tracking taxonomy changes, use:**
 - `/tracking-taxonomy-updates` - Reconcile NCBI/GTDB/ICTV taxonomy updates
 
+Use this skill for sequence-to-taxonomy routing as well as release tracking. It owns the QuickClade-first domain screen, GTDB-Tk database setup checks, and cross-tool provenance table.
+
 ## Workflow Decision Tree
 
 ```
@@ -185,30 +189,36 @@ START
   │       │
   │       ├─ Need Assembly?
   │       │   └─> /bio-assembly-qc
-  │       │       │
-  │       │       ├─ Metagenome?
-  │       │       │   └─> /bio-binning-qc
-  │       │       │
-  │       │       └─> /bio-gene-calling
+  │       │       └─> /tracking-taxonomy-updates (QuickClade per-contig domain gate)
+  │       │           ├─ Metagenome?
+  │       │           │   └─> /bio-binning-qc
   │       │           │
-  │       │           ├─> /bio-annotation
-  │       │           ├─> /bio-protein-clustering-pangenome
-  │       │           ├─> /bio-structure-annotation
-  │       │           └─> /bio-phylogenomics
+  │       │           └─> /bio-gene-calling
+  │       │               ├─> /bio-annotation
+  │       │               ├─> /bio-protein-clustering-pangenome
+  │       │               ├─> /bio-structure-annotation
+  │       │               └─> /bio-phylogenomics
   │       │
   │       └─ Direct Mapping Analysis?
   │           └─> /bio-stats-ml-reporting
   │
   ├─ Have Assemblies/Genomes?
-  │   └─> /bio-gene-calling → /bio-annotation
-  │       └─> /bio-phylogenomics → /bio-protein-clustering-pangenome
-  │           └─> /bio-logic (interesting findings)
+  │   └─> /tracking-taxonomy-updates (QuickClade per-contig domain gate)
+  │       ├─ Bacteria/Archaea? -> GTDB-Tk -> /bio-gene-calling → /bio-annotation
+  │       │   └─> /bio-phylogenomics → /bio-protein-clustering-pangenome
+  │       │       └─> /bio-logic (interesting findings)
+  │       ├─ Viral/phage? -> /bio-viromics -> vConTACT3 when appropriate
+  │       ├─ Giant virus/NCLDV? -> /bio-viromics -> GVClass + marker phylogeny
+  │       ├─ Eukaryota? -> EukCC -> eukaryote-aware annotation/comparison
+  │       └─ Mixed/unclear? -> split or manual-review contigs before final routing
   │
   ├─ Viral Analysis?
-  │   └─> /bio-viromics → /bio-gene-calling → /bio-annotation
-  │       └─> /polars-dovmed (viral-group analysis playbook)
-  │           └─> group-appropriate relatives/comparisons
-  │               └─> /bio-logic (viral discovery synthesis)
+  │   └─> /tracking-taxonomy-updates (if not already screened)
+  │       └─> /bio-viromics
+  │           └─> /bio-gene-calling → /bio-annotation
+  │               └─> /polars-dovmed (viral-group analysis playbook)
+  │                   └─> group-appropriate relatives/comparisons
+  │                       └─> /bio-logic (viral discovery synthesis)
   │
   ├─ Need JGI Data?
   │   └─> /jgi-lakehouse
@@ -230,7 +240,8 @@ START
 - **"unexpected", "surprising", "intermediate result", "QC result", "revise hypothesis"** → `/bio-logic` → `/polars-dovmed`
 - **"raw reads", "fastq", "QC", "trimming"** → `/bio-reads-qc-mapping`
 - **"assemble", "assembly", "contigs", "QUAST"** → `/bio-assembly-qc`
-- **"binning", "MAGs", "CheckM"** → `/bio-binning-qc`
+- **"bin", "bins", "binning", "MAGs", "QuickBin", "CheckM"** → `/bio-binning-qc`
+- **"QuickClade", "domain triage", "domain-level taxonomy", "per-contig taxonomy", "percontig", "route assemblies", "route MAGs", "GTDB-Tk", "EukCC", "vConTACT3", "GVClass"** → `/tracking-taxonomy-updates` → domain-appropriate analysis skill
 - **"gene calling", "predict genes", "gene prediction", "ORF", "Prodigal"** → `/bio-gene-calling`
 - **"scaffold", "new project", "project setup", "reproducible environment", "project housekeeping"** → `/bio-foundation-housekeeping`
 - **"annotation", "DIAMOND", "KEGG", "taxonomy"** → `/bio-annotation`

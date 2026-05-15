@@ -1,9 +1,9 @@
 {
   "summary": {
-    "total": 33,
-    "passed": 32,
+    "total": 35,
+    "passed": 34,
     "failed": 1,
-    "pass_rate": 0.97,
+    "pass_rate": 0.971,
     "agent_failures": 0,
     "primary_skill_failures": 1,
     "ordered_skill_failures": 0,
@@ -22,6 +22,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "polars-dovmed",
@@ -40,11 +41,30 @@
         "primary_skills": [
           "bio-assembly-qc",
           "bio-binning-qc",
-          "bio-reads-qc-mapping"
+          "bio-reads-qc-mapping",
+          "tracking-taxonomy-updates"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
+          "bio-binning-qc"
+        ]
+      }
+    },
+    {
+      "task": "bin contigs with QuickBin using the Bryce BBTools Docker container",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-binning-qc",
+          "bio-assembly-qc"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-binning-qc"
         ]
       }
@@ -62,6 +82,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "bio-phylogenomics",
@@ -83,6 +104,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "bio-phylogenomics",
@@ -104,6 +126,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "bio-protein-clustering-pangenome",
@@ -126,6 +149,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics"
         ]
       }
@@ -141,6 +165,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "bio-logic",
@@ -163,6 +188,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "bio-structure-annotation",
@@ -200,15 +226,30 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-binning-qc",
           "bio-viromics",
           "bio-gene-calling",
-          "tracking-taxonomy-updates",
           "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
           "bio-logic",
           "polars-dovmed",
           "bio-annotation"
+        ]
+      }
+    },
+    {
+      "task": "run QuickClade first on an assembly and route bacteria archaea viral giant-virus and eukaryotic contigs to GTDB-Tk vConTACT3 GVClass or EukCC",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "tracking-taxonomy-updates"
+        ],
+        "ordered_skills": [
+          "bio-reads-qc-mapping",
+          "bio-assembly-qc",
+          "tracking-taxonomy-updates"
         ]
       }
     },
@@ -240,9 +281,10 @@
           "bio-prefect-dask-nextflow",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "bio-workflow-methods-docwriter",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
-          "bio-workflow-methods-docwriter",
           "polars-dovmed",
           "bio-annotation",
           "bio-phylogenomics",
@@ -262,6 +304,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "polars-dovmed",
@@ -297,9 +340,10 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "biorxiv-search",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
-          "biorxiv-search",
           "bio-annotation",
           "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
@@ -319,6 +363,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "bio-annotation",
@@ -361,18 +406,19 @@
       "actual": {
         "agent": "science-writer",
         "primary_skills": [
+          "bio-binning-qc",
           "scientific-writing",
           "bio-workflow-methods-docwriter",
-          "bio-binning-qc",
           "manuscript-review-council"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
-          "bio-binning-qc",
           "bio-workflow-methods-docwriter",
           "manuscript-review-council",
-          "scientific-writing"
+          "scientific-writing",
+          "tracking-taxonomy-updates",
+          "bio-binning-qc"
         ]
       }
     },
@@ -389,10 +435,11 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
-          "bio-viromics",
-          "bio-gene-calling",
           "manuscript-review-council",
           "scientific-writing",
+          "tracking-taxonomy-updates",
+          "bio-viromics",
+          "bio-gene-calling",
           "polars-dovmed",
           "bio-annotation",
           "bio-phylogenomics",
@@ -414,10 +461,11 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
-          "bio-viromics",
-          "bio-gene-calling",
           "manuscript-review-council",
           "proposal-review",
+          "tracking-taxonomy-updates",
+          "bio-viromics",
+          "bio-gene-calling",
           "polars-dovmed",
           "bio-annotation",
           "bio-phylogenomics",
@@ -439,6 +487,7 @@
           "ai-scientist-evaluator",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "polars-dovmed",
@@ -550,6 +599,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "polars-dovmed",
@@ -584,6 +634,7 @@
         "ordered_skills": [
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
+          "tracking-taxonomy-updates",
           "bio-viromics",
           "bio-gene-calling",
           "polars-dovmed",

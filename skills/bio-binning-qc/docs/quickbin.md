@@ -1,4 +1,4 @@
-# QuickBin (BBTools) v39.52
+# QuickBin (BBTools) v39.84
 
 High-fidelity metagenomic binning using neural networks with conservative contig merging.
 
@@ -8,26 +8,24 @@ High-fidelity metagenomic binning using neural networks with conservative contig
 - QuickBin: https://bbmap.org/tools/quickbin
 - GitHub: https://github.com/bbushnell/BBTools
 - Preprint: https://www.biorxiv.org/content/10.64898/2026.01.08.698506v3
-- Version: 39.52
+- Version checked: 39.84
 
 ## Installation
 
-**Download BBTools:**
+**Preferred container (Bryce Foster's official BBTools image):**
 ```bash
-wget https://sourceforge.net/projects/bbmap/files/latest/download -O BBMap.tar.gz
-tar -xzf BBMap.tar.gz
-export PATH=$PATH:$(pwd)/bbmap/
+docker pull bryce911/bbtools:39.84
+docker run --rm bryce911/bbtools:39.84 quickbin.sh --help
 ```
 
-**Conda:**
+As of 2026-05-15, Docker Hub reports `bryce911/bbtools:39.84` and `latest` at digest `sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`. Pin the tag in workflow docs and record the digest in run provenance.
+
+**Apptainer/Singularity:**
 ```bash
-conda install -c bioconda bbtools
+apptainer exec docker://bryce911/bbtools:39.84 quickbin.sh --help
 ```
 
-**Docker:**
-```bash
-docker pull quay.io/biocontainers/bbtools
-```
+Local BBTools or conda installs are acceptable only when the container runtime is unavailable; record the local BBTools version and install path.
 
 ## Key Command-Line Flags
 
@@ -58,44 +56,69 @@ docker pull quay.io/biocontainers/bbtools
 
 ### Basic binning with SAM files
 ```bash
-quickbin.sh in=contigs.fasta out=bin%.fa \
-  sample1.sam sample2.sam sample3.sam
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa \
+    sample1.sam sample2.sam sample3.sam covout=quickbin/coverage.txt
 ```
 
 ### Using BAM files and per-bin output
 ```bash
-quickbin.sh in=assembly.fasta out=bins/bin%.fa \
-  reads=sample1.bam,sample2.bam,sample3.bam \
-  readthreads=8
+mkdir -p bins
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=assembly.fasta out=bins/bin%.fa \
+    reads=sample1.bam,sample2.bam,sample3.bam \
+    readthreads=8
 ```
 
 ### Save coverage for fast reruns
 ```bash
 # First run: compute and save coverage
-quickbin.sh in=contigs.fasta out=bin%.fa \
-  sample*.sam covout=coverage.txt
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa \
+    sample*.sam covout=quickbin/coverage.txt
 
 # Subsequent runs: reuse coverage (much faster)
-quickbin.sh in=contigs.fasta out=bin%.fa \
-  cov=coverage.txt cutoff=0.55
+mkdir -p quickbin_rerun
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin_rerun/bin%.fa \
+    cov=quickbin/coverage.txt cutoff=0.55
 ```
 
 ### High specificity binning (low contamination)
 ```bash
-quickbin.sh in=contigs.fasta out=bin%.fa \
-  sample*.bam xstrict
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xstrict
 ```
 
 ### High sensitivity binning (maximize recovery)
 ```bash
-quickbin.sh in=contigs.fasta out=bin%.fa \
-  sample*.bam xloose
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xloose
 ```
 
 ### Custom neural network threshold
 ```bash
-quickbin.sh in=contigs.fasta out=bin%.fa \
-  sample*.sam cutoff=0.60
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.sam cutoff=0.60
 ```
 
 ## Input Requirements
@@ -113,7 +136,13 @@ quickbin.sh in=contigs.fasta out=bin%.fa \
 **Generating SAM/BAM files:**
 ```bash
 # Example with BBMap
-bbmap.sh ref=contigs.fasta in=reads_1.fq.gz in2=reads_2.fq.gz \
+bbtools() {
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -v "$PWD":/work -w /work \
+    bryce911/bbtools:39.84 "$@"
+}
+
+bbtools bbmap.sh ref=contigs.fasta in=reads_1.fq.gz in2=reads_2.fq.gz \
   out=sample1.sam threads=16
 
 # Example with minimap2
@@ -189,7 +218,11 @@ Conservative approach prioritizes **high-fidelity bins** (low contamination) ove
 
 ```bash
 # Run QuickBin
-quickbin.sh in=contigs.fasta out=bins/bin%.fa sample*.bam xstrict
+mkdir -p bins
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=bins/bin%.fa sample*.bam xstrict
 
 # Assess bacterial/archaeal bins
 checkm2 predict --input bins/ --output-directory qc/ -t 16
@@ -217,7 +250,11 @@ QuickBin can be used in ensemble binning approaches:
 # Run multiple binners
 metabat2 -i contigs.fasta -a depth.txt -o metabat/bin
 semibin2 single_easy_bin -i contigs.fasta -b reads.bam -o semibin/
-quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xstrict
+mkdir -p quickbin
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xstrict
 
 # Refine with DAS Tool or similar
 ```

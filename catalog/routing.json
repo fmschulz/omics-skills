@@ -236,9 +236,28 @@
         {
           "skill_name": "bio-binning-qc",
           "phrases": [
+            "bin",
+            "bins",
             "binning",
             "MAGs",
+            "QuickBin",
             "CheckM"
+          ]
+        },
+        {
+          "skill_name": "tracking-taxonomy-updates",
+          "phrases": [
+            "QuickClade",
+            "domain triage",
+            "domain-level taxonomy",
+            "per-contig taxonomy",
+            "percontig",
+            "route assemblies",
+            "route MAGs",
+            "GTDB-Tk",
+            "EukCC",
+            "vConTACT3",
+            "GVClass"
           ]
         },
         {
@@ -586,14 +605,17 @@
     },
     {
       "name": "bio-binning-qc",
-      "description": "Perform metagenomic binning, refinement, and QC with completeness/contamination checks.",
+      "description": "Perform metagenomic binning with QuickBin, refinement, and QC with completeness/contamination checks.",
       "agents": [
         "omics-scientist"
       ],
       "task_patterns": [
         "CheckM",
         "MAGs",
-        "binning"
+        "QuickBin",
+        "bin",
+        "binning",
+        "bins"
       ],
       "platforms": [
         "claude",
@@ -1033,7 +1055,7 @@
     },
     {
       "name": "scientific-writing",
-      "description": "Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, or manuscript QA when claims must stay grounded in supplied artifacts.",
+      "description": "Draft, review, and iteratively revise scientific manuscripts with a provider-agnostic multi-agent workflow for Codex and Claude Code. Use for new manuscripts, section rewrites, rebuttals, response letters, manuscript QA, or sentence-level writing reviews when claims must stay grounded in supplied artifacts.",
       "agents": [
         "science-writer"
       ],
@@ -1058,9 +1080,20 @@
         "omics-scientist"
       ],
       "task_patterns": [
+        "EukCC",
         "GTDB",
+        "GTDB-Tk",
+        "GVClass",
         "ICTV",
-        "taxonomy updates"
+        "QuickClade",
+        "domain triage",
+        "domain-level taxonomy",
+        "per-contig taxonomy",
+        "percontig",
+        "route MAGs",
+        "route assemblies",
+        "taxonomy updates",
+        "vConTACT3"
       ],
       "platforms": [
         "claude",

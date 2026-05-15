@@ -3,8 +3,9 @@
 This Skill assumes you may run tools locally (HPC, workstation, CI) and want **reproducible installs**.
 
 ## Recommended approach
-- **QuickClade (BBTools)**: run via container `bryce911/bbtools:39.65` (Docker or Apptainer/Singularity).
+- **QuickClade (BBTools)**: run via Bryce Foster's official BBTools container `bryce911/bbtools:39.84` (Docker or Apptainer/Singularity). As of 2026-05-15, `latest` points to the same digest: `sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
 - **GTDB-Tk, EukCC, vConTACT3, TaxonKit**: manage dependencies via **Pixi** using `pixi.toml`.
+- **GVClass**: use the `/bio-viromics` GVClass setup notes for giant-virus routes.
 
 ---
 
@@ -12,23 +13,33 @@ This Skill assumes you may run tools locally (HPC, workstation, CI) and want **r
 
 ### Docker
 ```bash
-docker pull bryce911/bbtools:39.65
-docker run --rm bryce911/bbtools:39.65 quickclade.sh --help
+docker pull bryce911/bbtools:39.84
+docker run --rm bryce911/bbtools:39.84 quickclade.sh --help
 ```
 
 For data in the current directory:
 ```bash
-docker run --rm -u "$(id -u):$(id -g)"   -v "$PWD":/work -w /work   bryce911/bbtools:39.65   quickclade.sh contigs.fa percontig out=results.tsv usetree
+docker run --rm -u "$(id -u):$(id -g)"   -v "$PWD":/work -w /work   bryce911/bbtools:39.84   quickclade.sh contigs.fa percontig out=results.tsv usetree
+```
+
+For production runs, pass the spectra explicitly and write the standard per-contig artifact:
+
+```bash
+mkdir -p results/taxonomy
+docker run --rm -u "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  bryce911/bbtools:39.84 \
+  quickclade.sh contigs.fa percontig ref=references/quickclade.spectra.gz out=results/taxonomy/quickclade_percontig.tsv usetree
 ```
 
 ### Apptainer / Singularity
 ```bash
-apptainer exec docker://bryce911/bbtools:39.65 quickclade.sh --help
+apptainer exec docker://bryce911/bbtools:39.84 quickclade.sh --help
 ```
 
 For data in the current directory:
 ```bash
-apptainer exec --bind "$PWD":/work --pwd /work   docker://bryce911/bbtools:39.65   quickclade.sh contigs.fa percontig out=results.tsv usetree
+apptainer exec --bind "$PWD":/work --pwd /work   docker://bryce911/bbtools:39.84   quickclade.sh contigs.fa percontig out=results.tsv usetree
 ```
 
 Provenance: record container tag (and digest if available) in outputs.

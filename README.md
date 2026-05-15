@@ -28,7 +28,8 @@ Skills target current stable releases as of 2026 and document GPU alternatives w
 | Read mapping (short) | bwa-mem2, BBMap | NVIDIA Parabricks `fq2bam` |
 | Read mapping (long) | minimap2 v2.30 | `mm2-fast` (AVX-512), `mm2-gb`, `mm2-ax` |
 | Assembly | SPAdes 4 (Illumina), Flye 2.9 (long-read), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
-| Binning | QuickBin | SemiBin2 v2.2.1 (CUDA-backed PyTorch) |
+| Domain taxonomy triage | BBTools QuickClade via `bryce911/bbtools` container (`percontig` for assemblies), then GTDB-Tk / EukCC / vConTACT3 / GVClass by domain | — |
+| Binning | QuickBin via `bryce911/bbtools` container | SemiBin2 v2.2.1 (CUDA-backed PyTorch) |
 | Bin QC | CheckM2 v1.1.0, EukCC v2.1.3, GUNC v1.0.6 | — |
 | Gene calling | pyrodigal, pyrodigal-gv, BRAKER3 | — |
 | ncRNA | tRNAscan-SE v2.0.12, Infernal v1.1.5 (`cmsearch` against Rfam SSU/LSU CMs) | — |

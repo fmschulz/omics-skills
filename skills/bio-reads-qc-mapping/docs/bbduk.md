@@ -11,15 +11,23 @@ BBDuk (Decontamination Using Kmers) is a high-performance tool from BBTools that
 
 ## Installation
 
-BBDuk is part of BBTools suite:
+BBDuk is part of the BBTools suite. Prefer Bryce Foster's official BBTools
+container for reproducible runs:
 
 ```bash
-# Via conda/mamba
-conda install -c bioconda bbtools
+docker pull bryce911/bbtools:39.84
 
-# Via pixi (recommended for this workflow)
-pixi add bbtools
+bbtools() {
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -v "$PWD":/work -w /work \
+    bryce911/bbtools:39.84 "$@"
+}
+
+bbtools bbduk.sh --help
 ```
+
+As of 2026-05-15, `bryce911/bbtools:39.84` and `latest` point to digest
+`sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
 
 ## Key Command-Line Flags
 
@@ -71,7 +79,7 @@ pixi add bbtools
 ### Basic Adapter Trimming (Single-End)
 
 ```bash
-bbduk.sh -Xmx1g \
+bbtools bbduk.sh -Xmx1g \
   in=reads.fq \
   out=clean.fq \
   ref=adapters.fa \
@@ -81,7 +89,7 @@ bbduk.sh -Xmx1g \
 ### Adapter Trimming (Paired-End)
 
 ```bash
-bbduk.sh -Xmx1g \
+bbtools bbduk.sh -Xmx1g \
   in1=read1.fq in2=read2.fq \
   out1=clean1.fq out2=clean2.fq \
   ref=adapters.fa \
@@ -92,7 +100,7 @@ bbduk.sh -Xmx1g \
 ### Quality and Adapter Trimming Combined
 
 ```bash
-bbduk.sh -Xmx1g \
+bbtools bbduk.sh -Xmx1g \
   in1=read1.fq in2=read2.fq \
   out1=clean1.fq out2=clean2.fq \
   ref=adapters.fa \
@@ -104,7 +112,7 @@ bbduk.sh -Xmx1g \
 ### Contaminant Filtering
 
 ```bash
-bbduk.sh -Xmx1g \
+bbtools bbduk.sh -Xmx1g \
   in=reads.fq \
   out=filtered.fq \
   ref=phix174_ill.ref.fa.gz \
@@ -114,7 +122,7 @@ bbduk.sh -Xmx1g \
 ### Quality Filtering Only
 
 ```bash
-bbduk.sh -Xmx1g \
+bbtools bbduk.sh -Xmx1g \
   in=reads.fq \
   out=filtered.fq \
   qtrim=rl trimq=20 \
@@ -144,7 +152,7 @@ bbduk.sh -Xmx1g \
 ### Memory Allocation
 - Use `-Xmx1g` for small or no reference files
 - For large references, use ~85% of physical memory (e.g., `-Xmx27g` on 32GB machine)
-- Example: `bbduk.sh -Xmx27g ...`
+- Example: `bbtools bbduk.sh -Xmx27g ...`
 
 ### Threading
 - BBDuk scales well with multiple threads

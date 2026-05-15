@@ -17,6 +17,12 @@ Assemble genomes/metagenomes and produce assembly QC artifacts.
    - Diverse or very large long-read datasets where speed dominates: **myloasm** (2025) as a faster long-read metagenome assembler when its profile matches the dataset; document the choice in the run log.
 2. Run assembly with resource-aware settings and record exact CLI, version, thread count, and RAM ceiling.
 3. Run QUAST v5.3+ (use MetaQUAST for metagenomes) and summarize metrics.
+4. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows.
+5. Use the QuickClade domain routing table to decide the next step:
+   - Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment.
+   - Viral or virus-like -> `/bio-viromics` before prokaryotic MAG tooling.
+   - Eukaryota -> eukaryote-aware gene/QC workflows and EukCC where bins or genomes are present.
+   - Mixed/low-confidence -> split or flag contigs before domain-specific analysis.
 
 ## Quick Reference
 
@@ -40,6 +46,7 @@ Inputs:
 
 - results/bio-assembly-qc/contigs.fasta
 - results/bio-assembly-qc/assembly_metrics.tsv
+- results/bio-assembly-qc/domain_routing.tsv
 - results/bio-assembly-qc/qc_report.html
 - results/bio-assembly-qc/logs/
 
@@ -49,6 +56,8 @@ Inputs:
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Verify reads are present and gzip-readable.
 - [ ] Check available disk space before assembly.
+- [ ] QuickClade `percontig` domain screen completed or the reason for skipping it is explicitly recorded.
+- [ ] Domain routing table is reviewed before selecting MAG, viral, bacterial/archaeal, or eukaryotic downstream tools.
 
 ## Examples
 

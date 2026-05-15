@@ -125,7 +125,11 @@ Interpretation:
 
 ### Quick Templates
 
-Anchor plus relation:
+Use one of these compact shapes:
+
+```json
+{"anchor_entity": [["entity_name"], ["entity_alias"]]}
+```
 
 ```json
 {
@@ -140,49 +144,9 @@ Anchor plus relation:
 }
 ```
 
-Anchor-only high-recall discovery:
-
-```json
-{
-  "anchor_entity": [
-    ["entity_name"],
-    ["entity_alias_1"],
-    ["entity_alias_2"]
-  ]
-}
-```
-
-Example: `"hosts of Klosneuvirinae"`
-
-```json
-{
-  "anchor_klosneuvirinae": [
-    ["klosneuvirinae"],
-    ["klosneuvirus"]
-  ],
-  "host_relation": [
-    ["klosneuvirinae", "host"],
-    ["klosneuvirus", "infect"]
-  ]
-}
-```
-
-Example: `"Mirusviricota and the eukaryotic nucleus"`
-
-```json
-{
-  "anchor_mirusviricota": [
-    ["mirusviricota"],
-    ["mirusvirus"],
-    ["mirusviruses"]
-  ],
-  "nucleus_association": [
-    ["mirusviricota", "eukaryotic", "nucleus"],
-    ["mirusvirus", "nuclear"],
-    ["mirusviruses", "nucleus"]
-  ]
-}
-```
+For an "X of Y" prompt, anchor the entity and combine the entity with the
+relation term inside an OR-of-AND group, for example
+`["klosneuvirinae", "host"]` or `["mirusvirus", "nucleus"]`.
 
 ### Step 2: Create A Run Directory
 
@@ -285,17 +249,7 @@ Local corpus aliases on this workstation:
 - `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`
 - `--corpus both`: both corpora in one scan
 
-Current local bioRxiv corpus, checked on 2026-05-05:
-- latest-version search corpus: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`
-- version-history parquet: `/mnt/taskmaster2/biorxiv/parquet/versions/year=YYYY/month=MM/`
-- 306,299 latest-version records
-- date range: 2013-11-07 to 2026-05-05
-- 32 latest parquet part files
-- latest parquet size: about 5.7G
-- version-history parquet size: about 7.7G
-- raw XML/cache size: about 64G
-
-The bioRxiv schema is compatible with `dovmed scan` and includes the same search-critical fields as PMC: `title`, `abstract_text`, `full_text`, `authors`, `journal`, `publication_date`, `doi`, `pmc_id`, `pmid`, and `file_path`. For bioRxiv records, `pmc_id` and `pmid` are blank. Extra fields include `source`, `version`, `license`, `category`, and `xml_url`.
+The bioRxiv schema is compatible with `dovmed scan` and includes the same search-critical fields as PMC: `title`, `abstract_text`, `full_text`, `authors`, `journal`, `publication_date`, `doi`, `pmc_id`, `pmid`, and `file_path`. For bioRxiv records, `pmc_id` and `pmid` are blank.
 
 Examples:
 
@@ -447,60 +401,13 @@ Expected success indicators in `summary.json`:
 
 ## Confirmed API Contract
 
-### Structured Advanced Search
-
-Use:
-
-```json
-{
-  "primary_queries": {
-    "concept_a": [["pattern1"], ["pattern2"]],
-    "concept_b": [["pattern3"]]
-  },
-  "corpus": "pmc",
-  "search_columns": ["title", "abstract_text", "full_text"],
-  "extract_matches": "none",
-  "add_group_counts": "primary",
-  "max_results": 5
-}
-```
-
-Send this to:
-- `POST /api/scan_literature_advanced`
-- header: `X-API-Key: ...`
-
-### Structured Discovery Search
-
-Use the same structured request body but set:
-
-```json
-{
-  "mode": "discovery"
-}
-```
-
-### Paper Details
-
-Use:
-
-```json
-{
-  "corpus": "pmc",
-  "pmc_ids": ["PMC1234567"]
-}
-```
-
-Send this to:
-- `POST /api/get_paper_details`
-
-For bioRxiv details, use:
-
-```json
-{
-  "corpus": "biorxiv",
-  "dois": ["10.1101/2026.01.01.123456"]
-}
-```
+- Search endpoint: `POST /api/scan_literature_advanced`
+- Details endpoint: `POST /api/get_paper_details`
+- Auth header: `X-API-Key: ...`
+- Search body: `primary_queries`, `corpus`, `search_columns`, `extract_matches`, `add_group_counts`, `max_results`, and optional `mode`.
+- Discovery search: same body with `mode="discovery"`.
+- PMC details: `{"corpus": "pmc", "pmc_ids": ["PMC1234567"]}`.
+- bioRxiv details: `{"corpus": "biorxiv", "dois": ["10.1101/..."]}`.
 
 ## Examples
 
