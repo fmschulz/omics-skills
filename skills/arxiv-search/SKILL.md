@@ -30,7 +30,7 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 10. If the user needs massive bulk harvesting rather than interactive search, the arXiv docs recommend OAI-PMH rather than large search result slices.
 11. Use `scripts/summarize` when the user wants stable local notes for specific arXiv IDs. This writes Markdown files containing paper metadata, abstract, links, and a blank `## Notes` section for follow-up annotation.
 12. Do not rely on server-side `submittedDate:[...]` queries for user-facing workflows. As observed on March 18, 2026 UTC, official arXiv API requests using `submittedDate` returned `HTTP 500` even for the example pattern shown in the arXiv API manual. The bundled CLI therefore applies `--days` as a local filter on returned `published` timestamps instead of sending `submittedDate` to the API.
-13. Respect arXiv API pacing. The official API manual asks clients making repeated requests to incorporate a 3-second delay, and the service can return `HTTP 429 Rate exceeded` when queried too aggressively.
+13. Respect arXiv API pacing. The bundled CLI caches identical requests, coordinates a default 3.1-second minimum interval between API calls through a local state file, and retries `HTTP 429` responses with backoff. For broad discovery, still prefer one scoped query over many small queries.
 
 ## Quick Reference
 
@@ -49,7 +49,7 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 | ID lookup | `--ids 2501.01234,2406.00001` |
 | Write local notes | `skills/arxiv-search/scripts/summarize 2501.01234 --output-dir arxiv-summaries` |
 | Network timeout | `--timeout 20` |
-| Pacing | wait about 3 seconds between repeated requests |
+| Pacing/cache | default `--min-interval 3.1`, `--retries 2`, `--retry-backoff 60`, cache under `~/.cache/omics-skills/arxiv-search` |
 | Help | `skills/arxiv-search/scripts/search --help` |
 
 ## Input Requirements
@@ -58,7 +58,7 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
 - A search query or one or more arXiv IDs
 - Reasonable request pacing for repeated calls:
   - arXiv recommends a 3-second delay between consecutive API requests
-  - cache identical queries instead of refetching them repeatedly in one session
+  - the CLI caches identical API URLs and uses a local pacing-state file by default
 - For Markdown note generation:
   - one or more arXiv IDs
   - optional `--output-dir` (default: `arxiv-summaries`)
@@ -71,6 +71,11 @@ Search arXiv through its official API for discovery, shortlisting, recent-prepri
   - `--order ascending|descending`
   - `--start <N>` for paging
   - `--timeout <seconds>` when the network is slow or partially blocked
+- Optional pacing/cache modifiers:
+  - `--min-interval <seconds>` to adjust the minimum interval between API calls across CLI invocations
+  - `--retries <N>` and `--retry-backoff <seconds>` to adjust retry behavior for `HTTP 429`
+  - `--cache-dir <path>` or `ARXIV_SEARCH_CACHE_DIR` to choose the local response cache and pacing-state directory
+  - `--no-cache` to disable response-cache reads/writes while retaining pacing
 - When writing raw queries, use official arXiv field prefixes and operators:
   - `ti`, `au`, `abs`, `co`, `jr`, `cat`, `rn`, `all`
   - `AND`, `OR`, `ANDNOT`
@@ -202,7 +207,7 @@ skills/arxiv-search/scripts/summarize 2501.01234 2406.00001 \
 **Solution**: Do not send raw `submittedDate:[...]` filters in normal use. Prefer `--sort submittedDate --order descending --days N`, which uses local published-date filtering in the bundled CLI.
 
 **Issue**: `HTTP 429 Rate exceeded`  
-**Solution**: Slow down. arXiv recommends a 3-second delay between repeated API calls. Cache identical queries, avoid tight retry loops, and prefer fetching small result slices.
+**Solution**: The CLI now caches identical API URLs, waits at least 3.1 seconds between API calls, and retries 429 responses with backoff. If 429 persists, wait several minutes, reduce query count, use one broad query plus local filtering, reuse cached JSON, or verify final IDs on official arxiv.org abstract pages.
 
 ## Related Skills
 

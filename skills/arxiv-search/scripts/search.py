@@ -5,17 +5,24 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
+import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 
 API_URL = "https://export.arxiv.org/api/query"
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
 USER_AGENT = "omics-skills-arxiv-search/1.0 (+https://github.com/fschulz/omics-skills)"
+DEFAULT_MIN_INTERVAL_SECONDS = 3.1
+DEFAULT_RETRIES = 2
+DEFAULT_RETRY_BACKOFF_SECONDS = 60.0
 RAW_QUERY_HINTS = (
     "ti:",
     "au:",
@@ -34,6 +41,16 @@ RAW_QUERY_HINTS = (
     "[",
     "]",
 )
+
+
+class ArxivHTTPError(RuntimeError):
+    """HTTP error with enough metadata for retry handling."""
+
+    def __init__(self, code: int, body: str, retry_after: str | None = None) -> None:
+        super().__init__(f"HTTP {code} from arXiv API: {body}")
+        self.code = code
+        self.body = body
+        self.retry_after = retry_after
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -89,6 +106,35 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=20,
         help="Network timeout in seconds (default: 20)",
+    )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Directory for arXiv API response cache and pacing state",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable response-cache reads and writes; pacing still applies",
+    )
+    parser.add_argument(
+        "--min-interval",
+        type=float,
+        default=DEFAULT_MIN_INTERVAL_SECONDS,
+        help="Minimum seconds between arXiv API calls across invocations (default: 3.1)",
+    )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=DEFAULT_RETRIES,
+        help="Number of retries for HTTP 429 responses (default: 2)",
+    )
+    parser.add_argument(
+        "--retry-backoff",
+        type=float,
+        default=DEFAULT_RETRY_BACKOFF_SECONDS,
+        help="Base seconds to wait after HTTP 429 when Retry-After is absent (default: 60)",
     )
     return parser
 
@@ -202,7 +248,15 @@ def build_params(args: argparse.Namespace, compiled_query: str | None) -> dict[s
     return params
 
 
-def fetch_results_by_ids(ids: list[str], timeout: int) -> tuple[str, dict[str, object]]:
+def fetch_results_by_ids(
+    ids: list[str],
+    timeout: int,
+    cache_dir: Path,
+    no_cache: bool,
+    min_interval: float,
+    retries: int,
+    retry_backoff: float,
+) -> tuple[str, dict[str, object]]:
     unique_ids = []
     seen = set()
     for raw_id in ids:
@@ -222,21 +276,111 @@ def fetch_results_by_ids(ids: list[str], timeout: int) -> tuple[str, dict[str, o
         ids=",".join(unique_ids),
     )
     params = build_params(args, None)
-    request_url, xml_text = fetch_feed(params, timeout)
+    request_url, xml_text = fetch_feed(
+        params,
+        timeout,
+        cache_dir=cache_dir,
+        no_cache=no_cache,
+        min_interval=min_interval,
+        retries=retries,
+        retry_backoff=retry_backoff,
+    )
     return request_url, parse_feed(xml_text)
 
 
-def fetch_feed(params: dict[str, str], timeout: int) -> tuple[str, str]:
-    query_string = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-    request_url = f"{API_URL}?{query_string}"
+def default_cache_dir() -> Path:
+    override = os.environ.get("ARXIV_SEARCH_CACHE_DIR")
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".cache" / "omics-skills" / "arxiv-search"
+
+
+def cache_path(cache_dir: Path, request_url: str) -> Path:
+    digest = hashlib.sha256(request_url.encode("utf-8")).hexdigest()
+    return cache_dir / "responses" / f"{digest}.xml"
+
+
+def wait_for_pacing(cache_dir: Path, min_interval: float) -> None:
+    if min_interval <= 0:
+        return
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    state_path = cache_dir / "last_request_unix.txt"
+    now = time.time()
+    try:
+        last_request = float(state_path.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        last_request = None
+    if last_request is not None:
+        delay = min_interval - (now - last_request)
+        if delay > 0:
+            time.sleep(delay)
+    state_path.write_text(f"{time.time():.6f}\n", encoding="utf-8")
+
+
+def parse_retry_after(value: str | None) -> float | None:
+    if not value:
+        return None
+    try:
+        seconds = float(value)
+    except ValueError:
+        return None
+    return seconds if seconds >= 0 else None
+
+
+def fetch_url_once(request_url: str, timeout: int) -> str:
     request = urllib.request.Request(request_url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             charset = response.headers.get_content_charset() or "utf-8"
-            return request_url, response.read().decode(charset)
+            return response.read().decode(charset)
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"HTTP {exc.code} from arXiv API: {body}") from exc
+        raise ArxivHTTPError(
+            exc.code,
+            body,
+            retry_after=exc.headers.get("Retry-After"),
+        ) from exc
+
+
+def fetch_feed(
+    params: dict[str, str],
+    timeout: int,
+    cache_dir: Path,
+    no_cache: bool,
+    min_interval: float,
+    retries: int,
+    retry_backoff: float,
+) -> tuple[str, str]:
+    query_string = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
+    request_url = f"{API_URL}?{query_string}"
+    response_cache_path = cache_path(cache_dir, request_url)
+
+    if not no_cache:
+        try:
+            return request_url, response_cache_path.read_text(encoding="utf-8")
+        except OSError:
+            pass
+
+    attempts = max(0, retries) + 1
+    for attempt in range(attempts):
+        wait_for_pacing(cache_dir, min_interval)
+        try:
+            xml_text = fetch_url_once(request_url, timeout)
+        except ArxivHTTPError as exc:
+            if exc.code == 429 and attempt + 1 < attempts:
+                delay = parse_retry_after(exc.retry_after)
+                if delay is None:
+                    delay = retry_backoff * (2**attempt)
+                time.sleep(delay)
+                continue
+            raise RuntimeError(str(exc)) from exc
+
+        if not no_cache:
+            response_cache_path.parent.mkdir(parents=True, exist_ok=True)
+            response_cache_path.write_text(xml_text, encoding="utf-8")
+        return request_url, xml_text
+
+    raise RuntimeError("arXiv API request failed after retry loop")
 
 
 def text_or_none(parent: ET.Element, path: str) -> str | None:
@@ -316,9 +460,24 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        cache_dir = args.cache_dir or default_cache_dir()
+        if args.min_interval < 0:
+            raise ValueError("--min-interval must be >= 0")
+        if args.retries < 0:
+            raise ValueError("--retries must be >= 0")
+        if args.retry_backoff < 0:
+            raise ValueError("--retry-backoff must be >= 0")
         compiled_query = compile_search_query(args)
         params = build_params(args, compiled_query)
-        request_url, xml_text = fetch_feed(params, args.timeout)
+        request_url, xml_text = fetch_feed(
+            params,
+            args.timeout,
+            cache_dir=cache_dir,
+            no_cache=args.no_cache,
+            min_interval=args.min_interval,
+            retries=args.retries,
+            retry_backoff=args.retry_backoff,
+        )
         parsed = parse_feed(xml_text)
         filtered_results, days_filter = apply_local_days_filter(parsed["results"], args.days)
     except Exception as exc:  # noqa: BLE001
@@ -355,6 +514,11 @@ def main() -> int:
         "sort_by": args.sort,
         "sort_order": args.order,
         "timeout_seconds": args.timeout,
+        "cache_dir": str(cache_dir),
+        "cache_enabled": not args.no_cache,
+        "min_interval_seconds": args.min_interval,
+        "retries": args.retries,
+        "retry_backoff_seconds": args.retry_backoff,
         "request_url": request_url,
         "feed_updated": parsed["feed_updated"],
         "total_results": parsed["total_results"],
