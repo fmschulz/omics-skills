@@ -11,11 +11,11 @@ Documentation for phylogenetic tree inference and post-processing tools.
 - **[iqtree.md](iqtree.md)** - IQ-TREE v3.1.2+ usage guide
   - Maximum likelihood tree inference with comprehensive model selection
   - MAST and GTRpmix models (new in v3)
-  - Default choice for up to ~2,000 taxa
+  - Default choice for final/publication-quality trees up to ~2,000 taxa
   - UFBoot, SH-aLRT, and standard bootstrap support
 
 - **[veryfasttree.md](veryfasttree.md)** - VeryFastTree v4.0+ usage guide
-  - Default choice when leaf count exceeds ~2,000
+  - Default choice for exploratory trees and when leaf count exceeds ~2,000
   - Parallelization and SIMD optimizations
   - "Disk computing" mode scales to >1M taxa
   - Drop-in replacement for FastTree-2 (FastTree itself is no longer recommended)
@@ -35,8 +35,9 @@ Documentation for phylogenetic tree inference and post-processing tools.
 
 | Leaf count | Recommended tool | Notes |
 |-----------|------------------|-------|
-| Up to ~2,000 | IQ-TREE v3 standard | Full model selection (`-m MFP`), UFBoot. Publication-quality. |
-| Up to ~2,000, exploratory | `iqtree3 -fast` | Cuts runtime sharply at small accuracy cost. |
+| Any size, exploratory | VeryFastTree v4 | Default for placement, screening, benchmark iterations, and other time-bounded work. Use local support values with `-boot 1000` when support is needed. |
+| Up to ~2,000, final | IQ-TREE v3 standard | Full model selection (`-m MFP`), UFBoot/SH-aLRT. Publication-quality. |
+| Up to ~2,000, exploratory fallback | `iqtree3 -fast` | Use only when VeryFastTree is unavailable or IQ-TREE-compatible exploratory output is explicitly required. |
 | ~2,000 to ~100,000 | VeryFastTree v4 | Default beyond the IQ-TREE 3 sweet spot. |
 | >100,000 | VeryFastTree v4 with `--disk-computing` | Scales to >1M taxa. |
 
@@ -69,15 +70,15 @@ t.write(outfile='alignment.rooted.nw')
 EOF
 ```
 
-### Large Dataset (Exploratory)
+### Exploratory Dataset
 ```bash
-# 1. Fast tree with IQ-TREE
-iqtree -s large.phy -m GTR+G -fast -bb 1000 -nt AUTO
+# 1. Fast exploratory tree with VeryFastTree
+VeryFastTree -boot 1000 -threads 32 < large.faa > large.nw
 
 # 2. Filter and analyze
 python << EOF
 from ete4 import Tree
-t = Tree('large.treefile')
+t = Tree('large.nw')
 for node in t.traverse():
     if not node.is_leaf and node.support < 70:
         node.delete()
@@ -133,13 +134,14 @@ EOF
 iqtree -s alignment.phy                       # Auto model selection
 iqtree -s alignment.phy -m GTR+I+G            # Specific model
 iqtree -s alignment.phy -m MFP -bb 1000       # Model selection + UFBoot
-iqtree -s alignment.phy -fast -nt AUTO        # Fast mode, auto threads
+iqtree -s alignment.phy -fast -nt AUTO        # Exploratory fallback when VeryFastTree cannot be used
 ```
 
 ### VeryFastTree Essential Commands
 ```bash
 VeryFastTree -nt < dna.fna > tree.nw          # DNA/RNA sequences
 VeryFastTree < proteins.faa > tree.nw         # Protein sequences
+VeryFastTree -boot 1000 < proteins.faa > tree.nw # Exploratory tree with local support
 VeryFastTree -threads 32 < input.faa > tree.nw # Multi-threaded
 VeryFastTree -fastest -threads 64 < huge.faa > tree.nw # Maximum speed
 ```
@@ -198,6 +200,7 @@ conda install conda-forge::ete4
 
 **Notes**:
 - Times are approximate and vary with alignment length, model, and hardware
+- For exploratory work, choose VeryFastTree first; `IQ-TREE -fast` is a fallback when VeryFastTree is unavailable or IQ-TREE-compatible output is required.
 - IQ-TREE provides best model selection and publication-quality trees
 - VeryFastTree maintains identical topology to FastTree-2 with 3x+ speedup
 - All tools produce maximum likelihood trees with support values
@@ -212,7 +215,7 @@ conda install conda-forge::ete4
 | Bootstrap | UFBoot, standard, SH-aLRT | Local bootstrap |
 | Speed (100K seqs) | Hours | Minutes |
 | Max practical size | ~100K sequences | >1M sequences |
-| Best for | Publication trees | Exploratory, large-scale |
+| Best for | Final/publication trees | Exploratory, large-scale, time-bounded work |
 
 ### When to Use ETE Over Command-Line Tools
 

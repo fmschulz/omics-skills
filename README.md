@@ -34,7 +34,7 @@ Skills target current stable releases as of 2026 and document GPU alternatives w
 | Gene calling | pyrodigal, pyrodigal-gv, BRAKER3 | — |
 | ncRNA | tRNAscan-SE v2.0.12, Infernal v1.1.5 (`cmsearch` against Rfam SSU/LSU CMs) | — |
 | Annotation | DIAMOND v2.1.20+ (clusterednr preferred), eggNOG-mapper v2.1.13, InterProScan v5.77, pyhmmer, TaxonKit v0.20 | MMseqs2-GPU |
-| Phylogenetics | IQ-TREE v3.1.2 (≤2,000 taxa), VeryFastTree v4 (>2,000 taxa), MAFFT, trimAl, ete4 | — |
+| Phylogenetics | VeryFastTree v4 (exploratory/time-bounded trees and >2,000 taxa), IQ-TREE v3.1.2 (final ≤2,000 taxa), MAFFT, trimAl, ete4 | — |
 | Orthology / pangenome | OrthoFinder v3, ProteinOrtho v6 (large pangenomes), MMseqs2 | MMseqs2-GPU |
 | Synteny | MCScanX, ntSynt, SibeliaZ | — |
 | Viromics | geNomad, CheckV, VirSorter2, vConTACT3 (prokaryotic-virus taxonomy), gvclass (Nucleocytoviricota) | — |

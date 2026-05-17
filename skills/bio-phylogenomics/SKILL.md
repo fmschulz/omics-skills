@@ -11,10 +11,11 @@ Build marker gene alignments and phylogenetic trees.
 
 1. Extract marker genes or SSU rRNA sequences.
 2. Align with MAFFT v7.5+ and trim with trimAl v1.4 (or ClipKIT when phylogenetically-informed trimming is preferred).
-3. Build ML trees with bootstraps. Choose by leaf count:
-   - Up to ~2,000 taxa: IQ-TREE v3 (v3.1.2+) for comprehensive model selection, MAST/GTRpmix, and publication-quality inference.
-   - Above ~2,000 taxa: VeryFastTree v4.0 (multi-threaded, SIMD, "disk computing" for >1M taxa).
-   - For exploratory or large alignments where IQ-TREE 3 is too slow: `iqtree3 -fast`.
+3. Build ML trees with support values. Choose by objective first, then leaf count:
+   - Exploratory placement, benchmark iterations, reference-set screening, or any time-bounded analysis: use VeryFastTree v4.0 first, even below ~2,000 taxa. Prefer `VeryFastTree -boot 1000 -threads <n> < alignment.faa > tree.nw` for proteins and add `-nt` for nucleotide alignments.
+   - Final or publication-quality trees up to ~2,000 taxa: IQ-TREE v3 (v3.1.2+) for comprehensive model selection, MAST/GTRpmix, UFBoot/SH-aLRT, and defensible final inference.
+   - Above ~2,000 taxa, or when memory/runtime is uncertain: VeryFastTree v4.0 (multi-threaded, SIMD, `-disk-computing` for very large trees).
+   - Use `iqtree3 -fast` only when VeryFastTree is unavailable or a project explicitly requires IQ-TREE-compatible exploratory output; record that fallback in the report.
 4. Post-process trees with ETE v4 (`ete4`):
    - Compute tree statistics (branch lengths, distances, topology metrics).
    - Root, prune, or collapse nodes as needed.

@@ -169,6 +169,7 @@ VeryFastTree -boot 1000 -threads 16 < alignment.faa > tree.nw
 ## Performance Tips
 
 ### Dataset Size Guidelines
+- **Exploratory or time-bounded analyses at any size**: VeryFastTree is the default first-pass tree builder; reserve IQ-TREE for final publication-quality inference or explicit project requirements.
 - **10K-100K sequences**: VeryFastTree preferred over IQ-TREE -fast
 - **>100K sequences**: VeryFastTree is the practical choice
 - **>1M sequences**: Demonstrated capability (36 hours on 1M taxa)
