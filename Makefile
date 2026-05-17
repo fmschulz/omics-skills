@@ -205,10 +205,14 @@ ifeq ($(INSTALL_METHOD),symlink)
 			target=$(AGENTS_SKILLS_DIR)/$$basename; \
 			if [ -L $$target ]; then \
 				rm $$target; \
-			elif [ -d $$target ]; then \
-				mv $$target $$target.bak; \
+			elif [ -e $$target ]; then \
+				backup=$$target.bak; \
+				if [ -e $$backup ]; then \
+					backup=$$target.bak.$$(date +%s); \
+				fi; \
+				mv $$target $$backup; \
 			fi; \
-			ln -sf $$skill $$target; \
+			ln -sfn $$skill $$target; \
 			if [ "$(VERBOSE)" = "1" ]; then \
 				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
 			else \
@@ -229,8 +233,12 @@ else
 			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
 			target=$(AGENTS_SKILLS_DIR)/$$basename; \
-			if [ -d $$target ]; then \
-				mv $$target $$target.bak; \
+			if [ -e $$target ]; then \
+				backup=$$target.bak; \
+				if [ -e $$backup ]; then \
+					backup=$$target.bak.$$(date +%s); \
+				fi; \
+				mv $$target $$backup; \
 			fi; \
 			cp -r $$skill $$target; \
 			if [ "$(VERBOSE)" = "1" ]; then \
