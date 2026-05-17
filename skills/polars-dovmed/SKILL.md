@@ -48,6 +48,31 @@ For every search prompt, create a dedicated run directory and save:
 - A hosted API key, or mounted local parquet files for `pmc`, `biorxiv`, or `both`.
 - A writable run directory for prompts, payloads, raw results, and summaries.
 
+## Hosted API Reachability Rules
+
+Use the helper script, `curl`, or `httpx` for API checks. Do not diagnose the
+hosted API as unreachable from a single bare `urllib` failure.
+
+Known client pitfall: Cloudflare can reject Python `urllib`'s default user agent
+with HTTP `403` and `error code: 1010`. That means the client was blocked, not
+that `https://api.newlineages.com` is down. If raw `urllib` is unavoidable, send
+both `X-API-Key` and a normal `User-Agent`; the bundled helper already does this.
+
+Minimal reachability check before declaring an outage:
+
+```bash
+curl -sS --max-time 20 https://api.newlineages.com/
+curl -sS --max-time 45 \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ${POLARS_DOVMED_API_KEY}" \
+  -d '{"query":"CRISPR","max_results":1,"extract_matches":false,"fast_mode":true}' \
+  https://api.newlineages.com/api/search_literature
+```
+
+Expected success: the root endpoint returns service metadata and the search
+endpoint returns HTTP 200 with at least one paper. If `curl` or `httpx` works but
+bare `urllib` returns `403`/`1010`, use the helper or set `User-Agent` and retry.
+
 ## Instructions
 
 1. Decide execution mode up front.
@@ -398,6 +423,7 @@ Expected success indicators in `summary.json`:
 | Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus="biorxiv"` with `dois` |
 | Required run artifacts | `prompt.txt`, `query.json`, `payload.json`, `results.json`, optional summary |
 | Quick skill verification | `python skills/polars-dovmed/scripts/smoke_test.py` |
+| Reachability pitfall | `urllib` default user-agent can be blocked with `403`/`1010`; use helper, `curl`, or `httpx` |
 
 ## Confirmed API Contract
 
@@ -424,7 +450,8 @@ Use the same hosted API examples for `--corpus pmc`, `--corpus biorxiv`, or `--c
 ## Quality Gates
 
 - [ ] execution mode chosen correctly: API when key exists, local otherwise
-- [ ] API availability checked before local fallback assumptions
+- [ ] API availability checked with helper, `curl`, or `httpx` before local fallback assumptions
+- [ ] `403`/Cloudflare `1010` from bare `urllib` not mistaken for hosted API downtime
 - [ ] structured query file authored first or user-supplied
 - [ ] dedicated run directory created for the prompt
 - [ ] `prompt.txt`, `query.json`, `payload.json`, raw results, and summary saved
@@ -440,6 +467,9 @@ Use the same hosted API examples for `--corpus pmc`, `--corpus biorxiv`, or `--c
 
 **Issue**: Hosted API key is missing  
 **Solution**: Fall back to local `dovmed scan` if local parquet files exist.
+
+**Issue**: Hosted API reported as unreachable after a `urllib` `403`
+**Solution**: Retry with the helper, `curl`, or `httpx`. For raw `urllib`, set a normal `User-Agent` plus `X-API-Key`; Cloudflare `1010` is a client block, not proof of outage.
 
 **Issue**: Local parquet files are missing  
 **Solution**: Use hosted API mode if a key is available, otherwise state that the local corpus must be prepared first.
