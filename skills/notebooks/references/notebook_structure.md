@@ -56,6 +56,8 @@ print(df.shape)
 - Use short paragraphs + bullets.
 - Use callouts sparingly (e.g., `> Note:`).
 - Never leave a code cell without a preceding markdown cell.
+- In marimo `.py` notebooks, write markdown as one clean `mo.md(r"""...""")` block. Do not leave stray quoted-string fragments inside markdown text.
+- Remove trailing empty cells and placeholder cells before final verification.
 
 ## Cell sizing limits (recommended)
 - Target **≤ 25 lines** per code cell.
