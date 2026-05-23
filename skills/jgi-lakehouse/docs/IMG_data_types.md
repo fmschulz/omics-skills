@@ -14,41 +14,40 @@ This guide helps you identify which IMG data types match your research needs and
 
 ## Quick Reference: Data Types by Analysis Project Type
 
-### **Isolate Genomes** (from pure cultures or single-cell samples)
+### **Individual Genomes from Cultures or Single Cells**
 
 | Type | Count | Description | Best For |
 |------|-------|-------------|----------|
-| **Genome Analysis (Isolate)** | 150,515 | Traditional single-organism genomes | Comparative genomics, metabolic pathway analysis |
-| **Single Cell Analysis (screened)** | 3,281 | Quality-checked single-cell amplified genomes (SAGs) | Single-cell studies, rare organisms |
-| **Single Cell Analysis (unscreened)** | 11,427 | Raw SAGs without quality filtering | Screening for contamination |
+| **Genome Analysis (Isolate)** | 150,515 | Traditional single-organism genomes from pure cultures | Comparative genomics, metabolic pathway analysis |
+| **Single Cell Analysis (screened)** | 3,281 | SAGs with contaminant sequences removed by database comparison | Single-cell studies, rare organisms |
+| **Single Cell Analysis (unscreened)** | 11,427 | SAGs without contaminant screening | Where you handle QC yourself |
+| **Combined Assembly Single Cell (screened)** | 22 | Co-assembled SAGs with QC |  |
+| **Combined Assembly Single Cell (unscreened)** | 14 | Co-assembled SAGs without QC |  |
 
-### **Metagenome-Derived Isolates (MAGs & Specialized Extractions)**
+### **Individual Genomes Reconstructed from Environmental Data**
 
-| Type | Count | Description | Best For |
-|------|-------|-------------|----------|
-| **Metagenome-Assembled Genome (MAG)** | 26,260 | High-quality reconstructed genomes from metagenomes | Uncultured organisms, ecosystem diversity |
-| **Metagenome - Single Particle Sort (SPS)** | 13,098 | Genomes from sorted cells (flow cytometry) | Cell-sorted populations, specific microbial groups |
-| **Metagenome - Cell Enrichment** | 4,850 | Genomes from enriched microbial cultures | Target-specific isolation |
-| **Metagenome - Low Complexity** | 7,221 | Genomes from simple, well-defined communities | Biofilms, pure co-cultures, bioreactors |
-| **Metagenome - SIP** (Stable Isotope Probing) | 1,374 | Genomes from isotope-labeled organisms | Functional ecology, metabolic activity tracking |
-
-### **Metagenomes** (whole community samples)
+These types represent individual genome reconstructions binned from metagenome assemblies, stored with a specific bacterial/archaeal `domain` (not `*Microbiome`).
 
 | Type | Count | Description | Best For |
 |------|-------|-------------|----------|
-| **Metagenome Analysis** | 49,939 | Standard environmental metagenomes | Community composition, functional potential |
-| **Metatranscriptome Analysis** | 12,758 | RNA-based gene expression from communities | Active metabolism, functional profiling |
-| **Combined Assembly** | 1,057 | Multi-sample co-assemblies | Cross-sample comparison, rare genes |
+| **Metagenome-Assembled Genome (MAG)** | 26,260 | Genomes reconstructed by binning a metagenome assembly | Uncultured organisms, ecosystem diversity |
+| **Metagenome-Extracted Genome** | 12 | Individual genomes manually extracted from metagenome datasets |  |
+
+### **Community Metagenomes** (whole-community assemblies, `domain = '*Microbiome'`)
+
+These types represent assemblies of reads from an environmental community rather than a single organism. They are stored with `domain = '*Microbiome'` in the taxon table and GTDB-Tk classification does not apply to them.
+
+| Type | Count | Description | Best For |
+|------|-------|-------------|----------|
+| **Metagenome Analysis** | 49,939 | Standard shotgun environmental metagenomes | Community composition, functional potential |
+| **Metatranscriptome Analysis** | 12,758 | Community mRNA sequenced as cDNA | Active metabolism, expressed gene profiling |
+| **Metagenome - Single Particle Sort (SPS)** | 13,098 | Assembly from a single particle (cell or aggregate) isolated by flow cytometry; particle may contain multiple cells of mixed phylogenetic background | Cell-sorted community fractions |
+| **Metagenome - Cell Enrichment** | 4,850 | Draft metagenome assembly from a cell enrichment (>1 cell); DNA typically amplified by WGA | Target-specific enriched communities |
+| **Metagenome - Low Complexity** | 7,221 | Metagenomes from simple, well-defined communities | Biofilms, co-cultures, bioreactors |
+| **Metagenome - SIP** (Stable Isotope Probing) | 1,374 | Metagenomes from isotope-labeled DNA fractions | Metabolically active community members |
+| **Combined Assembly** | 1,057 | Co-assembly from reads across multiple metagenome samples | Cross-sample comparison, recovering low-abundance genes |
 | **Combined Assembly SIP Metagenome** | 209 | Co-assembled SIP metagenomes | Isotope-labeled ecosystem studies |
-| **Metagenome - Co-Culture** | 31 | Defined mixed culture metagenomes | Synthetic communities, interactions |
-
-### **Specialized Types**
-
-| Type | Count | Description |
-|------|-------|-------------|
-| **Metagenome-Extracted Genome** | 12 | Individual genomes extracted from metagenome datasets |
-| **Combined Assembly Single Cell (screened)** | 22 | Co-assembled SAGs with QC |
-| **Combined Assembly Single Cell (unscreened)** | 14 | Raw co-assembled SAGs |
+| **Metagenome - Co-Culture** | 31 | Defined mixed-culture metagenomes | Synthetic communities, interaction studies |
 
 ---
 
@@ -63,14 +62,15 @@ GROUP BY genome_type
 ```
 
 ### **Genome Type = 'isolate'** (196,379 records)
-- Pure single-organism assemblies
-- Includes: traditional isolates, MAGs, SAGs, enrichments
-- Best for: single-organism analyses
+- Individual genome assemblies (one organism per record)
+- Includes: traditional isolates, MAGs, SAGs (screened and unscreened)
+- Best for: single-organism analyses, comparative genomics
 
 ### **Genome Type = 'metagenome'** (90,380 records)
-- Whole-community assemblies
-- Includes: standard metagenomes, metatranscriptomes, combined assemblies
-- Best for: community-level analyses
+- Whole-community assemblies (mixed-organism reads assembled together)
+- Includes: Metagenome Analysis, Metatranscriptome Analysis, Single Particle Sort, Cell Enrichment, Low Complexity, SIP, Combined Assembly, Co-Culture
+- Best for: community-level analyses, functional potential of ecosystems
+- Note: `domain = '*Microbiome'` for all records in this group; GTDB-Tk does not apply
 
 ---
 
@@ -162,26 +162,50 @@ GROUP BY analysis_project_type
 ORDER BY cnt DESC
 ```
 
-### 9. Find Finished Genomes of a Specific Phylum
+### 9. Find good-quality isolate genomes of a specific phylum
+
+For isolates, use `high_quality_flag` (IMG internal QC). `completeness_percentage`/`contamination_percentage`
+from GOLD are often NULL for traditional isolates.
 
 ```sql
-SELECT taxon_oid, taxon_display_name, analysis_project_type, seq_status
-FROM "img-db-2 postgresql".img_core_v400.taxon
-WHERE phylum = 'Proteobacteria'
-  AND seq_status = 'Finished'
-  AND analysis_project_type = 'Genome Analysis (Isolate)'
-  AND is_public = 'Yes'
+SELECT t.taxon_oid, t.taxon_display_name, t.genus, t.species,
+       ts.total_bases / 1e6 AS genome_size_mb, ts.n_scaffolds
+FROM "img-db-2 postgresql".img_core_v400.taxon t
+JOIN "img-db-2 postgresql".img_core_v400.taxon_stats ts
+  ON t.taxon_oid = ts.taxon_oid
+WHERE t.phylum = 'Proteobacteria'
+  AND t.analysis_project_type = 'Genome Analysis (Isolate)'
+  AND t.high_quality_flag = 'Yes'
+  AND t.is_public = 'Yes'
+  AND t.obsolete_flag = 'No'
 LIMIT 100
 ```
 
 ### 10. Find High-Quality Metagenome-Assembled Genomes
 
+Use CheckM2 scores from `taxon_gtdbtk_lineage` (preferred) or `genome_completion` from the taxon table as a fallback.
+
 ```sql
-SELECT taxon_oid, taxon_display_name, completion, genome_completion
+-- Preferred: CheckM2-based quality (MIMAG high-quality tier: ≥90% complete, ≤5% contaminated)
+SELECT t.taxon_oid, t.taxon_display_name, t.domain, t.phylum,
+       g.gtdbtk_genus, g.checkm_completeness, g.checkm_contamination
+FROM "img-db-2 postgresql".img_core_v400.taxon t
+JOIN "img-db-2 postgresql".img_core_v400.taxon_gtdbtk_lineage g
+  ON t.taxon_oid = g.taxon_oid
+WHERE t.analysis_project_type = 'Metagenome-Assembled Genome'
+  AND g.checkm_completeness >= 90
+  AND g.checkm_contamination <= 5
+  AND t.is_public = 'Yes'
+  AND t.obsolete_flag = 'No'
+LIMIT 100
+
+-- Fallback: genome_completion field (may be NULL for many MAGs)
+SELECT taxon_oid, taxon_display_name, genome_completion
 FROM "img-db-2 postgresql".img_core_v400.taxon
 WHERE analysis_project_type = 'Metagenome-Assembled Genome'
-  AND genome_completion >= 80  -- >= 80% complete
+  AND genome_completion >= 80
   AND is_public = 'Yes'
+  AND obsolete_flag = 'No'
 LIMIT 100
 ```
 
@@ -218,17 +242,17 @@ LIMIT 100
 - **Row count: 49,939** (largest metagenome category)
 
 ### **Choose Single-Cell SAGs if you:**
-- Study rare or unculturable microorganisms
+- Study rare or unculturable microorganisms at the individual cell level
 - Examine individual cell genomes
-- Have ultra-low-abundance organisms
-- **Row count: 14,708** (combined screened + unscreened)
+- **Prefer screened SAGs** (`Single Cell Analysis (screened)`) for analysis — unscreened SAGs may contain contaminant sequences
+- **Row count: 14,708** (screened 3,281 + unscreened 11,427)
 
-### **Choose Enrichment/SIP Genomes if you:**
-- Work on specific microbial groups or functions
-- Track isotope incorporation (SIP)
-- Study sorted cell populations
-- Analyze low-complexity communities
-- **Row count: 6,074 + 1,374 = 7,448**
+### **Choose community metagenome subtypes (Cell Enrichment, SPS, SIP, Low Complexity) if you:**
+- Study enriched or sorted microbial fractions at the **community** level (these are metagenome assemblies, not individual genomes)
+- Track isotope incorporation in active community members (SIP)
+- Study flow-cytometry-sorted particles (SPS may contain multiple cells of mixed background)
+- Analyze low-complexity biofilm or co-culture communities
+- **Row count: ~26,500** (SPS 13,098 + Cell Enrichment 4,850 + Low Complexity 7,221 + SIP 1,374)
 
 ---
 
@@ -279,17 +303,20 @@ See the [examples](../examples/) folder for automated download scripts.
 
 ## Important Notes
 
-1. **Not all genomes are public**: Filter by `is_public = 'Yes'` for public datasets
-2. **Sequence status varies**: Use `seq_status = 'Finished'` for complete genomes
-3. **Genome completion**: Check `genome_completion` field (% estimated completion)
-4. **Gene content**: Use the `gene` table to query annotations within genomes
-5. **High-quality filters**: Some analyses use `high_quality_flag` for QC'd genomes
-6. **Cross-references**: Link to GOLD projects via `sequencing_gold_id` or `study_gold_id`
+1. **Not all genomes are public**: Always filter with `is_public = 'Yes'` and `obsolete_flag = 'No'`
+2. **`seq_status` is not informative**: For metagenomes, SAGs, and MAGs it is always `Permanent Draft`. For isolates it can be `Finished`, `Permanent Draft`, or `Draft`, but most submitters do not specify it, so it defaults to `Permanent Draft` regardless of actual assembly quality. Do not use it as a quality proxy.
+3. **`high_quality_flag` is only meaningful for isolates**: IMG assigns it based on coding density (70–100%), genes per Mb (700–1400), sequences per Mb (≤300), and GOLD phylogeny not being UNCLASSIFIED. For MAGs it is almost always `'No'` (99.9%) and carries no quality signal — use CheckM2 from `taxon_gtdbtk_lineage` instead.
+4. **MAG quality**: Use `taxon_gtdbtk_lineage.checkm_completeness` / `checkm_contamination` (CheckM2). Fall back to `genome_completion` in the taxon table when GTDB-Tk has no entry.
+5. **Community metagenome quality**: `high_quality_flag`, `genome_completion`, and GTDB-Tk classification all do not apply to community metagenomes (`domain = '*Microbiome'`).
+6. **Gene content**: Use the `gene` table for annotations within individual genomes.
+7. **Cross-references**: Link to GOLD projects via `analysis_project_id` (= GOLD `Ga*` ID) or `sequencing_gold_id` / `study_gold_id`.
 
 ---
 
 ## Related Documentation
 
+- [img_and_gold_terms.md](img_and_gold_terms.md) - Full IMG/GOLD glossary (definitions for all terms, project types, quality flags, IDs)
+- [explore_IMG_genomes.md](explore_IMG_genomes.md) - Genome metadata query guide (taxonomy, quality, size, GTDB)
 - [data-catalog.md](data-catalog.md) - Full table inventory
 - [sql-quick-reference.md](sql-quick-reference.md) - SQL syntax guide
 - [examples/](../examples/) - Download and analysis scripts

@@ -28,18 +28,20 @@ set -euo pipefail
 # Configuration
 DREMIO_HOST="${DREMIO_HOST:-lakehouse-1.jgi.lbl.gov}"
 DREMIO_PORT="${DREMIO_PORT:-9047}"
-DREMIO_LOGIN_URL="http://${DREMIO_HOST}:${DREMIO_PORT}/apiv2/login"
+DREMIO_LOGIN_URL="https://${DREMIO_HOST}:${DREMIO_PORT}/apiv2/login"
 
 # Helper function to parse JSON (avoids jq dependency)
 q() {
   python3 -c "import sys, json; print(json.load(sys.stdin)['$1'].strip())"
 }
 
+HOMEPATH=$(readlink -f ~/)
+OUTFILE=$HOMEPATH"/.secrets/dremio_pat"
+
 # Input validation
 if [ $# -eq 0 ]; then
   # Interactive mode - will have the option to output the token to a file
-  HOMEPATH=$(readlink -f ~/)
-  OUTFILE=$HOMEPATH"/.secrets/dremio_pat"
+
   read -p "Output file where the token will be stored (default: ~/.secrets/dremio_pat, leave empty if you don't want to change): " OUTFILE_CHANGE
   read -p "Username: " USERNAME
   read -sp "Password: " PASSWORD
@@ -48,6 +50,7 @@ elif [ $# -eq 2 ]; then
   # Command-line arguments
   USERNAME="$1"
   PASSWORD="$2"
+  OUTFILE_CHANGE=""
 else
   echo "Error: Invalid arguments" >&2
   echo "Usage: $0 [username] [password]" >&2
@@ -71,6 +74,9 @@ fi
 TEMP_FILE=$(mktemp)
 trap "rm -f $TEMP_FILE" EXIT
 
+
+# print the curl command for debugging purposes (without the password)
+# echo "Running curl command: curl --silent --insecure --write-out \"%{http_code}\" --output $TEMP_FILE -X POST $DREMIO_LOGIN_URL --header 'Content-Type: application/json' --data-raw '{ \"userName\": \"$USERNAME\", \"password\": \"********\" }'"
 HTTP_CODE=$(curl --silent --insecure \
   --write-out "%{http_code}" \
   --output "$TEMP_FILE" \

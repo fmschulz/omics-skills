@@ -16,7 +16,7 @@ fi
 
 DREMIO_HOST="${DREMIO_HOST:-lakehouse-1.jgi.lbl.gov}"
 DREMIO_PORT="${DREMIO_PORT:-9047}"
-BASE_URL="http://${DREMIO_HOST}:${DREMIO_PORT}/api/v3"
+BASE_URL="https://${DREMIO_HOST}:${DREMIO_PORT}/api/v3"
 
 echo "════════════════════════════════════════════════════════════════"
 echo "JGI GOLD Database Explorer"

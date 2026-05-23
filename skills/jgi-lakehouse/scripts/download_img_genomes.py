@@ -25,7 +25,7 @@ urllib3.disable_warnings()
 # Configuration
 DREMIO_HOST = os.getenv("DREMIO_HOST", "lakehouse-1.jgi.lbl.gov")
 DREMIO_PORT = os.getenv("DREMIO_PORT", "9047")
-DREMIO_BASE_URL = f"http://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
+DREMIO_BASE_URL = f"https://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
 
 # JGI Filesystem paths
 IMG_DOWNLOAD_DIR = Path("/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download")

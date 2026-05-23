@@ -42,11 +42,11 @@ logging.basicConfig(level=logging.INFO)
 with open("config.yaml", "r", encoding="utf-8") as fh:
     cfg = yaml.safe_load(fh)
 
-conn = DremioFlightEndpointConnection(
-    hostname=cfg["hostname"],
-    username=cfg["username"],
-    password=cfg["password"],
-)
+conn = DremioFlightEndpointConnection({
+    "hostname": cfg["hostname"],
+    "username": cfg["username"],
+    "password": cfg["password"],
+})
 df = conn.query(cfg["query"])
 print(df)
 ```

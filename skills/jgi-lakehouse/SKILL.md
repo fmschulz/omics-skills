@@ -1,62 +1,9 @@
 ---
 name: jgi-lakehouse
-description: Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG, Mycocosm, Phytozome. Downloads genome files from JGI filesystem using IMG taxon OIDs. Use when working with JGI data, GOLD projects, IMG annotations, or downloading genomes.
+description: Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG, Mycocosm, Phytozome. Downloads genome files from JGI filesystem using IMG taxon OIDs and links JGI taxon OIDs to read files through PMO/GOLD identifiers and JAMO. Use when working with JGI data, GOLD projects, IMG annotations, or downloading genomes.
 ---
 
 # JGI Lakehouse Skill
-
-## Instructions
-
-1. Decide whether the task needs metadata from the Lakehouse or files from the JGI filesystem.
-2. Start with a small validation query, then remove `LIMIT` for final counts or complete result sets.
-3. Use the query and download patterns below instead of improvising SQL or filesystem paths.
-4. Record the exact tables, filters, taxon OIDs, file paths, and commands used.
-
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Find metadata | Query the Lakehouse with SQL |
-| Download IMG genome packages | Copy `{taxon_oid}.tar.gz` from `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/` |
-| Retrieve Mycocosm or Phytozome files | Query `portal.downloadRequestFiles`, then copy from `/global/dna/dm_archive/` |
-| Query metagenome proteins | Use the NUMG tables and join on both `oid` and `gene_oid` |
-| Inspect schemas | Use `SHOW TABLES` and `DESCRIBE` before writing larger joins |
-
-## Input Requirements
-
-- Clear task description: metadata discovery, annotation lookup, file retrieval, or sequence download
-- Access to the relevant JGI environment and filesystem paths
-- Known identifiers when available: GOLD IDs, IMG taxon OIDs, project names, or organism names
-- Output scope: exploratory sample, complete count, or file retrieval target
-
-## Output
-
-- SQL queries or filesystem commands that match the request
-- Returned metadata, counts, taxon IDs, file paths, or copied files
-- A concise summary of what was found, including any limits or caveats
-
-## Quality Gates
-
-- [ ] Data source chosen correctly: Lakehouse for metadata, filesystem for sequence files
-- [ ] `LIMIT` removed from final comprehensive queries
-- [ ] Table and column names validated before final query execution
-- [ ] File paths and taxon OIDs recorded exactly
-
-## Examples
-
-See the worked examples and query blocks below, especially:
-- `## NUMG (Metagenome Proteins) Agent Workflow`
-- `## Downloading Genomes with IMG Taxon OIDs`
-- `## Portal Downloads (Mycocosm / Phytozome)`
-- `## Common Queries`
-
-## Troubleshooting
-
-**Issue**: Query returns only a sample and not the full answer
-**Solution**: Remove `LIMIT` after validating query shape and use aggregation for totals.
-
-**Issue**: Expected genome sequences are not in the Lakehouse
-**Solution**: Use the filesystem paths described below; the Lakehouse is for metadata and annotations.
 
 ## Quick Start
 
@@ -86,6 +33,12 @@ WHERE is_public = 'Yes' LIMIT 5;
 - Download microbial genomes with IMG taxon OIDs
 - Cross-reference GOLD projects with IMG annotations
 
+
+---
+
+## Best practices
+ - When reporting results from database queries, always provide a clear summary of the exact criteria that were used for filtering. This should include a list of each field that was used in the query/filter, and the query/filter was applied (string used in exact match, regular expression, exact number searched for or range, etc) 
+
 ---
 
 ## Data Access: Lakehouse vs Filesystem
@@ -110,10 +63,12 @@ WHERE is_public = 'Yes' LIMIT 5;
 | IMG | `"img-db-2 postgresql".img_core_v400.*` | Taxons, genes, annotations (244 tables) |
 | Portal | `"portal-db-1".portal.*` | Download tracking, file paths |
 | Mycocosm | `"myco-db-1 mysql".<organism>.*` | Fungal genomes (2,711 schemas) |
-| Phytozome | `"plant-db-7 postgresql".*` | Plant genomics |
+| Phytozome | `"plant-db-7 postgresql".*` | Plant genomics — see [docs/phytozome.md](docs/phytozome.md) |
 | NUMG | `"numg-iceberg"."numg-iceberg".*` | Metagenome proteins, Pfam hits |
 
 **Full table catalog:** See [docs/data-catalog.md](docs/data-catalog.md)
+
+**Phytozome (plant-db-7 / plant-db-4):** Read [docs/phytozome.md](docs/phytozome.md) before writing any queries against these sources.
 
 ---
 
@@ -192,6 +147,124 @@ tar -xzf 8136918376.tar.gz
 - `{taxon_oid}.cog.tab.txt` - COG annotations
 - `{taxon_oid}.pfam.tab.txt` - Pfam annotations
 - `{taxon_oid}.ko.tab.txt` - KEGG KO annotations
+
+---
+
+## Linking Assemblies To Reads
+
+Use this workflow when you need to go from an IMG metagenome assembly to the underlying JGI reads.
+
+### 1. Start from the assembly taxon OID
+
+Assemblies live under:
+
+```bash
+/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/
+```
+
+### 2. Pull the JGI/GOLD linkage fields from metadata
+
+For a metagenome taxon OID, the most useful linkage fields are:
+
+- `img_jgi_project_id`
+- `sequencing_gold_id`
+- `sample_gold_id`
+- `study_gold_id`
+- `gold_project_id`
+- `gold_pmo_project_id`
+- `gold_its_spid`
+
+In practice, `img_jgi_project_id` is often the strongest key for JAMO because it behaves like the PMO project identifier used by `jamo info ... pmoid`.
+
+### 3. Prefer JAMO `pmoid` for JGI read lookup
+
+Native JAMO lookup types are listed by:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest jamo info help
+```
+
+For legacy JGI metagenomes, this usually works better than `raw_normal spid`:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo info all pmoid <img_jgi_project_id>
+```
+
+If you only want FASTQ rows, filter the output:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo info all pmoid <img_jgi_project_id> | rg 'fastq(\\.gz)?'
+```
+
+### 4. Direct taxon-OID lookup is still useful
+
+This queries JAMO by the IMG taxon OID embedded in metadata:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo info all custom '{"metadata.gold_data.img_oid": 3300000030, "file_name": {"$regex": ".*fastq(\\\\.gz)?$"}}'
+```
+
+This can recover reads even when the older `spid` route is blank, but in recent re-audits `pmoid` recovered many more JGI rows.
+
+### 5. `spid` is valid, but not sufficient
+
+If you already have a verified sequencing project ID, this is still worth trying:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo info raw_normal spid <gold_its_spid>
+```
+
+But do not stop there. In several JGI cases:
+
+- `raw_normal spid` returned nothing
+- `all pmoid <img_jgi_project_id>` returned usable FASTQ records
+
+### 6. Inspect and fetch the actual file
+
+Inspect one metadata record:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest jamo show <metadata_id>
+```
+
+Fetch a file by filename:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo fetch -s dori all filename <file_name>
+```
+
+That prints the staged scratch path, typically under:
+
+```bash
+/clusterfs/jgi/scratch/dsi/...
+```
+
+Important:
+
+- if the file is already `RESTORED`, you can use the staged path immediately
+- if the file is `PURGED`, `jamo fetch` only starts the restore; you must wait until the staged path exists and has non-zero size before using it
+
+Simple wait pattern:
+
+```bash
+while [[ ! -s /clusterfs/jgi/scratch/dsi/.../file.fastq.gz ]]; do sleep 10; done
+```
+
+### Practical rule
+
+For JGI metagenome read recovery, use this priority:
+
+1. `jamo info all pmoid <img_jgi_project_id>`
+2. `jamo info all custom '{"metadata.gold_data.img_oid": ...}'`
+3. `jamo info raw_normal spid <gold_its_spid>`
+
+Do not assume "no reads" until all three have been checked.
+Do not assume a fetched file is ready until the staged path is actually restored.
 
 ---
 
@@ -362,8 +435,18 @@ Full guide: [docs/arrow-flight-python.md](docs/arrow-flight-python.md)
 
 ## Documentation
 
-- [docs/data-catalog.md](docs/data-catalog.md) - Complete table inventory (651 tables)
+### IMG Reference
+- [docs/img_and_gold_terms.md](docs/img_and_gold_terms.md) - IMG/GOLD glossary: all terms, project types, quality flags, IDs, sequencing status, taxonomy systems
+- [docs/IMG_data_types.md](docs/IMG_data_types.md) - Guide to analysis project types (isolates, MAGs, SAGs, metagenomes) with query patterns and data type counts
+- [docs/IMG-tables-reference.md](docs/IMG-tables-reference.md) - Complete IMG table catalog (244 tables in img_core_v400)
+- [docs/explore_IMG_genomes.md](docs/explore_IMG_genomes.md) - Genome metadata queries: NCBI/GTDB taxonomy, genome size, GC content, quality filters
+
+### Lakehouse Catalog & SQL
+- [docs/data-catalog.md](docs/data-catalog.md) - All data sources and key tables (GOLD, IMG, Portal, Mycocosm, Phytozome, NUMG)
+- [docs/phytozome.md](docs/phytozome.md) - Phytozome plant genomics: proteomes, genes, families, PFAM/PANTHER/GO, expression, synteny, homologs
 - [docs/sql-quick-reference.md](docs/sql-quick-reference.md) - Dremio SQL syntax
+
+### Access & Downloads
 - [docs/arrow-flight-python.md](docs/arrow-flight-python.md) - Arrow Flight Python setup and test
 - [examples/05-query-numg-metagenome-proteins.md](examples/05-query-numg-metagenome-proteins.md) - NUMG workflow for protein+Pfam queries
 - [examples/04-download-img-genomes.md](examples/04-download-img-genomes.md) - Download with taxon OIDs

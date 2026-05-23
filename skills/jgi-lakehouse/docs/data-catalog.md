@@ -2,6 +2,8 @@
 
 Complete map of available data sources in the JGI Dremio Lakehouse.
 
+> For definitions of IMG/GOLD terms (analysis project types, quality flags, sequencing status, IDs, taxonomy systems), see [img_and_gold_terms.md](img_and_gold_terms.md).
+
 **Last Updated**: 2025-02-02
 
 **Total Tables**: 651
@@ -172,11 +174,13 @@ LIMIT 50;
 
 Integrated Microbial Genomes database - gene annotations, functions, and genomic features.
 
+**→ For comprehensive IMG table documentation, see [IMG-tables-reference.md](IMG-tables-reference.md)**
+
 ### Schemas
 
 | Schema | Description |
 |--------|-------------|
-| `img_core_v400` | Core IMG data (taxons, genes, annotations) |
+| `img_core_v400` | Core IMG data (taxons, genes, annotations) - 100 tables |
 | `img_gold` | GOLD integration tables |
 | `img_ext` | Extended annotations and external links |
 | `img_rnaseq` | RNAseq experiments and datasets |
@@ -188,11 +192,15 @@ Integrated Microbial Genomes database - gene annotations, functions, and genomic
 
 - `taxon` - IMG taxon metadata
 - `gene` - Gene information
-- `gene_function` - Functional annotations
-- `biocyc_*` - BioCyc pathway data
+- `gene_ko_terms` - KEGG Orthology assignments
+- `gene_cog_groups` - COG assignments
+- `gene_img_interpro_hits` - InterPro domains
+- `gene_go_terms` - Gene Ontology terms
+- `biocyc_*` - BioCyc pathway data (29 tables)
 - `bc_type` - Biosynthetic cluster types
-- `pfam_*` - Pfam domain annotations
-- `ko_*` - KEGG Orthology data
+- `enzyme*` - Enzyme/EC definitions and relationships
+- `compound*` - Chemical compound data
+- `dt_*` - Pre-computed/denormalized data tables
 
 ### Example Queries
 
@@ -641,3 +649,12 @@ See `scripts/download_img_genomes.py` for a complete workflow that:
 - **Filesystem access requires** JGI cluster account with appropriate permissions
 - **numg-iceberg tables** contain metagenome proteins only, not isolate genomes
 - **Genome packages** are tar.gz archives with sequences, annotations, and functional assignments
+
+---
+
+## Related Documentation
+
+- [img_and_gold_terms.md](img_and_gold_terms.md) - Full IMG/GOLD glossary: definitions for all terms, project types, quality flags, IDs, and sequencing concepts
+- [IMG_data_types.md](IMG_data_types.md) - Guide to analysis project types with query patterns
+- [IMG-tables-reference.md](IMG-tables-reference.md) - Complete IMG table catalog (244 tables)
+- [explore_IMG_genomes.md](explore_IMG_genomes.md) - Genome metadata query guide (taxonomy, quality, size, GTDB)

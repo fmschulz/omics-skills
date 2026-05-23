@@ -65,6 +65,64 @@ pip install \
 
 See `docs/arrow-flight-python.md` for full setup, config, and test query.
 
+### 5. Link an IMG assembly to reads
+
+Use this sequence for JGI metagenomes:
+
+1. Start from the assembly taxon OID:
+
+```bash
+/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/
+```
+
+2. Pull linkage fields from Lakehouse metadata:
+
+- `img_jgi_project_id`
+- `sequencing_gold_id`
+- `sample_gold_id`
+- `study_gold_id`
+- `gold_project_id`
+- `gold_pmo_project_id`
+- `gold_its_spid`
+
+3. Query JAMO, preferring `pmoid`:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest jamo info all pmoid <img_jgi_project_id>
+```
+
+4. If needed, also try direct taxon lookup:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo info all custom '{"metadata.gold_data.img_oid": 3300000030, "file_name": {"$regex": ".*fastq(\\\\.gz)?$"}}'
+```
+
+5. Only treat `spid` as a fallback, not the primary key:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest jamo info raw_normal spid <gold_its_spid>
+```
+
+6. Fetch a selected file:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest \
+  jamo fetch -s dori all filename <file_name>
+```
+
+7. Inspect one record in detail:
+
+```bash
+apptainer run docker://doejgi/jamo-dori:latest jamo show <metadata_id>
+```
+
+Important restore note:
+
+- `jamo fetch` may return a staged scratch path even when the underlying file was `PURGED`
+- in that case, wait until the staged file exists and has non-zero size before starting downstream work
+- only treat the file as ready once the staged path is actually restored
+
 ## File Structure
 
 ```

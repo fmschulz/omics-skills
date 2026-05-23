@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional
 # Configuration
 DREMIO_HOST = os.getenv("DREMIO_HOST", "lakehouse-1.jgi.lbl.gov")
 DREMIO_PORT = os.getenv("DREMIO_PORT", "9047")
-DREMIO_BASE_URL = f"http://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
+DREMIO_BASE_URL = f"https://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
 
 # Default timeout for job polling (seconds)
 DEFAULT_JOB_TIMEOUT = 300
