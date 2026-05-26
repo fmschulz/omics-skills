@@ -8,8 +8,6 @@ A skill and agent pack for omics data analysis, literature discovery, scientific
 
 Read the docs at <https://fmschulz.github.io/omics-skills/>. They cover installation, the agent set, the skill catalog, routing, and development.
 
-Source pages live in [`docs/`](docs/); GitHub Pages publishes them through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
-
 ## Scope
 
 Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, statistics, manuscript drafting, and figure generation.
@@ -32,10 +30,10 @@ Skills target current stable releases as of 2026 and document GPU alternatives w
 
 | Step | CPU baseline | GPU alternative |
 |---|---|---|
-| Read trimming (long) | Porechop_ABI, Pychopper | — |
+| Read QC (long) | Dorado summaries/trimming, Chopper, Filtlong, Pychopper for full-length cDNA; Porechop_ABI only as a documented fallback | — |
 | Read mapping (short) | bwa-mem2, BBMap | NVIDIA Parabricks `fq2bam` |
 | Read mapping (long) | minimap2 v2.30 | `mm2-fast` (AVX-512), `mm2-gb`, `mm2-ax` |
-| Assembly | SPAdes 4 (Illumina), Flye 2.9 (long-read), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
+| Assembly | SPAdes 4 (Illumina), Flye 2.9 (long-read isolate draft), Autocycler 0.6+ (bacterial isolate consensus), Flye `--meta` / metaFlye (long-read metagenome), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
 | Domain taxonomy triage | BBTools QuickClade via `bryce911/bbtools` container (`percontig` for assemblies), then GTDB-Tk / EukCC / vConTACT3 / GVClass by domain | — |
 | Binning | QuickBin via `bryce911/bbtools` container | SemiBin2 v2.2.1 (CUDA-backed PyTorch) |
 | Bin QC | CheckM2 v1.1.0, EukCC v2.1.3, GUNC v1.0.6 | — |
@@ -47,7 +45,7 @@ Skills target current stable releases as of 2026 and document GPU alternatives w
 | Synteny | MCScanX, ntSynt, SibeliaZ | — |
 | Viromics | geNomad, CheckV, VirSorter2, vConTACT3 (prokaryotic-virus taxonomy), gvclass (Nucleocytoviricota) | — |
 | Structure | TM-Vec (triage), Boltz-2 (default predictor), ColabFold + MMseqs2-GPU MSA, ESMFold (pre-screen), Foldseek v9 | Boltz-2, Foldseek v9 `--gpu 1`, ColabFold, ESMFold |
-| Statistics / ML | DuckDB v1.1, scikit-learn, XGBoost v2.1 | XGBoost `device=cuda`, RAPIDS cuML |
+| Statistics / ML | LinkML schemas, Pydantic validation/parsing, DuckDB v1.1, scikit-learn, XGBoost v2.1 | XGBoost `device=cuda`, RAPIDS cuML |
 
 The full survey of versions, alternatives, and benchmarks is in [`docs/tooling-survey-2026.md`](docs/tooling-survey-2026.md).
 
@@ -91,10 +89,10 @@ Skills are also invocable individually as `/<skill-name>`. Agent files list the 
 
 | Agent | Focus | Skills |
 |---|---|---:|
-| `omics-scientist` | Sequencing reads, assembly, binning, annotation, phylogenomics, MAG recovery, JGI access | 16 |
-| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact | 7 |
-| `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 7 |
-| `dataviz-artist` | marimo and Jupyter notebooks (executed end-to-end), matplotlib/seaborn figures, Plotly Dash dashboards | 4 |
+| `omics-scientist` | Sequencing reads, assembly, binning, annotation, phylogenomics, MAG recovery, JGI access | 21 |
+| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact, API docs | 11 |
+| `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 10 |
+| `dataviz-artist` | marimo and Jupyter notebooks (executed end-to-end), scientific data inspection, matplotlib/seaborn figures, Plotly Dash dashboards | 7 |
 
 Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a specific agent routes a given task.
 

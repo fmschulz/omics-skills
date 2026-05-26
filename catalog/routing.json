@@ -7,10 +7,24 @@
       "skills": [
         "agent-browser",
         "beautiful-data-viz",
+        "exploratory-data-analysis",
+        "handoff",
         "notebooks",
+        "pickup",
         "plotly-dashboard-skill"
       ],
       "task_patterns": [
+        {
+          "skill_name": "exploratory-data-analysis",
+          "phrases": [
+            "unknown file",
+            "inspect file",
+            "explore data file",
+            "EDA",
+            "data structure",
+            "file format"
+          ]
+        },
         {
           "skill_name": "notebooks",
           "phrases": [
@@ -19,7 +33,6 @@
             "jupyter",
             "ipynb",
             "convert notebook",
-            "EDA",
             "reactive notebook",
             "executed notebook",
             "pixi kernel"
@@ -54,6 +67,23 @@
             "browser",
             "web data"
           ]
+        },
+        {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
+          ]
         }
       ]
     },
@@ -67,6 +97,10 @@
         "bio-logic",
         "biorxiv-search",
         "crossref-lookup",
+        "csag-extraction",
+        "get-api-docs",
+        "handoff",
+        "pickup",
         "polars-dovmed",
         "scientific-impact-assessment"
       ],
@@ -143,12 +177,50 @@
           ]
         },
         {
+          "skill_name": "csag-extraction",
+          "phrases": [
+            "CSAG",
+            "argument graph",
+            "claim evidence graph",
+            "conditional scientific argumentation",
+            "extract claims and evidence"
+          ]
+        },
+        {
           "skill_name": "agent-browser",
           "phrases": [
             "browser",
             "scrape",
             "supplementary materials",
             "web database"
+          ]
+        },
+        {
+          "skill_name": "get-api-docs",
+          "phrases": [
+            "API documentation",
+            "SDK documentation",
+            "latest API docs",
+            "current docs",
+            "fast-moving API",
+            "chub"
+          ]
+        },
+        {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
           ]
         }
       ]
@@ -161,6 +233,7 @@
         "bio-annotation",
         "bio-assembly-qc",
         "bio-binning-qc",
+        "bio-fasta-database-curator",
         "bio-foundation-housekeeping",
         "bio-gene-calling",
         "bio-logic",
@@ -172,7 +245,10 @@
         "bio-structure-annotation",
         "bio-viromics",
         "bio-workflow-methods-docwriter",
+        "exploratory-data-analysis",
+        "handoff",
         "jgi-lakehouse",
+        "pickup",
         "polars-dovmed",
         "tracking-taxonomy-updates"
       ],
@@ -281,6 +357,30 @@
           ]
         },
         {
+          "skill_name": "exploratory-data-analysis",
+          "phrases": [
+            "unknown file",
+            "inspect file",
+            "explore data file",
+            "EDA",
+            "data structure",
+            "file format"
+          ]
+        },
+        {
+          "skill_name": "bio-fasta-database-curator",
+          "phrases": [
+            "FASTA database",
+            "FAA database",
+            "curate FASTA",
+            "standardize headers",
+            "deduplicate sequences",
+            "prepare BLAST database",
+            "prepare MMseqs database",
+            "HMM database"
+          ]
+        },
+        {
           "skill_name": "bio-annotation",
           "phrases": [
             "annotation",
@@ -366,6 +466,23 @@
           ]
         },
         {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
+          ]
+        },
+        {
           "skill_name": "bio-prefect-dask-nextflow",
           "phrases": [
             "Nextflow",
@@ -403,7 +520,10 @@
         "ai-scientist-evaluator",
         "bio-logic",
         "bio-workflow-methods-docwriter",
+        "csag-extraction",
+        "handoff",
         "manuscript-review-council",
+        "pickup",
         "proposal-review",
         "scientific-writing"
       ],
@@ -471,12 +591,39 @@
           ]
         },
         {
+          "skill_name": "csag-extraction",
+          "phrases": [
+            "CSAG",
+            "argument graph",
+            "claim evidence graph",
+            "conditional scientific argumentation",
+            "extract claims and evidence"
+          ]
+        },
+        {
           "skill_name": "bio-workflow-methods-docwriter",
           "phrases": [
             "document workflow",
             "Nextflow",
             "Snakemake",
             "pipeline methods"
+          ]
+        },
+        {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
           ]
         }
       ]
@@ -622,6 +769,28 @@
         "codex"
       ],
       "path": "skills/bio-binning-qc/SKILL.md"
+    },
+    {
+      "name": "bio-fasta-database-curator",
+      "description": "Curate, validate, and standardize FASTA/FAA sequence databases: standardize headers, merge databases, remove duplicates, convert GenBank to FASTA, and generate statistics. Use when preparing reference databases for HMM searches, MMseqs2, BLAST, and other bioinformatics workflows.",
+      "agents": [
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "FAA database",
+        "FASTA database",
+        "HMM database",
+        "curate FASTA",
+        "deduplicate sequences",
+        "prepare BLAST database",
+        "prepare MMseqs database",
+        "standardize headers"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/bio-fasta-database-curator/SKILL.md"
     },
     {
       "name": "bio-foundation-housekeeping",
@@ -887,15 +1056,85 @@
       "path": "skills/crossref-lookup/SKILL.md"
     },
     {
+      "name": "csag-extraction",
+      "description": "Extract a CSAG (Conditional Scientific Argumentation Graph) from a manuscript using the canonical argumentation spine (Assertions, EvidenceItems, EvidenceLinks, InferenceSteps) while enforcing CSAG conditionality (no assertion without at least one Context). Also generates paper-grounded Q&A items using bundled QA templates.",
+      "agents": [
+        "literature-expert",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "CSAG",
+        "argument graph",
+        "claim evidence graph",
+        "conditional scientific argumentation",
+        "extract claims and evidence"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/csag-extraction/SKILL.md"
+    },
+    {
+      "name": "exploratory-data-analysis",
+      "description": "Perform comprehensive exploratory data analysis on scientific data files across 200+ file formats. This skill should be used when analyzing any scientific data file to understand its structure, content, quality, and characteristics. Automatically detects file type and generates detailed markdown reports with format-specific analysis, quality metrics, and downstream analysis recommendations. Covers chemistry, bioinformatics, microscopy, spectroscopy, proteomics, metabolomics, and general scientific data formats.",
+      "agents": [
+        "dataviz-artist",
+        "omics-scientist"
+      ],
+      "task_patterns": [
+        "EDA",
+        "data structure",
+        "explore data file",
+        "file format",
+        "inspect file",
+        "unknown file"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/exploratory-data-analysis/SKILL.md"
+    },
+    {
       "name": "get-api-docs",
       "description": "Fetch current API and SDK documentation with the chub CLI. Use when writing or reviewing code against fast-changing APIs, especially when the user asks for the latest or current docs.",
-      "agents": [],
-      "task_patterns": [],
+      "agents": [
+        "literature-expert"
+      ],
+      "task_patterns": [
+        "API documentation",
+        "SDK documentation",
+        "chub",
+        "current docs",
+        "fast-moving API",
+        "latest API docs"
+      ],
       "platforms": [
         "claude",
         "codex"
       ],
       "path": "skills/get-api-docs/SKILL.md"
+    },
+    {
+      "name": "handoff",
+      "description": "Create a session handoff document for context continuity. Captures work completed, decisions, knowledge, and next steps in docs/handoffs/.",
+      "agents": [
+        "dataviz-artist",
+        "literature-expert",
+        "omics-scientist",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "handoff",
+        "session handoff",
+        "write handoff"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/handoff/SKILL.md"
     },
     {
       "name": "jgi-lakehouse",
@@ -947,7 +1186,6 @@
         "dataviz-artist"
       ],
       "task_patterns": [
-        "EDA",
         "convert notebook",
         "executed notebook",
         "ipynb",
@@ -962,6 +1200,27 @@
         "codex"
       ],
       "path": "skills/notebooks/SKILL.md"
+    },
+    {
+      "name": "pickup",
+      "description": "Read and resume from the latest session handoff. Queries memd first when project memory is configured and available, then falls back to docs/handoffs/ for filesystem handoffs. Summarizes both and auto-archives filesystem handoffs.",
+      "agents": [
+        "dataviz-artist",
+        "literature-expert",
+        "omics-scientist",
+        "science-writer"
+      ],
+      "task_patterns": [
+        "continue previous work",
+        "pickup",
+        "read handoff",
+        "resume session"
+      ],
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "path": "skills/pickup/SKILL.md"
     },
     {
       "name": "plotly-dashboard-skill",

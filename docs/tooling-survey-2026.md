@@ -4,10 +4,10 @@ This page records the default tool choices referenced by the agents and bioinfor
 
 | Step | CPU baseline | GPU or accelerated option |
 |---|---|---|
-| Long-read trimming | Porechop_ABI, Pychopper | None documented |
+| Long-read QC | Dorado summaries/trimming, Chopper, Filtlong, Pychopper for full-length cDNA; Porechop_ABI only as a documented fallback | None documented |
 | Short-read mapping | `bwa-mem2`, BBMap | NVIDIA Parabricks `fq2bam` |
 | Long-read mapping | `minimap2` v2.30 | `mm2-fast`, `mm2-gb`, `mm2-ax` when the hardware fits |
-| Assembly | SPAdes 4, Flye 2.9, metaMDBG 1.1, myloasm where appropriate | None documented |
+| Assembly | SPAdes 4, Flye 2.9 for long-read isolate drafts, Autocycler 0.6+ for bacterial isolate consensus, Flye `--meta` / metaFlye for long-read metagenomes, metaMDBG 1.1, myloasm where appropriate | None documented |
 | Domain taxonomy triage | BBTools QuickClade via `bryce911/bbtools`, followed by GTDB-Tk, EukCC, vConTACT3, or GVClass by domain | None documented |
 | Binning | QuickBin via `bryce911/bbtools` | SemiBin2 with CUDA-backed PyTorch |
 | Bin QC | CheckM2, EukCC, GUNC | None documented |
@@ -19,7 +19,7 @@ This page records the default tool choices referenced by the agents and bioinfor
 | Synteny | MCScanX, ntSynt, SibeliaZ | None documented |
 | Viromics | geNomad, CheckV, VirSorter2, vConTACT3, GVClass | None documented |
 | Structure annotation | TM-Vec, Boltz-2, ColabFold, ESMFold, Foldseek | Boltz-2, Foldseek GPU, ColabFold, ESMFold |
-| Statistics and ML | DuckDB, scikit-learn, XGBoost | XGBoost CUDA, RAPIDS cuML |
+| Statistics and ML | LinkML schemas, Pydantic validation/parsing, DuckDB, scikit-learn, XGBoost | XGBoost CUDA, RAPIDS cuML |
 
 ## Maintenance Notes
 

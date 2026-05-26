@@ -11,7 +11,7 @@ Ingest, QC, and map reads with reproducible outputs. Use for raw read processing
 
 1. Parse sample sheet and validate inputs.
 2. For short reads: run QC and adapter/quality trimming with `bbduk` or `fastp` v1.3.3+.
-3. For long reads: trim adapters with `Porechop_ABI` (preferred; the original `Porechop` is unmaintained and ships stale adapter sets) or `Pychopper` for full-length cDNA. Filter by quality and length with `filtlong` v0.2.1.
+3. For long reads: use current basecaller-aware QC first. For ONT, prefer Dorado summaries/trimming during basecalling or demultiplexing when starting from signal/BAM; for FASTQ-only filtering use `chopper` for quality/length/end trimming or `filtlong` v0.2.1 when selecting reads for assembly. Use `Pychopper` for full-length cDNA. Treat `Porechop_ABI` as a targeted legacy/fallback adapter-discovery tool, and record why it is needed.
 4. Map reads and produce coverage tables:
    - Short reads, CPU: `bbmap` or `bwa-mem2` v2.2.1+. Short reads, GPU node available: NVIDIA Parabricks `fq2bam` (wraps `bwa-mem2` + GATK markdup; typically 3–4× faster than `bwa-mem2` on 8 cores and up to ~80× over a 96-core CPU pipeline).
    - Long reads, CPU: `minimap2` v2.30+. AVX-512 hardware: `mm2-fast` as a drop-in replacement (~1.8× speedup). GPU node available: `mm2-gb` or `mm2-ax` for CUDA-accelerated long-read alignment.
@@ -50,6 +50,7 @@ Inputs:
 - [ ] Mapping rate meets project thresholds.
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Validate sample sheet schema and FASTQ integrity.
+- [ ] For long-read QC, record whether trimming happened in the basecaller/demultiplexer, `chopper`, `filtlong`, `Pychopper`, or a documented Porechop_ABI fallback.
 
 ## Examples
 

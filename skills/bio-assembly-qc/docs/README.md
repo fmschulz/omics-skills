@@ -18,6 +18,13 @@ Long-read assembler for PacBio and Oxford Nanopore data with sophisticated repea
 - Official website: https://github.com/fenderglass/Flye
 - Use cases: PacBio/ONT isolates and metagenomes; ONT-only HiFi-poor datasets
 
+### Autocycler v0.6+ (bacterial isolate consensus)
+Consensus assembler for bacterial isolate genomes. Use it when the goal is a complete, high-confidence isolate genome from multiple independent long-read assembly attempts. It complements Flye/Raven/miniasm-style draft assemblies; it is not the default path for mixed-community metagenomes.
+
+- Documentation: [autocycler.md](autocycler.md)
+- Official website: https://github.com/rrwick/Autocycler
+- Use cases: haploid prokaryotic isolate genomes with enough long-read coverage to compare multiple draft assemblies
+
 ### metaMDBG v1.1 (preferred for HiFi metagenomes)
 Minimizer-based de Bruijn graph assembler tuned for PacBio HiFi metagenomes. Produces ~2× more circularized high-quality MAGs than metaFlye on HiFi data and recovers more viruses and plasmids (*Nature Biotechnology* 2024, DOI: 10.1038/s41587-023-01983-6).
 
@@ -58,9 +65,9 @@ quast.py spades_out/contigs.fasta -r reference.fasta -o qc_results -t 8
 |-----------|-------------|------------------|-------------|
 | Illumina paired-end | Bacterial isolate | `spades.py --isolate` | — |
 | Illumina paired-end | Metagenomic | `spades.py --meta` | — |
-| PacBio HiFi | Isolate | `flye --pacbio-hifi` | — |
+| PacBio HiFi | Isolate | `flye --pacbio-hifi` | Autocycler consensus when complete isolate closure is required |
 | PacBio HiFi | Metagenomic | **metaMDBG v1.1** | metaFlye `--meta --pacbio-hifi` |
-| ONT Q20+ | Isolate | `flye --nano-hq` | — |
+| ONT Q20+ | Isolate | `flye --nano-hq` | Autocycler consensus when complete isolate closure is required |
 | ONT Q20+ | Metagenomic | metaFlye `--meta --nano-hq` | myloasm (when speed-bound) |
 | Illumina + PacBio | Hybrid | SPAdes (hybrid) | Flye + short-read polishing |
 | Illumina + ONT | Hybrid | SPAdes (hybrid) | Flye + short-read polishing |

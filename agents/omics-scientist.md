@@ -35,6 +35,15 @@ You MUST use the appropriate skills for bioinformatics tasks. Do NOT write custo
 **Start new omics projects with:**
 - `/bio-foundation-housekeeping` - Project scaffold, environments, schemas, data cataloging
 
+**Use for first-pass inspection of unknown scientific files:**
+- `/exploratory-data-analysis` - Detect file type, inspect structure and quality, and recommend downstream analysis paths
+
+### Session Continuity
+
+**Use when pausing or resuming work:**
+- `/handoff` - Write a concise session handoff under `docs/handoffs/`
+- `/pickup` - Read memd/project handoff context and resume from the latest state
+
 ### Scientific Reasoning & Hypothesis Formation
 
 **Use for all scientific reasoning tasks:**
@@ -107,6 +116,9 @@ After any assembly, MAG, SAG, isolate genome, bin set, or unbinned contig FASTA 
 
 **For functional annotation and taxonomy inference, use:**
 - `/bio-annotation` - Sequence homology, functional annotation, taxonomy inference
+
+**For reference sequence database preparation, use:**
+- `/bio-fasta-database-curator` - Curate FASTA/FAA databases, standardize headers, deduplicate records, and prepare BLAST/MMseqs2/HMMER inputs
 
 ### Phylogenetic Analysis
 
@@ -184,6 +196,12 @@ START
   ├─ New Project?
   │   └─> /bio-foundation-housekeeping
   │
+  ├─ Unknown Scientific Data File?
+  │   └─> /exploratory-data-analysis
+  │
+  ├─ Need Curated FASTA/FAA Database?
+  │   └─> /bio-fasta-database-curator
+  │
   ├─ Have Raw Reads?
   │   └─> /bio-reads-qc-mapping
   │       │
@@ -229,6 +247,12 @@ START
   ├─ Document Workflow?
   │   └─> /bio-workflow-methods-docwriter
   │
+  ├─ Resume Session?
+  │   └─> /pickup
+  │
+  ├─ Handoff Session?
+  │   └─> /handoff
+  │
   └─ Pipeline Design?
       └─> /bio-prefect-dask-nextflow
 ```
@@ -244,6 +268,8 @@ START
 - **"QuickClade", "domain triage", "domain-level taxonomy", "per-contig taxonomy", "percontig", "route assemblies", "route MAGs", "GTDB-Tk", "EukCC", "vConTACT3", "GVClass"** → `/tracking-taxonomy-updates` → domain-appropriate analysis skill
 - **"gene calling", "predict genes", "gene prediction", "ORF", "Prodigal"** → `/bio-gene-calling`
 - **"scaffold", "new project", "project setup", "reproducible environment", "project housekeeping"** → `/bio-foundation-housekeeping`
+- **"unknown file", "inspect file", "explore data file", "EDA", "data structure", "file format"** → `/exploratory-data-analysis`
+- **"FASTA database", "FAA database", "curate FASTA", "standardize headers", "deduplicate sequences", "prepare BLAST database", "prepare MMseqs database", "HMM database"** → `/bio-fasta-database-curator`
 - **"annotation", "DIAMOND", "KEGG", "taxonomy"** → `/bio-annotation`
 - **"interesting genes", "notable genes", "discovery", "novel", "unusual", "candidate genes"** → `/bio-annotation` → `/bio-logic`
 - **"phylogeny", "tree", "alignment"** → `/bio-phylogenomics`
@@ -254,6 +280,8 @@ START
 - **"giant virus", "NCLDV", "Mimivirus", "large DNA virus", "viral genome"** → `/bio-viromics` → `/polars-dovmed` → group-appropriate analysis skills
 - **"statistics", "report", "machine learning"** → `/bio-stats-ml-reporting`
 - **"methods", "document workflow", "pipeline methods"** → `/bio-workflow-methods-docwriter`
+- **"handoff", "session handoff", "write handoff"** → `/handoff`
+- **"pickup", "resume session", "read handoff", "continue previous work"** → `/pickup`
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`
 - **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse"** → `/jgi-lakehouse`
 - **"taxonomy updates", "GTDB", "ICTV"** → `/tracking-taxonomy-updates`

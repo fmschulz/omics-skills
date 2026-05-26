@@ -79,7 +79,9 @@ These tools work together in the skill workflow:
 1. **Pixi**: Sets up reproducible environment with all dependencies
 2. **LinkML**: Defines metadata schemas for samples, runs, etc.
 3. **Pydantic**: Validates data at runtime using generated models
-4. **DuckDB**: Catalogs data files for efficient querying
+4. **DuckDB**: Catalogs validated Parquet files for efficient querying
+
+The default pattern is schema-first. Define records in LinkML, validate incoming metadata, parse/coerce values through Pydantic models, write normalized Parquet, and then register those Parquet files in DuckDB. Avoid loading raw CSV/JSON directly into the catalog unless the raw table is clearly marked as staging and excluded from downstream analysis.
 
 ## Official Documentation Links
 

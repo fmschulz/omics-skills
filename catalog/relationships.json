@@ -676,6 +676,20 @@
     ]
   },
   {
+    "source": "handoff",
+    "target": "pickup",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "Pairs with `/pickup` skill which reads and resumes from handoff documents created by this skill."
+    ]
+  },
+  {
     "source": "manuscript-review-council",
     "target": "ai-scientist-evaluator",
     "type": "compose_with",
@@ -731,6 +745,20 @@
     "evidence": [
       "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.",
       "- `/scientific-writing` \u2014 apply the reviewer feedback to the manuscript"
+    ]
+  },
+  {
+    "source": "pickup",
+    "target": "handoff",
+    "type": "compose_with",
+    "source_type": "skill",
+    "target_type": "skill",
+    "confidence": 0.6,
+    "provenance": [
+      "skill_body_reference"
+    ],
+    "evidence": [
+      "- Pairs with `/handoff` which writes filesystem handoffs."
     ]
   },
   {

@@ -43,6 +43,36 @@ go get github.com/duckdb/duckdb-go/v2
 
 ## Key Commands for Data Cataloging
 
+## Schema-First Catalog Pattern
+
+Use DuckDB as the query layer over validated records, not as the first place raw metadata lands.
+
+1. Define the record schema in LinkML under `schemas/`.
+2. Validate raw CSV/TSV/JSON/YAML with `linkml-validate` or the Python validator.
+3. Generate or maintain Pydantic models and parse records through those models to coerce dates, numeric values, booleans, enumerations, and paths.
+4. Write normalized Parquet tables.
+5. Register only validated Parquet tables in DuckDB, keeping raw inputs in `data/raw/` or a clearly named staging table.
+
+```bash
+linkml-validate --schema schemas/project.yaml --target-class Sample data/raw/samples.tsv
+linkml generate pydantic --black schemas/project.yaml > src/project_models.py
+```
+
+```python
+import duckdb
+import pandas as pd
+from project_models import Sample
+
+raw = pd.read_csv("data/raw/samples.tsv", sep="\t").to_dict("records")
+samples = [Sample.model_validate(row).model_dump() for row in raw]
+pd.DataFrame(samples).to_parquet("data/samples.parquet", index=False)
+
+conn = duckdb.connect("data/catalog.duckdb")
+conn.execute("CREATE OR REPLACE VIEW samples AS SELECT * FROM 'data/samples.parquet'")
+```
+
+Record rejected rows separately with the validation error, source file, line/row number, and remediation status.
+
 ### Create Database
 ```python
 import duckdb

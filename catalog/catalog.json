@@ -1,10 +1,10 @@
 {
   "metadata": {
     "source_repo": "/home/fschulz/dev/omics-skills",
-    "built_at": "2026-05-26T05:04:33+00:00",
-    "skill_count": 30,
+    "built_at": "2026-05-26T07:06:16+00:00",
+    "skill_count": 35,
     "agent_count": 4,
-    "edge_count": 120
+    "edge_count": 136
   },
   "skills": [
     {
@@ -265,6 +265,34 @@
           "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
       }
+    },
+    {
+      "name": "bio-fasta-database-curator",
+      "title": "FASTA Database Curator",
+      "description": "Curate, validate, and standardize FASTA/FAA sequence databases: standardize headers, merge databases, remove duplicates, convert GenBank to FASTA, and generate statistics. Use when preparing reference databases for HMM searches, MMseqs2, BLAST, and other bioinformatics workflows.",
+      "path": "skills/bio-fasta-database-curator/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "omics-scientist"
+      ],
+      "sections": [
+        "Functional Annotation"
+      ],
+      "task_patterns": [
+        "FAA database",
+        "FASTA database",
+        "HMM database",
+        "curate FASTA",
+        "deduplicate sequences",
+        "prepare BLAST database",
+        "prepare MMseqs database",
+        "standardize headers"
+      ],
+      "internal_references": [],
+      "reference_contexts": {}
     },
     {
       "name": "bio-foundation-housekeeping",
@@ -717,6 +745,60 @@
       }
     },
     {
+      "name": "csag-extraction",
+      "title": "CSAG extraction skill",
+      "description": "Extract a CSAG (Conditional Scientific Argumentation Graph) from a manuscript using the canonical argumentation spine (Assertions, EvidenceItems, EvidenceLinks, InferenceSteps) while enforcing CSAG conditionality (no assertion without at least one Context). Also generates paper-grounded Q&A items using bundled QA templates.",
+      "path": "skills/csag-extraction/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "literature-expert",
+        "science-writer"
+      ],
+      "sections": [
+        "Argument Graph Extraction"
+      ],
+      "task_patterns": [
+        "CSAG",
+        "argument graph",
+        "claim evidence graph",
+        "conditional scientific argumentation",
+        "extract claims and evidence"
+      ],
+      "internal_references": [],
+      "reference_contexts": {}
+    },
+    {
+      "name": "exploratory-data-analysis",
+      "title": "Exploratory Data Analysis",
+      "description": "Perform comprehensive exploratory data analysis on scientific data files across 200+ file formats. This skill should be used when analyzing any scientific data file to understand its structure, content, quality, and characteristics. Automatically detects file type and generates detailed markdown reports with format-specific analysis, quality metrics, and downstream analysis recommendations. Covers chemistry, bioinformatics, microscopy, spectroscopy, proteomics, metabolomics, and general scientific data formats.",
+      "path": "skills/exploratory-data-analysis/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "dataviz-artist",
+        "omics-scientist"
+      ],
+      "sections": [
+        "Project Initialization",
+        "Scientific Data Inspection"
+      ],
+      "task_patterns": [
+        "EDA",
+        "data structure",
+        "explore data file",
+        "file format",
+        "inspect file",
+        "unknown file"
+      ],
+      "internal_references": [],
+      "reference_contexts": {}
+    },
+    {
       "name": "get-api-docs",
       "title": "Get API Docs",
       "description": "Fetch current API and SDK documentation with the chub CLI. Use when writing or reviewing code against fast-changing APIs, especially when the user asks for the latest or current docs.",
@@ -725,11 +807,54 @@
         "claude",
         "codex"
       ],
-      "agents": [],
-      "sections": [],
-      "task_patterns": [],
+      "agents": [
+        "literature-expert"
+      ],
+      "sections": [
+        "API and SDK Documentation"
+      ],
+      "task_patterns": [
+        "API documentation",
+        "SDK documentation",
+        "chub",
+        "current docs",
+        "fast-moving API",
+        "latest API docs"
+      ],
       "internal_references": [],
       "reference_contexts": {}
+    },
+    {
+      "name": "handoff",
+      "title": "/handoff",
+      "description": "Create a session handoff document for context continuity. Captures work completed, decisions, knowledge, and next steps in docs/handoffs/.",
+      "path": "skills/handoff/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "dataviz-artist",
+        "literature-expert",
+        "omics-scientist",
+        "science-writer"
+      ],
+      "sections": [
+        "Session Continuity"
+      ],
+      "task_patterns": [
+        "handoff",
+        "session handoff",
+        "write handoff"
+      ],
+      "internal_references": [
+        "pickup"
+      ],
+      "reference_contexts": {
+        "pickup": [
+          "Pairs with `/pickup` skill which reads and resumes from handoff documents created by this skill."
+        ]
+      }
     },
     {
       "name": "jgi-lakehouse",
@@ -848,7 +973,6 @@
         "Notebook authoring"
       ],
       "task_patterns": [
-        "EDA",
         "convert notebook",
         "executed notebook",
         "ipynb",
@@ -860,6 +984,39 @@
       ],
       "internal_references": [],
       "reference_contexts": {}
+    },
+    {
+      "name": "pickup",
+      "title": "/pickup",
+      "description": "Read and resume from the latest session handoff. Queries memd first when project memory is configured and available, then falls back to docs/handoffs/ for filesystem handoffs. Summarizes both and auto-archives filesystem handoffs.",
+      "path": "skills/pickup/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "dataviz-artist",
+        "literature-expert",
+        "omics-scientist",
+        "science-writer"
+      ],
+      "sections": [
+        "Session Continuity"
+      ],
+      "task_patterns": [
+        "continue previous work",
+        "pickup",
+        "read handoff",
+        "resume session"
+      ],
+      "internal_references": [
+        "handoff"
+      ],
+      "reference_contexts": {
+        "handoff": [
+          "- Pairs with `/handoff` which writes filesystem handoffs."
+        ]
+      }
     },
     {
       "name": "plotly-dashboard-skill",
@@ -1127,6 +1284,13 @@
         "Notebook authoring": [
           "notebooks"
         ],
+        "Scientific Data Inspection": [
+          "exploratory-data-analysis"
+        ],
+        "Session Continuity": [
+          "handoff",
+          "pickup"
+        ],
         "Static Publication-Quality Plots": [
           "beautiful-data-viz"
         ],
@@ -1137,6 +1301,17 @@
       "workflow_edges": [],
       "task_patterns": [
         {
+          "skill_name": "exploratory-data-analysis",
+          "phrases": [
+            "unknown file",
+            "inspect file",
+            "explore data file",
+            "EDA",
+            "data structure",
+            "file format"
+          ]
+        },
+        {
           "skill_name": "notebooks",
           "phrases": [
             "notebook",
@@ -1144,7 +1319,6 @@
             "jupyter",
             "ipynb",
             "convert notebook",
-            "EDA",
             "reactive notebook",
             "executed notebook",
             "pixi kernel"
@@ -1179,6 +1353,23 @@
             "browser",
             "web data"
           ]
+        },
+        {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
+          ]
         }
       ]
     },
@@ -1187,6 +1378,12 @@
       "description": "Expert literature discovery and citation metadata agent for peer-reviewed papers, preprints, DOI lookup, and evidence-grounded search triage.",
       "path": "agents/literature-expert.md",
       "skill_sections": {
+        "API and SDK Documentation": [
+          "get-api-docs"
+        ],
+        "Argument Graph Extraction": [
+          "csag-extraction"
+        ],
         "Citation Metadata": [
           "crossref-lookup"
         ],
@@ -1202,6 +1399,10 @@
         "Preprint Discovery": [
           "arxiv-search",
           "biorxiv-search"
+        ],
+        "Session Continuity": [
+          "handoff",
+          "pickup"
         ],
         "Web Retrieval": [
           "agent-browser"
@@ -1281,12 +1482,50 @@
           ]
         },
         {
+          "skill_name": "csag-extraction",
+          "phrases": [
+            "CSAG",
+            "argument graph",
+            "claim evidence graph",
+            "conditional scientific argumentation",
+            "extract claims and evidence"
+          ]
+        },
+        {
           "skill_name": "agent-browser",
           "phrases": [
             "browser",
             "scrape",
             "supplementary materials",
             "web database"
+          ]
+        },
+        {
+          "skill_name": "get-api-docs",
+          "phrases": [
+            "API documentation",
+            "SDK documentation",
+            "latest API docs",
+            "current docs",
+            "fast-moving API",
+            "chub"
+          ]
+        },
+        {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
           ]
         }
       ]
@@ -1315,7 +1554,8 @@
           "polars-dovmed"
         ],
         "Functional Annotation": [
-          "bio-annotation"
+          "bio-annotation",
+          "bio-fasta-database-curator"
         ],
         "Gene Prediction": [
           "bio-gene-calling"
@@ -1333,13 +1573,18 @@
           "bio-phylogenomics"
         ],
         "Project Initialization": [
-          "bio-foundation-housekeeping"
+          "bio-foundation-housekeeping",
+          "exploratory-data-analysis"
         ],
         "Read Processing & Mapping": [
           "bio-reads-qc-mapping"
         ],
         "Scientific Reasoning & Hypothesis Formation": [
           "bio-logic"
+        ],
+        "Session Continuity": [
+          "handoff",
+          "pickup"
         ],
         "Statistical Analysis & Reporting": [
           "bio-stats-ml-reporting"
@@ -1564,6 +1809,30 @@
           ]
         },
         {
+          "skill_name": "exploratory-data-analysis",
+          "phrases": [
+            "unknown file",
+            "inspect file",
+            "explore data file",
+            "EDA",
+            "data structure",
+            "file format"
+          ]
+        },
+        {
+          "skill_name": "bio-fasta-database-curator",
+          "phrases": [
+            "FASTA database",
+            "FAA database",
+            "curate FASTA",
+            "standardize headers",
+            "deduplicate sequences",
+            "prepare BLAST database",
+            "prepare MMseqs database",
+            "HMM database"
+          ]
+        },
+        {
           "skill_name": "bio-annotation",
           "phrases": [
             "annotation",
@@ -1649,6 +1918,23 @@
           ]
         },
         {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
+          ]
+        },
+        {
           "skill_name": "bio-prefect-dask-nextflow",
           "phrases": [
             "Nextflow",
@@ -1682,6 +1968,9 @@
       "description": "Expert scientific writer and editor for publication-quality manuscripts, revision strategy, peer review, and reproducible methods documentation.",
       "path": "agents/science-writer.md",
       "skill_sections": {
+        "Argument Graph Extraction": [
+          "csag-extraction"
+        ],
         "Manuscript Review": [
           "manuscript-review-council"
         ],
@@ -1697,6 +1986,10 @@
         ],
         "Scientific Reasoning & Evaluation": [
           "bio-logic"
+        ],
+        "Session Continuity": [
+          "handoff",
+          "pickup"
         ],
         "Supporting Retrieval": [
           "agent-browser"
@@ -1767,12 +2060,39 @@
           ]
         },
         {
+          "skill_name": "csag-extraction",
+          "phrases": [
+            "CSAG",
+            "argument graph",
+            "claim evidence graph",
+            "conditional scientific argumentation",
+            "extract claims and evidence"
+          ]
+        },
+        {
           "skill_name": "bio-workflow-methods-docwriter",
           "phrases": [
             "document workflow",
             "Nextflow",
             "Snakemake",
             "pipeline methods"
+          ]
+        },
+        {
+          "skill_name": "handoff",
+          "phrases": [
+            "handoff",
+            "session handoff",
+            "write handoff"
+          ]
+        },
+        {
+          "skill_name": "pickup",
+          "phrases": [
+            "pickup",
+            "resume session",
+            "read handoff",
+            "continue previous work"
           ]
         }
       ]
@@ -2667,7 +2987,49 @@
     },
     {
       "source": "dataviz-artist",
+      "target": "exploratory-data-analysis",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
+      "target": "handoff",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
       "target": "notebooks",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "dataviz-artist",
+      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -2691,6 +3053,20 @@
       ],
       "evidence": [
         "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "handoff",
+      "target": "pickup",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "Pairs with `/pickup` skill which reads and resumes from handoff documents created by this skill."
       ]
     },
     {
@@ -2752,6 +3128,62 @@
     {
       "source": "literature-expert",
       "target": "crossref-lookup",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/literature-expert.md"
+      ]
+    },
+    {
+      "source": "literature-expert",
+      "target": "csag-extraction",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/literature-expert.md"
+      ]
+    },
+    {
+      "source": "literature-expert",
+      "target": "get-api-docs",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/literature-expert.md"
+      ]
+    },
+    {
+      "source": "literature-expert",
+      "target": "handoff",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/literature-expert.md"
+      ]
+    },
+    {
+      "source": "literature-expert",
+      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -2880,6 +3312,20 @@
     {
       "source": "omics-scientist",
       "target": "bio-binning-qc",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
+      "target": "bio-fasta-database-curator",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -3047,7 +3493,49 @@
     },
     {
       "source": "omics-scientist",
+      "target": "exploratory-data-analysis",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
+      "target": "handoff",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
       "target": "jgi-lakehouse",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
+      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -3085,6 +3573,20 @@
       ],
       "evidence": [
         "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "pickup",
+      "target": "handoff",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Pairs with `/handoff` which writes filesystem handoffs."
       ]
     },
     {
@@ -3271,7 +3773,49 @@
     },
     {
       "source": "science-writer",
+      "target": "csag-extraction",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/science-writer.md"
+      ]
+    },
+    {
+      "source": "science-writer",
+      "target": "handoff",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/science-writer.md"
+      ]
+    },
+    {
+      "source": "science-writer",
       "target": "manuscript-review-council",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/science-writer.md"
+      ]
+    },
+    {
+      "source": "science-writer",
+      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",

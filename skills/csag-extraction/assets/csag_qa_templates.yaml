@@ -1,0 +1,122 @@
+id: https://w3id.org/csag/templates/qa_templates.yaml
+name: csag_qa_templates
+description: >
+  Programmatic QA template catalog for CSAG extractors. Templates are instantiated into QAItem + Answer
+  objects in a PaperExtraction and remain grounded to EvidenceLinks.
+
+templates:
+  - template_id: CSAG_QA_01_STATUS
+    phase: 1
+    eligibility:
+      requires_evidence_links: true
+    question_pattern: 'What is the evidence status for the claim: "{assertion_text}"?'
+    expected_answer_type: categorical
+    answer_values: [supports, refutes, mixed, inconclusive]
+    answer_logic: >
+      Compute evidence status from EvidenceLinks using weighted support/refute scores.
+      Cite supporting_evidence_links.
+
+  - template_id: CSAG_QA_02_EVIDENCE_SUPPORT
+    phase: 1
+    eligibility:
+      requires_supporting_links: true
+    question_pattern: 'What evidence supports the claim: "{assertion_text}"?'
+    expected_answer_type: list
+    answer_logic: >
+      Return list of supporting EvidenceItems/EvidenceLinks (polarity=supports).
+
+  - template_id: CSAG_QA_03_EVIDENCE_REFUTE
+    phase: 1
+    eligibility:
+      requires_refuting_links: true
+    question_pattern: 'What evidence refutes the claim: "{assertion_text}"?'
+    expected_answer_type: list
+    answer_logic: >
+      Return list of refuting EvidenceItems/EvidenceLinks (polarity=refutes).
+
+  - template_id: CSAG_QA_04_BOOL
+    phase: 1
+    eligibility:
+      requires_clear_status: true
+      allowed_status: [supports, refutes]
+    question_pattern: 'Based on this paper, is it supported that: "{assertion_text}"?'
+    expected_answer_type: boolean
+    answer_logic: >
+      Answer true if supports, false if refutes. Do not instantiate if mixed/inconclusive.
+
+  - template_id: CSAG_QA_05_TRIPLE_BOOL
+    phase: 3
+    eligibility:
+      requires_fully_normalized: true
+      requires_clear_status: true
+      allowed_status: [supports, refutes]
+    question_pattern: 'In {context_label}, does {subject_label} ({subject_id}) {predicate_label_or_id} {object_label} ({object_id})?'
+    expected_answer_type: boolean
+    answer_logic: >
+      Derive boolean from evidence status; cite supporting_evidence_links.
+
+  - template_id: CSAG_QA_06_TRIPLE_STATUS
+    phase: 3
+    eligibility:
+      requires_fully_normalized: true
+      requires_evidence_links: true
+    question_pattern: 'In {context_label}, what is the evidence status that {subject_label} {predicate_label_or_id} {object_label}?'
+    expected_answer_type: categorical
+    answer_values: [supports, refutes, mixed, inconclusive]
+    answer_logic: >
+      Compute evidence status from EvidenceLinks (scoped to the context if possible).
+
+  - template_id: CSAG_QA_07_CONTEXT_LIST
+    phase: 2
+    eligibility:
+      requires_contexts: true
+    question_pattern: 'Under what biological contexts is the claim "{assertion_text}" evaluated in this paper?'
+    expected_answer_type: list
+    answer_logic: >
+      Return list of Context ids/labels attached to the assertion and its evidence.
+
+  - template_id: CSAG_QA_08_CONDITION_LIST
+    phase: 3
+    eligibility:
+      requires_conditions: true
+    question_pattern: 'Under what conditions (dose/time/genotype/treatment) does the claim "{assertion_text}" hold?'
+    expected_answer_type: list
+    answer_logic: >
+      Return list of Condition ids/labels attached to the assertion and its evidence.
+
+  - template_id: CSAG_QA_09_MECHANISM
+    phase: 3
+    eligibility:
+      requires_inference_steps: true
+    question_pattern: 'What mechanism is proposed to explain: "{assertion_text}"?'
+    expected_answer_type: free_text
+    answer_logic: >
+      Summarize mechanism using InferenceSteps + cited evidence links; keep short, cite spans.
+
+  - template_id: CSAG_QA_10_LIMITATIONS
+    phase: 3
+    eligibility:
+      requires_critiques: true
+    question_pattern: 'What limitations or flaws could weaken the claim: "{assertion_text}"?'
+    expected_answer_type: list
+    answer_logic: >
+      Return list of StudyCritique ids impacting the assertion.
+
+  - template_id: CSAG_QA_11_GAPS
+    phase: 3
+    eligibility:
+      requires_gaps: true
+    question_pattern: 'What knowledge gaps remain for the claim: "{assertion_text}"?'
+    expected_answer_type: list
+    answer_logic: >
+      Return list of KnowledgeGap ids related to the assertion.
+
+  - template_id: CSAG_QA_12_CONFLICTS
+    phase: 3
+    eligibility:
+      requires_assertion_relations: true
+    question_pattern: 'Are there conflicting statements in this paper or cited literature about: "{assertion_text}"?'
+    expected_answer_type: categorical
+    answer_values: [yes, no, unclear]
+    answer_logic: >
+      Answer yes if any contradicts relation exists; unclear if qualifies; otherwise no.

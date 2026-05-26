@@ -1,0 +1,1678 @@
+id: https://w3id.org/csag/schema/csag.yaml
+name: csag
+title: Conditional Scientific Argumentation Graph
+description: >
+  CSAG (Conditional Scientific Argumentation Graph) is a LinkML schema for extracting and representing
+  scientific reasoning from literature at scale. It uses a canonical argumentation spine:
+  Assertions, EvidenceItems, EvidenceLinks (support/refute), and InferenceSteps (chains of reasoning),
+  with rigorous provenance via TextSpans. It preserves CSAG’s philosophy that no claim stands alone:
+  every Assertion MUST include at least one Context object (even if coarse). Conditions are represented
+  as first-class entities and can be phased in later.
+
+license: https://creativecommons.org/publicdomain/zero/1.0/
+
+prefixes:
+  csag: https://w3id.org/csag/
+  linkml: https://w3id.org/linkml/
+  schema: http://schema.org/
+  dcterms: http://purl.org/dc/terms/
+  prov: http://www.w3.org/ns/prov#
+  pav: http://purl.org/pav/
+  xsd: http://www.w3.org/2001/XMLSchema#
+  orcid: https://orcid.org/
+  doi: https://doi.org/
+  pmid: https://pubmed.ncbi.nlm.nih.gov/
+  obo: http://purl.obolibrary.org/obo/
+
+default_prefix: csag
+default_range: string
+
+imports:
+  - linkml:types
+
+subsets:
+  phase1:
+    description: >
+      Phase 1 extraction: Entities + Assertions + EvidenceItems + EvidenceLinks + TextSpans (+ basic Paper metadata).
+      Context objects must exist but may be coarse/minimally populated.
+  phase2:
+    description: >
+      Phase 2 extraction: Study/Experiment structure + enriched Context fields (organism/cell type/tissue/disease).
+  phase3:
+    description: >
+      Phase 3 extraction: Conditions (dose/time/genotype), mechanistic inference chains (InferenceSteps),
+      critique/gap enrichment, and QA layer.
+
+enums:
+  SectionType:
+    description: Canonical paper sections for anchoring extracted snippets.
+    permissible_values:
+      title: {}
+      abstract: {}
+      introduction: {}
+      methods: {}
+      results: {}
+      discussion: {}
+      conclusion: {}
+      supplementary: {}
+      figure_caption: {}
+      table_caption: {}
+      other: {}
+
+  Origin:
+    description: Where an extracted object comes from.
+    permissible_values:
+      author_stated: {}
+      author_implied: {}
+      extractor_inferred: {}
+      curator_added: {}
+
+  CurationStatus:
+    description: Review state for an extracted object.
+    permissible_values:
+      unreviewed: {}
+      machine_extracted: {}
+      human_verified: {}
+      human_corrected: {}
+      deprecated: {}
+
+  Polarity:
+    description: Direction of an evidence link with respect to an assertion.
+    permissible_values:
+      supports: {}
+      refutes: {}
+      mixed: {}
+      inconclusive: {}
+
+  StrengthLevel:
+    description: Qualitative strength label (evidence strength or critique severity).
+    permissible_values:
+      very_strong: {}
+      strong: {}
+      moderate: {}
+      weak: {}
+      very_weak: {}
+      unknown: {}
+
+  ClaimRole:
+    description: The rhetorical/functional role an assertion plays in the paper.
+    permissible_values:
+      background: {}
+      hypothesis: {}
+      research_question: {}
+      objective: {}
+      method_claim: {}
+      result_claim: {}
+      conclusion: {}
+      discovery: {}
+      speculation: {}
+      limitation: {}
+      future_work: {}
+
+  AssertionCriticality:
+    description: Benchmark/evaluation importance of an assertion.
+    permissible_values:
+      core:
+        description: Load-bearing claim required for the benchmark ground truth.
+      major:
+        description: Important claim that materially affects interpretation or scoring.
+      supporting:
+        description: Useful supporting claim, method detail, or contextual result.
+      background:
+        description: Background or framing claim not usually required for participant success.
+
+  AssertionType:
+    description: Semantic type of an assertion.
+    permissible_values:
+      causal: {}
+      associative: {}
+      mechanistic: {}
+      comparative: {}
+      localization: {}
+      functional: {}
+      descriptive: {}
+      methodological: {}
+      other: {}
+
+  NormalizationStatus:
+    description: Normalization status of an Assertion into a structured triple.
+    permissible_values:
+      raw: {}
+      partially_normalized: {}
+      fully_normalized: {}
+
+  EntityCategory:
+    description: High-level categories for normalized entities.
+    permissible_values:
+      gene: {}
+      protein: {}
+      transcript: {}
+      variant: {}
+      chemical: {}
+      metabolite: {}
+      drug: {}
+      disease: {}
+      phenotype: {}
+      pathway: {}
+      biological_process: {}
+      molecular_function: {}
+      cellular_component: {}
+      cell_type: {}
+      tissue: {}
+      anatomical_structure: {}
+      organism: {}
+      strain: {}
+      environment: {}
+      assay: {}
+      method: {}
+      dataset: {}
+      other: {}
+
+  EvidenceType:
+    description: The kind of evidence item extracted from the paper.
+    permissible_values:
+      experimental_result: {}
+      statistical_analysis: {}
+      computational_model: {}
+      observational_data: {}
+      literature_citation: {}
+      meta_analysis: {}
+      replication: {}
+      control_result: {}
+      negative_result: {}
+      expert_opinion: {}
+      other: {}
+
+  InferenceMethod:
+    description: Reasoning mode used to connect evidence/premises to a conclusion.
+    permissible_values:
+      statistical_inference: {}
+      mechanistic_reasoning: {}
+      causal_inference: {}
+      qualitative_interpretation: {}
+      computational_inference: {}
+      analogy_or_prior_knowledge: {}
+      other: {}
+
+  ThreatToValidityType:
+    description: Broad threat-to-validity category.
+    permissible_values:
+      internal_validity: {}
+      external_validity: {}
+      construct_validity: {}
+      statistical_conclusion_validity: {}
+
+  RiskOfBiasDomain:
+    description: Common risk-of-bias or failure modes.
+    permissible_values:
+      selection_bias: {}
+      performance_bias: {}
+      detection_bias: {}
+      attrition_bias: {}
+      reporting_bias: {}
+      confounding: {}
+      batch_effect: {}
+      contamination: {}
+      measurement_error: {}
+      multiple_testing: {}
+      p_hacking: {}
+      model_overfitting: {}
+      data_leakage: {}
+      data_quality: {}
+      other: {}
+
+  GapType:
+    description: Types of knowledge gaps or future work items.
+    permissible_values:
+      missing_mechanism: {}
+      missing_experiment: {}
+      missing_control: {}
+      replication_needed: {}
+      generalizability: {}
+      data_missing: {}
+      inconsistent_results: {}
+      unresolved_contradiction: {}
+      other: {}
+
+  ArtifactType:
+    description: Artifact kinds referenced in a paper.
+    permissible_values:
+      figure: {}
+      table: {}
+      supplementary: {}
+      equation: {}
+      protocol: {}
+      code: {}
+      other: {}
+
+  AssertionRelationType:
+    description: Relationships between assertions (within or across papers).
+    permissible_values:
+      same_as: {}
+      supports: {}
+      refutes: {}
+      contradicts: {}
+      qualifies: {}
+      generalizes: {}
+      specializes: {}
+      derived_from: {}
+      replicates: {}
+      other: {}
+
+  QAAnswerType:
+    description: Expected shape of an answer to a question.
+    permissible_values:
+      boolean: {}
+      numeric: {}
+      categorical: {}
+      entity: {}
+      relation: {}
+      free_text: {}
+      list: {}
+      dataset_pointer: {}
+
+  ContextFacet:
+    description: Optional coarse facet label for a Context (useful for phase 1/2).
+    permissible_values:
+      unspecified: {}
+      organism: {}
+      cell_type: {}
+      tissue: {}
+      disease_state: {}
+      environment: {}
+      model_system: {}
+      other: {}
+
+slots:
+  # -----------------------------
+  # Identity & common annotations
+  # -----------------------------
+  id:
+    identifier: true
+    range: uriorcurie
+    description: Stable identifier for the object (URI/CURIE recommended).
+
+  label:
+    range: string
+    description: Human-friendly short label.
+
+  description:
+    range: string
+    description: Longer free-text description.
+
+  aliases:
+    range: string
+    multivalued: true
+    description: Alternative labels/synonyms.
+
+  notes:
+    range: string
+    description: Curator/system notes (not intended as machine-extracted content).
+
+  origin:
+    range: Origin
+    description: Whether content is explicitly author-stated or inferred.
+
+  curation_status:
+    range: CurationStatus
+    description: Review status for this extracted object.
+
+  confidence_score:
+    range: float
+    minimum_value: 0
+    maximum_value: 1
+    description: Extractor confidence (0-1).
+
+  created_on:
+    range: datetime
+    description: Timestamp for object creation.
+    slot_uri: pav:createdOn
+
+  created_by:
+    range: uriorcurie
+    description: Actor responsible (tool URI or ORCID).
+    slot_uri: pav:createdBy
+
+  generated_by:
+    range: uriorcurie
+    description: Reference to an ExtractionActivity that generated this object.
+    slot_uri: prov:wasGeneratedBy
+
+  derived_from:
+    range: uriorcurie
+    multivalued: true
+    description: Upstream objects this record was derived from.
+    slot_uri: prov:wasDerivedFrom
+
+  provenance:
+    range: ProvenanceRecord
+    description: Minimal provenance record.
+
+  text_spans:
+    range: TextSpan
+    multivalued: true
+    inlined_as_list: true
+    description: Text spans grounding this object.
+    in_subset: [phase1]
+
+  # -----------------------------
+  # Corpus and paper organization
+  # -----------------------------
+  documents:
+    range: PaperExtraction
+    multivalued: true
+    inlined_as_list: true
+    description: Per-paper extraction records.
+
+  extraction_activities:
+    range: ExtractionActivity
+    multivalued: true
+    inlined_as_list: true
+    description: Extraction runs/activities used to generate the corpus or paper extraction.
+
+  # -----------------------------
+  # Paper metadata
+  # -----------------------------
+  title:
+    range: string
+    slot_uri: dcterms:title
+    description: Paper title.
+    in_subset: [phase1]
+
+  abstract:
+    range: string
+    description: Paper abstract.
+    in_subset: [phase1]
+
+  doi:
+    range: string
+    description: DOI string (e.g., 10.xxxx/xxxx).
+    in_subset: [phase1]
+
+  pmid:
+    range: string
+    description: PubMed ID string.
+    in_subset: [phase1]
+
+  journal:
+    range: string
+    description: Journal or venue.
+    in_subset: [phase1]
+
+  publication_date:
+    range: date
+    description: Publication date.
+    in_subset: [phase1]
+
+  authors:
+    range: Author
+    multivalued: true
+    inlined_as_list: true
+    description: Author list.
+    in_subset: [phase1]
+
+  affiliation:
+    range: string
+    description: Author affiliation (free text).
+
+  keywords:
+    range: string
+    multivalued: true
+    description: Keywords.
+
+  mesh_terms:
+    range: string
+    multivalued: true
+    description: MeSH terms (if available).
+
+  full_text_url:
+    range: uri
+    description: URL where the full text can be accessed.
+
+  license:
+    range: uri
+    description: License URL.
+
+  schema_version:
+    range: string
+    description: CSAG schema version used to create or validate this extraction.
+    in_subset: [phase1]
+
+  validator_version:
+    range: string
+    description: Validator version used for the latest validation report.
+    in_subset: [phase1]
+
+  # -----------------------------
+  # TextSpan grounding
+  # -----------------------------
+  document_id:
+    range: uriorcurie
+    description: Identifier of the source document this span belongs to.
+
+  section_type:
+    range: SectionType
+    description: Canonical section for this span.
+
+  section_heading:
+    range: string
+    description: Actual heading text, if available.
+
+  start_char:
+    range: integer
+    minimum_value: 0
+    description: Start character offset (0-based).
+
+  end_char:
+    range: integer
+    minimum_value: 0
+    description: End character offset (exclusive).
+
+  exact_text:
+    range: string
+    description: Exact extracted string (optional).
+
+  page_number:
+    range: integer
+    minimum_value: 1
+    description: Page number (if PDF-sourced).
+
+  artifact_ref:
+    range: uriorcurie
+    description: Optional reference to an Artifact (figure/table).
+
+  # -----------------------------
+  # Artifacts & datasets
+  # -----------------------------
+  artifacts:
+    range: Artifact
+    multivalued: true
+    inlined_as_list: true
+    description: Figures/tables/supplemental artifacts.
+
+  datasets:
+    range: Dataset
+    multivalued: true
+    inlined_as_list: true
+    description: Datasets/accessions.
+
+  artifact_type:
+    range: ArtifactType
+    description: Type of artifact (figure/table/etc).
+
+  artifact_label:
+    range: string
+    description: Label such as "Figure 2" or "Table S1".
+
+  caption:
+    range: string
+    description: Artifact caption.
+
+  accession:
+    range: string
+    description: Accession identifier (e.g., GEO, SRA).
+
+  repository:
+    range: string
+    description: Repository name (e.g., GEO, SRA, PRIDE, Zenodo).
+
+  dataset_url:
+    range: uri
+    description: URL to dataset.
+
+  dataset_license:
+    range: uri
+    description: Dataset license.
+
+  # -----------------------------
+  # Entity normalization
+  # -----------------------------
+  entities:
+    range: Entity
+    multivalued: true
+    inlined_as_list: true
+    description: Normalized entities mentioned/implied in the paper.
+    in_subset: [phase1]
+
+  entity_category:
+    range: EntityCategory
+    description: High-level category of the entity.
+    in_subset: [phase1]
+
+  ontology_annotations:
+    range: OntologyAnnotation
+    multivalued: true
+    inlined_as_list: true
+    description: Ontology normalization records.
+
+  xrefs:
+    range: uriorcurie
+    multivalued: true
+    description: External database cross-references (CURIEs/URIs).
+
+  mentions:
+    range: EntityMention
+    multivalued: true
+    inlined_as_list: true
+    description: Mentions of the entity grounded to spans.
+
+  term_id:
+    range: uriorcurie
+    description: Ontology term CURIE/URI used for normalization.
+
+  term_label:
+    range: string
+    description: Label of the ontology term at extraction time.
+
+  match_type:
+    range: string
+    description: Match type (exact/broad/narrow/related).
+
+  evidence_code:
+    range: uriorcurie
+    description: Optional ECO/SEPIO evidence code term.
+
+  entity_ref:
+    range: uriorcurie
+    description: Reference to an Entity.
+
+  mention_span:
+    range: TextSpan
+    description: Text span grounding an entity mention.
+
+  # -----------------------------
+  # Context & condition philosophy
+  # -----------------------------
+  contexts:
+    range: Context
+    multivalued: true
+    inlined_as_list: true
+    description: Contexts under which an assertion/evidence holds.
+    in_subset: [phase1]
+
+  context_facet:
+    range: ContextFacet
+    description: Coarse context facet (helps early extraction).
+    in_subset: [phase1]
+
+  organism:
+    range: uriorcurie
+    description: Entity reference (Entity id) for organism (NCBITaxon recommended).
+    in_subset: [phase2]
+
+  cell_type:
+    range: uriorcurie
+    description: Entity reference for cell type (CL recommended).
+    in_subset: [phase2]
+
+  tissue:
+    range: uriorcurie
+    description: Entity reference for tissue/anatomy (UBERON recommended).
+    in_subset: [phase2]
+
+  disease_state:
+    range: uriorcurie
+    description: Entity reference for disease context (MONDO recommended).
+    in_subset: [phase2]
+
+  strain:
+    range: uriorcurie
+    description: Entity reference for strain (NCBITaxon/other as available).
+    in_subset: [phase2]
+
+  developmental_stage:
+    range: string
+    description: Developmental stage (free text or ontology term CURIE as string).
+    in_subset: [phase2]
+
+  sex:
+    range: string
+    description: Sex (free text or ontology term CURIE as string).
+    in_subset: [phase2]
+
+  age:
+    range: string
+    description: Age description (e.g., "8-week", "adult").
+    in_subset: [phase2]
+
+  environment_description:
+    range: string
+    description: Free text environment details not captured elsewhere.
+    in_subset: [phase2]
+
+  additional_context_qualifiers:
+    range: Qualifier
+    multivalued: true
+    inlined_as_list: true
+    description: Additional context qualifiers (predicate/value pairs).
+    in_subset: [phase2]
+
+  conditions:
+    range: Condition
+    multivalued: true
+    inlined_as_list: true
+    description: Conditions/parameters required for an observation/claim.
+    in_subset: [phase3]
+
+  parameter_type:
+    range: uriorcurie
+    description: Ontology term or controlled CURIE describing the parameter (OBI/EFO/NCIT recommended).
+    in_subset: [phase3]
+
+  value_text:
+    range: string
+    description: Text value for a qualifier/condition/result.
+
+  value_number:
+    range: float
+    description: Numeric value for a qualifier/condition/result.
+
+  value_unit:
+    range: string
+    description: Unit (UCUM recommended).
+
+  entity_involved:
+    range: uriorcurie
+    description: Entity reference implicated by the condition (e.g., a drug used in a treatment).
+    in_subset: [phase3]
+
+  logical_expression:
+    range: string
+    description: Logical expression for complex conditions (e.g., "A AND (B OR C)").
+    in_subset: [phase3]
+
+  predicate:
+    range: uriorcurie
+    description: Predicate/relation CURIE/URI (RO/SIO recommended).
+
+  value_entity_ref:
+    range: uriorcurie
+    description: Entity-valued qualifier reference (Entity id).
+
+  # -----------------------------
+  # Study / experiment structure
+  # -----------------------------
+  studies:
+    range: Study
+    multivalued: true
+    inlined_as_list: true
+    description: Studies/experiments described in the paper.
+    in_subset: [phase2]
+
+  experiments:
+    range: Experiment
+    multivalued: true
+    inlined_as_list: true
+    description: Experiments/assays within a study.
+    in_subset: [phase2]
+
+  study_type:
+    range: uriorcurie
+    description: Ontology term for study design/type (OBI/EFO recommended).
+    in_subset: [phase2]
+
+  study_contexts:
+    range: Context
+    multivalued: true
+    inlined_as_list: true
+    description: Context objects for the study (may overlap with assertion contexts).
+    in_subset: [phase2]
+
+  sample_size:
+    range: integer
+    minimum_value: 0
+    description: Total sample size (if reported).
+    in_subset: [phase2]
+
+  assay_type:
+    range: uriorcurie
+    description: Ontology term for assay type (OBI recommended).
+    in_subset: [phase2]
+
+  variables:
+    range: Variable
+    multivalued: true
+    inlined_as_list: true
+    description: Variables measured/manipulated in an experiment.
+    in_subset: [phase2]
+
+  variable_role:
+    range: string
+    description: Role of the variable (independent/dependent/control/confounder).
+    in_subset: [phase2]
+
+  variable_entity:
+    range: uriorcurie
+    description: Entity reference (Entity id) representing what is measured/manipulated.
+    in_subset: [phase2]
+
+  measurement_type:
+    range: uriorcurie
+    description: Ontology term for measurement/attribute type (optional).
+    in_subset: [phase2]
+
+  # -----------------------------
+  # Assertion spine (canonical claims)
+  # -----------------------------
+  assertions:
+    range: Assertion
+    multivalued: true
+    inlined_as_list: true
+    description: Hypotheses/claims/results/conclusions extracted from the paper.
+    in_subset: [phase1]
+
+  assertion_text:
+    range: string
+    description: Natural-language form of the assertion, close to author wording.
+    in_subset: [phase1]
+
+  criticality:
+    range: AssertionCriticality
+    description: Evaluation importance of the assertion for ground-truth and scoring use.
+    in_subset: [phase1]
+
+  falsification_criteria:
+    range: string
+    multivalued: true
+    description: Concrete observations or analyses that would weaken, refute, or require revising the assertion.
+    in_subset: [phase1]
+
+  claim_role:
+    range: ClaimRole
+    description: Rhetorical role of the assertion.
+    in_subset: [phase1]
+
+  assertion_type:
+    range: AssertionType
+    description: Semantic type (causal, mechanistic, associative, etc.).
+    in_subset: [phase1]
+
+  normalization_status:
+    range: NormalizationStatus
+    description: Normalization status of the assertion triple (raw/partial/full).
+    in_subset: [phase1]
+
+  subject:
+    range: uriorcurie
+    description: Entity reference (Entity id) for subject of a normalized triple.
+
+  object:
+    range: uriorcurie
+    description: Entity reference (Entity id) for object of a normalized triple.
+
+  qualifiers:
+    range: Qualifier
+    multivalued: true
+    inlined_as_list: true
+    description: Generic qualifiers that scope/condition the assertion (extra beyond Context/Condition).
+
+  asserted_in_study:
+    range: uriorcurie
+    description: Reference to a Study (Study id) where the assertion is posed/tested/concluded.
+    in_subset: [phase2]
+
+  # -----------------------------
+  # Evidence items + canonical links
+  # -----------------------------
+  evidence_items:
+    range: EvidenceItem
+    multivalued: true
+    inlined_as_list: true
+    description: Evidence units (results/analyses/citations).
+    in_subset: [phase1]
+
+  evidence_type:
+    range: EvidenceType
+    description: Category of evidence item.
+    in_subset: [phase1]
+
+  evidence_text:
+    range: string
+    description: Short description of the evidence item.
+
+  associated_experiment:
+    range: uriorcurie
+    description: Reference to an Experiment that produced this evidence.
+    in_subset: [phase2]
+
+  associated_artifacts:
+    range: uriorcurie
+    multivalued: true
+    description: References to figures/tables supporting this evidence.
+
+  results:
+    range: Result
+    multivalued: true
+    inlined_as_list: true
+    description: Structured results reported in this evidence item.
+    in_subset: [phase1]
+
+  referenced_works:
+    range: Reference
+    multivalued: true
+    inlined_as_list: true
+    description: External works cited as evidence.
+
+  evidence_links:
+    range: EvidenceLink
+    multivalued: true
+    inlined_as_list: true
+    description: Canonical EvidenceItem -> Assertion links with support/refute polarity.
+    in_subset: [phase1]
+
+  evidence_item:
+    range: uriorcurie
+    description: Reference to an EvidenceItem.
+
+  assertion:
+    range: uriorcurie
+    description: Reference to an Assertion.
+
+  polarity:
+    range: Polarity
+    description: Whether evidence supports/refutes the assertion.
+
+  strength:
+    range: StrengthLevel
+    description: Strength label for the evidence link.
+
+  rationale:
+    range: string
+    description: Explanation of why the evidence supports/refutes the assertion.
+
+  # -----------------------------
+  # Results (structured)
+  # -----------------------------
+  result_text:
+    range: string
+    description: Natural-language statement of the result.
+
+  outcome:
+    range: uriorcurie
+    description: Entity reference for the measured outcome.
+
+  comparator:
+    range: string
+    description: Comparator/control condition description.
+
+  effect_size:
+    range: float
+    description: Reported effect size (if numeric).
+
+  effect_size_type:
+    range: string
+    description: Effect size type (e.g., log2FC, OR, Cohen's d).
+
+  p_value:
+    range: float
+    minimum_value: 0
+    maximum_value: 1
+    description: Reported p-value (if any).
+
+  ci_low:
+    range: float
+    description: Lower confidence interval bound.
+
+  ci_high:
+    range: float
+    description: Upper confidence interval bound.
+
+  statistic:
+    range: string
+    description: Reported test/statistic (e.g., t-test, F=..., chi-square).
+
+  n:
+    range: integer
+    minimum_value: 0
+    description: Sample size for this result.
+
+  # -----------------------------
+  # Inference chains (canonical reasoning)
+  # -----------------------------
+  inferences:
+    range: InferenceStep
+    multivalued: true
+    inlined_as_list: true
+    description: Evidence/premise chains producing derived assertions.
+    in_subset: [phase3]
+
+  input_assertions:
+    range: uriorcurie
+    multivalued: true
+    description: Premise assertions used in an inference step.
+
+  input_evidence_links:
+    range: uriorcurie
+    multivalued: true
+    description: Evidence links used as inputs to the inference step.
+
+  output_assertion:
+    range: uriorcurie
+    description: The conclusion assertion produced by the inference step.
+
+  inference_method:
+    range: InferenceMethod
+    description: Reasoning mode.
+
+  assumptions:
+    range: uriorcurie
+    multivalued: true
+    description: Assumptions (assertions) needed for the inference.
+
+  inference_rationale:
+    range: string
+    description: Free-text rationale for the inference step.
+    in_subset: [phase3]
+
+  # -----------------------------
+  # Canonical assertion<->assertion relations (incl contradictions)
+  # -----------------------------
+  assertion_relations:
+    range: AssertionRelation
+    multivalued: true
+    inlined_as_list: true
+    description: Relations between assertions (contradicts/qualifies/replicates/etc).
+    in_subset: [phase3]
+
+  from_assertion:
+    range: uriorcurie
+    description: Source assertion for the relation edge.
+
+  to_assertion:
+    range: uriorcurie
+    description: Target assertion for the relation edge.
+
+  relation_type:
+    range: AssertionRelationType
+    description: Type of relation between assertions.
+
+  relation_rationale:
+    range: string
+    description: Rationale for the assertion relation.
+
+  related_work:
+    range: uriorcurie
+    description: Optional external work identifier if relating to an external claim.
+
+  # -----------------------------
+  # Critiques & gaps
+  # -----------------------------
+  critiques:
+    range: StudyCritique
+    multivalued: true
+    inlined_as_list: true
+    description: Study limitations/flaws and risk-of-bias.
+    in_subset: [phase3]
+
+  critique_type:
+    range: ThreatToValidityType
+    description: Broad threat-to-validity class.
+
+  risk_domain:
+    range: RiskOfBiasDomain
+    description: Specific risk/bias domain.
+
+  severity:
+    range: StrengthLevel
+    description: Severity label.
+
+  impacted_assertions:
+    range: uriorcurie
+    multivalued: true
+    description: Assertions likely impacted.
+
+  impacted_evidence_items:
+    range: uriorcurie
+    multivalued: true
+    description: Evidence items likely impacted.
+
+  mitigation_suggestions:
+    range: string
+    multivalued: true
+    description: Suggested mitigations (optional).
+    in_subset: [phase3]
+
+  knowledge_gaps:
+    range: KnowledgeGap
+    multivalued: true
+    inlined_as_list: true
+    description: Open questions/missing evidence/future work.
+    in_subset: [phase3]
+
+  gap_type:
+    range: GapType
+    description: Type of knowledge gap.
+
+  related_assertions:
+    range: uriorcurie
+    multivalued: true
+    description: Assertions related to the knowledge gap.
+
+  suggested_actions:
+    range: string
+    multivalued: true
+    description: Suggested experiments/analyses to address the gap.
+
+  # -----------------------------
+  # QA layer
+  # -----------------------------
+  qa_items:
+    range: QAItem
+    multivalued: true
+    inlined_as_list: true
+    description: Question/answer items linked to extracted claims and evidence.
+    in_subset: [phase3]
+
+  question_text:
+    range: string
+    description: Natural-language question.
+
+  query_assertion:
+    range: uriorcurie
+    description: Optional reference to an Assertion representing the question in structured form.
+
+  normalized_query:
+    range: string
+    description: Optional normalized form of the question (templated/structured).
+
+  expected_answer_type:
+    range: QAAnswerType
+    description: Expected answer type.
+
+  answers:
+    range: Answer
+    multivalued: true
+    inlined_as_list: true
+    description: Candidate answers with evidence.
+
+  answer_type:
+    range: QAAnswerType
+    description: The type/shape of this answer.
+
+  answer_text:
+    range: string
+    description: Free-text answer.
+
+  answer_number:
+    range: float
+    description: Numeric answer.
+
+  answer_boolean:
+    range: boolean
+    description: Boolean answer.
+
+  answer_entity:
+    range: uriorcurie
+    description: Entity answer (Entity id).
+
+  supporting_assertions:
+    range: uriorcurie
+    multivalued: true
+    description: Assertions that justify the answer.
+
+  supporting_evidence_links:
+    range: uriorcurie
+    multivalued: true
+    description: Evidence links supporting the answer.
+
+  answer_confidence:
+    range: float
+    minimum_value: 0
+    maximum_value: 1
+    description: Confidence in this answer.
+
+  # -----------------------------
+  # References & extraction activity
+  # -----------------------------
+  url:
+    range: uri
+    description: URL for the referenced work.
+
+  citation_text:
+    range: string
+    description: Citation string as appears in the paper.
+
+  year:
+    range: integer
+    description: Publication year.
+
+  tool_name:
+    range: string
+    description: Extraction tool name.
+
+  tool_version:
+    range: string
+    description: Extraction tool version.
+
+  model_name:
+    range: string
+    description: Model name (if applicable).
+
+  model_version:
+    range: string
+    description: Model version/checkpoint.
+
+  run_id:
+    range: string
+    description: Run identifier.
+
+  run_datetime:
+    range: datetime
+    description: Extraction run datetime.
+
+  parameters:
+    range: KeyValue
+    multivalued: true
+    inlined_as_list: true
+    description: Key-value parameters.
+
+  agent_uri:
+    range: uriorcurie
+    description: URI/CURIE identifying the responsible actor (tool, service, or person).
+    slot_uri: prov:wasAssociatedWith
+
+  activity_type:
+    range: string
+    description: Activity type (e.g., claim extraction, named-entity recognition, human review).
+
+  key:
+    range: string
+    description: Key for a parameter.
+
+  value:
+    range: string
+    description: Value for a parameter.
+
+classes:
+  Corpus:
+    tree_root: true
+    description: A collection of CSAG-extracted papers.
+    slots:
+      - id
+      - label
+      - description
+      - documents
+      - extraction_activities
+      - created_on
+      - created_by
+
+  Paper:
+    description: Bibliographic metadata for a scientific paper.
+    slots:
+      - id
+      - title
+      - abstract
+      - doi
+      - pmid
+      - journal
+      - publication_date
+      - authors
+      - keywords
+      - mesh_terms
+      - full_text_url
+      - license
+      - schema_version
+      - validator_version
+
+  PaperExtraction:
+    is_a: Paper
+    description: A paper plus extracted CSAG objects.
+    slots:
+      - extraction_activities
+      - artifacts
+      - datasets
+      - entities
+      - studies
+      - assertions
+      - evidence_items
+      - evidence_links
+      - inferences
+      - assertion_relations
+      - critiques
+      - knowledge_gaps
+      - qa_items
+
+  # -----------------------------
+  # Mixins (avoid TextSpan recursion)
+  # -----------------------------
+  Record:
+    mixin: true
+    description: Common metadata for any record.
+    slots:
+      - id
+      - label
+      - description
+      - aliases
+      - notes
+      - origin
+      - curation_status
+      - confidence_score
+      - provenance
+      - created_on
+      - created_by
+      - generated_by
+      - derived_from
+
+  ExtractedItem:
+    mixin: true
+    description: A record grounded to text spans.
+    mixins:
+      - Record
+    slots:
+      - text_spans
+
+  # -----------------------------
+  # Provenance
+  # -----------------------------
+  ProvenanceRecord:
+    description: Minimal provenance record compatible with PROV-O/PAV patterns.
+    slots:
+      - id
+      - created_on
+      - created_by
+      - generated_by
+      - derived_from
+
+  ExtractionActivity:
+    description: A run of an extraction tool/pipeline component.
+    slots:
+      - id
+      - activity_type
+      - tool_name
+      - tool_version
+      - model_name
+      - model_version
+      - agent_uri
+      - run_id
+      - run_datetime
+      - parameters
+
+  KeyValue:
+    description: Key-value record.
+    slots:
+      - key
+      - value
+
+  # -----------------------------
+  # Text grounding
+  # -----------------------------
+  TextSpan:
+    description: A grounded location in a document where an extracted object is evidenced.
+    mixins:
+      - Record
+    slots:
+      - document_id
+      - section_type
+      - section_heading
+      - start_char
+      - end_char
+      - exact_text
+      - page_number
+      - artifact_ref
+    slot_usage:
+      document_id:
+        required: true
+      section_type:
+        required: true
+      start_char:
+        required: true
+      end_char:
+        required: true
+
+  # -----------------------------
+  # People & references
+  # -----------------------------
+  Author:
+    description: An author of a paper.
+    slots:
+      - id
+      - label
+      - affiliation
+    slot_usage:
+      id:
+        description: ORCID URI is recommended when available.
+
+  Reference:
+    description: A referenced/cited external work used as background or evidence.
+    mixins:
+      - ExtractedItem
+    slots:
+      - citation_text
+      - doi
+      - pmid
+      - url
+      - year
+
+  # -----------------------------
+  # Artifacts and datasets
+  # -----------------------------
+  Artifact:
+    description: A figure/table/supplemental artifact referred to in the paper.
+    mixins:
+      - ExtractedItem
+    slots:
+      - artifact_type
+      - artifact_label
+      - caption
+
+  Dataset:
+    description: A dataset produced or used by the paper.
+    mixins:
+      - ExtractedItem
+    slots:
+      - accession
+      - repository
+      - dataset_url
+      - dataset_license
+
+  # -----------------------------
+  # Entities
+  # -----------------------------
+  Entity:
+    description: A normalized entity (gene, chemical, disease, cell type, etc.)
+    mixins:
+      - ExtractedItem
+    slots:
+      - entity_category
+      - ontology_annotations
+      - xrefs
+      - mentions
+
+  OntologyAnnotation:
+    description: A mapping from extracted text to an ontology term.
+    mixins:
+      - ExtractedItem
+    slots:
+      - term_id
+      - term_label
+      - match_type
+      - evidence_code
+
+  EntityMention:
+    description: A mention of an entity in the paper, grounded to text.
+    mixins:
+      - Record
+    slots:
+      - entity_ref
+      - mention_span
+
+  # -----------------------------
+  # Context & conditions (CSAG philosophy)
+  # -----------------------------
+  Context:
+    description: >
+      The broader biological or experimental context in which an assertion/evidence is stated.
+      In phase 1, Context may be coarse (e.g., facet=unspecified + label="in this study").
+      In phase 2, populate organism/cell_type/tissue/disease_state/etc with Entity references.
+    mixins:
+      - ExtractedItem
+    slots:
+      - context_facet
+      - organism
+      - cell_type
+      - tissue
+      - disease_state
+      - strain
+      - developmental_stage
+      - sex
+      - age
+      - environment_description
+      - additional_context_qualifiers
+
+  Condition:
+    description: >
+      Specific parameters/settings required for an observation/claim to hold (dose, timepoint, genotype, etc).
+      Prefer ontology terms for parameter_type where possible; otherwise use a CSAG-local term.
+    mixins:
+      - ExtractedItem
+    slots:
+      - parameter_type
+      - value_text
+      - value_number
+      - value_unit
+      - entity_involved
+      - logical_expression
+
+  Qualifier:
+    description: A flexible predicate/value qualifier for scoping assertions or contexts.
+    mixins:
+      - ExtractedItem
+    slots:
+      - predicate
+      - value_text
+      - value_number
+      - value_unit
+      - value_entity_ref
+
+  # -----------------------------
+  # Study / experiment structure (phase 2)
+  # -----------------------------
+  Study:
+    description: A study described in the paper (may include multiple experiments).
+    mixins:
+      - ExtractedItem
+    slots:
+      - study_type
+      - study_contexts
+      - experiments
+      - sample_size
+
+  Experiment:
+    description: An experiment/assay within a study.
+    mixins:
+      - ExtractedItem
+    slots:
+      - assay_type
+      - variables
+
+  Variable:
+    description: A measured/manipulated variable in an experiment.
+    mixins:
+      - ExtractedItem
+    slots:
+      - variable_role
+      - variable_entity
+      - measurement_type
+      - value_text
+      - value_number
+      - value_unit
+
+  # -----------------------------
+  # Assertions (canonical claims)
+  # -----------------------------
+  Assertion:
+    description: >
+      A hypothesis/claim/result/conclusion. Optionally normalized as a triple (subject, predicate, object).
+      CSAG rule: Every Assertion MUST have >=1 Context.
+    mixins:
+      - ExtractedItem
+    slots:
+      - assertion_text
+      - criticality
+      - falsification_criteria
+      - claim_role
+      - assertion_type
+      - normalization_status
+      - subject
+      - predicate
+      - object
+      - contexts
+      - conditions
+      - qualifiers
+      - asserted_in_study
+    slot_usage:
+      assertion_text:
+        required: true
+      claim_role:
+        required: true
+      normalization_status:
+        required: true
+      contexts:
+        required: true
+        minimum_cardinality: 1
+
+  # -----------------------------
+  # Evidence & canonical support/refute edges
+  # -----------------------------
+  EvidenceItem:
+    description: >
+      An evidence unit (result/analysis/citation) that can link to one or more assertions.
+      IMPORTANT: EvidenceItem itself does NOT encode support/refute; that is canonicalized in EvidenceLink.
+    mixins:
+      - ExtractedItem
+    slots:
+      - evidence_type
+      - evidence_text
+      - contexts
+      - conditions
+      - associated_experiment
+      - associated_artifacts
+      - results
+      - referenced_works
+    slot_usage:
+      evidence_type:
+        required: true
+
+  Result:
+    description: A structured representation of a reported result/statistic.
+    mixins:
+      - ExtractedItem
+    slots:
+      - result_text
+      - outcome
+      - comparator
+      - effect_size
+      - effect_size_type
+      - p_value
+      - ci_low
+      - ci_high
+      - statistic
+      - n
+
+  EvidenceLink:
+    description: >
+      Canonical edge EvidenceItem -> Assertion with support/refute polarity and strength.
+      This is the only place where support/refutation is encoded (prevents inconsistency).
+    mixins:
+      - ExtractedItem
+    slots:
+      - evidence_item
+      - assertion
+      - polarity
+      - strength
+      - rationale
+    slot_usage:
+      evidence_item:
+        required: true
+      assertion:
+        required: true
+      polarity:
+        required: true
+
+  # -----------------------------
+  # Inference chains (phase 3)
+  # -----------------------------
+  InferenceStep:
+    description: >
+      A reasoning step chaining premises/evidence into a derived assertion.
+      This captures evidence chains and mechanistic reasoning explicitly.
+    mixins:
+      - ExtractedItem
+    slots:
+      - input_assertions
+      - input_evidence_links
+      - output_assertion
+      - inference_method
+      - assumptions
+      - inference_rationale
+    slot_usage:
+      output_assertion:
+        required: true
+      inference_method:
+        required: true
+
+  # -----------------------------
+  # Canonical assertion relations (incl contradictions)
+  # -----------------------------
+  AssertionRelation:
+    description: >
+      A typed edge Assertion -> Assertion (e.g., contradicts, qualifies, replicates).
+      This is the canonical location for contradiction/qualification to avoid duplicated semantics.
+    mixins:
+      - ExtractedItem
+    slots:
+      - from_assertion
+      - to_assertion
+      - relation_type
+      - relation_rationale
+      - related_work
+    slot_usage:
+      from_assertion:
+        required: true
+      to_assertion:
+        required: true
+      relation_type:
+        required: true
+
+  # -----------------------------
+  # Critiques & gaps (phase 3)
+  # -----------------------------
+  StudyCritique:
+    description: A limitation/flaw/risk-of-bias assessment.
+    mixins:
+      - ExtractedItem
+    slots:
+      - critique_type
+      - risk_domain
+      - severity
+      - impacted_assertions
+      - impacted_evidence_items
+      - mitigation_suggestions
+
+  KnowledgeGap:
+    description: An open question or missing evidence item (author-stated or extractor-inferred).
+    mixins:
+      - ExtractedItem
+    slots:
+      - gap_type
+      - severity
+      - related_assertions
+      - suggested_actions
+
+  # -----------------------------
+  # Q&A layer (phase 3)
+  # -----------------------------
+  QAItem:
+    description: A question with answers grounded in extracted assertions and evidence.
+    mixins:
+      - ExtractedItem
+    slots:
+      - question_text
+      - query_assertion
+      - normalized_query
+      - expected_answer_type
+      - answers
+    slot_usage:
+      question_text:
+        required: true
+      expected_answer_type:
+        required: true
+
+  Answer:
+    description: A single answer to a QA item, linked to assertions/evidence.
+    mixins:
+      - ExtractedItem
+    slots:
+      - answer_type
+      - answer_text
+      - answer_number
+      - answer_boolean
+      - answer_entity
+      - supporting_assertions
+      - supporting_evidence_links
+      - answer_confidence
+    slot_usage:
+      answer_type:
+        required: true
+      answer_confidence:
+        required: true

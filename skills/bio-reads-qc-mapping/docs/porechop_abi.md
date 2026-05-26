@@ -1,37 +1,33 @@
-# Porechop - Nanopore Adapter Trimmer
+# Porechop_ABI - Legacy/Fallback Nanopore Adapter Trimming
 
 ## Overview
 
-Porechop is a tool for finding and removing adapters from Oxford Nanopore reads. Adapters on the ends of reads are trimmed off, and when a read has an adapter in its middle, it is treated as chimeric and chopped into separate reads. Porechop can handle barcoded runs and demultiplex reads.
+Porechop_ABI is a targeted fallback for finding and removing Oxford Nanopore adapters when current basecaller/demultiplexer trimming is unavailable or when adapter discovery is part of the analysis question. For new ONT workflows, prefer Dorado for basecalling/demultiplexing/trimming context and Chopper or Filtlong for FASTQ-level filtering.
 
-**Note:** The original developer has declared Porechop as abandonware, though it remains widely used in Nanopore pipelines. Alternative tools include Porechop_ABI for improved adapter detection.
+**Note:** the original Porechop developer declared Porechop unsupported/abandonware. Treat original Porechop as legacy-only; use Porechop_ABI only when you have a specific adapter-discovery or legacy reproducibility reason.
 
 ## Official Documentation
 
-- [Porechop GitHub Repository](https://github.com/rrwick/Porechop)
-- [ARTIC Network Fork](https://github.com/artic-network/Porechop)
-- [Porechop_ABI (Alternative)](https://github.com/bonsai-team/Porechop_ABI)
+- [Porechop_ABI](https://github.com/bonsai-team/Porechop_ABI)
+- [Original Porechop](https://github.com/rrwick/Porechop) (unsupported legacy reference)
+- [Dorado](https://github.com/nanoporetech/dorado)
+- [Chopper](https://github.com/wdecoster/chopper)
 
 ## Installation
 
 ```bash
 # Via conda/mamba
-conda install -c bioconda porechop
+conda install -c bioconda porechop_abi
 
 # Via pixi (recommended for this workflow)
-pixi add porechop
-
-# From source
-git clone https://github.com/rrwick/Porechop.git
-cd Porechop
-python3 setup.py install
+pixi add porechop_abi
 ```
 
 ## Key Command-Line Flags
 
 ### Basic Syntax
 ```bash
-porechop -i INPUT [-o OUTPUT] [options]
+porechop_abi -i INPUT [-o OUTPUT] [options]
 ```
 
 ### Input/Output
@@ -77,43 +73,43 @@ porechop -i INPUT [-o OUTPUT] [options]
 ### Basic Adapter Trimming
 
 ```bash
-porechop -i input.fastq -o output.fastq
+porechop_abi -i input.fastq -o output.fastq
 ```
 
 ### Trim with Multiple Threads
 
 ```bash
-porechop -i input.fastq -o output.fastq -t 16
+porechop_abi -i input.fastq -o output.fastq -t 16
 ```
 
 ### Discard Chimeric Reads
 
 ```bash
-porechop -i input.fastq -o output.fastq --discard_middle
+porechop_abi -i input.fastq -o output.fastq --discard_middle
 ```
 
 ### No Read Splitting (Trim Only)
 
 ```bash
-porechop -i input.fastq -o output.fastq --no_split
+porechop_abi -i input.fastq -o output.fastq --no_split
 ```
 
 ### Output to Gzipped FASTQ
 
 ```bash
-porechop -i input.fastq -o output.fastq.gz --format fastq.gz
+porechop_abi -i input.fastq -o output.fastq.gz --format fastq.gz
 ```
 
 ### Demultiplex Barcoded Reads
 
 ```bash
-porechop -i input.fastq -b demultiplexed_reads/ -t 16
+porechop_abi -i input.fastq -b demultiplexed_reads/ -t 16
 ```
 
 ### Demultiplex with Strict Barcode Matching
 
 ```bash
-porechop -i input.fastq -b demultiplexed_reads/ \
+porechop_abi -i input.fastq -b demultiplexed_reads/ \
   --barcode_threshold 80 \
   --require_two_barcodes \
   --discard_unassigned
@@ -122,13 +118,13 @@ porechop -i input.fastq -b demultiplexed_reads/ \
 ### Process Directory of FASTQ Files
 
 ```bash
-porechop -i fastq_directory/ -o trimmed_output.fastq -t 16
+porechop_abi -i fastq_directory/ -o trimmed_output.fastq -t 16
 ```
 
 ### Conservative Trimming (Less Aggressive)
 
 ```bash
-porechop -i input.fastq -o output.fastq \
+porechop_abi -i input.fastq -o output.fastq \
   --end_threshold 80 \
   --middle_threshold 90 \
   --extra_end_trim 0
@@ -137,7 +133,7 @@ porechop -i input.fastq -o output.fastq \
 ### Aggressive Trimming
 
 ```bash
-porechop -i input.fastq -o output.fastq \
+porechop_abi -i input.fastq -o output.fastq \
   --end_threshold 70 \
   --extra_end_trim 5 \
   --extra_middle_trim_bad_side 150
@@ -146,7 +142,7 @@ porechop -i input.fastq -o output.fastq \
 ### Verbose Output for Debugging
 
 ```bash
-porechop -i input.fastq -o output.fastq -v 3
+porechop_abi -i input.fastq -o output.fastq -v 3
 ```
 
 ## Input/Output Formats
@@ -175,7 +171,7 @@ porechop -i input.fastq -o output.fastq -v 3
 - Adapter alignment is parallelized across threads
 
 ### Memory Usage
-- Porechop has modest memory requirements
+- Porechop_ABI has modest memory requirements
 - Typically <2GB RAM for most operations
 - Scales with read length and number of concurrent threads
 
@@ -191,7 +187,7 @@ porechop -i input.fastq -o output.fastq -v 3
 
 ## Adapter Detection
 
-Porechop includes built-in adapters for:
+Porechop_ABI can discover adapters and also works with known ONT adapter/barcode contexts such as:
 - Native barcoding kits (NBD103, NBD104, NBD114, etc.)
 - PCR barcoding kits (PCR12, PCR96, etc.)
 - Rapid barcoding kits (RBK001, RBK004, RB096, etc.)
@@ -209,12 +205,12 @@ Porechop includes built-in adapters for:
 
 ### Standard Nanopore Run
 ```bash
-porechop -i input.fastq -o output.fastq -t 16
+porechop_abi -i input.fastq -o output.fastq -t 16
 ```
 
 ### Conservative Trimming (Keep More Data)
 ```bash
-porechop -i input.fastq -o output.fastq \
+porechop_abi -i input.fastq -o output.fastq \
   -t 16 \
   --end_threshold 80 \
   --middle_threshold 90 \
@@ -223,7 +219,7 @@ porechop -i input.fastq -o output.fastq \
 
 ### Aggressive Trimming (Higher Quality)
 ```bash
-porechop -i input.fastq -o output.fastq \
+porechop_abi -i input.fastq -o output.fastq \
   -t 16 \
   --end_threshold 70 \
   --extra_end_trim 5 \
@@ -232,12 +228,12 @@ porechop -i input.fastq -o output.fastq \
 
 ### Barcoded Run (Standard)
 ```bash
-porechop -i input.fastq -b barcodes/ -t 16
+porechop_abi -i input.fastq -b barcodes/ -t 16
 ```
 
 ### Barcoded Run (Strict)
 ```bash
-porechop -i input.fastq -b barcodes/ \
+porechop_abi -i input.fastq -b barcodes/ \
   -t 16 \
   --barcode_threshold 80 \
   --barcode_diff 10 \
@@ -247,7 +243,7 @@ porechop -i input.fastq -b barcodes/ \
 
 ### Quick Processing (Skip Chimera Detection)
 ```bash
-porechop -i input.fastq -o output.fastq \
+porechop_abi -i input.fastq -o output.fastq \
   -t 16 \
   --no_split \
   --check_reads 5000
@@ -255,10 +251,11 @@ porechop -i input.fastq -o output.fastq \
 
 ## Common Workflows
 
-### Simple Adapter Trimming Pipeline
+### Fallback Adapter Trimming Pipeline
 ```bash
-# Trim adapters
-porechop -i raw_reads.fastq -o trimmed_reads.fastq -t 16
+# Use only when basecaller/demultiplexer trimming is unavailable
+# or adapter discovery is explicitly needed.
+porechop_abi -i raw_reads.fastq -o trimmed_reads.fastq -t 16
 
 # Quality filter with Filtlong
 filtlong --min_length 1000 trimmed_reads.fastq | gzip > filtered_reads.fastq.gz
@@ -270,7 +267,7 @@ minimap2 -ax map-ont reference.fa filtered_reads.fastq.gz > mapped.sam
 ### Demultiplex and Process Each Barcode
 ```bash
 # Demultiplex
-porechop -i multiplexed.fastq -b barcodes/ -t 16
+porechop_abi -i multiplexed.fastq -b barcodes/ -t 16
 
 # Process each barcode
 for bc in barcodes/BC*.fastq; do
@@ -283,7 +280,7 @@ done
 
 ### Conservative Trim + Assembly Prep
 ```bash
-porechop -i raw_reads.fastq -o trimmed_reads.fastq \
+porechop_abi -i raw_reads.fastq -o trimmed_reads.fastq \
   -t 16 \
   --end_threshold 75 \
   --no_split
@@ -295,20 +292,19 @@ filtlong --target_bases 5000000000 \
 
 ## Alternatives and Notes
 
-### When to Use Porechop
-- Standard Nanopore adapter trimming
-- Barcoded runs requiring demultiplexing
-- Chimeric read detection and splitting
-- Legacy pipelines with Porechop dependencies
+### When to Use Porechop_ABI
+- Targeted adapter discovery in ONT FASTQ files
+- Reproducing a legacy pipeline that used Porechop/Porechop_ABI
+- Chimeric read detection and splitting when this behavior is specifically desired
+- Fallback trimming when Dorado or kit-aware demultiplexing outputs are unavailable
 
 ### Alternatives to Consider
-- **Porechop_ABI**: Improved ab initio adapter detection
-- **Guppy**: ONT's official basecaller includes adapter trimming
-- **Dorado**: Next-gen ONT basecaller with built-in adapter removal
-- **Cutadapt**: General-purpose adapter trimmer (works with ONT)
+- **Dorado**: ONT basecaller/demultiplexer with trimming and read summaries
+- **Chopper**: streaming FASTQ quality/length/end trimming
+- **Filtlong**: long-read filtering and read selection for assembly
+- **Cutadapt**: general-purpose adapter trimmer when adapter sequences are known
 
 ### Maintenance Status
-- Original Porechop is no longer maintained
-- ARTIC Network fork includes minor updates
-- Consider modern alternatives for new pipelines
-- Still widely used and functional for standard use cases
+- Original Porechop is no longer maintained.
+- Prefer Dorado/Chopper/Filtlong for new ONT workflows unless adapter discovery is the reason to use Porechop_ABI.
+- Document the reason whenever Porechop_ABI is used in a new analysis.

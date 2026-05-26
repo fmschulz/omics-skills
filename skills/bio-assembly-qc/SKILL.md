@@ -11,8 +11,8 @@ Assemble genomes/metagenomes and produce assembly QC artifacts.
 
 1. Select an assembler based on read type, genome/metagenome scope, and sample diversity:
    - Illumina short-read isolates and hybrid assemblies: SPAdes v4.0.0+ (final feature release; bug-fix-only series continues). Use `metaSPAdes` for short-read metagenomes.
-   - Long-read isolates (PacBio CLR, ONT): Flye v2.9.5+.
-   - Long-read metagenomes: Flye v2.9.5+ in `--meta` mode (metaFlye) as the baseline.
+   - Long-read bacterial isolates (PacBio CLR, ONT): Flye v2.9.5+ for the draft/baseline assembly. Use Autocycler v0.6+ when a complete, high-confidence bacterial consensus genome is needed from multiple independent long-read assembly attempts; do not use it for mixed-community metagenomes.
+   - Long-read metagenomes: Flye v2.9.5+ in `--meta` mode (metaFlye) as the baseline for ONT/CLR mixed-community assemblies.
    - HiFi metagenomes: prefer **metaMDBG v1.1** (~2× more circularized high-quality MAGs vs metaFlye on HiFi, better virus/plasmid recovery; *Nature Biotechnology* 2024, DOI: 10.1038/s41587-023-01983-6). Keep metaFlye as a comparator when a per-sample failure mode is suspected.
    - Diverse or very large long-read datasets where speed dominates: **myloasm** (2025) as a faster long-read metagenome assembler when its profile matches the dataset; document the choice in the run log.
 2. Run assembly with resource-aware settings and record exact CLI, version, thread count, and RAM ceiling.
@@ -40,7 +40,7 @@ Prerequisites:
 - Sufficient disk and RAM for chosen assembler.
 Inputs:
 - reads/*.fastq.gz (raw reads).
-- assembler choice (spades | flye | metamdbg | myloasm).
+- assembler choice (spades | flye | metaflye | metamdbg | myloasm | autocycler).
 
 ## Output
 
@@ -56,6 +56,7 @@ Inputs:
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Verify reads are present and gzip-readable.
 - [ ] Check available disk space before assembly.
+- [ ] For Autocycler isolate consensus, record each input assembler/run and confirm the sample is not a mixed community.
 - [ ] QuickClade `percontig` domain screen completed or the reason for skipping it is explicitly recorded.
 - [ ] Domain routing table is reviewed before selecting MAG, viral, bacterial/archaeal, or eukaryotic downstream tools.
 

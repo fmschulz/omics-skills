@@ -11,8 +11,9 @@ Initialize a bioinformatics project scaffold with reproducible environments, sch
 
 1. Create standard directory layout (data/, results/, schemas/, workflows/, src/, notebooks/).
 2. Initialize Pixi workspace and lockfile; define tasks.
-3. Define LinkML schemas and generate Pydantic models.
-4. Create DuckDB catalog and register parquet tables.
+3. Define LinkML schemas for sample, run, file, result, and provenance records.
+4. Generate or hand-write Pydantic models from the LinkML schema and use them to parse/coerce incoming metadata before storage.
+5. Validate raw records with LinkML/Pydantic, write normalized Parquet tables, then create the DuckDB catalog over validated Parquet only.
 
 ## Quick Reference
 
@@ -39,14 +40,16 @@ Inputs:
 - pixi.lock
 - schemas/
 - data/catalog.duckdb
+- data/*.parquet validated against schemas/
 - results/bio-foundation-housekeeping/report.md
 - results/bio-foundation-housekeeping/logs/
 
 ## Quality Gates
 
 - [ ] Schema generation succeeds and models are importable.
+- [ ] Raw metadata validates against LinkML and Pydantic before DuckDB ingestion.
 - [ ] pixi.lock is created and consistent with pixi.toml.
-- [ ] DuckDB catalog is readable.
+- [ ] DuckDB catalog is readable and points at validated Parquet tables.
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
 - [ ] Verify project root exists and is writable.
 - [ ] Validate generated schemas against expected fields.

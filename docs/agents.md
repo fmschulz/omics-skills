@@ -6,10 +6,10 @@ Agents are Markdown system prompts. They define the role, the skill lookup polic
 
 | Agent | Use it for | Typical first skills |
 |---|---|---|
-| `omics-scientist` | Reads, assemblies, MAGs, annotations, taxonomy, phylogenomics, viral discovery, JGI data, and final biological interpretation. | `bio-reads-qc-mapping`, `bio-assembly-qc`, `tracking-taxonomy-updates`, `bio-annotation`, `bio-viromics` |
-| `literature-expert` | Literature discovery, preprint scans, DOI lookup, citation metadata cleanup, and impact checks. | `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup` |
-| `science-writer` | Manuscript drafting, section rewrites, rebuttals, proposal critique, methods documentation, and multi-reviewer evaluation. | `scientific-writing`, `manuscript-review-council`, `proposal-review`, `bio-workflow-methods-docwriter` |
-| `dataviz-artist` | Reproducible notebooks, exploratory plots, publication figures, and dashboards. | `notebooks`, `beautiful-data-viz`, `plotly-dashboard-skill` |
+| `omics-scientist` | Reads, assemblies, MAGs, annotations, taxonomy, phylogenomics, viral discovery, JGI data, and final biological interpretation. | `bio-reads-qc-mapping`, `bio-assembly-qc`, `tracking-taxonomy-updates`, `bio-annotation`, `bio-fasta-database-curator` |
+| `literature-expert` | Literature discovery, preprint scans, DOI lookup, citation metadata cleanup, impact checks, structured claim/evidence extraction, and current API docs. | `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup`, `csag-extraction`, `get-api-docs` |
+| `science-writer` | Manuscript drafting, section rewrites, rebuttals, proposal critique, methods documentation, multi-reviewer evaluation, and argument-graph extraction. | `scientific-writing`, `manuscript-review-council`, `proposal-review`, `bio-workflow-methods-docwriter`, `csag-extraction` |
+| `dataviz-artist` | Scientific data inspection, reproducible notebooks, exploratory plots, publication figures, and dashboards. | `exploratory-data-analysis`, `notebooks`, `beautiful-data-viz`, `plotly-dashboard-skill` |
 
 ## Choosing an Agent
 

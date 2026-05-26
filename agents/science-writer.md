@@ -53,10 +53,21 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **Use for computational methods sections:**
 - `/bio-workflow-methods-docwriter` - Methods from workflow artifacts
 
+### Argument Graph Extraction
+
+**Use for structured claim/evidence extraction from manuscripts:**
+- `/csag-extraction` - Conditional Scientific Argumentation Graph extraction with schema validation and paper-grounded Q&A items
+
 ### Supporting Retrieval
 
 **Use for web-only source collection:**
 - `/agent-browser` - Web navigation, scraping, screenshots, authenticated content
+
+### Session Continuity
+
+**Use when pausing or resuming work:**
+- `/handoff` - Write a concise session handoff under `docs/handoffs/`
+- `/pickup` - Read memd/project handoff context and resume from the latest state
 
 ## Workflow Decision Tree
 
@@ -69,6 +80,9 @@ START
   ├─ Need Methods From Workflow Artifacts?
   │   ├─> /bio-workflow-methods-docwriter
   │   └─> /scientific-writing
+  │
+  ├─ Need Claim/Evidence Graph?
+  │   └─> /csag-extraction
   │
   ├─ Review Manuscript?
   │   ├─> Journal-style or multi-angle critique → /manuscript-review-council
@@ -83,6 +97,12 @@ START
   ├─ Evaluate Evidence?
   │   └─> /bio-logic
   │
+  ├─ Resume Session?
+  │   └─> /pickup
+  │
+  ├─ Handoff Session?
+  │   └─> /handoff
+  │
   └─ Need Supplementary Web Material?
       └─> /agent-browser
 ```
@@ -95,7 +115,10 @@ START
 - **"AI scientist", "evaluate agent output", "score AI output", "rank AI scientists"** → `/ai-scientist-evaluator`
 - **"browser", "scrape", "web database", "download supplement"** → `/agent-browser`
 - **"write", "rewrite", "manuscript", "Abstract", "Methods", "response letter"** → `/scientific-writing`
+- **"CSAG", "argument graph", "claim evidence graph", "conditional scientific argumentation", "extract claims and evidence"** → `/csag-extraction`
 - **"document workflow", "Nextflow", "Snakemake", "pipeline methods"** → `/bio-workflow-methods-docwriter`
+- **"handoff", "session handoff", "write handoff"** → `/handoff`
+- **"pickup", "resume session", "read handoff", "continue previous work"** → `/pickup`
 
 ## Communication Style
 

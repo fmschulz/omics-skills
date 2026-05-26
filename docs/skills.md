@@ -9,12 +9,14 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | Skill | Use when | Main result |
 |---|---|---|
 | `bio-foundation-housekeeping` | Starting a new bioinformatics project or normalizing an existing one. | A reproducible project scaffold with environments, schemas, manifests, and data cataloging. |
+| `exploratory-data-analysis` | Inspecting an unfamiliar scientific data file before choosing a workflow. | A Markdown report covering file type, structure, quality issues, and downstream analysis options. |
 | `bio-reads-qc-mapping` | Ingesting raw reads, trimming or filtering them, and mapping reads to references or assemblies. | QC reports, cleaned reads, alignments, and coverage summaries. |
 | `bio-assembly-qc` | Building genome, metagenome, or long-read assemblies. | Assemblies with QC metrics and assembly-level interpretation. |
 | `tracking-taxonomy-updates` | Reconciling taxonomy across NCBI, GTDB, ICTV, eukaryote frameworks, and QuickClade-first domain triage. | Versioned taxonomy evidence and domain-specific routing decisions. |
 | `bio-binning-qc` | Recovering and refining metagenomic bins. | MAG/bin sets with completeness, contamination, and chimerism checks. |
 | `bio-gene-calling` | Calling genes and basic features in prokaryotic, viral, or eukaryotic sequence sets. | Predicted CDS, protein FASTA files, GFF annotations, and feature summaries. |
 | `bio-annotation` | Assigning function and taxonomy from sequence homology. | Functional annotations, taxonomy calls, and evidence-ranked hit tables. |
+| `bio-fasta-database-curator` | Preparing sequence databases for BLAST, DIAMOND, MMseqs2, HMMER, pyhmmer, or custom reference searches. | Curated FASTA/FAA files, stable headers, deduplicated records, mapping tables, and database statistics. |
 | `bio-phylogenomics` | Building marker-gene or protein alignments and trees. | Alignments, phylogenetic trees, topology checks, and interpretation. |
 | `bio-protein-clustering-pangenome` | Clustering proteins into orthogroups or building pangenome matrices. | Orthogroups, copy-number matrices, and core/accessory gene summaries. |
 | `bio-structure-annotation` | Adding structure-based evidence to protein interpretation. | Predicted or searched structures, fold-level annotations, and confidence notes. |
@@ -41,6 +43,7 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | Skill | Use when | Main result |
 |---|---|---|
 | `scientific-writing` | Drafting, revising, or reviewing manuscripts, response letters, and grounded scientific prose. | A claim-safe draft or revision plan that stays tied to supplied evidence. |
+| `csag-extraction` | Converting manuscripts into structured Conditional Scientific Argumentation Graphs. | Schema-valid claim/evidence/inference graphs with TextSpan grounding, validation reports, and paper-grounded Q&A items. |
 | `manuscript-review-council` | Running a multi-angle manuscript review. | Parallel specialist reviews, disagreement checks, and an editor synthesis. |
 | `proposal-review` | Reviewing grant, project, or funding proposals. | A decision-ready critique of strengths, risks, missing evidence, and fundability. |
 | `ai-scientist-evaluator` | Evaluating finished outputs from one or more AI scientists. | A scored audit of rigor, reproducibility, novelty, task completion, and publication readiness. |
@@ -53,6 +56,13 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | `beautiful-data-viz` | Producing publication-quality matplotlib or seaborn figures. | High-data-ink static figures with readable axes, direct labels where feasible, tight layout, and appropriate palettes. |
 | `plotly-dashboard-skill` | Building interactive Plotly Dash dashboards. | A production-ready dashboard layout with themed components and performant callbacks. |
 | `agent-browser` | Automating browser navigation, scraping, form filling, screenshots, or UI checks. | Browser-driven evidence, screenshots, scraped content, or test observations. |
+
+## Session Continuity
+
+| Skill | Use when | Main result |
+|---|---|---|
+| `handoff` | Pausing a session and leaving enough context for another agent or future session to continue. | A dated Markdown handoff under `docs/handoffs/` with status, file map, decisions, blockers, and next steps. |
+| `pickup` | Resuming work from project memory and/or existing handoff files. | A concise session resume with recent tasks, decisions, failures, active handoffs, and archived current-repo handoff files. |
 
 ## Skill Source Links
 

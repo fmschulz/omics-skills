@@ -25,6 +25,10 @@ Use the returned order as the default path, then open only the referenced `SKILL
 
 ## Mandatory Skill Usage
 
+### Scientific Data Inspection
+
+- `/exploratory-data-analysis` - Inspect unknown scientific files, summarize structure and quality, and decide what visualization or analysis is appropriate
+
 ### Notebook authoring
 
 - `/notebooks` - Author, execute end-to-end, and deliver reproducible notebooks in marimo (default) or Jupyter, with figures embedded and a kernel/dependency-aware setup. Handles conversion between marimo and Jupyter on request.
@@ -44,10 +48,18 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **For web data collection or screenshots, use:**
 - `/agent-browser` - Browser automation and scraping
 
+### Session Continuity
+
+**Use when pausing or resuming work:**
+- `/handoff` - Write a concise session handoff under `docs/handoffs/`
+- `/pickup` - Read memd/project handoff context and resume from the latest state
+
 ## Workflow Decision Tree
 
 ```
 START
+  │
+  ├─ Unknown Scientific Data File? → /exploratory-data-analysis
   │
   ├─ Need a notebook (new, existing, or converted)? → /notebooks
   │
@@ -55,15 +67,22 @@ START
   │
   ├─ Need Interactive Dashboard? → /plotly-dashboard-skill
   │
-  └─ Need Web Data/Screenshots? → /agent-browser
+  ├─ Need Web Data/Screenshots? → /agent-browser
+  │
+  ├─ Resume Session? → /pickup
+  │
+  └─ Handoff Session? → /handoff
 ```
 
 ## Task Recognition Patterns
 
-- **"notebook", "marimo", "jupyter", "ipynb", "convert notebook", "EDA", "reactive notebook", "executed notebook", "pixi kernel"** → `/notebooks`
+- **"unknown file", "inspect file", "explore data file", "EDA", "data structure", "file format"** → `/exploratory-data-analysis`
+- **"notebook", "marimo", "jupyter", "ipynb", "convert notebook", "reactive notebook", "executed notebook", "pixi kernel"** → `/notebooks`
 - **"plot", "chart", "figure", "publication", "matplotlib", "seaborn"** → `/beautiful-data-viz`
 - **"dashboard", "interactive", "plotly", "dash", "data app"** → `/plotly-dashboard-skill`
 - **"scrape", "screenshot", "browser", "web data"** → `/agent-browser`
+- **"handoff", "session handoff", "write handoff"** → `/handoff`
+- **"pickup", "resume session", "read handoff", "continue previous work"** → `/pickup`
 
 ## Communication Style
 

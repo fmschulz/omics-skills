@@ -1,0 +1,4 @@
+interface:
+  display_name: "CSAG Extraction"
+  short_description: "Extract and validate CSAG paper artifacts"
+  default_prompt: "Use $csag-extraction to extract a validated CSAG PaperExtraction from this manuscript."

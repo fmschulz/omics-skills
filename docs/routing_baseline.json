@@ -1,11 +1,11 @@
 {
   "summary": {
-    "total": 35,
-    "passed": 34,
-    "failed": 1,
-    "pass_rate": 0.971,
+    "total": 38,
+    "passed": 38,
+    "failed": 0,
+    "pass_rate": 1.0,
     "agent_failures": 0,
-    "primary_skill_failures": 1,
+    "primary_skill_failures": 0,
     "ordered_skill_failures": 0,
     "forbidden_skill_leaks": 0
   },
@@ -206,9 +206,11 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
-          "jgi-lakehouse"
+          "jgi-lakehouse",
+          "bio-fasta-database-curator"
         ],
         "ordered_skills": [
+          "bio-fasta-database-curator",
           "jgi-lakehouse"
         ]
       }
@@ -263,6 +265,32 @@
         ],
         "ordered_skills": [
           "bio-foundation-housekeeping"
+        ]
+      }
+    },
+    {
+      "task": "curate a FASTA database for MMseqs2 by standardizing headers and removing duplicate sequences",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-fasta-database-curator"
+        ],
+        "ordered_skills": [
+          "bio-fasta-database-curator"
+        ]
+      }
+    },
+    {
+      "task": "inspect this unknown scientific data file and summarize its structure before plotting",
+      "passed": true,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [
+          "exploratory-data-analysis"
+        ],
+        "ordered_skills": [
+          "exploratory-data-analysis"
         ]
       }
     },
@@ -514,6 +542,21 @@
       }
     },
     {
+      "task": "extract a CSAG claim evidence argument graph from this manuscript",
+      "passed": true,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [
+          "csag-extraction",
+          "manuscript-review-council"
+        ],
+        "ordered_skills": [
+          "csag-extraction",
+          "manuscript-review-council"
+        ]
+      }
+    },
+    {
       "task": "create a publication-quality matplotlib figure of assembly statistics",
       "passed": true,
       "actual": {
@@ -580,11 +623,15 @@
     },
     {
       "task": "fetch up-to-date Anthropic SDK API documentation before writing client code",
-      "passed": false,
+      "passed": true,
       "actual": {
-        "agent": "science-writer",
-        "primary_skills": [],
-        "ordered_skills": []
+        "agent": "literature-expert",
+        "primary_skills": [
+          "get-api-docs"
+        ],
+        "ordered_skills": [
+          "get-api-docs"
+        ]
       }
     },
     {

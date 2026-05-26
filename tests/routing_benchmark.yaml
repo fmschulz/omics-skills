@@ -84,6 +84,16 @@
   expected_agent: omics-scientist
   expected_primary_skills: [bio-foundation-housekeeping]
 
+- task: "curate a FASTA database for MMseqs2 by standardizing headers and removing duplicate sequences"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-fasta-database-curator]
+
+- task: "inspect this unknown scientific data file and summarize its structure before plotting"
+  platform: codex
+  expected_agent: dataviz-artist
+  expected_primary_skills: [exploratory-data-analysis]
+
 - task: "design a Nextflow pipeline for metagenomic assembly on HPC"
   platform: codex
   expected_agent: omics-scientist
@@ -153,6 +163,11 @@
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [bio-workflow-methods-docwriter]
+
+- task: "extract a CSAG claim evidence argument graph from this manuscript"
+  platform: codex
+  expected_agent: science-writer
+  expected_primary_skills: [csag-extraction]
 
 # ============================================================================
 # Visualization and notebooks (dataviz-artist)
