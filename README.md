@@ -1,4 +1,6 @@
-# omics-skills
+<p align="center">
+  <img src="docs/assets/omics-skills-logo.png" alt="omics-skills" width="220">
+</p>
 
 A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
 
