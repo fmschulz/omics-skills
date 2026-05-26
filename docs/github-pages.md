@@ -12,7 +12,7 @@ The workflow runs on pushes to `main` and on manual dispatch. It:
 
 1. Checks out the repository.
 2. Sets up Python and `uv`.
-3. Runs `uvx --from mkdocs mkdocs build --strict --site-dir site`.
+3. Runs `uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict --site-dir site`.
 4. Uploads the built `site/` directory as a Pages artifact.
 5. Deploys the artifact to GitHub Pages.
 
@@ -29,13 +29,13 @@ If the repository owner or name changes, update `site_url` in `mkdocs.yml`.
 Run the same strict build locally:
 
 ```bash
-uvx --from mkdocs mkdocs build --strict
+uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict
 ```
 
 Preview while editing:
 
 ```bash
-uvx --from mkdocs mkdocs serve
+uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs serve
 ```
 
 MkDocs writes the local build to `site/`; that directory is generated output and should not be committed.

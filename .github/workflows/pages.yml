@@ -1,9 +1,13 @@
-name: Deploy documentation
+name: Docs
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -12,8 +16,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: false
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -31,7 +35,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Build MkDocs site
-        run: uvx --from mkdocs mkdocs build --strict --site-dir site
+        run: uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict --site-dir site
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

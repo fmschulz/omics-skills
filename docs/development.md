@@ -45,13 +45,13 @@ Keep documentation concrete:
 Preview locally:
 
 ```bash
-uvx --from mkdocs mkdocs serve
+uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs serve
 ```
 
 Build strictly:
 
 ```bash
-uvx --from mkdocs mkdocs build --strict
+uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict
 ```
 
 The GitHub Pages workflow runs the same strict build before deployment.
@@ -64,7 +64,7 @@ Before opening a pull request:
 python3 scripts/validate-skills.py
 python3 -m unittest discover -s tests -v
 make benchmark
-uvx --from mkdocs mkdocs build --strict
+uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict
 ```
 
 If routing behavior changes, update `tests/routing_benchmark.yaml` and refresh `docs/routing_baseline.json` only after reviewing the benchmark delta.
