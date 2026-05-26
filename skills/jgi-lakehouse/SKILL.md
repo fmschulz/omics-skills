@@ -33,6 +33,53 @@ WHERE is_public = 'Yes' LIMIT 5;
 - Download microbial genomes with IMG taxon OIDs
 - Cross-reference GOLD projects with IMG annotations
 
+## Instructions
+
+1. Decide whether the task needs metadata, files, or read recovery.
+2. Use Lakehouse SQL for metadata/annotations and the JGI filesystem or JAMO for sequence files.
+3. Inspect schemas with a small `LIMIT`; remove `LIMIT` for comprehensive results.
+4. Record source, table, fields, filters, and access route in every result summary.
+
+## Quick Reference
+
+| Task | Action |
+|---|---|
+| Test Lakehouse | Query `"gold-db-2 postgresql".gold.project` |
+| Query IMG metadata | Use `"img-db-2 postgresql".img_core_v400.*` tables |
+| Query NUMG proteins | Join `faa` and `gene2pfam` on both `oid` and `gene_oid` |
+| Download IMG genome | Copy `{taxon_oid}.tar.gz` from `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/` |
+| Link reads | Start with `jamo info all pmoid <img_jgi_project_id>` |
+
+## Input Requirements
+
+- JGI/GOLD/IMG identifier, taxonomy, project filter, term, or file target.
+- `DREMIO_PAT` for SQL; filesystem/JAMO access for files or reads.
+- Whether the result is exploratory, comprehensive, or a download.
+
+## Output
+
+- SQL/result summaries with exact filtering criteria.
+- Tables or exports for reusable metadata.
+- Downloaded genome/protein/annotation files when requested.
+- Provenance covering database, tables, filters, access route, and file paths.
+
+## Quality Gates
+
+- [ ] Query source and access route match the task.
+- [ ] Schema was inspected before writing joins against unfamiliar tables.
+- [ ] Comprehensive answers do not use development `LIMIT` clauses.
+- [ ] Joins use correct keys, especially `oid` + `gene_oid` for NUMG.
+- [ ] Result summaries state all filters and whether they are exact matches, regexes, ranges, or aggregations.
+
+## Examples
+
+See `examples/04-download-img-genomes.md` and `examples/05-query-numg-metagenome-proteins.md`.
+
+## Troubleshooting
+
+**Issue**: Metadata query returns no sequence files. **Solution**: Use filesystem, portal `downloadRequestFiles`, or JAMO.
+
+**Issue**: Final answer is based on 50 or 100 rows. **Solution**: Remove exploratory limits or use aggregation.
 
 ---
 
