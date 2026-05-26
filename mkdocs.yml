@@ -1,0 +1,35 @@
+site_name: omics-skills
+site_description: Agent prompts and reusable skills for omics analysis, literature discovery, scientific writing, and data visualization.
+site_url: https://fmschulz.github.io/omics-skills/
+repo_url: https://github.com/fmschulz/omics-skills
+repo_name: fmschulz/omics-skills
+edit_uri: edit/main/docs/
+
+theme:
+  name: mkdocs
+  locale: en
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Agents: agents.md
+  - Skills: skills.md
+  - Routing: routing.md
+  - Development: development.md
+  - GitHub Pages: github-pages.md
+  - Reference:
+      - Skill Graph: SKILL_GRAPH.md
+      - Routing Improvements: ROUTING_IMPROVEMENTS.md
+      - Tooling Survey 2026: tooling-survey-2026.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+strict: true

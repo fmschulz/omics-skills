@@ -59,7 +59,8 @@ fig.savefig(OUT_DIR / "figure.png", bbox_inches="tight", pad_inches=0.05)
 
 ## Annotation conventions
 - Always label axes (with units if relevant).
-- Titles are short; subtitles go in markdown.
+- Manuscript/paper figures should not have in-plot titles or subtitles; use captions and panel labels instead.
+- Notebook exploration or slide figures may use short titles; subtitles go in markdown.
 - Legends only when needed; place outside if crowded.
 
 ## “Pretty plot” checklist
@@ -72,8 +73,8 @@ fig.savefig(OUT_DIR / "figure.png", bbox_inches="tight", pad_inches=0.05)
 ## If the notebook uses many plots
 Create a helper like:
 ```python
-def finalize(ax, title: str | None = None):
-    if title:
+def finalize(ax, title: str | None = None, *, manuscript: bool = False):
+    if title and not manuscript:
         ax.set_title(title)
     ax.grid(True, alpha=0.25)
     return ax

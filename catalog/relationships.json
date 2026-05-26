@@ -858,7 +858,7 @@
       "skill_body_reference"
     ],
     "evidence": [
-      "8. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
+      "9. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
       "| Validate citations | `/crossref-lookup` |",
       "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
       "- `/crossref-lookup` \u2014 validate every cited DOI"

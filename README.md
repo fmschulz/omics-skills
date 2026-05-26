@@ -2,6 +2,12 @@
 
 A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
 
+## Documentation
+
+The MkDocs documentation site is configured for GitHub Pages at <https://fmschulz.github.io/omics-skills/>. It includes a getting-started guide, agent overview, full skill catalog, routing guide, and development notes.
+
+Source pages live in [`docs/`](docs/), the site is configured by [`mkdocs.yml`](mkdocs.yml), and the deployment workflow is in [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+
 ## Scope
 
 Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, statistics, manuscript drafting, and figure generation.
@@ -131,7 +137,7 @@ Adding or modifying a skill:
 3. Rebuild the catalog and run the test suite.
 4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is non-trivially discoverable by the router.
 
-See [AGENTS.md](AGENTS.md) for structural conventions and [docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and composes skills.
+See [AGENTS.md](AGENTS.md) for structural conventions, [docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and composes skills, and [docs/skills.md](docs/skills.md) for the public skill catalog.
 
 ## Compatibility
 

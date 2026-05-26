@@ -191,7 +191,7 @@ After installation, you'll have:
 3. **science-writer.md** - Scientific writing
 4. **dataviz-artist.md** - Data visualization
 
-### Skills Installed (31)
+### Skills Installed (30)
 
 The shared skills directory includes every top-level folder in `skills/`, including:
 
@@ -217,7 +217,7 @@ Installation Status
 
 Shared Skills:
   Skills directory: /home/user/.agents/skills
-  Omics-skills skills: 31/31 installed (69 total in directory)
+  Omics-skills skills: 30/30 installed (69 total in directory)
 
 Claude Code:
   Agents directory: /home/user/.claude/agents

@@ -13,7 +13,7 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Sequence
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -27,6 +27,24 @@ class VizConfig:
     background: str = "light"     # light | dark
     font_scale: float = 1.0
     dpi: int = 150
+
+
+TUFTE_COLORS = {
+    "light_bg": "#fffff8",
+    "dark_bg": "#151515",
+    "light_text": "#111111",
+    "dark_text": "#dddddd",
+    "light_secondary": "#666666",
+    "dark_secondary": "#999999",
+    "light_axis": "#cccccc",
+    "dark_axis": "#444444",
+    "series_default": "#666666",
+    "series_default_dark": "#999999",
+    "highlight": "#e41a1c",
+    "highlight_dark": "#fc8d62",
+    "min": "#e15759",
+    "max": "#4e79a7",
+}
 
 
 def _maybe_set_retina() -> None:
@@ -70,10 +88,11 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
 
     is_dark = background.lower() == "dark"
 
-    # Neutral ink colors (avoid pure black/white)
-    fg = "#F3F4F6" if is_dark else "#111827"
-    grid = "#374151" if is_dark else "#E5E7EB"
-    face = "#111827" if is_dark else "#FFFFFF"
+    # Tufte-inspired neutral ink colors (avoid pure black/white).
+    fg = TUFTE_COLORS["dark_text"] if is_dark else TUFTE_COLORS["light_text"]
+    grid = TUFTE_COLORS["dark_axis"] if is_dark else TUFTE_COLORS["light_axis"]
+    face = TUFTE_COLORS["dark_bg"] if is_dark else TUFTE_COLORS["light_bg"]
+    secondary = TUFTE_COLORS["dark_secondary"] if is_dark else TUFTE_COLORS["light_secondary"]
 
     rc = {
         # Figure / save
@@ -85,9 +104,10 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "axes.facecolor": face,
 
         # Typography
-        "font.family": "DejaVu Sans",
+        "font.family": "serif",
+        "font.serif": ["Palatino", "Palatino Linotype", "Georgia", "DejaVu Serif"],
         "text.color": fg,
-        "axes.labelcolor": fg,
+        "axes.labelcolor": secondary,
         "axes.titlecolor": fg,
         "axes.titlesize": title,
         "axes.labelsize": label,
@@ -97,24 +117,26 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "ytick.labelsize": tick,
 
         # Lines / markers
-        "lines.linewidth": 2.0,
-        "lines.markersize": 6,
+        "lines.linewidth": 1.5,
+        "lines.markersize": 3,
 
         # Axes / spines
         "axes.edgecolor": grid,
-        "axes.linewidth": 0.8,
-        "axes.grid": True,
+        "axes.linewidth": 0.5,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.grid": False,
         "grid.color": grid,
-        "grid.linewidth": 0.8,
-        "grid.alpha": 0.6 if is_dark else 1.0,
+        "grid.linewidth": 0.5,
+        "grid.alpha": 0.12,
 
         # Ticks
-        "xtick.direction": "out",
-        "ytick.direction": "out",
+        "xtick.direction": "in",
+        "ytick.direction": "in",
         "xtick.major.size": 4,
         "ytick.major.size": 4,
-        "xtick.major.width": 0.8,
-        "ytick.major.width": 0.8,
+        "xtick.major.width": 0.5,
+        "ytick.major.width": 0.5,
 
         # Legend
         "legend.frameon": False,
@@ -127,9 +149,10 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
     # If seaborn is available, use it for coherent themes/palettes.
     try:
         import seaborn as sns  # type: ignore
-        sns.set_theme(style="whitegrid", context=medium)
+        sns.set_theme(style="white", context=medium)
         sns.set_context(medium, font_scale=font_scale)
         sns.set_palette("colorblind")
+        mpl.rcParams.update(rc)
     except Exception:
         pass
 
@@ -142,6 +165,99 @@ def despine(ax: Axes) -> Axes:
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_alpha(0.8)
     ax.spines["bottom"].set_alpha(0.8)
+    return ax
+
+
+def apply_range_frame(ax: Axes, x_data: Sequence[float], y_data: Sequence[float]) -> Axes:
+    """Constrain visible axis lines to the observed data range."""
+    despine(ax)
+    x_values = list(x_data)
+    y_values = list(y_data)
+    if x_values:
+        ax.spines["bottom"].set_bounds(min(x_values), max(x_values))
+    if y_values:
+        ax.spines["left"].set_bounds(min(y_values), max(y_values))
+    ax.tick_params(direction="in", length=3, width=0.5)
+    return ax
+
+
+def direct_label(
+    ax: Axes,
+    x_data: Sequence[float],
+    y_data: Sequence[float],
+    label: str,
+    *,
+    color: str = TUFTE_COLORS["series_default"],
+    offset: tuple[float, float] = (8, 0),
+) -> Axes:
+    """Label a series at its final point instead of using a legend."""
+    x_values = list(x_data)
+    y_values = list(y_data)
+    if not x_values or not y_values:
+        return ax
+    ax.annotate(
+        label,
+        xy=(x_values[-1], y_values[-1]),
+        xytext=offset,
+        textcoords="offset points",
+        color=color,
+        fontsize=mpl.rcParams.get("axes.labelsize", 10),
+        va="center",
+    )
+    return ax
+
+
+def annotate_point(
+    ax: Axes,
+    x: float,
+    y: float,
+    text: str,
+    *,
+    color: str = "#333333",
+    offset: tuple[float, float] = (0, 24),
+) -> Axes:
+    """Annotate one notable point with a restrained leader line."""
+    ax.annotate(
+        text,
+        xy=(x, y),
+        xytext=offset,
+        textcoords="offset points",
+        color=color,
+        fontsize=mpl.rcParams.get("xtick.labelsize", 9),
+        fontstyle="italic",
+        ha="center",
+        arrowprops={"arrowstyle": "-", "color": mpl.rcParams["axes.edgecolor"], "lw": 0.5},
+    )
+    return ax
+
+
+def sparkline(
+    ax: Axes,
+    values: Sequence[float],
+    *,
+    color: str = TUFTE_COLORS["series_default"],
+    mark_min_max: bool = True,
+    mark_endpoint: bool = True,
+) -> Axes:
+    """Draw a compact trend with no axes or grid."""
+    data = list(values)
+    if not data:
+        return ax
+    x = list(range(len(data)))
+    ax.plot(x, data, color=color, linewidth=1)
+    if mark_min_max:
+        min_i = min(range(len(data)), key=data.__getitem__)
+        max_i = max(range(len(data)), key=data.__getitem__)
+        ax.plot(min_i, data[min_i], "o", color=TUFTE_COLORS["min"], markersize=2)
+        ax.plot(max_i, data[max_i], "o", color=TUFTE_COLORS["max"], markersize=2)
+    if mark_endpoint:
+        ax.plot(x[-1], data[-1], "o", color=color, markersize=2)
+    ax.set_xlim(0, len(data) - 1)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.grid(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
     return ax
 
 
@@ -186,4 +302,3 @@ def finalize_axes(
                 pass
 
     return ax
-

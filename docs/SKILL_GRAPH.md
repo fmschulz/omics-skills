@@ -20,7 +20,7 @@ The generated outputs are:
 - `relationships.json`: skill-to-skill relationships only
 - `routing.json`: lightweight routing metadata for task matching
 
-These files are built by [`scripts/skill_index.py`](../scripts/skill_index.py).
+These files are built by [`scripts/skill_index.py`](https://github.com/fmschulz/omics-skills/blob/main/scripts/skill_index.py).
 
 ## Source of Truth
 

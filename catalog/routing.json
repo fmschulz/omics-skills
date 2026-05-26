@@ -543,7 +543,7 @@
     },
     {
       "name": "beautiful-data-viz",
-      "description": "Create publication-quality matplotlib/seaborn charts with readable axes, tight layout, and curated palettes.",
+      "description": "Create publication-quality matplotlib/seaborn charts with readable axes, tight layout, curated palettes, and Tufte-style high-data-ink design.",
       "agents": [
         "dataviz-artist"
       ],

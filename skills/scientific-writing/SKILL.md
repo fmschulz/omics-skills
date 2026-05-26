@@ -58,9 +58,15 @@ Both drafting and review work share the same auditable artifact set (plan, draft
    - only minor edits remain
    - the remaining issues require missing evidence
    - another loop would only repeat the same findings without material improvement
-7. Keep intermediate artifacts auditable: plan, methods draft, outline, manuscript draft, citation audit, review notes, and revision notes.
-8. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.
-9. Return unresolved evidence gaps explicitly instead of smoothing them over.
+7. For manuscript figures, review the figure/caption pair as evidence, not decoration:
+   - keep the figure title and interpretation in the caption; remove in-plot titles/subtitles from graphics
+   - make the caption state the finding, comparison context, sample size or cohort, units, uncertainty, and statistical test when relevant
+   - prefer direct labels, panel labels, axis labels, and concise legends over legend-heavy graphics
+   - flag 3D, pie charts, dual y-axes, heavy grids, decorative gradients, and overloaded multi-series plots as revision issues
+   - recommend a sentence/table when the figure shows only one or two values, small multiples for many series, slopegraphs for before/after contrasts, and sparklines for compact trend context
+8. Keep intermediate artifacts auditable: plan, methods draft, outline, manuscript draft, citation audit, review notes, and revision notes.
+9. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.
+10. Return unresolved evidence gaps explicitly instead of smoothing them over.
 
 ## Prose-Quality Audits
 
@@ -110,6 +116,8 @@ Used by both reviewer and reviser. Reviser addresses CRITICAL and MAJOR first.
 - [ ] claims stay within the supplied evidence
 - [ ] Methods trace to real artifacts rather than inference
 - [ ] numbers in prose match structured summaries or tables
+- [ ] manuscript figures use captions rather than in-plot titles and captions state the finding, context, units, uncertainty, and test where relevant
+- [ ] figure text calls out misleading or low-data-ink displays instead of treating them as neutral style choices
 - [ ] citations are validated, inherited from trusted sources, or marked for follow-up
 - [ ] reviewer findings are either fixed or carried forward as blocked gaps
 

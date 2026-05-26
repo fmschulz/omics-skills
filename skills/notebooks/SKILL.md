@@ -57,6 +57,7 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
 7. **Evaluate the plots, then refine.** This step is required, not optional. After the run-all execution:
    - Open the executed notebook (or exported HTML) and visually inspect every figure.
    - Check for: empty axes, mis-scaled axes (log when linear was intended or vice versa), missing labels/legends, overlapping ticks, illegible font sizes at target output size, ambiguous palettes, colorbars without units, NaN-driven gaps, axis ranges clipping data, broken layouts.
+   - For manuscript/paper figures, remove all in-plot titles and subtitles. Use axis labels, legends, panel letters, and manuscript captions instead.
    - If a figure is wrong or unclear, edit the source cell and re-run end-to-end. Repeat until each figure communicates what the surrounding markdown says it communicates.
    - Record what changed between revisions in a brief "Figure revision log" markdown cell or in the run log.
 
@@ -109,6 +110,7 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
 - [ ] Data paths are project-relative and verified to exist.
 - [ ] Headless run-all succeeds on a fresh kernel: marimo `marimo export ipynb` or Jupyter `nbconvert --execute` exits zero.
 - [ ] Every figure is inspected after execution; any figure that fails the visual checks above triggers a code revision and re-run.
+- [ ] Manuscript/paper figures have no in-plot titles or subtitles.
 - [ ] Delivered notebook has every cell pre-executed with figures embedded; users do not have to run the notebook to see the plots.
 - [ ] For marimo: `uvx marimo check <notebook.py>` is run by default and reports no issues or warnings; do not treat exit code zero as enough if the output says "Found issues."
 - [ ] For marimo: no malformed markdown cells, quoted-string fragments inside `mo.md(...)`, trailing empty cells, or `return`-only placeholder cells remain.

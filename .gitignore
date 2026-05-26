@@ -38,6 +38,7 @@ ENV/
 .pytest_cache/
 .coverage
 htmlcov/
+site/
 
 # Local development
 .env
@@ -52,6 +53,7 @@ temp/
 
 # AI scratch artifacts (task lists, session handoffs, agent memory)
 tasks/
+.memd/
 lessons.md
 MEMORY.md
 .codexloop/
