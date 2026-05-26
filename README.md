@@ -2,13 +2,13 @@
   <img src="docs/assets/omics-skills-logo.png" alt="omics-skills" width="220">
 </p>
 
-A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
+A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Works with Claude Code and the Codex CLI.
 
 ## Documentation
 
-The MkDocs documentation site is configured for GitHub Pages at <https://fmschulz.github.io/omics-skills/>. It includes a getting-started guide, agent overview, full skill catalog, routing guide, and development notes.
+Read the docs at <https://fmschulz.github.io/omics-skills/>. They cover installation, the agent set, the skill catalog, routing, and development.
 
-Source pages live in [`docs/`](docs/), the site is configured by [`mkdocs.yml`](mkdocs.yml), and the deployment workflow is in [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+Source pages live in [`docs/`](docs/); GitHub Pages publishes them through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
 
 ## Scope
 
@@ -16,9 +16,9 @@ Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`
 
 Agents are markdown system prompts; skills are markdown files with a defined input/output contract. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a given task and can be enabled as a hook so it runs on every user prompt.
 
-## How analyses are run
+## How Analyses Are Run
 
-Rather than an open-ended toolbox, the bio-* skills enforce a short set of conventions:
+Every skill can be used on its own. The bio-* skills also share a few habits that make exploratory analyses easier to audit and reproduce:
 
 - **Hypothesis register.** Exploratory work starts with at least five working hypotheses (biological mechanism, technical artifact, null, sampling or batch effect, database artifact). Each is revised as supported, weakened, ruled out, or unresolved, with the evidence that changed its status.
 - **Reflection after each step.** After each major result or QC gate, the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
