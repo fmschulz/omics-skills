@@ -1,7 +1,7 @@
 # Omics Skills Installer
 # Installs agents and skills for Claude Code and Codex CLI
 
-.PHONY: help install install-claude install-codex install-agents install-skills \
+.PHONY: help install install-all install-selected install-claude install-codex install-agents install-skills \
         install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
         build-catalog install-catalog install-hook uninstall-hook \
         hook-status benchmark uninstall uninstall-claude \
@@ -16,6 +16,7 @@ CATALOG_DIR := $(CURDIR)/catalog
 # Specific agent files (flattened in agents/ directory)
 AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md dataviz-artist.md
 AGENT_COUNT := $(words $(AGENT_FILES))
+SKILL_DIRS := $(notdir $(wildcard $(SKILLS_DIR)/*))
 
 # Installation targets
 CLAUDE_HOME := $(HOME)/.claude
@@ -32,6 +33,16 @@ CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
 # Installation method (symlink or copy)
 # Use INSTALL_METHOD=copy for copying instead of symlinking
 INSTALL_METHOD ?= symlink
+
+# Interactive installer selector (auto, 1, or 0)
+# auto shows a terminal checklist only when stdin/stdout are TTYs.
+INSTALL_TUI ?= auto
+
+# Agent subset used by the interactive installer. Defaults to all agents.
+SELECTED_AGENT_FILES ?= $(AGENT_FILES)
+
+# Skill subset used by the interactive installer. Defaults to all skills.
+SELECTED_SKILL_DIRS ?= $(SKILL_DIRS)
 
 # Verbosity control
 # Use VERBOSE=1 to show each file being installed/uninstalled
@@ -71,6 +82,7 @@ help: ## Display this help
 	@echo ""
 	@echo "Options:"
 	@echo "  INSTALL_METHOD=copy    Copy files instead of creating symlinks"
+	@echo "  INSTALL_TUI=0          Skip the interactive selector"
 	@echo "  VERBOSE=1              Show each file being installed/uninstalled"
 	@echo "  NO_COLOR=1             Disable colored output"
 	@echo ""
@@ -85,7 +97,35 @@ help: ## Display this help
 
 ##@ Installation
 
-install: check-deps install-claude install-codex ## Install for both Claude Code and Codex
+install: check-deps ## Install with an interactive selector when possible
+	@if { [ "$(INSTALL_TUI)" = "1" ] || { [ "$(INSTALL_TUI)" = "auto" ] && [ -t 0 ] && [ -t 1 ]; }; }; then \
+		python3 $(SCRIPTS_DIR)/install_tui.py \
+			--repo $(CURDIR) \
+			--make-program "$(MAKE)" \
+			--install-method "$(INSTALL_METHOD)" \
+			--verbose "$(VERBOSE)" \
+			--agents $(AGENT_FILES) \
+			--skills $(SKILL_DIRS); \
+	else \
+		$(MAKE) --no-print-directory install-all; \
+	fi
+
+install-all: install-claude install-codex ## Install all agents and skills without prompting
+	@echo "$(GREEN)✓ Installation complete!$(NC)"
+	@echo ""
+	@$(MAKE) --no-print-directory status
+
+install-selected:
+	@if [ -n "$(strip $(SELECTED_SKILL_DIRS))" ]; then \
+		$(MAKE) --no-print-directory build-catalog install-skills install-catalog link-claude-skills link-codex-skills SELECTED_SKILL_DIRS="$(SELECTED_SKILL_DIRS)"; \
+	else \
+		echo "$(YELLOW)Skipping shared skills and catalog$(NC)"; \
+	fi
+	@if [ -n "$(strip $(SELECTED_AGENT_FILES))" ]; then \
+		$(MAKE) --no-print-directory install-claude-agents install-codex-agents SELECTED_AGENT_FILES="$(SELECTED_AGENT_FILES)"; \
+	else \
+		echo "$(YELLOW)Skipping agents$(NC)"; \
+	fi
 	@echo "$(GREEN)✓ Installation complete!$(NC)"
 	@echo ""
 	@$(MAKE) --no-print-directory status
@@ -156,7 +196,7 @@ install-claude-agents: ## Install agents to Claude Code
 	@echo "$(BLUE)Installing agents to Claude Code...$(NC)"
 	@mkdir -p $(CLAUDE_AGENTS_DIR)
 ifeq ($(INSTALL_METHOD),symlink)
-	@for agent in $(AGENT_FILES); do \
+	@for agent in $(SELECTED_AGENT_FILES); do \
 		agent_path=$(AGENTS_DIR)/$$agent; \
 		basename=$$(basename $$agent); \
 		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
@@ -175,7 +215,7 @@ ifeq ($(INSTALL_METHOD),symlink)
 		echo "  $(GREEN)✓$(NC) $$basename"; \
 	done
 else
-	@for agent in $(AGENT_FILES); do \
+	@for agent in $(SELECTED_AGENT_FILES); do \
 		agent_path=$(AGENTS_DIR)/$$agent; \
 		basename=$$(basename $$agent); \
 		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
@@ -196,9 +236,10 @@ install-skills: ## Install skills to ~/.agents/skills
 	@echo "$(BLUE)Installing skills to $(AGENTS_SKILLS_DIR)...$(NC)"
 	@mkdir -p $(AGENTS_SKILLS_DIR)
 ifeq ($(INSTALL_METHOD),symlink)
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	@total=$$(for skill_name in $(SELECTED_SKILL_DIRS); do echo "$$skill_name"; done | wc -l); \
 	current=0; \
-	for skill in $(SKILLS_DIR)/*; do \
+	for skill_name in $(SELECTED_SKILL_DIRS); do \
+		skill=$(SKILLS_DIR)/$$skill_name; \
 		if [ -d $$skill ]; then \
 			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
@@ -226,9 +267,10 @@ ifeq ($(INSTALL_METHOD),symlink)
 		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
 	fi
 else
-	@total=$$(find $(SKILLS_DIR) -mindepth 1 -maxdepth 1 -type d | wc -l); \
+	@total=$$(for skill_name in $(SELECTED_SKILL_DIRS); do echo "$$skill_name"; done | wc -l); \
 	current=0; \
-	for skill in $(SKILLS_DIR)/*; do \
+	for skill_name in $(SELECTED_SKILL_DIRS); do \
+		skill=$(SKILLS_DIR)/$$skill_name; \
 		if [ -d $$skill ]; then \
 			current=$$((current + 1)); \
 			basename=$$(basename $$skill); \
@@ -297,7 +339,7 @@ install-codex-agents: ## Install agents to Codex CLI
 	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
 	@mkdir -p $(CODEX_AGENTS_DIR)
 ifeq ($(INSTALL_METHOD),symlink)
-	@for agent in $(AGENT_FILES); do \
+	@for agent in $(SELECTED_AGENT_FILES); do \
 		agent_path=$(AGENTS_DIR)/$$agent; \
 		basename=$$(basename $$agent); \
 		target=$(CODEX_AGENTS_DIR)/$$basename; \
@@ -316,7 +358,7 @@ ifeq ($(INSTALL_METHOD),symlink)
 		echo "  $(GREEN)✓$(NC) $$basename"; \
 	done
 else
-	@for agent in $(AGENT_FILES); do \
+	@for agent in $(SELECTED_AGENT_FILES); do \
 		agent_path=$(AGENTS_DIR)/$$agent; \
 		basename=$$(basename $$agent); \
 		target=$(CODEX_AGENTS_DIR)/$$basename; \

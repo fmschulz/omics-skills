@@ -100,6 +100,13 @@ else
     echo -e "  ${GREEN}✓${NC} Makefile exists"
 fi
 
+if [ ! -f "$REPO_ROOT/scripts/install_tui.py" ]; then
+    echo -e "  ${RED}✗${NC} scripts/install_tui.py missing"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "  ${GREEN}✓${NC} scripts/install_tui.py exists"
+fi
+
 # Test 6: Build skill catalog
 echo -e "\n${BLUE}[6/9] Building skill catalog...${NC}"
 if [ ! -f "$REPO_ROOT/scripts/skill_index.py" ]; then
