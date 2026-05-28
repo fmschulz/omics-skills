@@ -6,10 +6,10 @@ Guidance for AI coding agents (Claude Code, Cursor, Copilot) working in this rep
 
 ## Repository overview
 
-5 agents and 36 skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
+4 agents and 35 skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
 
 Layout:
-- `agents/` — 5 agent definitions (markdown)
+- `agents/` — 4 agent definitions (markdown)
 - `skills/` — skill directories; each has a `SKILL.md`
 - `scripts/` — router, catalog builder, hook, installer, benchmark
 - `tests/` — unit tests + routing benchmark
@@ -482,8 +482,8 @@ scripts/install.sh  # Alternative to Makefile
 
 ### What Gets Installed
 
-- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (5 files)
-- **Skills** → `~/.agents/skills/` (31 directories)
+- **Agents** → `~/.claude/agents/` and `~/.codex/agents/` (4 files)
+- **Skills** → `~/.agents/skills/` (35 directories)
 - **Claude skills link** → `~/.claude/skills` → `~/.agents/skills`
 - **Codex skills link** → `~/.codex/skills` → `~/.agents/skills`
 - **Symlinks** by default (auto-updates with `git pull`)
@@ -629,7 +629,7 @@ make install
 | Documentation | lowercase-hyphen .md preferred; `README.md` allowed | `docs/tool-name.md` |
 | Summaries | YYYY-title.md | `summaries/2024-paper-name.md` |
 | Scripts | kebab-case.sh | `scripts/install.sh` |
-| Root docs | UPPERCASE | `README.md`, `INSTALL.md` |
+| Root docs | UPPERCASE | `README.md`, `LICENSE`, `AGENTS.md`; long-form guides live in `docs/` |
 
 ---
 

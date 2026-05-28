@@ -23,14 +23,14 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
+      primary: grey
       accent: indigo
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
+      primary: grey
       accent: indigo
       toggle:
         icon: material/weather-sunny
@@ -44,10 +44,14 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Installation Guide: INSTALL.md
   - Agents: agents.md
   - Skills: skills.md
   - Routing: routing.md
-  - Development: development.md
+  - Development:
+      - Development: development.md
+      - Contributing: CONTRIBUTING.md
+      - Distribution: DISTRIBUTION.md
   - GitHub Pages: github-pages.md
   - Reference:
       - Skill Graph: SKILL_GRAPH.md

@@ -2,11 +2,21 @@
   <img src="docs/assets/omics-skills-logo.png" alt="omics-skills" width="220">
 </p>
 
+<p align="center">
+  <a href="https://github.com/fmschulz/omics-skills/releases">
+    <img src="https://img.shields.io/github/v/release/fmschulz/omics-skills?label=version" alt="Latest release">
+  </a>
+  <a href="https://github.com/fmschulz/omics-skills/actions/workflows/ci.yml">
+    <img src="https://github.com/fmschulz/omics-skills/actions/workflows/ci.yml/badge.svg" alt="CI status">
+  </a>
+</p>
+
 A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Works with Claude Code and the Codex CLI.
 
 ## Documentation
 
 Read the docs at <https://fmschulz.github.io/omics-skills/>. They cover installation, the agent set, the skill catalog, routing, and development.
+Release notes are published on the [GitHub Releases page](https://github.com/fmschulz/omics-skills/releases).
 
 ## Scope
 
@@ -57,7 +67,7 @@ cd omics-skills
 make install
 ```
 
-`make install` builds the routing catalog and symlinks agents and skills into `~/.claude/` and `~/.codex/`. Use `make install-claude` or `make install-codex` for a single runtime, `make install INSTALL_METHOD=copy` for copies instead of symlinks, and `make status` to report what is installed. See [INSTALL.md](INSTALL.md) for troubleshooting.
+`make install` builds the routing catalog and symlinks agents and skills into `~/.claude/` and `~/.codex/`. Use `make install-claude` or `make install-codex` for a single runtime, `make install INSTALL_METHOD=copy` for copies instead of symlinks, and `make status` to report what is installed. See [docs/INSTALL.md](docs/INSTALL.md) for troubleshooting.
 
 The routing hook attaches the router to every user prompt:
 
@@ -115,6 +125,9 @@ tests/
   test_emit_routing_hint.py hook-script tests
   routing_benchmark.yaml    routing regression suite
 docs/
+  INSTALL.md                 detailed installation and troubleshooting guide
+  CONTRIBUTING.md            contribution workflow
+  DISTRIBUTION.md            distribution and discovery notes
   ROUTING_IMPROVEMENTS.md   per-PR router deltas
   SKILL_GRAPH.md            routing model and graph
   routing_baseline.json     benchmark baseline
@@ -137,7 +150,7 @@ Adding or modifying a skill:
 3. Rebuild the catalog and run the test suite.
 4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is non-trivially discoverable by the router.
 
-See [AGENTS.md](AGENTS.md) for structural conventions, [docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and composes skills, and [docs/skills.md](docs/skills.md) for the public skill catalog.
+See [AGENTS.md](AGENTS.md) for structural conventions, [docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and composes skills, [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for contribution flow, and [docs/skills.md](docs/skills.md) for the public skill catalog.
 
 ## Compatibility
 

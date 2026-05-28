@@ -13,7 +13,7 @@ Complete guide for installing Omics Skills for Claude Code and Codex CLI.
 
 ### Optional
 - **Python 3** with pip3 (required for some skills with Python dependencies)
-- **Make** (for using Makefile, or use install.sh script instead)
+- **Make** (for using Makefile, or use `scripts/install.sh` instead)
 
 ### Check Prerequisites
 
@@ -121,6 +121,9 @@ ln -sf $(pwd)/agents/omics-scientist.md ~/.codex/agents/
 ln -sf $(pwd)/agents/literature-expert.md ~/.codex/agents/
 ln -sf $(pwd)/agents/science-writer.md ~/.codex/agents/
 ln -sf $(pwd)/agents/dataviz-artist.md ~/.codex/agents/
+
+# Link shared skills
+ln -sfn ~/.agents/skills ~/.codex/skills
 ```
 
 ---
@@ -168,11 +171,7 @@ After installation, you'll have:
 │   ├── literature-expert.md        → (symlink/copy)
 │   ├── science-writer.md           → (symlink/copy)
 │   └── dataviz-artist.md           → (symlink/copy)
-└── skills/
-    ├── bio-logic/                  → (symlink/copy)
-    ├── bio-foundation-housekeeping/ → (symlink/copy)
-    ├── bio-reads-qc-mapping/       → (symlink/copy)
-    └── ... (other skills)
+└── skills → ~/.agents/skills
 
 ~/.codex/
 ├── agents/
@@ -180,8 +179,13 @@ After installation, you'll have:
 │   ├── literature-expert.md        → (symlink/copy)
 │   ├── science-writer.md           → (symlink/copy)
 │   └── dataviz-artist.md           → (symlink/copy)
+└── skills → ~/.agents/skills
+
+~/.agents/
 └── skills/
     ├── bio-logic/                  → (symlink/copy)
+    ├── bio-foundation-housekeeping/ → (symlink/copy)
+    ├── bio-reads-qc-mapping/       → (symlink/copy)
     └── ... (other skills)
 ```
 
@@ -191,7 +195,7 @@ After installation, you'll have:
 3. **science-writer.md** - Scientific writing
 4. **dataviz-artist.md** - Data visualization
 
-### Skills Installed (30)
+### Skills Installed
 
 The shared skills directory includes every top-level folder in `skills/`, including:
 
@@ -217,7 +221,7 @@ Installation Status
 
 Shared Skills:
   Skills directory: /home/user/.agents/skills
-  Omics-skills skills: 30/30 installed (69 total in directory)
+  Omics-skills skills: 35/35 installed (69 total in directory)
 
 Claude Code:
   Agents directory: /home/user/.claude/agents
@@ -232,9 +236,10 @@ Claude Code:
 
 Codex CLI:
   Agents directory: /home/user/.codex/agents
-  Omics-skills agents: 5/5 installed (9 total in directory)
+  Omics-skills agents: 4/4 installed (9 total in directory)
 
-  Skills directory: /home/user/.agents/skills (shared)
+  Skills directory: /home/user/.codex/skills
+  Linked to: /home/user/.agents/skills
 ```
 
 ### Validate Installation
@@ -340,7 +345,7 @@ scripts/install.sh
 
 Use the install script instead:
 ```bash
-./install.sh
+scripts/install.sh
 ```
 
 Or install make:
@@ -520,13 +525,13 @@ You can maintain multiple installations by cloning to different directories:
 # Production version
 git clone https://github.com/user/omics-skills.git ~/omics-skills-prod
 cd ~/omics-skills-prod
-./install.sh
+scripts/install.sh
 
 # Development version
 git clone https://github.com/user/omics-skills.git ~/omics-skills-dev
 cd ~/omics-skills-dev
 git checkout develop
-./install.sh
+scripts/install.sh
 ```
 
 The last installation will take precedence.

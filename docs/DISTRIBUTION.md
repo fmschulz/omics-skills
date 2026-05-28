@@ -124,20 +124,19 @@ The [Agent Skills open standard](https://agentskills.io/specification) (released
 
 2. **Complete Repository Description:**
    ```
-   3 expert agents and 22 specialized skills for bioinformatics,
+   4 expert agents and 35 specialized skills for bioinformatics,
    scientific writing, and data visualization. Compatible with
    Claude Code and Codex CLI.
    ```
 
-3. **Add Badges to README.md:**
+3. **Keep README badges accurate if used:**
    - Agent Skills standard badge
    - Compatible platforms badge
-   - Installation count (if available)
    - License badge
 
-4. **Enable GitHub Pages** (optional):
-   - Publish documentation site
-   - Better SEO and discoverability
+4. **Maintain GitHub Pages:**
+   - Publish the MkDocs documentation site
+   - Keep installation, skill catalog, and routing pages current
 
 #### Repository Structure for Marketplaces
 
@@ -145,7 +144,7 @@ Marketplaces look for:
 - ✅ `SKILL.md` files with YAML frontmatter (you have this)
 - ✅ Clear directory structure (you have this)
 - ✅ README.md documentation (you have this)
-- ✅ LICENSE file (add if missing)
+- ✅ LICENSE file in the repository root
 - ✅ GitHub topics/tags (need to add)
 
 ---
@@ -196,13 +195,9 @@ Marketplaces look for:
    #             computational-biology, scientific-writing, etc.
    ```
 
-2. **Create LICENSE file:**
-   ```bash
-   # Choose license (MIT, Apache 2.0, or GPL)
-   # Add to repository root
-   ```
+2. **Keep the root LICENSE file current.**
 
-3. **Add Badges to README.md:**
+3. **Refresh README badges only when they are maintained:**
    ```markdown
    [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-Compatible-blue)](https://agentskills.io)
    [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green)](https://code.claude.com)
@@ -212,7 +207,7 @@ Marketplaces look for:
 4. **Push Updates:**
    ```bash
    git add .
-   git commit -m "docs: add license, badges, and GitHub topics"
+   git commit -m "docs: refresh distribution metadata"
    git push
    ```
 
@@ -287,6 +282,28 @@ Marketplaces look for:
 
 ## Submission Templates
 
+## Release Process
+
+Use GitHub Releases as the canonical release-note surface. Do not keep a
+separate root `CHANGELOG.md` unless the project later needs generated
+offline release history.
+
+For each release:
+
+1. Choose a semantic version tag such as `v1.0.0`.
+2. Add human-written release notes at `.github/releases/vX.Y.Z.md`.
+3. Commit and push the release-ready docs, skills, agents, catalog, and tests.
+4. Create an annotated tag from the pushed commit.
+5. Push the tag. `.github/workflows/release.yml` publishes the GitHub Release
+   from `.github/releases/<tag>.md`.
+
+Release notes should cover:
+   - major user-facing changes
+   - agent and skill coverage
+   - installation or compatibility notes
+   - validation commands run before release
+6. Keep the README version badge pointed at the repository releases page.
+
 ### Pull Request Template (for Anthropic/OpenAI repos)
 
 ```markdown
@@ -308,20 +325,20 @@ Marketplaces look for:
 This skill is part of the omics-skills collection available at:
 https://github.com/fmschulz/omics-skills
 
-The collection includes 22 specialized skills and 3 expert agents for
+The collection includes 35 specialized skills and 4 expert agents for
 computational biology workflows.
 ```
 
 ### Reddit Announcement Template
 
 ```markdown
-Title: [Release] Omics Skills - 20 Specialized Skills for Bioinformatics with Claude Code/Codex
+Title: [Release] Omics Skills - Agent Skills for Bioinformatics with Claude Code/Codex
 
 I've created a comprehensive collection of Agent Skills for computational biology:
 
 **What it includes:**
-- 3 expert agents (omics-scientist, science-writer, dataviz-artist)
-- 22 specialized skills (reads QC, assembly, annotation, phylogenomics, etc.)
+- 4 expert agents (omics-scientist, literature-expert, science-writer, dataviz-artist)
+- 35 specialized skills (reads QC, assembly, annotation, phylogenomics, literature, writing, visualization, etc.)
 - Complete installation system (one-command install)
 - Works with Claude Code and Codex CLI
 
@@ -425,8 +442,8 @@ Feedback and contributions welcome!
 ## Next Steps Checklist
 
 - [ ] Add GitHub topics to repository
-- [ ] Create LICENSE file
-- [ ] Add badges to README.md
+- [ ] Confirm root LICENSE file is current
+- [ ] Refresh README badges only if they remain accurate
 - [ ] Push updates to GitHub
 - [ ] Wait for auto-indexing (SkillsMP, SkillHub)
 - [ ] Submit to Anthropic skills repository
@@ -440,4 +457,4 @@ Feedback and contributions welcome!
 
 ---
 
-**Good luck with distribution!** Your comprehensive bioinformatics skills collection fills a real gap in the ecosystem.
+Keep this page current when the agent or skill counts change.

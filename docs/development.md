@@ -68,3 +68,5 @@ uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdo
 ```
 
 If routing behavior changes, update `tests/routing_benchmark.yaml` and refresh `docs/routing_baseline.json` only after reviewing the benchmark delta.
+
+For contribution workflow details, see [Contributing](CONTRIBUTING.md). Distribution and marketplace notes live in [Distribution](DISTRIBUTION.md).

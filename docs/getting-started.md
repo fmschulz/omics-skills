@@ -82,4 +82,4 @@ make status
 make test
 ```
 
-For more installation details and troubleshooting, use the repository guide in [`INSTALL.md`](https://github.com/fmschulz/omics-skills/blob/main/INSTALL.md).
+For more installation details and troubleshooting, use the [Installation Guide](INSTALL.md).

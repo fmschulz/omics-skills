@@ -35,7 +35,7 @@ cd omics-skills
 git checkout -b feature/your-feature-name
 
 # Install in development mode (using symlinks)
-./install.sh
+make install
 ```
 
 ---
@@ -223,7 +223,7 @@ Agents are markdown files that define:
    claude --agent agents/your-agent.md
    ```
 3. **Verify skill mappings** are correct
-4. **Update documentation** in `agents/README.md`
+4. **Update documentation** in `docs/` and `README.md` when behavior changes
 
 ### Best Practices
 
@@ -239,7 +239,7 @@ Agents are markdown files that define:
 ### 1. Test Repository Structure
 
 ```bash
-./test-install.sh
+scripts/test-install.sh
 ```
 
 ### 2. Test Installation
@@ -292,7 +292,7 @@ codex --system-prompt ~/.codex/agents/your-agent.md
 
 ### 1. Pre-submission Checklist
 
-- [ ] `./test-install.sh` passes
+- [ ] `scripts/test-install.sh` passes
 - [ ] `make validate` passes
 - [ ] New skill has `SKILL.md`
 - [ ] Agent mappings updated
@@ -496,8 +496,7 @@ Show how the agent responds:
 ## Recognition
 
 Contributors will be acknowledged in:
-- README.md contributor section
-- Release notes
+- README.md or documentation notes when appropriate
 - Git commit history
 
 Thank you for contributing to Omics Skills!

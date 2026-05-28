@@ -24,6 +24,8 @@ The current package contains four agents and 35 skills. The source files remain 
 | Browse every skill | [Skills](skills.md) |
 | Understand the router | [Routing](routing.md) |
 | Add or maintain skills | [Development](development.md) |
+| Contribute a change | [Contributing](CONTRIBUTING.md) |
+| Review distribution notes | [Distribution](DISTRIBUTION.md) |
 | Publish the documentation site | [GitHub Pages](github-pages.md) |
 
 ## Quick Example
