@@ -61,6 +61,27 @@ The full survey of versions, alternatives, and benchmarks is in [`docs/tooling-s
 
 ## Installation
 
+### Claude Code / Cowork Plugin Marketplace
+
+This repository is packaged as a Claude Code / Cowork plugin marketplace. To test the marketplace directly from GitHub:
+
+```bash
+claude plugin marketplace add fmschulz/omics-skills
+claude plugin install omics-skills@omics-skills
+```
+
+To test a local checkout before submitting or publishing changes:
+
+```bash
+claude plugin validate .
+claude plugin marketplace add ./
+claude plugin install omics-skills@omics-skills
+```
+
+After Anthropic approves the community marketplace submission, users can install it from the public Claude plugin catalog.
+
+### Makefile
+
 ```bash
 git clone https://github.com/fmschulz/omics-skills.git
 cd omics-skills

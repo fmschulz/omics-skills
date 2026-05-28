@@ -33,7 +33,24 @@ pip3 --version
 
 ## Installation Methods
 
-### Method 1: Makefile (Recommended)
+### Method 1: Claude Code / Cowork Plugin Marketplace
+
+Omics Skills is packaged as a Claude Code / Cowork plugin marketplace. To install from GitHub:
+
+```bash
+claude plugin marketplace add fmschulz/omics-skills
+claude plugin install omics-skills@omics-skills
+```
+
+To validate and test a local checkout:
+
+```bash
+claude plugin validate .
+claude plugin marketplace add ./
+claude plugin install omics-skills@omics-skills
+```
+
+### Method 2: Makefile
 
 **For both platforms:**
 ```bash
@@ -65,7 +82,7 @@ make check-deps        # Check prerequisites
 make install-python-deps  # Install Python dependencies for skills
 ```
 
-### Method 2: Shell Scripts
+### Method 3: Shell Scripts
 
 If you prefer not to use Make, shell scripts are available in `scripts/`:
 
@@ -83,7 +100,7 @@ scripts/uninstall.sh
 scripts/test-install.sh
 ```
 
-### Method 3: Manual Installation
+### Method 4: Manual Installation
 
 **Shared skills (used by Claude and Codex):**
 ```bash

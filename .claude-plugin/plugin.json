@@ -1,0 +1,20 @@
+{
+  "name": "omics-skills",
+  "displayName": "Omics Skills",
+  "description": "Bioinformatics, literature discovery, scientific writing, and data visualization agents and skills for Claude Code and Cowork.",
+  "version": "1.0.1",
+  "author": {
+    "name": "Frederik Schulz"
+  },
+  "homepage": "https://fmschulz.github.io/omics-skills/",
+  "repository": "https://github.com/fmschulz/omics-skills",
+  "license": "MIT",
+  "keywords": [
+    "bioinformatics",
+    "omics",
+    "genomics",
+    "literature",
+    "scientific-writing",
+    "data-visualization"
+  ]
+}

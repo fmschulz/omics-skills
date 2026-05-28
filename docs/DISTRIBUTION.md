@@ -14,7 +14,36 @@ The [Agent Skills open standard](https://agentskills.io/specification) (released
 
 ## Distribution Channels
 
-### 1. Official Repositories
+### 1. Claude Code / Cowork Plugin Marketplace ⭐ (Recommended)
+
+**URL:** <https://claude.com/docs/plugins/submit>
+
+**Purpose:** Public plugin directory for Cowork and Claude Code. A plugin can bundle skills, agents, MCP connectors, commands, and hooks into one installable package.
+
+**Repository status:** This repository includes:
+- `.claude-plugin/plugin.json` — plugin metadata
+- `.claude-plugin/marketplace.json` — marketplace catalog
+- `agents/` and `skills/` at the plugin root, which Claude Code discovers as plugin components
+
+**Validate before submitting:**
+```bash
+claude plugin validate .
+claude plugin validate --strict .
+```
+
+**Test direct install from GitHub:**
+```bash
+claude plugin marketplace add fmschulz/omics-skills
+claude plugin install omics-skills@omics-skills
+```
+
+**Submit for review:**
+- Claude.ai: <https://claude.ai/settings/plugins/submit>
+- Console: <https://platform.claude.com/plugins/submit>
+
+Use the public GitHub repository URL, `https://github.com/fmschulz/omics-skills`, when submitting. Anthropic's review pipeline runs `claude plugin validate` plus automated screening. Approved community plugins are added to the public Claude community catalog and updates are picked up from the GitHub repository automatically.
+
+### 2. Official Repositories
 
 #### Anthropic Skills Repository ⭐ (Recommended)
 **URL:** [github.com/anthropics/skills](https://github.com/anthropics/skills)
@@ -54,7 +83,7 @@ The [Agent Skills open standard](https://agentskills.io/specification) (released
 - Codex CLI users can discover your skills
 - Cross-platform exposure (Agent Skills standard)
 
-### 2. Community Marketplaces
+### 3. Community Marketplaces
 
 #### SkillsMP (Skills Marketplace) ⭐
 **URL:** [skillsmp.com](https://skillsmp.com)
@@ -107,7 +136,7 @@ The [Agent Skills open standard](https://agentskills.io/specification) (released
 
 ---
 
-## 3. Your GitHub Repository
+## 4. Your GitHub Repository
 
 #### Make Your Repo Discoverable
 
@@ -149,7 +178,7 @@ Marketplaces look for:
 
 ---
 
-## 4. Community Listings
+## 5. Community Listings
 
 #### Awesome Lists
 
