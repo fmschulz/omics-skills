@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import argparse
 import curses
+import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -29,6 +31,8 @@ AGENT_LABELS = {
     "science-writer.md": "Science writer agent",
     "dataviz-artist.md": "Dataviz artist agent",
 }
+
+SKILL_REF_PATTERN = re.compile(r"(?<![\w:/])/([a-z0-9][a-z0-9-]+)")
 
 
 @dataclass
@@ -83,7 +87,59 @@ def selectable_indexes(rows: list[OptionRow]) -> list[int]:
     return [index for index, row in enumerate(rows) if row.kind == "option"]
 
 
-def toggle_selection(selection: InstallSelection, key: str) -> None:
+def load_agent_skill_map(
+    repo: Path,
+    agent_files: list[str],
+    skill_dirs: list[str],
+) -> dict[str, set[str]]:
+    skill_set = set(skill_dirs)
+    mapping = {agent: set() for agent in agent_files}
+
+    catalog_path = repo / "catalog" / "catalog.json"
+    if catalog_path.exists():
+        try:
+            with catalog_path.open(encoding="utf-8") as handle:
+                catalog = json.load(handle)
+            for agent in catalog.get("agents", []):
+                agent_file = Path(agent.get("path", "")).name
+                if agent_file not in mapping:
+                    continue
+                for section_skills in agent.get("skill_sections", {}).values():
+                    mapping[agent_file].update(skill for skill in section_skills if skill in skill_set)
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    for agent_file, skills in mapping.items():
+        if skills:
+            continue
+        agent_path = repo / "agents" / agent_file
+        if not agent_path.exists():
+            continue
+        try:
+            text = agent_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        body = _extract_section(text, "Mandatory Skill Usage")
+        skills.update(skill for skill in SKILL_REF_PATTERN.findall(body) if skill in skill_set)
+
+    return mapping
+
+
+def _extract_section(markdown: str, heading: str) -> str:
+    marker = f"## {heading}"
+    start = markdown.find(marker)
+    if start == -1:
+        return ""
+    tail = markdown[start + len(marker) :]
+    next_heading = re.search(r"\n##\s+", tail)
+    return tail if not next_heading else tail[: next_heading.start()]
+
+
+def toggle_selection(
+    selection: InstallSelection,
+    key: str,
+    agent_skill_map: dict[str, set[str]] | None = None,
+) -> None:
     if key == "all":
         new_state = not selection.all_selected
         for agent in selection.agents:
@@ -99,7 +155,23 @@ def toggle_selection(selection: InstallSelection, key: str) -> None:
         return
 
     if key in selection.agents:
-        selection.agents[key] = not selection.agents[key]
+        new_state = not selection.agents[key]
+        selection.agents[key] = new_state
+        if not agent_skill_map:
+            return
+        agent_skills = agent_skill_map.get(key, set())
+        if new_state:
+            for skill in agent_skills:
+                if skill in selection.skills:
+                    selection.skills[skill] = True
+            return
+        still_selected_skills: set[str] = set()
+        for agent, selected in selection.agents.items():
+            if selected:
+                still_selected_skills.update(agent_skill_map.get(agent, set()))
+        for skill in agent_skills - still_selected_skills:
+            if skill in selection.skills:
+                selection.skills[skill] = False
 
 
 def make_install_command(
@@ -181,6 +253,7 @@ def choose_components(
     screen: curses.window,
     agent_files: list[str],
     skill_dirs: list[str],
+    agent_skill_map: dict[str, set[str]] | None = None,
 ) -> InstallSelection:
     try:
         curses.curs_set(0)
@@ -209,7 +282,7 @@ def choose_components(
             cursor_pos = (cursor_pos + 1) % len(indexes)
             continue
         if key == ord(" "):
-            toggle_selection(selection, rows[cursor_index].key)
+            toggle_selection(selection, rows[cursor_index].key, agent_skill_map)
             continue
         if key in (curses.KEY_ENTER, 10, 13):
             if selection.has_any:
@@ -254,7 +327,8 @@ def main(argv: list[str] | None = None) -> int:
         if skill_dirs is None:
             skills_root = args.repo / "skills"
             skill_dirs = sorted(path.name for path in skills_root.iterdir() if path.is_dir())
-        selection = curses.wrapper(choose_components, args.agents, skill_dirs)
+        agent_skill_map = load_agent_skill_map(args.repo, args.agents, skill_dirs)
+        selection = curses.wrapper(choose_components, args.agents, skill_dirs, agent_skill_map)
     except KeyboardInterrupt:
         print("Installation cancelled.")
         return 130

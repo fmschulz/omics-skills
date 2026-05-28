@@ -53,6 +53,50 @@ class InstallTuiTests(unittest.TestCase):
         self.assertEqual(selection.selected_agents(), ["omics-scientist.md"])
         self.assertEqual(selection.selected_skills(), ["bio-logic"])
 
+    def test_toggling_agent_on_selects_mapped_skills(self):
+        selection = install_tui.make_initial_selection(
+            ["omics-scientist.md", "science-writer.md"],
+            ["bio-logic", "scientific-writing"],
+        )
+        install_tui.toggle_selection(selection, "all")
+
+        install_tui.toggle_selection(
+            selection,
+            "science-writer.md",
+            {"science-writer.md": {"bio-logic", "scientific-writing"}},
+        )
+
+        self.assertEqual(selection.selected_agents(), ["science-writer.md"])
+        self.assertEqual(selection.selected_skills(), ["bio-logic", "scientific-writing"])
+
+    def test_toggling_agent_off_keeps_shared_mapped_skills(self):
+        selection = install_tui.make_initial_selection(
+            ["omics-scientist.md", "science-writer.md"],
+            ["bio-logic", "scientific-writing"],
+        )
+        agent_skill_map = {
+            "omics-scientist.md": {"bio-logic"},
+            "science-writer.md": {"bio-logic", "scientific-writing"},
+        }
+
+        install_tui.toggle_selection(selection, "science-writer.md", agent_skill_map)
+
+        self.assertEqual(selection.selected_agents(), ["omics-scientist.md"])
+        self.assertEqual(selection.selected_skills(), ["bio-logic"])
+
+    def test_load_agent_skill_map_reads_catalog_sections(self):
+        repo = Path(__file__).resolve().parents[1]
+
+        mapping = install_tui.load_agent_skill_map(
+            repo,
+            ["omics-scientist.md", "science-writer.md"],
+            ["bio-logic", "scientific-writing", "notebooks"],
+        )
+
+        self.assertIn("bio-logic", mapping["omics-scientist.md"])
+        self.assertIn("scientific-writing", mapping["science-writer.md"])
+        self.assertNotIn("notebooks", mapping["science-writer.md"])
+
     def test_make_install_command_encodes_selected_components(self):
         selection = install_tui.make_initial_selection(
             ["omics-scientist.md", "science-writer.md"],
