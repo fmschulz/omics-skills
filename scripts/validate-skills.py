@@ -1,56 +1,82 @@
 #!/usr/bin/env python3
-import os
+"""Validate every skills/<name>/SKILL.md: frontmatter name matches the
+directory, name is a valid slug, required sections are present, and the file
+stays within the length budget.
+
+Importable (validate_skill / validate_all) so the checks are unit-testable, and
+runnable as a CLI for CI and the install smoke test."""
+from __future__ import annotations
+
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import skill_index  # noqa: E402  (reuse the single frontmatter parser)
 
 REQUIRED_SECTIONS = [
-    '## Instructions',
-    '## Quick Reference',
-    '## Input Requirements',
-    '## Output',
-    '## Quality Gates',
-    '## Examples',
-    '## Troubleshooting',
+    "## Instructions",
+    "## Quick Reference",
+    "## Input Requirements",
+    "## Output",
+    "## Quality Gates",
+    "## Examples",
+    "## Troubleshooting",
 ]
+MAX_LINES = 500
+MAX_NAME_LENGTH = 64
+SLUG_PATTERN = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.dirname(SCRIPT_DIR)
-SKILLS_DIR = os.path.join(REPO_ROOT, 'skills')
 
-errors = []
+def validate_skill(skill_dir: Path) -> list[str]:
+    """Return a list of human-readable validation errors for one skill dir."""
+    name = skill_dir.name
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.exists():
+        return [f"{name}: missing SKILL.md"]
 
-for name in sorted(os.listdir(SKILLS_DIR)):
-    skill_dir = os.path.join(SKILLS_DIR, name)
-    if not os.path.isdir(skill_dir):
-        continue
-    skill_md = os.path.join(skill_dir, 'SKILL.md')
-    if not os.path.exists(skill_md):
-        errors.append(f'{name}: missing SKILL.md')
-        continue
-    text = open(skill_md, encoding='utf-8').read()
-    if not text.startswith('---'):
-        errors.append(f'{name}: missing frontmatter')
-        continue
-    fm_match = re.search(r'^---\n(.*?)\n---\n', text, re.S)
-    fm = fm_match.group(1) if fm_match else ''
-    m = re.search(r'^name:\s*(.+)$', fm, re.M)
-    fm_name = m.group(1).strip() if m else ''
+    text = skill_md.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        return [f"{name}: missing frontmatter"]
+
+    errors: list[str] = []
+    frontmatter, _ = skill_index.split_frontmatter(text)
+    fm_name = (frontmatter.get("name") or "").strip()
     if fm_name != name:
-        errors.append(f'{name}: frontmatter name mismatch ({fm_name})')
-    if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*', fm_name):
-        errors.append(f'{name}: frontmatter name invalid ({fm_name})')
-    if len(fm_name) > 64:
-        errors.append(f'{name}: frontmatter name too long ({len(fm_name)})')
-    missing = [s for s in REQUIRED_SECTIONS if s not in text]
+        errors.append(f"{name}: frontmatter name mismatch ({fm_name})")
+    if not SLUG_PATTERN.fullmatch(fm_name):
+        errors.append(f"{name}: frontmatter name invalid ({fm_name})")
+    if len(fm_name) > MAX_NAME_LENGTH:
+        errors.append(f"{name}: frontmatter name too long ({len(fm_name)})")
+    missing = [section for section in REQUIRED_SECTIONS if section not in text]
     if missing:
-        errors.append(f'{name}: missing sections {missing}')
-    if len(text.splitlines()) > 500:
-        errors.append(f'{name}: SKILL.md over 500 lines ({len(text.splitlines())})')
+        errors.append(f"{name}: missing sections {missing}")
+    line_count = len(text.splitlines())
+    if line_count > MAX_LINES:
+        errors.append(f"{name}: SKILL.md over {MAX_LINES} lines ({line_count})")
+    return errors
 
-if errors:
-    print('Skill validation failed:')
-    for err in errors:
-        print(f'- {err}')
-    sys.exit(1)
 
-print('Skill validation passed.')
+def validate_all(skills_dir: Path) -> list[str]:
+    """Validate every skill directory under ``skills_dir``."""
+    errors: list[str] = []
+    for entry in sorted(skills_dir.iterdir()):
+        if entry.is_dir():
+            errors.extend(validate_skill(entry))
+    return errors
+
+
+def main(argv: list[str] | None = None) -> int:
+    skills_dir = Path(__file__).resolve().parent.parent / "skills"
+    errors = validate_all(skills_dir)
+    if errors:
+        print("Skill validation failed:")
+        for err in errors:
+            print(f"- {err}")
+        return 1
+    print("Skill validation passed.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

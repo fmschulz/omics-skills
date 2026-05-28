@@ -1,11 +1,12 @@
 # Omics Skills Installer
 # Installs agents and skills for Claude Code and Codex CLI
 
-.PHONY: help install install-all install-selected install-claude install-codex install-agents install-skills \
+.PHONY: help install install-all install-selected install-claude install-codex \
+        install-claude-agents install-codex-agents _install-agents install-skills install-catalog \
         install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
-        build-catalog install-catalog install-hook uninstall-hook \
-        hook-status benchmark uninstall uninstall-claude \
-        uninstall-codex uninstall-skills uninstall-catalog status check-deps clean test
+        build-catalog install-hook uninstall-hook hook-status benchmark \
+        check-deps install-python-deps uninstall uninstall-claude uninstall-codex \
+        uninstall-skills uninstall-catalog status clean update validate test
 
 # Directories
 AGENTS_DIR := $(CURDIR)/agents
@@ -154,88 +155,65 @@ build-catalog: ## Build the shared skill catalog files
 	@mkdir -p $(CATALOG_DIR)
 	@python3 $(SCRIPTS_DIR)/skill_index.py build --repo $(CURDIR) --out $(CATALOG_DIR) >/dev/null
 	@echo "  $(GREEN)✓$(NC) $(CATALOG_DIR)/catalog.json"
-	@echo "  $(GREEN)✓$(NC) $(CATALOG_DIR)/relationships.json"
-	@echo "  $(GREEN)✓$(NC) $(CATALOG_DIR)/routing.json"
 
 install-catalog: ## Install the shared skill catalog to ~/.agents/omics-skills
 	@echo "$(BLUE)Installing skill catalog to $(AGENTS_CATALOG_DIR)...$(NC)"
 	@mkdir -p $(AGENTS_CATALOG_DIR)
-ifeq ($(INSTALL_METHOD),symlink)
-	@for item in skill_index.py README.md catalog.json relationships.json routing.json; do \
+	@for item in skill_index.py README.md catalog.json; do \
 		if [ "$$item" = "skill_index.py" ]; then \
 			src=$(SCRIPTS_DIR)/$$item; \
 		else \
 			src=$(CATALOG_DIR)/$$item; \
 		fi; \
 		target=$(AGENTS_CATALOG_DIR)/$$item; \
-		if [ -L $$target ]; then \
-			rm $$target; \
-		elif [ -e $$target ]; then \
+		if [ -L $$target ] || [ -e $$target ]; then \
 			rm -rf $$target; \
 		fi; \
-		ln -sf $$src $$target; \
-		echo "  $(GREEN)✓$(NC) $$item"; \
-	done
-else
-	@for item in skill_index.py README.md catalog.json relationships.json routing.json; do \
-		if [ "$$item" = "skill_index.py" ]; then \
-			src=$(SCRIPTS_DIR)/$$item; \
+		if [ "$(INSTALL_METHOD)" = "symlink" ]; then \
+			ln -sf $$src $$target; \
 		else \
-			src=$(CATALOG_DIR)/$$item; \
+			cp $$src $$target; \
 		fi; \
-		target=$(AGENTS_CATALOG_DIR)/$$item; \
-		if [ -e $$target ]; then \
-			rm -rf $$target; \
-		fi; \
-		cp $$src $$target; \
 		echo "  $(GREEN)✓$(NC) $$item"; \
 	done
-endif
 
 install-claude-agents: ## Install agents to Claude Code
-	@echo "$(BLUE)Installing agents to Claude Code...$(NC)"
-	@mkdir -p $(CLAUDE_AGENTS_DIR)
-ifeq ($(INSTALL_METHOD),symlink)
+	@$(MAKE) --no-print-directory _install-agents AGENT_TARGET_DIR=$(CLAUDE_AGENTS_DIR) AGENT_PLATFORM="Claude Code"
+
+install-codex-agents: ## Install agents to Codex CLI
+	@$(MAKE) --no-print-directory _install-agents AGENT_TARGET_DIR=$(CODEX_AGENTS_DIR) AGENT_PLATFORM="Codex CLI"
+
+# Shared agent installer used by install-claude-agents / install-codex-agents.
+# Places each agent as a symlink or copy (INSTALL_METHOD), backing up any
+# pre-existing real file to <name>.bak first.
+_install-agents:
+	@echo "$(BLUE)Installing agents to $(AGENT_PLATFORM)...$(NC)"
+	@mkdir -p $(AGENT_TARGET_DIR)
 	@for agent in $(SELECTED_AGENT_FILES); do \
 		agent_path=$(AGENTS_DIR)/$$agent; \
 		basename=$$(basename $$agent); \
-		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
+		target=$(AGENT_TARGET_DIR)/$$basename; \
 		if [ ! -f $$agent_path ]; then \
 			echo "  $(RED)✗$(NC) $$agent not found"; \
 			continue; \
 		fi; \
 		if [ -L $$target ]; then \
-			echo "  Updating symlink: $$basename"; \
 			rm $$target; \
 		elif [ -f $$target ]; then \
 			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
 			mv $$target $$target.bak; \
 		fi; \
-		ln -sf $$agent_path $$target; \
+		if [ "$(INSTALL_METHOD)" = "symlink" ]; then \
+			ln -sf $$agent_path $$target; \
+		else \
+			cp $$agent_path $$target; \
+		fi; \
 		echo "  $(GREEN)✓$(NC) $$basename"; \
 	done
-else
-	@for agent in $(SELECTED_AGENT_FILES); do \
-		agent_path=$(AGENTS_DIR)/$$agent; \
-		basename=$$(basename $$agent); \
-		target=$(CLAUDE_AGENTS_DIR)/$$basename; \
-		if [ ! -f $$agent_path ]; then \
-			echo "  $(RED)✗$(NC) $$agent not found"; \
-			continue; \
-		fi; \
-		if [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
-			cp $$target $$target.bak; \
-		fi; \
-		cp $$agent_path $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
-	done
-endif
 
 install-skills: ## Install skills to ~/.agents/skills
 	@echo "$(BLUE)Installing skills to $(AGENTS_SKILLS_DIR)...$(NC)"
 	@mkdir -p $(AGENTS_SKILLS_DIR)
-ifeq ($(INSTALL_METHOD),symlink)
 	@total=$$(for skill_name in $(SELECTED_SKILL_DIRS); do echo "$$skill_name"; done | wc -l); \
 	current=0; \
 	for skill_name in $(SELECTED_SKILL_DIRS); do \
@@ -253,7 +231,11 @@ ifeq ($(INSTALL_METHOD),symlink)
 				fi; \
 				mv $$target $$backup; \
 			fi; \
-			ln -sfn $$skill $$target; \
+			if [ "$(INSTALL_METHOD)" = "symlink" ]; then \
+				ln -sfn $$skill $$target; \
+			else \
+				cp -r $$skill $$target; \
+			fi; \
 			if [ "$(VERBOSE)" = "1" ]; then \
 				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
 			else \
@@ -266,36 +248,6 @@ ifeq ($(INSTALL_METHOD),symlink)
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
 	fi
-else
-	@total=$$(for skill_name in $(SELECTED_SKILL_DIRS); do echo "$$skill_name"; done | wc -l); \
-	current=0; \
-	for skill_name in $(SELECTED_SKILL_DIRS); do \
-		skill=$(SKILLS_DIR)/$$skill_name; \
-		if [ -d $$skill ]; then \
-			current=$$((current + 1)); \
-			basename=$$(basename $$skill); \
-			target=$(AGENTS_SKILLS_DIR)/$$basename; \
-			if [ -e $$target ]; then \
-				backup=$$target.bak; \
-				if [ -e $$backup ]; then \
-					backup=$$target.bak.$$(date +%s); \
-				fi; \
-				mv $$target $$backup; \
-			fi; \
-			cp -r $$skill $$target; \
-			if [ "$(VERBOSE)" = "1" ]; then \
-				echo "  [$$current/$$total] $(GREEN)✓$(NC) $$basename"; \
-			else \
-				printf "\r  Progress: $$current/$$total skills"; \
-			fi; \
-		fi; \
-	done; \
-	if [ "$(VERBOSE)" != "1" ]; then \
-		printf "\r  $(GREEN)✓$(NC) Installed: $$total/$$total skills\n"; \
-	else \
-		echo "  $(GREEN)✓$(NC) Completed: $$total/$$total skills"; \
-	fi
-endif
 
 install-claude-skills: install-skills link-claude-skills ## Backwards-compatible target
 
@@ -334,46 +286,6 @@ link-codex-skills: ## Link Codex skills dir to ~/.agents/skills
 		ln -sfn $(AGENTS_SKILLS_DIR) $(CODEX_SKILLS_DIR); \
 	fi
 	@echo "  $(GREEN)✓$(NC) $(CODEX_SKILLS_DIR) -> $(AGENTS_SKILLS_DIR)"
-
-install-codex-agents: ## Install agents to Codex CLI
-	@echo "$(BLUE)Installing agents to Codex CLI...$(NC)"
-	@mkdir -p $(CODEX_AGENTS_DIR)
-ifeq ($(INSTALL_METHOD),symlink)
-	@for agent in $(SELECTED_AGENT_FILES); do \
-		agent_path=$(AGENTS_DIR)/$$agent; \
-		basename=$$(basename $$agent); \
-		target=$(CODEX_AGENTS_DIR)/$$basename; \
-		if [ ! -f $$agent_path ]; then \
-			echo "  $(RED)✗$(NC) $$agent not found"; \
-			continue; \
-		fi; \
-		if [ -L $$target ]; then \
-			echo "  Updating symlink: $$basename"; \
-			rm $$target; \
-		elif [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
-			mv $$target $$target.bak; \
-		fi; \
-		ln -sf $$agent_path $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
-	done
-else
-	@for agent in $(SELECTED_AGENT_FILES); do \
-		agent_path=$(AGENTS_DIR)/$$agent; \
-		basename=$$(basename $$agent); \
-		target=$(CODEX_AGENTS_DIR)/$$basename; \
-		if [ ! -f $$agent_path ]; then \
-			echo "  $(RED)✗$(NC) $$agent not found"; \
-			continue; \
-		fi; \
-		if [ -f $$target ]; then \
-			echo "  $(YELLOW)Warning: $$basename exists (backing up)$(NC)"; \
-			cp $$target $$target.bak; \
-		fi; \
-		cp $$agent_path $$target; \
-		echo "  $(GREEN)✓$(NC) $$basename"; \
-	done
-endif
 
 install-codex-skills: ## Backwards-compatible target
 	@$(MAKE) --no-print-directory link-codex-skills
@@ -520,12 +432,12 @@ status: ## Show installation status
 	@echo "  Catalog directory: $(AGENTS_CATALOG_DIR)"
 	@if [ -d $(AGENTS_CATALOG_DIR) ]; then \
 		installed=0; \
-		for item in skill_index.py README.md catalog.json relationships.json routing.json; do \
+		for item in skill_index.py README.md catalog.json; do \
 			if [ -f $(AGENTS_CATALOG_DIR)/$$item ] || [ -L $(AGENTS_CATALOG_DIR)/$$item ]; then \
 				installed=$$((installed + 1)); \
 			fi; \
 		done; \
-		echo "  Skill catalog files: $$installed/5 installed"; \
+		echo "  Skill catalog files: $$installed/3 installed"; \
 	else \
 		echo "  $(RED)Not installed$(NC)"; \
 	fi

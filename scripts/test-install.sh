@@ -119,7 +119,7 @@ else
         ERRORS=$((ERRORS + 1))
     else
         missing_files=0
-        for file in catalog.json relationships.json routing.json; do
+        for file in catalog.json; do
             if [ ! -f "$tmpdir/$file" ]; then
                 echo -e "  ${RED}✗${NC} Missing $file"
                 ERRORS=$((ERRORS + 1))
@@ -137,7 +137,7 @@ fi
 echo -e "\n${BLUE}[7/9] Checking shared installation...${NC}"
 if [ -d "$AGENTS_CATALOG_DIR" ]; then
     missing_files=0
-    for file in skill_index.py README.md catalog.json relationships.json routing.json; do
+    for file in skill_index.py README.md catalog.json; do
         if [ ! -f "$AGENTS_CATALOG_DIR/$file" ] && [ ! -L "$AGENTS_CATALOG_DIR/$file" ]; then
             echo -e "  ${YELLOW}⚠${NC} Missing shared catalog file: $file"
             WARNINGS=$((WARNINGS + 1))

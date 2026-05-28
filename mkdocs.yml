@@ -55,7 +55,6 @@ nav:
   - GitHub Pages: github-pages.md
   - Reference:
       - Skill Graph: SKILL_GRAPH.md
-      - Routing Improvements: ROUTING_IMPROVEMENTS.md
       - Tooling Survey 2026: tooling-survey-2026.md
 
 markdown_extensions:

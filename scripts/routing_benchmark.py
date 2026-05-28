@@ -123,6 +123,26 @@ def evaluate_row(row: dict[str, Any]) -> RowResult:
     if leaked:
         failures.append(f"forbidden skills surfaced: {leaked}")
 
+    # Precision guard: cap the "supporting skills" tail so the router cannot
+    # regress to dragging an entire pipeline into a single-step query.
+    max_supporting = row.get("max_supporting_skills")
+    if max_supporting is not None:
+        limit = int(max_supporting)
+        actual_supporting = len(result["supporting_skills"])
+        if actual_supporting > limit:
+            failures.append(
+                f"too many supporting skills: {actual_supporting} > {limit} "
+                f"({result['supporting_skills']})"
+            )
+
+    # Hard-negative guard: off-domain queries must not surface a confident
+    # primary skill (the hook stays silent on these).
+    if str(row.get("expect_no_primary", "")).strip().lower() in {"true", "1", "yes"}:
+        if result["primary_skills"]:
+            failures.append(
+                f"expected no confident primary skill, got {result['primary_skills']}"
+            )
+
     return RowResult(
         task=task,
         passed=not failures,
@@ -130,6 +150,7 @@ def evaluate_row(row: dict[str, Any]) -> RowResult:
         actual={
             "agent": result["agent"],
             "primary_skills": result["primary_skills"],
+            "supporting_skills": result["supporting_skills"],
             "ordered_skills": result["ordered_skills"],
         },
     )
@@ -142,6 +163,8 @@ def aggregate(results: list[RowResult]) -> dict[str, Any]:
     primary_failures = sum(1 for r in results if any("primary skills" in f for f in r.failures))
     ordered_failures = sum(1 for r in results if any("ordered skills" in f for f in r.failures))
     forbidden_failures = sum(1 for r in results if any("forbidden" in f for f in r.failures))
+    supporting_overflows = sum(1 for r in results if any("too many supporting" in f for f in r.failures))
+    negative_failures = sum(1 for r in results if any("no confident primary" in f for f in r.failures))
     return {
         "total": total,
         "passed": passed,
@@ -151,6 +174,8 @@ def aggregate(results: list[RowResult]) -> dict[str, Any]:
         "primary_skill_failures": primary_failures,
         "ordered_skill_failures": ordered_failures,
         "forbidden_skill_leaks": forbidden_failures,
+        "supporting_skill_overflows": supporting_overflows,
+        "negative_query_failures": negative_failures,
     }
 
 

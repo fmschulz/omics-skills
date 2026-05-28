@@ -14,13 +14,12 @@ The graph is assembled from three kinds of relationships:
 - Skill -> skill workflow links from each agent's `Workflow Decision Tree`.
 - Skill -> skill advisory links inferred from skill bodies when one skill references another.
 
-The generated outputs are:
+The generated output is:
 
-- `catalog.json`: full parsed view of agents, skills, and edges
-- `relationships.json`: skill-to-skill relationships only
-- `routing.json`: lightweight routing metadata for task matching
+- `catalog.json`: full parsed view of agents, skills, and edges — the single
+  source of truth consumed by the router
 
-These files are built by [`scripts/skill_index.py`](https://github.com/fmschulz/omics-skills/blob/main/scripts/skill_index.py).
+This file is built by [`scripts/skill_index.py`](https://github.com/fmschulz/omics-skills/blob/main/scripts/skill_index.py).
 
 ## Source of Truth
 
@@ -57,8 +56,6 @@ make build-catalog
 The builder parses every `skills/*/SKILL.md` and `agents/*.md`, then emits:
 
 - `catalog/catalog.json`
-- `catalog/relationships.json`
-- `catalog/routing.json`
 
 ## Edge Types
 
@@ -164,7 +161,7 @@ The Codex agent prompt follows the same model as Claude:
 
 This repository does not currently implement:
 
-- a native skill executor that walks `relationships.json` by itself
+- a native skill executor that walks the catalog edges by itself
 - a strict schema-backed DAG with full validation
 - direct Claude or Codex integration that automatically consumes `catalog.json`
 

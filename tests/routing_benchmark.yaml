@@ -12,6 +12,10 @@
 #   forbidden_skills           — skills that MUST NOT appear in any result list
 #                                (use for mutual-exclusion cases, e.g. an arxiv query
 #                                must not surface biorxiv-search as primary)
+#   max_supporting_skills      — upper bound on len(result.supporting_skills); guards
+#                                against the dependency/compose tail snowballing
+#   expect_no_primary          — true when an off-domain query must yield NO confident
+#                                primary skill (hard-negative precision check)
 
 # ============================================================================
 # Omics pipeline (omics-scientist)
@@ -27,6 +31,7 @@
   expected_agent: omics-scientist
   expected_primary_skills: [bio-assembly-qc]
   expected_ordered_includes: [bio-reads-qc-mapping, bio-assembly-qc, bio-binning-qc]
+  max_supporting_skills: 6
 
 - task: "bin contigs with QuickBin using the Bryce BBTools Docker container"
   platform: codex
@@ -47,16 +52,19 @@
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [bio-phylogenomics]
+  max_supporting_skills: 6
 
 - task: "detect viral contigs in a metagenomic assembly and classify them"
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [bio-viromics]
+  max_supporting_skills: 6
 
 - task: "cluster proteins into orthogroups and derive a pangenome matrix"
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [bio-protein-clustering-pangenome]
+  max_supporting_skills: 6
 
 - task: "predict protein structure with AlphaFold and run structure-based annotation"
   platform: codex
@@ -224,3 +232,24 @@
 - task: "log into a web portal to download supplementary data for a paper"
   platform: codex
   expected_primary_skills: [agent-browser]
+
+# ============================================================================
+# Hard negatives — off-domain queries must NOT surface a confident primary
+# skill (the routing hook stays silent on these). Guards router precision.
+# ============================================================================
+
+- task: "what is the capital of France"
+  platform: codex
+  expect_no_primary: true
+
+- task: "schedule a dentist appointment for next Tuesday"
+  platform: codex
+  expect_no_primary: true
+
+- task: "refactor this React component into smaller reusable functions"
+  platform: codex
+  expect_no_primary: true
+
+- task: "explain quantum entanglement to a child"
+  platform: codex
+  expect_no_primary: true

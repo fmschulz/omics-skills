@@ -11,11 +11,15 @@ import argparse
 import curses
 import json
 import os
-import re
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+# Reuse the single source of truth for skill-reference parsing instead of
+# maintaining a second copy of the regex and section extractor.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import skill_index  # noqa: E402
 
 
 DEFAULT_AGENT_FILES = [
@@ -31,8 +35,6 @@ AGENT_LABELS = {
     "science-writer.md": "Science writer agent",
     "dataviz-artist.md": "Dataviz artist agent",
 }
-
-SKILL_REF_PATTERN = re.compile(r"(?<![\w:/])/([a-z0-9][a-z0-9-]+)")
 
 
 @dataclass
@@ -119,20 +121,10 @@ def load_agent_skill_map(
             text = agent_path.read_text(encoding="utf-8")
         except OSError:
             continue
-        body = _extract_section(text, "Mandatory Skill Usage")
-        skills.update(skill for skill in SKILL_REF_PATTERN.findall(body) if skill in skill_set)
+        body = skill_index.extract_section(text, "Mandatory Skill Usage")
+        skills.update(skill for skill in skill_index.SKILL_REF_PATTERN.findall(body) if skill in skill_set)
 
     return mapping
-
-
-def _extract_section(markdown: str, heading: str) -> str:
-    marker = f"## {heading}"
-    start = markdown.find(marker)
-    if start == -1:
-        return ""
-    tail = markdown[start + len(marker) :]
-    next_heading = re.search(r"\n##\s+", tail)
-    return tail if not next_heading else tail[: next_heading.start()]
 
 
 def toggle_selection(

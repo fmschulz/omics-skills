@@ -260,7 +260,7 @@ START
 ## Task Recognition Patterns
 
 - **"why", "how", "interpret", "hypothesis", "formulate hypothesis", "design experiment", "experimental design", "reason", "causation", "causal", "observational", "follow-up experiments"** → `/bio-logic`
-- **"literature", "papers", "prior work", "context", "known", "reported"** → `/polars-dovmed`
+- **"literature", "papers", "prior work", "literature context", "prior literature", "previously reported"** → `/polars-dovmed`
 - **"unexpected", "surprising", "intermediate result", "QC result", "revise hypothesis"** → `/bio-logic` → `/polars-dovmed`
 - **"raw reads", "fastq", "QC", "trimming"** → `/bio-reads-qc-mapping`
 - **"assemble", "assembly", "contigs", "QUAST"** → `/bio-assembly-qc`

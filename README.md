@@ -149,7 +149,6 @@ docs/
   INSTALL.md                 detailed installation and troubleshooting guide
   CONTRIBUTING.md            contribution workflow
   DISTRIBUTION.md            distribution and discovery notes
-  ROUTING_IMPROVEMENTS.md   per-PR router deltas
   SKILL_GRAPH.md            routing model and graph
   routing_baseline.json     benchmark baseline
   tooling-survey-2026.md    bioinformatics tooling survey

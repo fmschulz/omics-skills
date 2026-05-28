@@ -1,13 +1,15 @@
 {
   "summary": {
-    "total": 38,
-    "passed": 38,
+    "total": 42,
+    "passed": 42,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
     "primary_skill_failures": 0,
     "ordered_skill_failures": 0,
-    "forbidden_skill_leaks": 0
+    "forbidden_skill_leaks": 0,
+    "supporting_skill_overflows": 0,
+    "negative_query_failures": 0
   },
   "rows": [
     {
@@ -19,16 +21,17 @@
           "bio-reads-qc-mapping",
           "bio-logic"
         ],
+        "supporting_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "ai-scientist-evaluator",
+          "manuscript-review-council",
+          "proposal-review"
+        ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -43,6 +46,11 @@
           "bio-binning-qc",
           "bio-reads-qc-mapping",
           "tracking-taxonomy-updates"
+        ],
+        "supporting_skills": [
+          "bio-annotation",
+          "bio-gene-calling",
+          "bio-viromics"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
@@ -60,6 +68,13 @@
         "primary_skills": [
           "bio-binning-qc",
           "bio-assembly-qc"
+        ],
+        "supporting_skills": [
+          "tracking-taxonomy-updates",
+          "bio-reads-qc-mapping",
+          "bio-annotation",
+          "bio-gene-calling",
+          "bio-viromics"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
@@ -79,15 +94,16 @@
           "bio-gene-calling",
           "bio-assembly-qc"
         ],
+        "supporting_skills": [
+          "polars-dovmed",
+          "bio-reads-qc-mapping",
+          "bio-viromics",
+          "tracking-taxonomy-updates"
+        ],
         "ordered_skills": [
+          "bio-gene-calling",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "bio-phylogenomics",
-          "bio-protein-clustering-pangenome",
-          "bio-logic",
           "polars-dovmed",
           "bio-annotation"
         ]
@@ -101,15 +117,14 @@
         "primary_skills": [
           "bio-annotation"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
+        "supporting_skills": [
           "bio-gene-calling",
-          "bio-phylogenomics",
-          "bio-protein-clustering-pangenome",
-          "bio-logic",
+          "polars-dovmed",
+          "bio-viromics",
+          "tracking-taxonomy-updates"
+        ],
+        "ordered_skills": [
+          "bio-gene-calling",
           "polars-dovmed",
           "bio-annotation"
         ]
@@ -123,16 +138,16 @@
         "primary_skills": [
           "bio-phylogenomics"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "bio-protein-clustering-pangenome",
-          "bio-logic",
-          "polars-dovmed",
+        "supporting_skills": [
           "bio-annotation",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-protein-clustering-pangenome"
+        ],
+        "ordered_skills": [
+          "bio-gene-calling",
+          "bio-annotation",
+          "polars-dovmed",
           "bio-phylogenomics"
         ]
       }
@@ -145,6 +160,12 @@
         "primary_skills": [
           "bio-assembly-qc",
           "bio-viromics"
+        ],
+        "supporting_skills": [
+          "bio-reads-qc-mapping",
+          "tracking-taxonomy-updates",
+          "bio-annotation",
+          "bio-gene-calling"
         ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
@@ -162,15 +183,16 @@
         "primary_skills": [
           "bio-protein-clustering-pangenome"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
+        "supporting_skills": [
           "bio-gene-calling",
-          "bio-logic",
+          "bio-phylogenomics",
           "polars-dovmed",
           "bio-annotation",
+          "bio-structure-annotation"
+        ],
+        "ordered_skills": [
+          "bio-gene-calling",
+          "polars-dovmed",
           "bio-phylogenomics",
           "bio-protein-clustering-pangenome"
         ]
@@ -185,16 +207,16 @@
           "bio-structure-annotation",
           "bio-annotation"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
+        "supporting_skills": [
+          "bio-gene-calling",
+          "polars-dovmed",
           "bio-viromics",
+          "tracking-taxonomy-updates",
+          "bio-protein-clustering-pangenome"
+        ],
+        "ordered_skills": [
           "bio-gene-calling",
           "bio-structure-annotation",
-          "bio-phylogenomics",
-          "bio-protein-clustering-pangenome",
-          "bio-logic",
           "polars-dovmed",
           "bio-annotation"
         ]
@@ -209,6 +231,7 @@
           "jgi-lakehouse",
           "bio-fasta-database-curator"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "bio-fasta-database-curator",
           "jgi-lakehouse"
@@ -225,16 +248,17 @@
           "bio-annotation",
           "bio-binning-qc"
         ],
+        "supporting_skills": [
+          "bio-assembly-qc",
+          "bio-gene-calling",
+          "polars-dovmed",
+          "bio-viromics"
+        ],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "tracking-taxonomy-updates",
           "bio-binning-qc",
-          "bio-viromics",
           "bio-gene-calling",
-          "bio-phylogenomics",
-          "bio-protein-clustering-pangenome",
-          "bio-logic",
           "polars-dovmed",
           "bio-annotation"
         ]
@@ -248,8 +272,11 @@
         "primary_skills": [
           "tracking-taxonomy-updates"
         ],
+        "supporting_skills": [
+          "bio-assembly-qc",
+          "bio-viromics"
+        ],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "tracking-taxonomy-updates"
         ]
@@ -263,6 +290,7 @@
         "primary_skills": [
           "bio-foundation-housekeeping"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "bio-foundation-housekeeping"
         ]
@@ -276,6 +304,7 @@
         "primary_skills": [
           "bio-fasta-database-curator"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "bio-fasta-database-curator"
         ]
@@ -289,6 +318,7 @@
         "primary_skills": [
           "exploratory-data-analysis"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "exploratory-data-analysis"
         ]
@@ -305,18 +335,25 @@
           "bio-assembly-qc",
           "bio-logic"
         ],
+        "supporting_skills": [
+          "bio-reads-qc-mapping",
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "bio-annotation",
+          "bio-gene-calling",
+          "bio-viromics",
+          "tracking-taxonomy-updates",
+          "ai-scientist-evaluator",
+          "manuscript-review-council",
+          "proposal-review"
+        ],
         "ordered_skills": [
           "bio-prefect-dask-nextflow",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "bio-workflow-methods-docwriter",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -329,16 +366,16 @@
         "primary_skills": [
           "bio-logic"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
+        "supporting_skills": [
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "ai-scientist-evaluator",
+          "manuscript-review-council",
+          "proposal-review"
+        ],
+        "ordered_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -350,6 +387,9 @@
         "agent": "literature-expert",
         "primary_skills": [
           "arxiv-search"
+        ],
+        "supporting_skills": [
+          "crossref-lookup"
         ],
         "ordered_skills": [
           "arxiv-search"
@@ -365,16 +405,14 @@
           "biorxiv-search",
           "polars-dovmed"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "biorxiv-search",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
+        "supporting_skills": [
           "bio-annotation",
-          "bio-phylogenomics",
-          "bio-protein-clustering-pangenome",
+          "bio-logic",
+          "crossref-lookup"
+        ],
+        "ordered_skills": [
+          "biorxiv-search",
+          "bio-annotation",
           "bio-logic",
           "polars-dovmed"
         ]
@@ -388,15 +426,12 @@
         "primary_skills": [
           "polars-dovmed"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
+        "supporting_skills": [
           "bio-annotation",
-          "bio-phylogenomics",
-          "bio-protein-clustering-pangenome",
+          "bio-logic"
+        ],
+        "ordered_skills": [
+          "bio-annotation",
           "bio-logic",
           "polars-dovmed"
         ]
@@ -410,6 +445,12 @@
         "primary_skills": [
           "crossref-lookup"
         ],
+        "supporting_skills": [
+          "arxiv-search",
+          "biorxiv-search",
+          "polars-dovmed",
+          "scientific-impact-assessment"
+        ],
         "ordered_skills": [
           "crossref-lookup"
         ]
@@ -422,6 +463,10 @@
         "agent": "literature-expert",
         "primary_skills": [
           "scientific-impact-assessment"
+        ],
+        "supporting_skills": [
+          "crossref-lookup",
+          "polars-dovmed"
         ],
         "ordered_skills": [
           "scientific-impact-assessment"
@@ -439,9 +484,15 @@
           "bio-workflow-methods-docwriter",
           "manuscript-review-council"
         ],
+        "supporting_skills": [
+          "tracking-taxonomy-updates",
+          "ai-scientist-evaluator",
+          "bio-logic",
+          "polars-dovmed",
+          "crossref-lookup",
+          "proposal-review"
+        ],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
           "bio-workflow-methods-docwriter",
           "manuscript-review-council",
           "scientific-writing",
@@ -460,18 +511,18 @@
           "bio-logic",
           "scientific-writing"
         ],
+        "supporting_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "ai-scientist-evaluator",
+          "proposal-review",
+          "crossref-lookup"
+        ],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
           "manuscript-review-council",
           "scientific-writing",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -486,18 +537,17 @@
           "bio-logic",
           "manuscript-review-council"
         ],
+        "supporting_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "ai-scientist-evaluator",
+          "scientific-writing"
+        ],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
           "manuscript-review-council",
           "proposal-review",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -511,17 +561,17 @@
           "bio-logic",
           "ai-scientist-evaluator"
         ],
+        "supporting_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "manuscript-review-council",
+          "scientific-writing",
+          "proposal-review"
+        ],
         "ordered_skills": [
           "ai-scientist-evaluator",
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -535,6 +585,7 @@
           "bio-workflow-methods-docwriter",
           "bio-prefect-dask-nextflow"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "bio-prefect-dask-nextflow",
           "bio-workflow-methods-docwriter"
@@ -550,6 +601,12 @@
           "csag-extraction",
           "manuscript-review-council"
         ],
+        "supporting_skills": [
+          "ai-scientist-evaluator",
+          "bio-logic",
+          "polars-dovmed",
+          "scientific-writing"
+        ],
         "ordered_skills": [
           "csag-extraction",
           "manuscript-review-council"
@@ -564,6 +621,7 @@
         "primary_skills": [
           "beautiful-data-viz"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "beautiful-data-viz"
         ]
@@ -577,6 +635,7 @@
         "primary_skills": [
           "plotly-dashboard-skill"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "plotly-dashboard-skill"
         ]
@@ -590,6 +649,7 @@
         "primary_skills": [
           "notebooks"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "notebooks"
         ]
@@ -603,6 +663,7 @@
         "primary_skills": [
           "notebooks"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "notebooks"
         ]
@@ -616,6 +677,7 @@
         "primary_skills": [
           "agent-browser"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "agent-browser"
         ]
@@ -629,6 +691,7 @@
         "primary_skills": [
           "get-api-docs"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "get-api-docs"
         ]
@@ -643,16 +706,16 @@
           "bio-reads-qc-mapping",
           "bio-logic"
         ],
+        "supporting_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "manuscript-review-council",
+          "proposal-review"
+        ],
         "ordered_skills": [
           "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -664,6 +727,9 @@
         "agent": "literature-expert",
         "primary_skills": [
           "arxiv-search"
+        ],
+        "supporting_skills": [
+          "crossref-lookup"
         ],
         "ordered_skills": [
           "arxiv-search"
@@ -678,16 +744,16 @@
         "primary_skills": [
           "bio-logic"
         ],
-        "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-assembly-qc",
-          "tracking-taxonomy-updates",
-          "bio-viromics",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-annotation",
-          "bio-phylogenomics",
+        "supporting_skills": [
           "bio-protein-clustering-pangenome",
+          "polars-dovmed",
+          "ai-scientist-evaluator",
+          "manuscript-review-council",
+          "proposal-review"
+        ],
+        "ordered_skills": [
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -700,9 +766,50 @@
         "primary_skills": [
           "agent-browser"
         ],
+        "supporting_skills": [],
         "ordered_skills": [
           "agent-browser"
         ]
+      }
+    },
+    {
+      "task": "what is the capital of France",
+      "passed": true,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "schedule a dentist appointment for next Tuesday",
+      "passed": true,
+      "actual": {
+        "agent": "dataviz-artist",
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "refactor this React component into smaller reusable functions",
+      "passed": true,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "explain quantum entanglement to a child",
+      "passed": true,
+      "actual": {
+        "agent": "science-writer",
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
       }
     }
   ]

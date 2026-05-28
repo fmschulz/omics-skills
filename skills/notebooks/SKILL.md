@@ -82,7 +82,7 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
 | Execute Jupyter headlessly | `python scripts/execute_notebook.py <notebook.ipynb>` |
 | Convert `.ipynb` → marimo | `uvx marimo convert <notebook.ipynb> -o <notebook.py>` |
 | Convert marimo → `.ipynb` | `uv run marimo export ipynb <notebook.py> -o <notebook.ipynb>` |
-| Marimo references | `references/MARIMO.md`, `references/UI.md`, `references/SQL.md`, `references/STATE.md`, `references/EXPORTS.md`, `references/PYTEST.md`, `references/TOP-LEVEL-IMPORTS.md`, `references/DEPLOYMENT.md` |
+| Marimo references | `references/notebook_structure.md`, `references/UI.md`, `references/SQL.md`, `references/STATE.md`, `references/EXPORTS.md`, `references/PYTEST.md`, `references/TOP-LEVEL-IMPORTS.md`, `references/DEPLOYMENT.md` |
 | Conversion references | `references/widgets.md`, `references/latex.md` |
 | Pixi + Jupyter | `references/pixi_jupyter.md` |
 | Plot style | `references/plot_style.md` |

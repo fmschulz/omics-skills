@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import contextlib
+import io
+import json
 import sys
 import tempfile
 import textwrap
@@ -75,7 +78,8 @@ class SkillIndexTests(unittest.TestCase):
             payload = skill_index.build_outputs(root)
             relationships = {
                 (edge["source"], edge["target"], edge["type"])
-                for edge in payload["relationships"]
+                for edge in payload["catalog"]["edges"]
+                if edge["source_type"] == "skill" and edge["target_type"] == "skill"
             }
             self.assertIn(("assembly", "read-qc", "depend_on"), relationships)
             self.assertIn(("assembly", "read-qc", "compose_with"), relationships)
@@ -331,25 +335,26 @@ class CatalogConsistencyTests(unittest.TestCase):
             f"Unresolved agent-side skill references: {unresolved}",
         )
 
-    def test_routing_only_lists_real_skills(self) -> None:
-        """routing.json agents[].skills and task_patterns must only reference
-        skills that exist in skills[]. This is the belt-and-suspenders filter
-        that protects downstream consumers from phantom skill names."""
+    def test_catalog_agents_only_reference_real_skills(self) -> None:
+        """catalog.agents[].skill_sections and task_patterns must only reference
+        skills that exist in catalog.skills. This is the belt-and-suspenders
+        filter that protects downstream consumers from phantom skill names."""
         payload = skill_index.build_outputs(REPO_ROOT)
         real = {skill["name"] for skill in payload["catalog"]["skills"]}
-        for agent in payload["routing"]["agents"]:
-            for skill_name in agent["skills"]:
-                self.assertIn(
-                    skill_name,
-                    real,
-                    f"routing.agents[{agent['name']!r}].skills contains {skill_name!r}, "
-                    f"which is not in catalog.skills",
-                )
+        for agent in payload["catalog"]["agents"]:
+            for section_skills in agent["skill_sections"].values():
+                for skill_name in section_skills:
+                    self.assertIn(
+                        skill_name,
+                        real,
+                        f"catalog.agents[{agent['name']!r}].skill_sections contains "
+                        f"{skill_name!r}, which is not in catalog.skills",
+                    )
             for pattern in agent["task_patterns"]:
                 self.assertIn(
                     pattern["skill_name"],
                     real,
-                    f"routing.agents[{agent['name']!r}].task_patterns references "
+                    f"catalog.agents[{agent['name']!r}].task_patterns references "
                     f"{pattern['skill_name']!r}, which is not in catalog.skills",
                 )
 
@@ -378,9 +383,11 @@ class AgentSectionHeadingScoringTests(unittest.TestCase):
 
 
 class CatalogPathPortabilityTests(unittest.TestCase):
-    """Catalog JSON on disk stores repo-relative paths; route_request
-    resolves them back to absolute via metadata.source_repo so users can
-    consume a shared catalog regardless of where the repo is checked out."""
+    """Catalog JSON on disk stores repo-relative paths; route_request resolves
+    them back to absolute by detecting the repo root from the catalog's own
+    location (catalog.json lives at <repo>/catalog/), so a shared catalog
+    resolves correctly regardless of where the repo is checked out — without
+    baking the committing machine's absolute path into the file."""
 
     def test_catalog_paths_are_repo_relative(self) -> None:
         payload = skill_index.build_outputs(REPO_ROOT)
@@ -397,12 +404,28 @@ class CatalogPathPortabilityTests(unittest.TestCase):
             self.assertFalse(Path(item["path"]).is_absolute())
             self.assertTrue(item["path"].startswith("agents/"))
 
-    def test_route_request_resolves_relative_paths_against_source_repo(self) -> None:
-        """Simulate a moved-clone: write the built catalog to a random directory
-        whose metadata.source_repo still points at the real repo. route_request
-        with --index-root should still produce absolute paths that exist."""
+    def test_catalog_metadata_is_deterministic(self) -> None:
+        """The committed catalog must be byte-stable across machines and time so
+        a `git diff` freshness check is meaningful: no build timestamp, no
+        absolute source path, and two builds of the same repo are identical."""
+        first = skill_index.build_outputs(REPO_ROOT)
+        second = skill_index.build_outputs(REPO_ROOT)
+        self.assertEqual(first, second)
+        metadata = first["catalog"]["metadata"]
+        self.assertNotIn("built_at", metadata)
+        self.assertNotIn("source_repo", metadata)
+
+    def test_route_request_resolves_relative_paths_from_catalog_location(self) -> None:
+        """Write the built catalog under a repo-shaped directory's catalog/ dir.
+        route_request with --index-root resolves skill paths to absolute by
+        detecting the repo root from the catalog's location, with no
+        metadata.source_repo needed."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            index_root = Path(tmpdir)
+            repo = Path(tmpdir)
+            (repo / "skills").mkdir()
+            (repo / "agents").mkdir()
+            index_root = repo / "catalog"
+            index_root.mkdir()
             payload = skill_index.build_outputs(REPO_ROOT)
             skill_index.write_outputs(payload, index_root)
             result = skill_index.route_request(
@@ -421,16 +444,17 @@ class CatalogPathPortabilityTests(unittest.TestCase):
                     f"route_request must emit absolute paths; got {path!r} for {name!r}",
                 )
                 self.assertTrue(
-                    Path(path).exists(),
-                    f"resolved path does not exist: {path!r}",
+                    path.startswith(str(repo)),
+                    f"path should resolve under the catalog's repo {repo}; got {path!r}",
                 )
 
     def test_catalog_is_checkout_portable_across_different_repo_paths(self) -> None:
         """The whole point of committing catalog/*.json is that a second
         clone at a different filesystem path still produces usable routes.
-        Simulate that: build a catalog under repo A (metadata.source_repo =
-        A), then ship that catalog to repo B at a different path. route_request
-        against repo B's catalog/ must resolve skill paths under repo B, not A."""
+        Simulate that: build a catalog under repo A, then ship that catalog to
+        repo B at a different path. route_request against repo B's catalog/ must
+        resolve skill paths under repo B (via repo-root detection from the
+        catalog's location), not A."""
         with tempfile.TemporaryDirectory() as a_dir, tempfile.TemporaryDirectory() as b_dir:
             a_root = Path(a_dir) / "repo_a"
             b_root = Path(b_dir) / "repo_b"
@@ -481,6 +505,47 @@ class CatalogPathPortabilityTests(unittest.TestCase):
                     Path(path).exists(),
                     f"resolved path does not exist: {path!r}",
                 )
+
+
+class CliTests(unittest.TestCase):
+    """Exercise the argparse entry point end-to-end so the CLI wiring (build +
+    route subcommands, text and JSON output) stays covered."""
+
+    def test_build_command_writes_only_catalog_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir)
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                rc = skill_index.main(["build", "--repo", str(REPO_ROOT), "--out", str(out)])
+            self.assertEqual(rc, 0)
+            self.assertTrue((out / "catalog.json").exists())
+            # relationships.json / routing.json were removed; build must not emit them.
+            self.assertFalse((out / "relationships.json").exists())
+            self.assertFalse((out / "routing.json").exists())
+            printed = json.loads(buffer.getvalue())
+            self.assertEqual(set(printed), {"catalog"})
+
+    def test_route_command_text_output(self) -> None:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            rc = skill_index.main(
+                ["route", "assemble a metagenome and recover MAGs", "--repo", str(REPO_ROOT)]
+            )
+        self.assertEqual(rc, 0)
+        output = buffer.getvalue()
+        self.assertIn("Agent: omics-scientist", output)
+        self.assertIn("bio-assembly-qc", output)
+
+    def test_route_command_json_output(self) -> None:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            rc = skill_index.main(
+                ["route", "find recent arxiv preprints", "--repo", str(REPO_ROOT), "--json"]
+            )
+        self.assertEqual(rc, 0)
+        payload = json.loads(buffer.getvalue())
+        self.assertEqual(payload["agent"], "literature-expert")
+        self.assertIn("arxiv-search", payload["primary_skills"])
 
 
 if __name__ == "__main__":

@@ -59,15 +59,13 @@ The router uses:
 - Skill-to-skill references from skill bodies.
 - Optional filters such as `--agent` and `--platform`.
 
-The generated catalog files live in `catalog/`:
+The generated catalog lives in `catalog/`:
 
 | File | Purpose |
 |---|---|
-| `catalog.json` | Parsed agents, skills, metadata, and graph edges. |
-| `relationships.json` | Skill-to-skill relationships. |
-| `routing.json` | Lightweight routing data for task matching. |
+| `catalog.json` | Parsed agents, skills, metadata, and graph edges — the single source of truth the router consumes. |
 
-Rebuild them after changing agent or skill text:
+Rebuild it after changing agent or skill text:
 
 ```bash
 python3 scripts/skill_index.py build

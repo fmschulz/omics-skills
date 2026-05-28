@@ -145,15 +145,13 @@ build_catalog() {
     mkdir -p "$CATALOG_DIR"
     python3 "$REPO_ROOT/scripts/skill_index.py" build --repo "$REPO_ROOT" --out "$CATALOG_DIR" >/dev/null
     echo -e "  ${GREEN}✓${NC} catalog.json"
-    echo -e "  ${GREEN}✓${NC} relationships.json"
-    echo -e "  ${GREEN}✓${NC} routing.json"
 }
 
 install_catalog() {
     echo -e "${BLUE}Installing skill catalog to $AGENTS_CATALOG_DIR...${NC}"
     mkdir -p "$AGENTS_CATALOG_DIR"
 
-    for item in skill_index.py README.md catalog.json relationships.json routing.json; do
+    for item in skill_index.py README.md catalog.json; do
         if [ "$item" = "skill_index.py" ]; then
             src="$REPO_ROOT/scripts/$item"
         else
@@ -258,12 +256,12 @@ show_status() {
     echo "  Catalog directory: $AGENTS_CATALOG_DIR"
     if [ -d "$AGENTS_CATALOG_DIR" ]; then
         count=0
-        for item in skill_index.py README.md catalog.json relationships.json routing.json; do
+        for item in skill_index.py README.md catalog.json; do
             if [ -f "$AGENTS_CATALOG_DIR/$item" ] || [ -L "$AGENTS_CATALOG_DIR/$item" ]; then
                 count=$((count + 1))
             fi
         done
-        echo "  Installed catalog files: $count/5"
+        echo "  Installed catalog files: $count/3"
     else
         echo -e "  ${RED}Not installed${NC}"
     fi

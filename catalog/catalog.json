@@ -1,7 +1,5 @@
 {
   "metadata": {
-    "source_repo": "/home/fschulz/dev/omics-skills",
-    "built_at": "2026-05-26T07:06:16+00:00",
     "skill_count": 35,
     "agent_count": 4,
     "edge_count": 136
@@ -1067,19 +1065,19 @@
         "PMC",
         "PMC plus bioRxiv",
         "bioRxiv screening",
-        "context",
         "dovmed scan",
         "find papers",
         "full-text bioRxiv screening",
-        "known",
         "literature",
+        "literature context",
         "literature search",
         "local bioRxiv parquet",
         "papers",
         "polars-dovmed",
+        "previously reported",
+        "prior literature",
         "prior work",
         "publication trends",
-        "reported",
         "screen bioRxiv with polars-dovmed"
       ],
       "internal_references": [
@@ -1728,9 +1726,9 @@
             "literature",
             "papers",
             "prior work",
-            "context",
-            "known",
-            "reported"
+            "literature context",
+            "prior literature",
+            "previously reported"
           ]
         },
         {

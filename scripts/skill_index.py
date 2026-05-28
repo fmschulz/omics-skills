@@ -2,19 +2,35 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 SKILL_REF_PATTERN = re.compile(r"(?<![\w:/])/([a-z0-9][a-z0-9-]+)")
 QUOTED_PATTERN = re.compile(r'"([^"]+)"')
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
-RELATIONSHIP_TYPES = {"depend_on", "compose_with", "similar_to", "belong_to"}
+
+# How many hops of `depend_on` edges to follow out from each primary skill when
+# building the "supporting skills" list. depend_on is the reverse of the
+# workflow_next chain, so an unbounded walk drags an entire pipeline into every
+# single-step query. 1 = direct prerequisites only.
+DEPENDENCY_MAX_DEPTH = 1
+
+# Routing score weights (see docs/SKILL_GRAPH.md). Lifted to named constants so
+# the scoring model lives in one place and can be tuned against the benchmark.
+SKILL_DESCRIPTION_WEIGHT = 2.0       # query overlap with a skill's name/description
+TASK_PATTERN_DIRECT_BONUS = 4.0      # query contains a skill's task-pattern phrase verbatim
+TASK_PATTERN_OVERLAP_WEIGHT = 3.0    # partial token overlap with a task-pattern phrase
+PARTIAL_OVERLAP_MIN = 0.34           # min token overlap to count a partial match
+PRIMARY_CUTOFF_FLOOR = 0.75          # a primary skill must score at least this
+PRIMARY_CUTOFF_RATIO = 0.35          # ...and at least this fraction of the top score
+AGENT_PATTERN_DIRECT_BONUS = 1.0     # owning agent's phrase matched the query verbatim
+AGENT_PATTERN_OVERLAP_WEIGHT = 0.5   # ...partial overlap with the owning agent's phrase
 
 
 @dataclass
@@ -34,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         out_dir = Path(args.out).expanduser().resolve() if args.out else default_output_dir(repo_root)
         out_dir.mkdir(parents=True, exist_ok=True)
         write_outputs(payload, out_dir)
-        print(json.dumps({name: str(out_dir / f"{name}.json") for name in ("catalog", "relationships", "routing")}, indent=2))
+        print(json.dumps({"catalog": str(out_dir / "catalog.json")}, indent=2))
         return 0
 
     if args.command == "route":
@@ -67,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     route_cmd = subparsers.add_parser("route", help="Recommend an agent and ordered skills for a task.")
     route_cmd.add_argument("task", help="Task description.")
     route_cmd.add_argument("--repo", default=None, help="Repository root. If omitted, the script infers it when possible.")
-    route_cmd.add_argument("--index-root", default=None, help="Directory containing catalog.json, relationships.json, and routing.json.")
+    route_cmd.add_argument("--index-root", default=None, help="Directory containing catalog.json.")
     route_cmd.add_argument("--agent", default=None, help="Limit recommendations to a specific installed agent.")
     route_cmd.add_argument("--platform", choices=("generic", "claude", "codex"), default="generic")
     route_cmd.add_argument("--top-k", type=int, default=4, help="Maximum number of primary skills to return.")
@@ -340,7 +356,45 @@ def merge_edges(edges: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(merged.values(), key=lambda item: (item["source"], item["type"], item["target"]))
 
 
-def build_outputs(repo_root: Path) -> dict[str, Any]:
+_BUILD_CACHE: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
+
+
+def _repo_signature(repo_root: Path) -> tuple[int, int]:
+    """Cheap change-detector for the catalog cache: (file count, newest mtime)
+    across all SKILL.md and agent files. Adding, removing, or editing any source
+    file changes the signature and busts the cache."""
+    sources = list((repo_root / "skills").glob("*/SKILL.md"))
+    sources += list((repo_root / "agents").glob("*.md"))
+    latest = 0
+    for path in sources:
+        try:
+            latest = max(latest, path.stat().st_mtime_ns)
+        except OSError:
+            continue
+    return (len(sources), latest)
+
+
+def build_outputs(repo_root: Path, use_cache: bool = True) -> dict[str, Any]:
+    """Build the catalog payload, memoized by (repo path, source signature).
+
+    parse_repo re-reads and regex-parses ~40 markdown files; the router and the
+    benchmark call this repeatedly for the same repo, so caching turns N rebuilds
+    into one. Callers may freely mutate the result (e.g. _absolutize_paths
+    rewrites paths in place): the cache always stores and returns independent
+    deep copies, so a mutated result never corrupts a later build."""
+    key = str(repo_root)
+    signature = _repo_signature(repo_root)
+    if use_cache:
+        cached = _BUILD_CACHE.get(key)
+        if cached is not None and cached[0] == signature:
+            return copy.deepcopy(cached[1])
+    payload = _build_catalog(repo_root)
+    if use_cache:
+        _BUILD_CACHE[key] = (signature, copy.deepcopy(payload))
+    return payload
+
+
+def _build_catalog(repo_root: Path) -> dict[str, Any]:
     skills, agents = parse_repo(repo_root)
     edges: list[dict[str, Any]] = []
 
@@ -408,9 +462,10 @@ def build_outputs(repo_root: Path) -> dict[str, Any]:
             )
 
     merged_edges = merge_edges(edges)
+    # Metadata is intentionally deterministic (no build timestamp or absolute
+    # source path) so the committed catalog/catalog.json is byte-stable across
+    # machines and a `git diff` freshness check is meaningful.
     metadata = {
-        "source_repo": str(repo_root),
-        "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "skill_count": len(skills),
         "agent_count": len(agents),
         "edge_count": len(merged_edges),
@@ -431,52 +486,15 @@ def build_outputs(repo_root: Path) -> dict[str, Any]:
         ],
         "edges": merged_edges,
     }
-    relationships = [
-        edge
-        for edge in merged_edges
-        if edge["source_type"] == "skill" and edge["target_type"] == "skill" and edge["type"] in RELATIONSHIP_TYPES
-    ]
-    skill_names = set(skills)
-    routing = {
-        "agents": [
-            {
-                "name": agent["name"],
-                "description": agent["description"],
-                "path": agent["path"],
-                "skills": sorted(
-                    {
-                        skill
-                        for skills_list in agent["skill_sections"].values()
-                        for skill in skills_list
-                        if skill in skill_names
-                    }
-                ),
-                "task_patterns": [
-                    pattern
-                    for pattern in agent["task_patterns"]
-                    if pattern["skill_name"] in skill_names
-                ],
-            }
-            for agent in sorted(agents.values(), key=lambda item: item["name"])
-        ],
-        "skills": [
-            {
-                "name": skill["name"],
-                "description": skill["description"],
-                "agents": skill["agents"],
-                "task_patterns": skill["task_patterns"],
-                "platforms": skill["platforms"],
-                "path": skill["path"],
-            }
-            for skill in sorted(skills.values(), key=lambda item: item["name"])
-        ],
-    }
-    return {"catalog": catalog, "relationships": relationships, "routing": routing}
+    # catalog.json is the single source of truth. The router consumes only
+    # catalog["skills"], ["agents"], and ["edges"]; earlier builds also emitted
+    # routing.json and relationships.json, but both were lossless projections of
+    # this structure that nothing read, so they were removed.
+    return {"catalog": catalog}
 
 
 def write_outputs(payload: dict[str, Any], out_dir: Path) -> None:
-    for name in ("catalog", "relationships", "routing"):
-        (out_dir / f"{name}.json").write_text(json.dumps(payload[name], indent=2), encoding="utf-8")
+    (out_dir / "catalog.json").write_text(json.dumps(payload["catalog"], indent=2), encoding="utf-8")
 
 
 def collect_unresolved_references(repo_root: Path) -> list[tuple[str, str, str]]:
@@ -509,8 +527,6 @@ def collect_unresolved_references(repo_root: Path) -> list[tuple[str, str, str]]
 def load_outputs(index_root: Path) -> dict[str, Any]:
     return {
         "catalog": json.loads((index_root / "catalog.json").read_text(encoding="utf-8")),
-        "relationships": json.loads((index_root / "relationships.json").read_text(encoding="utf-8")),
-        "routing": json.loads((index_root / "routing.json").read_text(encoding="utf-8")),
     }
 
 
@@ -530,8 +546,15 @@ def resolve_route_source(repo: str | None, index_root: str | None) -> tuple[dict
     script_path = Path(__file__).resolve()
     repo_candidate = script_path.parent.parent
     if is_repo_root(repo_candidate):
-        payload = build_outputs(repo_candidate)
-        _absolutize_paths(payload, catalog_dir=repo_candidate / "catalog")
+        catalog_dir = repo_candidate / "catalog"
+        # Prefer the committed catalog.json over re-parsing every SKILL.md.
+        # This keeps the per-prompt routing hook fast; CI guarantees the
+        # committed catalog stays in sync with the markdown sources.
+        if (catalog_dir / "catalog.json").exists():
+            payload = load_outputs(catalog_dir)
+        else:
+            payload = build_outputs(repo_candidate)
+        _absolutize_paths(payload, catalog_dir=catalog_dir)
         return payload, "repo"
 
     installed_root = script_path.parent
@@ -551,17 +574,18 @@ def _is_relative_skill_path(value: str) -> bool:
 
 
 def _absolutize_paths(payload: dict[str, Any], catalog_dir: Path | None = None) -> None:
-    """Resolve any repo-relative `path` fields in catalog / routing. Callers
-    downstream (route_request, format_route_result) assume absolute paths so
-    the router can print a usable location regardless of the cwd at
+    """Resolve repo-relative `path` fields in the catalog to absolute paths.
+    Callers downstream (route_request, format_route_result) assume absolute
+    paths so the router can print a usable location regardless of the cwd at
     invocation time.
 
-    Portability: when ``catalog_dir`` is itself a sibling of a real repo
-    checkout (`<repo>/skills/` and `<repo>/agents/` both exist), the
-    surrounding repo wins over any ``metadata.source_repo`` baked in at build
-    time. This lets a committed catalog.json resolve correctly in every
-    clone even though the committing machine's path is recorded in
-    metadata."""
+    The base repo is discovered from ``catalog_dir``'s location: catalog.json
+    sits at ``<repo>/catalog/catalog.json`` in every checkout, so the parent of
+    its directory is the repo root. This makes a committed catalog.json resolve
+    correctly in any clone without baking the committing machine's path into the
+    file. When no repo context is found (e.g. catalog.json copied into a bare
+    directory), paths are left repo-relative; installed layouts override them
+    via installed_skill_path / installed_agent_path instead."""
     catalog = payload.get("catalog")
     if not catalog:
         return
@@ -577,11 +601,6 @@ def _absolutize_paths(payload: dict[str, Any], catalog_dir: Path | None = None) 
                 break
 
     if base is None:
-        source_repo = catalog.get("metadata", {}).get("source_repo")
-        if source_repo:
-            base = Path(source_repo)
-
-    if base is None:
         return
 
     def resolve(value: str) -> str:
@@ -595,13 +614,170 @@ def _absolutize_paths(payload: dict[str, Any], catalog_dir: Path | None = None) 
     for item in catalog.get("agents", []):
         if "path" in item:
             item["path"] = resolve(item["path"])
-    routing = payload.get("routing") or {}
-    for item in routing.get("skills", []):
-        if "path" in item:
-            item["path"] = resolve(item["path"])
-    for item in routing.get("agents", []):
-        if "path" in item:
-            item["path"] = resolve(item["path"])
+
+
+def _allowed_skills_for_agent(
+    agent: str | None, agents: dict[str, dict[str, Any]]
+) -> set[str] | None:
+    """The set of skills an agent is allowed to recommend (its Mandatory Skill
+    Usage entries), or None when no agent constraint is given."""
+    if not agent:
+        return None
+    agent_record = agents.get(agent)
+    if not agent_record:
+        raise SystemExit(f"Unknown agent: {agent}")
+    allowed: set[str] = set()
+    for section_skills in agent_record["skill_sections"].values():
+        allowed.update(section_skills)
+    return allowed
+
+
+def _score_skills(
+    skills: dict[str, dict[str, Any]],
+    query: str,
+    query_tokens: set[str],
+    allowed_skills: set[str] | None,
+    platform: str,
+    reasons: dict[str, list[str]],
+) -> dict[str, float]:
+    """Score each candidate skill by query overlap with its name/description and
+    its task-pattern phrases. Records match explanations in ``reasons`` (mutated
+    in place). Skills that fail the agent/platform filter or score 0 are dropped."""
+    scores: dict[str, float] = {}
+    for skill in skills.values():
+        if allowed_skills is not None and skill["name"] not in allowed_skills:
+            continue
+        if platform in ("claude", "codex") and platform not in skill["platforms"]:
+            continue
+        score = 0.0
+        description_tokens = tokenize(" ".join((skill["name"].replace("-", " "), skill["description"])))
+        overlap = text_overlap(query_tokens, description_tokens)
+        if overlap:
+            score += overlap * SKILL_DESCRIPTION_WEIGHT
+            reasons[skill["name"]].append("name/description overlap")
+        for pattern in skill["task_patterns"]:
+            if pattern.lower() in query:
+                score += TASK_PATTERN_DIRECT_BONUS
+                reasons[skill["name"]].append(f'task pattern "{pattern}" matched directly')
+                continue
+            pattern_overlap = text_overlap(query_tokens, tokenize(pattern))
+            if pattern_overlap >= PARTIAL_OVERLAP_MIN:
+                score += pattern_overlap * TASK_PATTERN_OVERLAP_WEIGHT
+                reasons[skill["name"]].append(f'task pattern "{pattern}" overlapped')
+        if score > 0:
+            scores[skill["name"]] = score
+    return scores
+
+
+def _rank_primary_skills(skill_scores: dict[str, float], top_k: int) -> list[tuple[str, float]]:
+    """Sort skills by score (desc, then name) and drop anything below the
+    confidence cutoff. Returns all surviving (name, score) pairs; the caller
+    takes the first ``top_k`` as primary skills."""
+    ranked = sorted(skill_scores.items(), key=lambda item: (-item[1], item[0]))
+    if ranked:
+        cutoff = max(PRIMARY_CUTOFF_FLOOR, ranked[0][1] * PRIMARY_CUTOFF_RATIO)
+        ranked = [item for item in ranked if item[1] >= cutoff]
+    return ranked
+
+
+def _score_agents(
+    primary_skills: list[str],
+    skills: dict[str, dict[str, Any]],
+    agents: dict[str, dict[str, Any]],
+    agent: str | None,
+    query: str,
+    query_tokens: set[str],
+    skill_scores: dict[str, float],
+    reasons: dict[str, list[str]],
+) -> dict[str, float]:
+    """Attribute each primary skill's score to its owning agent(s), then add two
+    tiebreaks for shared skills — section-heading overlap and per-agent
+    task-pattern matches — plus a small agent-description overlap term. E.g.
+    bio-logic is co-owned by omics-scientist ("...Hypothesis Formation") and
+    science-writer ("...Evaluation"); a "hypothesis" query thus prefers
+    omics-scientist. Mutates ``reasons`` with tiebreak explanations."""
+    agent_scores: dict[str, float] = defaultdict(float)
+    for skill_name in primary_skills:
+        for owner in skills[skill_name]["agents"]:
+            agent_scores[owner] += skill_scores[skill_name]
+            owner_record = agents.get(owner) or {}
+            for section, section_skills in owner_record.get("skill_sections", {}).items():
+                if skill_name not in section_skills:
+                    continue
+                section_overlap = text_overlap(query_tokens, tokenize(section))
+                if section_overlap:
+                    agent_scores[owner] += section_overlap * skill_scores[skill_name]
+                    reasons[skill_name].append(
+                        f"section-heading '{section}' overlap for agent {owner}"
+                    )
+            for pattern_entry in owner_record.get("task_patterns", []):
+                if pattern_entry.get("skill_name") != skill_name:
+                    continue
+                for phrase in pattern_entry.get("phrases", []):
+                    phrase_tokens = tokenize(phrase)
+                    if phrase.lower() in query:
+                        agent_scores[owner] += AGENT_PATTERN_DIRECT_BONUS
+                        reasons[skill_name].append(f'agent {owner} pattern "{phrase}" direct match')
+                        break
+                    phrase_overlap = text_overlap(query_tokens, phrase_tokens)
+                    if phrase_overlap >= PARTIAL_OVERLAP_MIN:
+                        agent_scores[owner] += phrase_overlap * AGENT_PATTERN_OVERLAP_WEIGHT
+                        reasons[skill_name].append(f'agent {owner} pattern "{phrase}" overlap')
+    for agent_name, agent_record in agents.items():
+        if agent and agent_name != agent:
+            continue
+        agent_scores[agent_name] += text_overlap(query_tokens, tokenize(agent_record["description"]))
+    return agent_scores
+
+
+def _compose_extras(
+    primary_set: set[str],
+    dep_skills: list[str],
+    edges: list[dict[str, Any]],
+    allowed_skills: set[str] | None,
+    platform: str,
+    skills: dict[str, dict[str, Any]],
+) -> list[str]:
+    """Skills a primary skill directly recommends via a `compose_with` edge,
+    excluding anything already primary or a dependency, and respecting the
+    agent/platform filters."""
+    extras: list[str] = []
+    seen: set[str] = set()
+    dep_set = set(dep_skills)
+    for neighbor in compose_neighbors(primary_set, edges):
+        if neighbor in primary_set or neighbor in dep_set or neighbor in seen:
+            continue
+        if allowed_skills is not None and neighbor not in allowed_skills:
+            continue
+        if platform in ("claude", "codex") and neighbor in skills:
+            if platform not in skills[neighbor]["platforms"]:
+                continue
+        extras.append(neighbor)
+        seen.add(neighbor)
+    return extras
+
+
+def _result_paths(
+    selected_agent: str | None,
+    ordered_skills: list[str],
+    skills: dict[str, dict[str, Any]],
+    agents: dict[str, dict[str, Any]],
+    source_mode: str,
+    platform: str,
+) -> tuple[str | None, dict[str, str]]:
+    """Resolve the agent file path and per-skill file paths for the result. When
+    consuming an installed catalog, rewrite paths to the installed locations."""
+    agent_path = agents[selected_agent]["path"] if selected_agent in agents else None
+    skill_paths = {name: skills[name]["path"] for name in ordered_skills if name in skills}
+    if source_mode == "installed":
+        if selected_agent:
+            agent_path = installed_agent_path(selected_agent, platform, fallback=agent_path)
+        skill_paths = {
+            name: installed_skill_path(name, fallback=skills[name]["path"])
+            for name in ordered_skills
+            if name in skills
+        }
+    return agent_path, skill_paths
 
 
 def route_request(
@@ -620,97 +796,19 @@ def route_request(
 
     query = task.lower()
     query_tokens = tokenize(task)
-    allowed_skills = None
-    if agent:
-        agent_record = agents.get(agent)
-        if not agent_record:
-            raise SystemExit(f"Unknown agent: {agent}")
-        allowed_skills = set()
-        for section_skills in agent_record["skill_sections"].values():
-            allowed_skills.update(section_skills)
+    allowed_skills = _allowed_skills_for_agent(agent, agents)
 
-    skill_scores: dict[str, float] = {}
     reasons: dict[str, list[str]] = defaultdict(list)
-    for skill in skills.values():
-        if allowed_skills is not None and skill["name"] not in allowed_skills:
-            continue
-        if platform in ("claude", "codex") and platform not in skill["platforms"]:
-            continue
-        score = 0.0
-        description_tokens = tokenize(" ".join((skill["name"].replace("-", " "), skill["description"])))
-        overlap = text_overlap(query_tokens, description_tokens)
-        if overlap:
-            score += overlap * 2.0
-            reasons[skill["name"]].append("name/description overlap")
-        for pattern in skill["task_patterns"]:
-            if pattern.lower() in query:
-                score += 4.0
-                reasons[skill["name"]].append(f'task pattern "{pattern}" matched directly')
-                continue
-            pattern_overlap = text_overlap(query_tokens, tokenize(pattern))
-            if pattern_overlap >= 0.34:
-                score += pattern_overlap * 3.0
-                reasons[skill["name"]].append(f'task pattern "{pattern}" overlapped')
-        if score > 0:
-            skill_scores[skill["name"]] = score
-
-    ranked_pairs = sorted(skill_scores.items(), key=lambda item: (-item[1], item[0]))
-    if ranked_pairs:
-        cutoff = max(0.75, ranked_pairs[0][1] * 0.35)
-        ranked_pairs = [item for item in ranked_pairs if item[1] >= cutoff]
+    skill_scores = _score_skills(skills, query, query_tokens, allowed_skills, platform, reasons)
+    ranked_pairs = _rank_primary_skills(skill_scores, top_k)
     primary_skills = [name for name, _ in ranked_pairs[:top_k]]
 
-    agent_scores: dict[str, float] = defaultdict(float)
-    for skill_name in primary_skills:
-        for owner in skills[skill_name]["agents"]:
-            agent_scores[owner] += skill_scores[skill_name]
-            owner_record = agents.get(owner) or {}
-            # Section-heading context: when the same skill is co-owned by
-            # multiple agents, the section heading the owning agent filed
-            # it under is a strong tiebreak signal. E.g. bio-logic lives in
-            # "Scientific Reasoning & Hypothesis Formation" for
-            # omics-scientist and "Scientific Reasoning & Evaluation" for
-            # science-writer — a query about "formulate a hypothesis"
-            # should prefer the agent whose section heading contains
-            # "hypothesis".
-            for section, section_skills in owner_record.get("skill_sections", {}).items():
-                if skill_name not in section_skills:
-                    continue
-                section_overlap = text_overlap(query_tokens, tokenize(section))
-                if section_overlap:
-                    agent_scores[owner] += section_overlap * skill_scores[skill_name]
-                    reasons[skill_name].append(
-                        f"section-heading '{section}' overlap for agent {owner}"
-                    )
-            # Per-agent task-pattern match: if the query hits a phrase that
-            # the owning agent specifically mapped to this skill, prefer
-            # that agent over co-owners whose patterns do not match. E.g.
-            # omics-scientist lists "causation" → /bio-logic;
-            # science-writer lists "bias" → /bio-logic. A causation query
-            # should favour omics-scientist even when both score the skill.
-            for pattern_entry in owner_record.get("task_patterns", []):
-                if pattern_entry.get("skill_name") != skill_name:
-                    continue
-                for phrase in pattern_entry.get("phrases", []):
-                    phrase_lower = phrase.lower()
-                    phrase_tokens = tokenize(phrase)
-                    if phrase_lower in query:
-                        agent_scores[owner] += 1.0
-                        reasons[skill_name].append(
-                            f'agent {owner} pattern "{phrase}" direct match'
-                        )
-                        break
-                    phrase_overlap = text_overlap(query_tokens, phrase_tokens)
-                    if phrase_overlap >= 0.34:
-                        agent_scores[owner] += phrase_overlap * 0.5
-                        reasons[skill_name].append(
-                            f'agent {owner} pattern "{phrase}" overlap'
-                        )
-    for agent_name, agent_record in agents.items():
-        if agent and agent_name != agent:
-            continue
-        agent_scores[agent_name] += text_overlap(query_tokens, tokenize(agent_record["description"]))
-    selected_agent = agent or (max(agent_scores.items(), key=lambda item: (item[1], item[0]))[0] if agent_scores else None)
+    agent_scores = _score_agents(
+        primary_skills, skills, agents, agent, query, query_tokens, skill_scores, reasons
+    )
+    selected_agent = agent or (
+        max(agent_scores.items(), key=lambda item: (item[1], item[0]))[0] if agent_scores else None
+    )
 
     dep_skills = ordered_dependencies(primary_skills, edges)
     primary_set = set(primary_skills)
@@ -718,32 +816,13 @@ def route_request(
     # topological sort — pulling compose_with neighbours through it produces
     # huge "also consider" tails of unrelated skills.
     ordered_skills = ordered_workflow(dep_skills, edges)
-
-    compose_extras: list[str] = []
-    compose_set: set[str] = set()
-    for neighbor in compose_neighbors(primary_set, edges):
-        if neighbor in primary_set or neighbor in set(dep_skills) or neighbor in compose_set:
-            continue
-        if allowed_skills is not None and neighbor not in allowed_skills:
-            continue
-        if platform in ("claude", "codex") and neighbor in skills:
-            if platform not in skills[neighbor]["platforms"]:
-                continue
-        compose_extras.append(neighbor)
-        compose_set.add(neighbor)
-
+    compose_extras = _compose_extras(primary_set, dep_skills, edges, allowed_skills, platform, skills)
     supporting_only = [name for name in dep_skills if name not in primary_set] + compose_extras
-    agent_path = agents[selected_agent]["path"] if selected_agent in agents else None
-    skill_paths = {name: skills[name]["path"] for name in ordered_skills if name in skills}
-    if source_mode == "installed":
-        if selected_agent:
-            agent_path = installed_agent_path(selected_agent, platform, fallback=agent_path)
-        skill_paths = {
-            name: installed_skill_path(name, fallback=skills[name]["path"])
-            for name in ordered_skills
-            if name in skills
-        }
 
+    agent_path, skill_paths = _result_paths(
+        selected_agent, ordered_skills, skills, agents, source_mode, platform
+    )
+    ranked_names = {name for name, _ in ranked_pairs}
     return {
         "task": task,
         "platform": platform,
@@ -752,7 +831,7 @@ def route_request(
         "supporting_skills": supporting_only,
         "ordered_skills": ordered_skills,
         "skill_scores": {name: round(score, 3) for name, score in ranked_pairs},
-        "reasons": {name: sorted(set(values)) for name, values in reasons.items() if name in dict(ranked_pairs)},
+        "reasons": {name: sorted(set(values)) for name, values in reasons.items() if name in ranked_names},
         "agent_path": agent_path,
         "skill_paths": skill_paths,
     }
@@ -780,7 +859,18 @@ def compose_neighbors(primary_set: set[str], edges: list[dict[str, Any]]) -> lis
     return neighbors
 
 
-def ordered_dependencies(primary_skills: list[str], edges: list[dict[str, Any]]) -> list[str]:
+def ordered_dependencies(
+    primary_skills: list[str],
+    edges: list[dict[str, Any]],
+    max_depth: int = DEPENDENCY_MAX_DEPTH,
+) -> list[str]:
+    """Return the primary skills plus their prerequisites, dependency-first.
+
+    Dependencies are followed at most ``max_depth`` hops out from each primary
+    skill. Because depend_on is the reverse of the workflow_next chain, an
+    unbounded walk pulls a whole pipeline (reads -> assembly -> binning -> ...)
+    into the supporting list for any single-step query; the depth cap keeps it to
+    genuine immediate prerequisites."""
     dependencies: dict[str, list[str]] = defaultdict(list)
     for edge in edges:
         if edge["type"] == "depend_on" and edge["source_type"] == "skill" and edge["target_type"] == "skill":
@@ -790,18 +880,19 @@ def ordered_dependencies(primary_skills: list[str], edges: list[dict[str, Any]])
     seen: set[str] = set()
     on_path: set[str] = set()
 
-    def visit(skill_name: str) -> None:
+    def visit(skill_name: str, depth: int) -> None:
         if skill_name in seen or skill_name in on_path:
             return
         on_path.add(skill_name)
-        for dependency in dependencies.get(skill_name, []):
-            visit(dependency)
+        if depth < max_depth:
+            for dependency in dependencies.get(skill_name, []):
+                visit(dependency, depth + 1)
         on_path.discard(skill_name)
         seen.add(skill_name)
         ordered.append(skill_name)
 
     for skill_name in primary_skills:
-        visit(skill_name)
+        visit(skill_name, 0)
     return ordered
 
 
