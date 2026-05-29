@@ -106,15 +106,15 @@ class InstallTuiTests(unittest.TestCase):
         install_tui.toggle_selection(selection, "skill:scientific-writing")
 
         self.assertEqual(
-            install_tui.make_install_command("make", "copy", "1", selection),
+            install_tui.make_command("make", "install", "copy", "1", selection),
             [
                 "make",
                 "--no-print-directory",
                 "install-selected",
                 "SELECTED_AGENT_FILES=omics-scientist.md",
                 "SELECTED_SKILL_DIRS=bio-logic",
-                "INSTALL_METHOD=copy",
                 "VERBOSE=1",
+                "INSTALL_METHOD=copy",
             ],
         )
 
