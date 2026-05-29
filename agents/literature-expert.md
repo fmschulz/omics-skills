@@ -51,6 +51,11 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **Use for methodology and evidence-quality assessment:**
 - `/bio-logic` - Evaluate methodology, detect bias, and assess evidence strength
 
+### Document Conversion
+
+**Use for turning a PDF or manuscript into Markdown before extraction:**
+- `/pdf-to-md` - Convert any PDF (or DOCX/PPTX/image) to Markdown; for papers, build the section_audit.json and article.json bundle via the OCR API or a local LiteParse v2 fallback when no OCR key is set
+
 ### Argument Graph Extraction
 
 **Use for structured extraction from papers after source retrieval:**
@@ -98,6 +103,10 @@ START
   ├─ Need Evidence Critique?
   │   └─> /bio-logic
   │
+  ├─ Need PDF → Markdown or Article JSON?
+  │   └─> /pdf-to-md
+  │       └─> /csag-extraction
+  │
   ├─ Need Claim/Evidence Graph?
   │   └─> /csag-extraction
   │
@@ -123,6 +132,7 @@ START
 - **"crossref", "doi lookup", "citation metadata", "reference metadata", "bibtex"** → `/crossref-lookup`
 - **"citation count", "altmetric", "impact factor", "journal impact", "scientific impact"** → `/scientific-impact-assessment`
 - **"review evidence", "evidence quality", "bias", "methodology"** → `/bio-logic`
+- **"pdf to markdown", "pdf to md", "convert pdf", "convert manuscript to markdown", "paper to markdown", "parse pdf", "liteparse", "ocr pdf"** → `/pdf-to-md`
 - **"CSAG", "argument graph", "claim evidence graph", "conditional scientific argumentation", "extract claims and evidence"** → `/csag-extraction`
 - **"browser", "scrape", "supplementary materials", "web database"** → `/agent-browser`
 - **"API documentation", "SDK documentation", "latest API docs", "current docs", "fast-moving API", "chub"** → `/get-api-docs`

@@ -1,0 +1,50 @@
+id: https://example.org/schemas/article
+name: ArticleSchema
+description: Schema for structured scientific article outputs used by the pipeline.
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  article: https://example.org/article/
+
+default_prefix: article
+default_range: MarkdownText
+
+types:
+  MarkdownText:
+    base: str
+    description: Markdown-formatted text
+
+slots:
+  title:
+    description: Article title exactly as written.
+  authors:
+    description: Comma-separated author list as written.
+  affiliations:
+    descriptions: Author affiliations, comma-separated author affiliations as written.
+  abstract:
+    description: Abstract text verbatim.
+  main:
+    description: Concatenated narrative combining introduction, results, discussion, and conclusion.
+  methods:
+    description: Methods/Materials section text.
+  figure_legends:
+    description: Figure or table captions, one entry per figure/table.
+    multivalued: true
+  figure_interpretation:
+    description: Narrative interpretation of figures/tables.
+  references:
+    description: Reference entries, one per cited item.
+    multivalued: true
+
+classes:
+  Article:
+    attributes:
+      title:
+      authors:
+      affiliations:
+      abstract:
+      main:
+      methods:
+      figure_legends:
+      figure_interpretation:
+      references:

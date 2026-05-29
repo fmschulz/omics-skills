@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "skill_count": 35,
+    "skill_count": 36,
     "agent_count": 4,
-    "edge_count": 136
+    "edge_count": 140
   },
   "skills": [
     {
@@ -164,7 +164,6 @@
       ],
       "internal_references": [
         "bio-viromics",
-        "media",
         "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
@@ -175,9 +174,6 @@
           "- Viral/phage -> route to `/bio-viromics`; use PHROG/NCVOG markers and vConTACT3 only for phage/prokaryotic-virus contexts.",
           "- Giant-virus/Nucleocytoviricota -> route to `/bio-viromics` with GVClass and NCLDV marker-gene phylogeny.",
           "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota."
-        ],
-        "media": [
-          "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
       }
     },
@@ -248,7 +244,6 @@
       ],
       "internal_references": [
         "bio-viromics",
-        "media",
         "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
@@ -258,9 +253,6 @@
         "bio-viromics": [
           "- Viral or virus-like -> remove from MAG QC and route candidate contigs/genomes to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus evidence and GVClass for giant-virus/Nucleocytoviricota candidates.",
           "- [ ] Viral/virus-like bins are routed to `/bio-viromics` instead of reported as MAGs."
-        ],
-        "media": [
-          "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
       }
     },
@@ -584,8 +576,7 @@
       ],
       "internal_references": [
         "bio-annotation",
-        "bio-protein-clustering-pangenome",
-        "media"
+        "bio-protein-clustering-pangenome"
       ],
       "reference_contexts": {
         "bio-annotation": [
@@ -593,9 +584,6 @@
         ],
         "bio-protein-clustering-pangenome": [
           "4. Annotate hits and route high-value unknowns back to `/bio-annotation` for sequence-side context, or to comparative analyses via `/bio-protein-clustering-pangenome`."
-        ],
-        "media": [
-          "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
       }
     },
@@ -626,15 +614,11 @@
         "viral genome"
       ],
       "internal_references": [
-        "media",
         "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
         "tracking-taxonomy-updates": [
           "1. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not already been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial/archaeal and eukaryotic rows stay on their domain-specific routes unless later evidence contradicts the triage."
-        ],
-        "media": [
-          "- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU)."
         ]
       }
     },
@@ -878,26 +862,15 @@
       ],
       "internal_references": [
         "assembled",
-        "clusterfs",
         "file",
         "global"
       ],
       "reference_contexts": {
-        "clusterfs": [
-          "| Download IMG genome | Copy `{taxon_oid}.tar.gz` from `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/` |",
-          "| **Genome sequences (FNA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |",
-          "| **Protein sequences (FAA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |",
-          "/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/{taxon_oid}.tar.gz",
-          "cp /clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/8136918376.tar.gz .",
-          "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/",
-          "/clusterfs/jgi/scratch/dsi/...",
-          "while [[ ! -s /clusterfs/jgi/scratch/dsi/.../file.fastq.gz ]]; do sleep 10; done"
-        ],
         "assembled": [
-          "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/"
+          "$JGI_IMG_DATA_DIR/{taxon_oid}/assembled/"
         ],
         "file": [
-          "while [[ ! -s /clusterfs/jgi/scratch/dsi/.../file.fastq.gz ]]; do sleep 10; done"
+          "while [[ ! -s \"$JGI_DSI_SCRATCH/.../file.fastq.gz\" ]]; do sleep 10; done"
         ],
         "global": [
           "from the JGI filesystem (`/global/dna/dm_archive/...`).",
@@ -982,6 +955,58 @@
       ],
       "internal_references": [],
       "reference_contexts": {}
+    },
+    {
+      "name": "pdf-to-md",
+      "title": "pdf-to-md",
+      "description": "Convert any PDF (or DOCX/PPTX/XLSX/image) to clean Markdown. For scientific papers, produce the canonical paper-to-md bundle (Markdown plus section_audit.json and article.json) using the remote OCR API when an OCR key is available, or LiteParse v2 locally when it is not. For any non-paper PDF, defer to a fast, local, no-API-key LiteParse v2 conversion. Use when turning a PDF or manuscript into Markdown, extracting article structure, or preparing input for csag-extraction.",
+      "path": "skills/pdf-to-md/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "literature-expert",
+        "science-writer"
+      ],
+      "sections": [
+        "Document Conversion"
+      ],
+      "task_patterns": [
+        "convert manuscript to markdown",
+        "convert pdf",
+        "liteparse",
+        "ocr pdf",
+        "paper to markdown",
+        "parse pdf",
+        "pdf to markdown",
+        "pdf to md"
+      ],
+      "internal_references": [
+        "path",
+        "tmp"
+      ],
+      "reference_contexts": {
+        "path": [
+          "/path/to/input.pdf --output-dir /path/to/output-dir",
+          "/path/to/input.pdf --output-dir /path/to/output-dir",
+          "/path/to/input.pdf --output-dir /path/to/output-dir",
+          "/path/to/input.pdf --output-dir /path/to/output-dir",
+          "uv run skills/pdf-to-md/scripts/build_section_audit.py /path/to/output-dir/<stem>.md",
+          "uv run skills/pdf-to-md/scripts/populate_article_json.py /path/to/output-dir/<stem>.md",
+          "/path/to/input.pdf --output-dir /path/to/output-dir/figure_review",
+          "/path/to/input.pdf --output-dir /path/to/output-dir/figure_review",
+          "/path/to/output-dir/<stem>.article.json \\",
+          "--section-audit /path/to/output-dir/<stem>.section_audit.json",
+          "/path/to/input.pdf --output-dir /path/to/output-dir",
+          "/path/to/input.pdf --output-dir /path/to/output-dir"
+        ],
+        "tmp": [
+          "uv run skills/pdf-to-md/scripts/liteparse_to_md.py report.pdf --output-dir /tmp/out --no-ocr",
+          "# -> /tmp/out/report.md  (+ report.ocr.json, report.job.json)",
+          "DIR=/tmp/paper"
+        ]
+      }
     },
     {
       "name": "pickup",
@@ -1081,9 +1106,7 @@
         "screen bioRxiv with polars-dovmed"
       ],
       "internal_references": [
-        "api",
-        "media",
-        "mnt"
+        "api"
       ],
       "reference_contexts": {
         "api": [
@@ -1097,12 +1120,6 @@
           "| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` with `dois` |",
           "- Search endpoint: `POST /api/scan_literature_advanced`",
           "- Details endpoint: `POST /api/get_paper_details`"
-        ],
-        "media": [
-          "- `--corpus pmc`: `/media/shared-expansion/db/pubmed_central/parquet_files/**/*.parquet` when mounted, otherwise the repo-local PMC parquet directory"
-        ],
-        "mnt": [
-          "- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`"
         ]
       }
     },
@@ -1385,6 +1402,9 @@
         "Citation Metadata": [
           "crossref-lookup"
         ],
+        "Document Conversion": [
+          "pdf-to-md"
+        ],
         "Evidence Triage": [
           "bio-logic"
         ],
@@ -1406,7 +1426,13 @@
           "agent-browser"
         ]
       },
-      "workflow_edges": [],
+      "workflow_edges": [
+        {
+          "source": "pdf-to-md",
+          "target": "csag-extraction",
+          "evidence": "\u2502       \u2514\u2500> /csag-extraction"
+        }
+      ],
       "task_patterns": [
         {
           "skill_name": "polars-dovmed",
@@ -1477,6 +1503,19 @@
             "evidence quality",
             "bias",
             "methodology"
+          ]
+        },
+        {
+          "skill_name": "pdf-to-md",
+          "phrases": [
+            "pdf to markdown",
+            "pdf to md",
+            "convert pdf",
+            "convert manuscript to markdown",
+            "paper to markdown",
+            "parse pdf",
+            "liteparse",
+            "ocr pdf"
           ]
         },
         {
@@ -1969,6 +2008,9 @@
         "Argument Graph Extraction": [
           "csag-extraction"
         ],
+        "Document Conversion": [
+          "pdf-to-md"
+        ],
         "Manuscript Review": [
           "manuscript-review-council"
         ],
@@ -1993,7 +2035,13 @@
           "agent-browser"
         ]
       },
-      "workflow_edges": [],
+      "workflow_edges": [
+        {
+          "source": "pdf-to-md",
+          "target": "csag-extraction",
+          "evidence": "\u2502       \u2514\u2500> /csag-extraction"
+        }
+      ],
       "task_patterns": [
         {
           "skill_name": "bio-logic",
@@ -2055,6 +2103,19 @@
             "Abstract",
             "Methods",
             "response letter"
+          ]
+        },
+        {
+          "skill_name": "pdf-to-md",
+          "phrases": [
+            "pdf to markdown",
+            "pdf to md",
+            "convert pdf",
+            "convert manuscript to markdown",
+            "paper to markdown",
+            "parse pdf",
+            "liteparse",
+            "ocr pdf"
           ]
         },
         {
@@ -2956,6 +3017,20 @@
       ]
     },
     {
+      "source": "csag-extraction",
+      "target": "pdf-to-md",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2514\u2500> /csag-extraction"
+      ]
+    },
+    {
       "source": "dataviz-artist",
       "target": "agent-browser",
       "type": "uses",
@@ -3168,6 +3243,20 @@
     {
       "source": "literature-expert",
       "target": "handoff",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/literature-expert.md"
+      ]
+    },
+    {
+      "source": "literature-expert",
+      "target": "pdf-to-md",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -3574,6 +3663,20 @@
       ]
     },
     {
+      "source": "pdf-to-md",
+      "target": "csag-extraction",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2514\u2500> /csag-extraction"
+      ]
+    },
+    {
       "source": "pickup",
       "target": "handoff",
       "type": "compose_with",
@@ -3800,6 +3903,20 @@
     {
       "source": "science-writer",
       "target": "manuscript-review-council",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/science-writer.md"
+      ]
+    },
+    {
+      "source": "science-writer",
+      "target": "pdf-to-md",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
