@@ -15,7 +15,7 @@ import urllib.request
 
 
 API_BASE = "https://api.biorxiv.org/details/biorxiv"
-USER_AGENT = "omics-skills-biorxiv-search/1.0 (+https://github.com/fschulz/omics-skills)"
+USER_AGENT = "omics-skills-biorxiv-search/1.0 (+https://github.com/fmschulz/omics-skills)"
 VALID_FIELDS = ("title", "abstract", "authors")
 PAGE_SIZE = 100
 

@@ -35,7 +35,7 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 
 Prerequisites:
 - Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
-- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU).
+- Reference DB root: set `BIO_DB_ROOT` to the project or site-local database directory.
 - Coverage/depth tables or reads available to compute coverage.
 - Docker or Apptainer/Singularity available for `bryce911/bbtools` QuickBin runs, or a documented local BBTools install.
 Inputs:

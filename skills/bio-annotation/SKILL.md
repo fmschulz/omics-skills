@@ -44,7 +44,7 @@ Functional annotation and taxonomy inference from sequence homology.
 
 Prerequisites:
 - Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
-- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU).
+- Reference DB root: set `BIO_DB_ROOT` to the project or site-local database directory.
 - Input FASTA and reference DBs are readable.
 Inputs:
 - proteins.faa (FASTA protein sequences).

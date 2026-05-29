@@ -19,7 +19,7 @@ from pathlib import Path
 
 API_URL = "https://export.arxiv.org/api/query"
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
-USER_AGENT = "omics-skills-arxiv-search/1.0 (+https://github.com/fschulz/omics-skills)"
+USER_AGENT = "omics-skills-arxiv-search/1.0 (+https://github.com/fmschulz/omics-skills)"
 DEFAULT_MIN_INTERVAL_SECONDS = 3.1
 DEFAULT_RETRIES = 2
 DEFAULT_RETRY_BACKOFF_SECONDS = 60.0

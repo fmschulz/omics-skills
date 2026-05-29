@@ -30,7 +30,7 @@ Structure prediction and structure-based annotation.
 
 Prerequisites:
 - Tools available in the active environment (Pixi/conda/system). See `docs/README.md` for expected tools.
-- Reference DB root: set `BIO_DB_ROOT` (default `/media/shared-expansion/db/` on WSU).
+- Reference DB root: set `BIO_DB_ROOT` to the project or site-local database directory.
 - Protein FASTA inputs are available.
 Inputs:
 - proteins.faa (FASTA protein sequences)

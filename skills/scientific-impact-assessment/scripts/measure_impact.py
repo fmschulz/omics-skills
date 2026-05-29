@@ -49,7 +49,7 @@ def fetch_json(url: str, headers: dict[str, str] | None = None) -> dict[str, Any
         url,
         headers={
             "Accept": "application/json",
-            "User-Agent": "scientific-impact-assessment/1.0 (+https://github.com/fschulz/omics-skills)",
+            "User-Agent": "scientific-impact-assessment/1.0 (+https://github.com/fmschulz/omics-skills)",
             **(headers or {}),
         },
     )

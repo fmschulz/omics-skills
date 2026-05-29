@@ -862,15 +862,26 @@
       ],
       "internal_references": [
         "assembled",
+        "clusterfs",
         "file",
         "global"
       ],
       "reference_contexts": {
+        "clusterfs": [
+          "| Download IMG genome | Copy `{taxon_oid}.tar.gz` from `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/` |",
+          "| **Genome sequences (FNA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |",
+          "| **Protein sequences (FAA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |",
+          "/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/{taxon_oid}.tar.gz",
+          "cp /clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/8136918376.tar.gz .",
+          "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/",
+          "/clusterfs/jgi/scratch/dsi/...",
+          "while [[ ! -s /clusterfs/jgi/scratch/dsi/.../file.fastq.gz ]]; do sleep 10; done"
+        ],
         "assembled": [
-          "$JGI_IMG_DATA_DIR/{taxon_oid}/assembled/"
+          "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/"
         ],
         "file": [
-          "while [[ ! -s \"$JGI_DSI_SCRATCH/.../file.fastq.gz\" ]]; do sleep 10; done"
+          "while [[ ! -s /clusterfs/jgi/scratch/dsi/.../file.fastq.gz ]]; do sleep 10; done"
         ],
         "global": [
           "from the JGI filesystem (`/global/dna/dm_archive/...`).",

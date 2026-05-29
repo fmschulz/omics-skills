@@ -269,9 +269,9 @@ Use this mode when no hosted API key is available, or when the user explicitly w
   --verbose
 ```
 
-Local corpus aliases on this workstation:
-- `--corpus pmc`: `/media/shared-expansion/db/pubmed_central/parquet_files/**/*.parquet` when mounted, otherwise the repo-local PMC parquet directory
-- `--corpus biorxiv`: `/mnt/taskmaster2/biorxiv/parquet/latest/part-*.parquet`
+Local corpus aliases:
+- `--corpus pmc`: set `DOVMED_PMC_PARQUET` or pass a local PMC parquet path.
+- `--corpus biorxiv`: set `DOVMED_BIORXIV_PARQUET` or pass a local bioRxiv parquet path.
 - `--corpus both`: both corpora in one scan
 
 The bioRxiv schema is compatible with `dovmed scan` and includes the same search-critical fields as PMC: `title`, `abstract_text`, `full_text`, `authors`, `journal`, `publication_date`, `doi`, `pmc_id`, `pmid`, and `file_path`. For bioRxiv records, `pmc_id` and `pmid` are blank.

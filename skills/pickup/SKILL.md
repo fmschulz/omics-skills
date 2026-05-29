@@ -64,8 +64,8 @@ Expected shape of the file:
 
 ```json
 {
-  "tenant_id": "fschulz",
-  "project_id": "memd"
+  "tenant_id": "example-tenant",
+  "project_id": "example-project"
 }
 ```
 
