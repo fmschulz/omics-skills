@@ -51,11 +51,13 @@ temp/
 *.tmp
 
 
-# AI scratch artifacts (task lists, session handoffs, agent memory)
+# AI scratch artifacts (task lists, session handoffs, agent memory, plans, reasoning)
 tasks/
 .memd/
+.planning/
 lessons.md
 MEMORY.md
+memory.md
 .codexloop/
 docs/handoffs/
 docs/plans/
