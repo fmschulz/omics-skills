@@ -5,7 +5,8 @@
         install-claude-agents install-codex-agents _install-agents install-skills install-catalog \
         install-claude-skills install-codex-skills link-claude-skills link-codex-skills \
         build-catalog install-hook uninstall-hook hook-status benchmark \
-        check-deps install-python-deps uninstall uninstall-claude uninstall-codex \
+        check-deps install-python-deps uninstall uninstall-all uninstall-selected \
+        uninstall-claude uninstall-codex \
         uninstall-skills uninstall-catalog status clean update validate test
 
 # Directories
@@ -318,8 +319,36 @@ install-python-deps: ## Install Python dependencies for skills
 
 ##@ Uninstallation
 
-uninstall: uninstall-claude uninstall-codex uninstall-skills uninstall-catalog ## Uninstall from both platforms
+uninstall: ## Uninstall with an interactive selector when possible
+	@if { [ "$(INSTALL_TUI)" = "1" ] || { [ "$(INSTALL_TUI)" = "auto" ] && [ -t 0 ] && [ -t 1 ]; }; }; then \
+		python3 $(SCRIPTS_DIR)/install_tui.py \
+			--repo $(CURDIR) \
+			--make-program "$(MAKE)" \
+			--mode uninstall \
+			--install-method "$(INSTALL_METHOD)" \
+			--verbose "$(VERBOSE)" \
+			--agents $(AGENT_FILES) \
+			--skills $(SKILL_DIRS); \
+	else \
+		$(MAKE) --no-print-directory uninstall-all; \
+	fi
+
+uninstall-all: uninstall-claude uninstall-codex uninstall-skills uninstall-catalog ## Uninstall everything without prompting
 	@echo "$(GREEN)✓ Uninstallation complete$(NC)"
+
+uninstall-selected: ## Uninstall only SELECTED_AGENT_FILES / SELECTED_SKILL_DIRS
+	@for agent in $(SELECTED_AGENT_FILES); do \
+		for dir in $(CLAUDE_AGENTS_DIR) $(CODEX_AGENTS_DIR); do \
+			t="$$dir/$$agent"; \
+			if [ -L "$$t" ] || [ -f "$$t" ]; then rm -f "$$t"; echo "  $(GREEN)✓$(NC) removed $$t"; fi; \
+		done; \
+	done
+	@for skill in $(SELECTED_SKILL_DIRS); do \
+		t="$(AGENTS_SKILLS_DIR)/$$skill"; \
+		if [ -L "$$t" ] || [ -e "$$t" ]; then rm -rf "$$t"; echo "  $(GREEN)✓$(NC) removed $$t"; fi; \
+	done
+	@echo "$(GREEN)✓ Uninstall complete$(NC)"
+	@$(MAKE) --no-print-directory status
 
 uninstall-claude: ## Uninstall from Claude Code
 	@echo "$(BLUE)Uninstalling from Claude Code...$(NC)"

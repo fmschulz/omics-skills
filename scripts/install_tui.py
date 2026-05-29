@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Interactive component selector for `make install`.
+"""Interactive component selector for `make install` / `make uninstall`.
 
 The Makefile only invokes this script for real terminal sessions. Non-
-interactive installs continue to use the all-components path directly.
+interactive runs continue to use the all-components paths directly. Press `t`
+to switch between install and uninstall; rows are annotated `(installed)` so you
+can see what is currently set up before choosing what to remove.
 """
 
 from __future__ import annotations
@@ -35,6 +37,25 @@ AGENT_LABELS = {
     "science-writer.md": "Science writer agent",
     "dataviz-artist.md": "Dataviz artist agent",
 }
+
+# Where installed components live (standard paths; no private meta-repo).
+HOME = Path.home()
+CLAUDE_AGENTS_DIR = HOME / ".claude" / "agents"
+CODEX_AGENTS_DIR = HOME / ".codex" / "agents"
+AGENTS_SKILLS_DIR = HOME / ".agents" / "skills"
+
+
+def agent_installed(agent: str) -> bool:
+    for directory in (CLAUDE_AGENTS_DIR, CODEX_AGENTS_DIR):
+        target = directory / agent
+        if target.exists() or target.is_symlink():
+            return True
+    return False
+
+
+def skill_installed(skill: str) -> bool:
+    target = AGENTS_SKILLS_DIR / skill
+    return target.exists() or target.is_symlink()
 
 
 @dataclass
@@ -78,11 +99,24 @@ def make_rows(agent_files: list[str], skill_dirs: list[str]) -> list[OptionRow]:
     return rows
 
 
-def make_initial_selection(agent_files: list[str], skill_dirs: list[str]) -> InstallSelection:
+def make_initial_selection(
+    agent_files: list[str], skill_dirs: list[str], mode: str = "install"
+) -> InstallSelection:
+    # Install: everything pre-selected. Uninstall: only what is installed.
+    pick_agent = (lambda a: True) if mode == "install" else agent_installed
+    pick_skill = (lambda s: True) if mode == "install" else skill_installed
     return InstallSelection(
-        agents={agent: True for agent in agent_files},
-        skills={skill: True for skill in skill_dirs},
+        agents={agent: pick_agent(agent) for agent in agent_files},
+        skills={skill: pick_skill(skill) for skill in skill_dirs},
     )
+
+
+def row_installed(key: str) -> bool:
+    if key == "all" or key.endswith("-header"):
+        return False
+    if key.startswith("skill:"):
+        return skill_installed(key.removeprefix("skill:"))
+    return agent_installed(key)
 
 
 def selectable_indexes(rows: list[OptionRow]) -> list[int]:
@@ -166,21 +200,25 @@ def toggle_selection(
                 selection.skills[skill] = False
 
 
-def make_install_command(
+def make_command(
     make_program: str,
+    mode: str,
     install_method: str,
     verbose: str,
     selection: InstallSelection,
 ) -> list[str]:
-    return [
+    target = "install-selected" if mode == "install" else "uninstall-selected"
+    command = [
         make_program,
         "--no-print-directory",
-        "install-selected",
+        target,
         f"SELECTED_AGENT_FILES={' '.join(selection.selected_agents())}",
         f"SELECTED_SKILL_DIRS={' '.join(selection.selected_skills())}",
-        f"INSTALL_METHOD={install_method}",
         f"VERBOSE={verbose}",
     ]
+    if mode == "install":
+        command.append(f"INSTALL_METHOD={install_method}")
+    return command
 
 
 def _row_checked(selection: InstallSelection, key: str) -> bool:
@@ -197,6 +235,7 @@ def _draw(
     selection: InstallSelection,
     cursor_index: int,
     message: str,
+    mode: str,
 ) -> None:
     screen.erase()
     height, width = screen.getmaxyx()
@@ -208,10 +247,12 @@ def _draw(
             screen.addnstr(line, 0, text, max(0, width - 1), attr)
         line += 1
 
-    add("Omics Skills Installer", curses.A_BOLD)
+    verb = "install" if mode == "install" else "uninstall"
+    add(f"Omics Skills Installer — {mode.upper()}", curses.A_BOLD)
     add("")
-    add("Use Up/Down or j/k to move, Space to toggle, Enter to install, q to cancel.")
-    add("The all option starts selected; turn it off to choose components separately.")
+    add(f"Up/Down or j/k move · Space toggle · t switch install/uninstall "
+        f"· Enter {verb} · q cancel")
+    add("Rows marked (installed) are currently present.")
     add("")
 
     max_rows = max(1, height - line - 3)
@@ -230,8 +271,9 @@ def _draw(
             continue
         marker = "[x]" if _row_checked(selection, row.key) else "[ ]"
         prefix = ">" if index == cursor_index else " "
+        suffix = "  (installed)" if row_installed(row.key) else ""
         attr = curses.A_REVERSE if index == cursor_index else 0
-        add(f"{prefix} {marker} {row.label}", attr)
+        add(f"{prefix} {marker} {row.label}{suffix}", attr)
 
     if end < len(rows):
         add(f"  ... {len(rows) - end} more below")
@@ -246,7 +288,8 @@ def choose_components(
     agent_files: list[str],
     skill_dirs: list[str],
     agent_skill_map: dict[str, set[str]] | None = None,
-) -> InstallSelection:
+    mode: str = "install",
+) -> tuple[str, InstallSelection]:
     try:
         curses.curs_set(0)
     except curses.error:
@@ -254,14 +297,14 @@ def choose_components(
     screen.keypad(True)
 
     rows = make_rows(agent_files, skill_dirs)
-    selection = make_initial_selection(agent_files, skill_dirs)
+    selection = make_initial_selection(agent_files, skill_dirs, mode)
     indexes = selectable_indexes(rows)
     cursor_pos = 0
     message = ""
 
     while True:
         cursor_index = indexes[cursor_pos]
-        _draw(screen, rows, selection, cursor_index, message)
+        _draw(screen, rows, selection, cursor_index, message, mode)
         message = ""
         key = screen.getch()
 
@@ -273,25 +316,33 @@ def choose_components(
         if key in (curses.KEY_DOWN, ord("j"), ord("J")):
             cursor_pos = (cursor_pos + 1) % len(indexes)
             continue
+        if key in (ord("t"), ord("T")):
+            mode = "uninstall" if mode == "install" else "install"
+            selection = make_initial_selection(agent_files, skill_dirs, mode)
+            continue
         if key == ord(" "):
-            toggle_selection(selection, rows[cursor_index].key, agent_skill_map)
+            # Skill cascade only makes sense when installing.
+            cascade = agent_skill_map if mode == "install" else None
+            toggle_selection(selection, rows[cursor_index].key, cascade)
             continue
         if key in (curses.KEY_ENTER, 10, 13):
             if selection.has_any:
-                return selection
-            message = "Select at least one component before installing."
+                return mode, selection
+            message = f"Select at least one component to {mode}."
 
 
-def run_selected_install(args: argparse.Namespace, selection: InstallSelection) -> int:
-    command = make_install_command(
+def run_selected(args: argparse.Namespace, mode: str, selection: InstallSelection) -> int:
+    command = make_command(
         args.make_program,
+        mode,
         args.install_method,
         args.verbose,
         selection,
     )
     selected = selection.selected_agents()
     selected.extend(f"skills/{skill}" for skill in selection.selected_skills())
-    print("Installing selected components: " + ", ".join(selected))
+    verb = "Installing" if mode == "install" else "Uninstalling"
+    print(f"{verb} selected components: " + ", ".join(selected))
     completed = subprocess.run(command, cwd=args.repo)
     return completed.returncode
 
@@ -302,6 +353,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--make-program", default=os.environ.get("MAKE", "make"))
     parser.add_argument("--install-method", default="symlink")
     parser.add_argument("--verbose", default="0")
+    parser.add_argument("--mode", choices=["install", "uninstall"], default="install")
     parser.add_argument("--agents", nargs="+", default=DEFAULT_AGENT_FILES)
     parser.add_argument("--skills", nargs="+")
     return parser.parse_args(argv)
@@ -320,12 +372,14 @@ def main(argv: list[str] | None = None) -> int:
             skills_root = args.repo / "skills"
             skill_dirs = sorted(path.name for path in skills_root.iterdir() if path.is_dir())
         agent_skill_map = load_agent_skill_map(args.repo, args.agents, skill_dirs)
-        selection = curses.wrapper(choose_components, args.agents, skill_dirs, agent_skill_map)
+        mode, selection = curses.wrapper(
+            choose_components, args.agents, skill_dirs, agent_skill_map, args.mode
+        )
     except KeyboardInterrupt:
-        print("Installation cancelled.")
+        print("Cancelled.")
         return 130
 
-    return run_selected_install(args, selection)
+    return run_selected(args, mode, selection)
 
 
 if __name__ == "__main__":
