@@ -1,9 +1,9 @@
-id: https://controlcenter.local/schemas/workflow-run-schema
+id: https://w3id.org/omics-skills/schemas/workflow-run-schema
 name: workflow-run-schema
 description: LinkML schema for executed workflow run manifests (bioinformatics + data science).
 prefixes:
   linkml: https://w3id.org/linkml/
-  bio: https://controlcenter.local/schemas/
+  bio: https://w3id.org/omics-skills/schemas/
 default_prefix: bio
 default_range: string
 imports:

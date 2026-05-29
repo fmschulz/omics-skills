@@ -1,9 +1,9 @@
-id: https://controlcenter.local/schemas/bio-paper-schema
+id: https://w3id.org/omics-skills/schemas/bio-paper-schema
 name: bio-paper-schema
 description: LinkML schema for protocol summaries of bioinformatics papers (2023-2025).
 prefixes:
   linkml: https://w3id.org/linkml/
-  bio: https://controlcenter.local/schemas/
+  bio: https://w3id.org/omics-skills/schemas/
 default_prefix: bio
 default_range: string
 imports:
