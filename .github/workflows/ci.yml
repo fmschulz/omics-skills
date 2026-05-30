@@ -31,6 +31,9 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
 
+      - name: Install test dependencies
+        run: uv pip install --system requests
+
       - name: Validate shell scripts
         run: bash -n scripts/install.sh scripts/uninstall.sh scripts/test-install.sh
 
