@@ -31,6 +31,38 @@ PRIMARY_CUTOFF_FLOOR = 0.75          # a primary skill must score at least this
 PRIMARY_CUTOFF_RATIO = 0.35          # ...and at least this fraction of the top score
 AGENT_PATTERN_DIRECT_BONUS = 1.0     # owning agent's phrase matched the query verbatim
 AGENT_PATTERN_OVERLAP_WEIGHT = 0.5   # ...partial overlap with the owning agent's phrase
+WEAK_PATTERN_TOKENS = {
+    "analysis",
+    "data",
+    "docs",
+    "documentation",
+    "document",
+    "quality",
+    "review",
+    "this",
+    "write",
+    "writing",
+}
+SOFTWARE_REVIEW_ACTION_TOKENS = {"review", "documentation", "functionality", "structure", "usefulness"}
+SCIENTIFIC_CONTEXT_TOKENS = {
+    "abstract",
+    "annotation",
+    "assembly",
+    "bioinformatics",
+    "biology",
+    "contig",
+    "doi",
+    "genome",
+    "mag",
+    "manuscript",
+    "metagenome",
+    "omics",
+    "paper",
+    "proposal",
+    "protein",
+    "scientific",
+    "sequence",
+}
 
 
 @dataclass
@@ -47,6 +79,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build":
         repo_root = resolve_repo_root(args.repo)
         payload = build_outputs(repo_root)
+        if args.include_agent is not None or args.include_skill is not None:
+            payload = filter_catalog_payload(
+                payload,
+                include_agents=args.include_agent,
+                include_skills=args.include_skill,
+            )
         out_dir = Path(args.out).expanduser().resolve() if args.out else default_output_dir(repo_root)
         out_dir.mkdir(parents=True, exist_ok=True)
         write_outputs(payload, out_dir)
@@ -79,6 +117,18 @@ def build_parser() -> argparse.ArgumentParser:
     build_cmd = subparsers.add_parser("build", help="Build catalog files from the repository.")
     build_cmd.add_argument("--repo", default=None, help="Repository root. Defaults to the parent of this script.")
     build_cmd.add_argument("--out", default=None, help="Output directory. Defaults to <repo>/catalog.")
+    build_cmd.add_argument(
+        "--include-agent",
+        action="append",
+        default=None,
+        help="Agent name or file to include. Repeat for selected installs.",
+    )
+    build_cmd.add_argument(
+        "--include-skill",
+        action="append",
+        default=None,
+        help="Skill directory/name to include. Repeat for selected installs.",
+    )
 
     route_cmd = subparsers.add_parser("route", help="Recommend an agent and ordered skills for a task.")
     route_cmd.add_argument("task", help="Task description.")
@@ -275,6 +325,36 @@ def text_overlap(left: set[str], right: set[str]) -> float:
     if not common:
         return 0.0
     return len(common) / len(right)
+
+
+def task_pattern_overlap(query_tokens: set[str], pattern_tokens: set[str]) -> float:
+    """Token overlap for task-recognition phrases.
+
+    Multi-token phrases may match on one distinctive token, but a lone generic
+    word such as "review" must not activate "peer review" or "review council".
+    """
+    if not query_tokens or not pattern_tokens:
+        return 0.0
+    common = query_tokens & pattern_tokens
+    if not common:
+        return 0.0
+    if len(pattern_tokens) > 1 and len(common) < 2 and common <= WEAK_PATTERN_TOKENS:
+        return 0.0
+    return len(common) / len(pattern_tokens)
+
+
+def is_software_repo_review(query_tokens: set[str]) -> bool:
+    """Detect off-domain software repository review requests.
+
+    The omics-skills router has no code-review skill. Explicit code/repo review
+    prompts should stay silent instead of matching scientific review patterns.
+    """
+    has_repo_subject = bool(query_tokens & {"repo", "repository"}) or (
+        "code" in query_tokens and "review" in query_tokens
+    )
+    has_review_action = bool(query_tokens & SOFTWARE_REVIEW_ACTION_TOKENS)
+    has_scientific_context = bool(query_tokens & SCIENTIFIC_CONTEXT_TOKENS)
+    return has_repo_subject and has_review_action and not has_scientific_context
 
 
 def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
@@ -493,6 +573,112 @@ def _build_catalog(repo_root: Path) -> dict[str, Any]:
     return {"catalog": catalog}
 
 
+def _agent_filter_name(value: str) -> str:
+    return Path(value).stem
+
+
+def _skill_filter_name(value: str) -> str:
+    return Path(value).name
+
+
+def filter_catalog_payload(
+    payload: dict[str, Any],
+    include_agents: list[str] | None = None,
+    include_skills: list[str] | None = None,
+) -> dict[str, Any]:
+    """Return a catalog limited to selected installed agents and skills.
+
+    Selected installs must not recommend uninstalled components. The filter
+    trims agent sections, task patterns, workflow edges, and graph edges, then
+    recomputes each skill's owning agents and patterns from the remaining
+    agents.
+    """
+    filtered = copy.deepcopy(payload)
+    catalog = filtered["catalog"]
+    agent_names = (
+        {_agent_filter_name(value) for value in include_agents}
+        if include_agents is not None
+        else {agent["name"] for agent in catalog["agents"]}
+    )
+    skill_names = (
+        {_skill_filter_name(value) for value in include_skills}
+        if include_skills is not None
+        else {skill["name"] for skill in catalog["skills"]}
+    )
+
+    skills = [skill for skill in catalog["skills"] if skill["name"] in skill_names]
+    remaining_skill_names = {skill["name"] for skill in skills}
+
+    agents: list[dict[str, Any]] = []
+    for agent in catalog["agents"]:
+        if agent["name"] not in agent_names:
+            continue
+        agent = copy.deepcopy(agent)
+        agent["skill_sections"] = {
+            section: [skill for skill in section_skills if skill in remaining_skill_names]
+            for section, section_skills in agent.get("skill_sections", {}).items()
+        }
+        agent["skill_sections"] = {
+            section: section_skills
+            for section, section_skills in agent["skill_sections"].items()
+            if section_skills
+        }
+        agent["task_patterns"] = [
+            pattern
+            for pattern in agent.get("task_patterns", [])
+            if pattern.get("skill_name") in remaining_skill_names
+        ]
+        agent["workflow_edges"] = [
+            edge
+            for edge in agent.get("workflow_edges", [])
+            if edge.get("source") in remaining_skill_names and edge.get("target") in remaining_skill_names
+        ]
+        agents.append(agent)
+
+    for skill in skills:
+        skill["agents"] = []
+        skill["sections"] = []
+        skill["task_patterns"] = []
+
+    skills_by_name = {skill["name"]: skill for skill in skills}
+    for agent in agents:
+        for section, section_skills in agent.get("skill_sections", {}).items():
+            for skill_name in section_skills:
+                if skill_name in skills_by_name:
+                    skills_by_name[skill_name]["agents"].append(agent["name"])
+                    skills_by_name[skill_name]["sections"].append(section)
+        for pattern in agent.get("task_patterns", []):
+            skill_name = pattern.get("skill_name")
+            if skill_name in skills_by_name:
+                skills_by_name[skill_name]["task_patterns"].extend(pattern.get("phrases", []))
+
+    for skill in skills:
+        skill["agents"] = sorted(set(skill["agents"]))
+        skill["sections"] = sorted(set(skill["sections"]))
+        skill["task_patterns"] = sorted(set(skill["task_patterns"]))
+
+    remaining_agent_names = {agent["name"] for agent in agents}
+    edges: list[dict[str, Any]] = []
+    for edge in catalog["edges"]:
+        if edge.get("source_type") == "agent":
+            if edge.get("source") in remaining_agent_names and edge.get("target") in remaining_skill_names:
+                edges.append(edge)
+            continue
+        if edge.get("source_type") == "skill" and edge.get("target_type") == "skill":
+            if edge.get("source") in remaining_skill_names and edge.get("target") in remaining_skill_names:
+                edges.append(edge)
+
+    catalog["skills"] = sorted(skills, key=lambda item: item["name"])
+    catalog["agents"] = sorted(agents, key=lambda item: item["name"])
+    catalog["edges"] = merge_edges(edges)
+    catalog["metadata"] = {
+        "skill_count": len(catalog["skills"]),
+        "agent_count": len(catalog["agents"]),
+        "edge_count": len(catalog["edges"]),
+    }
+    return filtered
+
+
 def write_outputs(payload: dict[str, Any], out_dir: Path) -> None:
     (out_dir / "catalog.json").write_text(json.dumps(payload["catalog"], indent=2), encoding="utf-8")
 
@@ -543,6 +729,12 @@ def resolve_route_source(repo: str | None, index_root: str | None) -> tuple[dict
         _absolutize_paths(payload, catalog_dir=repo_root / "catalog")
         return payload, "repo"
 
+    invoked_root = invoked_index_root()
+    if invoked_root is not None:
+        payload = load_outputs(invoked_root)
+        _absolutize_paths(payload, catalog_dir=invoked_root)
+        return payload, "installed"
+
     script_path = Path(__file__).resolve()
     repo_candidate = script_path.parent.parent
     if is_repo_root(repo_candidate):
@@ -564,6 +756,25 @@ def resolve_route_source(repo: str | None, index_root: str | None) -> tuple[dict
         return payload, "installed"
 
     raise SystemExit("Could not find catalog files. Pass --repo or --index-root explicitly.")
+
+
+def invoked_index_root() -> Path | None:
+    """Return the invocation directory when it contains an installed catalog.
+
+    Symlink installs make ``Path(__file__).resolve()`` point back to the repo
+    script, while ``sys.argv[0]`` remains the installed symlink path. Prefer the
+    installed catalog in that case so selected installs only route to installed
+    components.
+    """
+    if not sys.argv or not sys.argv[0]:
+        return None
+    invocation = Path(sys.argv[0]).expanduser()
+    if not invocation.is_absolute():
+        invocation = Path.cwd() / invocation
+    candidate = invocation.parent
+    if (candidate / "catalog.json").exists():
+        return candidate.resolve()
+    return None
 
 
 def _is_relative_skill_path(value: str) -> bool:
@@ -660,7 +871,7 @@ def _score_skills(
                 score += TASK_PATTERN_DIRECT_BONUS
                 reasons[skill["name"]].append(f'task pattern "{pattern}" matched directly')
                 continue
-            pattern_overlap = text_overlap(query_tokens, tokenize(pattern))
+            pattern_overlap = task_pattern_overlap(query_tokens, tokenize(pattern))
             if pattern_overlap >= PARTIAL_OVERLAP_MIN:
                 score += pattern_overlap * TASK_PATTERN_OVERLAP_WEIGHT
                 reasons[skill["name"]].append(f'task pattern "{pattern}" overlapped')
@@ -719,7 +930,7 @@ def _score_agents(
                         agent_scores[owner] += AGENT_PATTERN_DIRECT_BONUS
                         reasons[skill_name].append(f'agent {owner} pattern "{phrase}" direct match')
                         break
-                    phrase_overlap = text_overlap(query_tokens, phrase_tokens)
+                    phrase_overlap = task_pattern_overlap(query_tokens, phrase_tokens)
                     if phrase_overlap >= PARTIAL_OVERLAP_MIN:
                         agent_scores[owner] += phrase_overlap * AGENT_PATTERN_OVERLAP_WEIGHT
                         reasons[skill_name].append(f'agent {owner} pattern "{phrase}" overlap')
@@ -797,6 +1008,20 @@ def route_request(
     query = task.lower()
     query_tokens = tokenize(task)
     allowed_skills = _allowed_skills_for_agent(agent, agents)
+
+    if agent is None and is_software_repo_review(query_tokens):
+        return {
+            "task": task,
+            "platform": platform,
+            "agent": None,
+            "primary_skills": [],
+            "supporting_skills": [],
+            "ordered_skills": [],
+            "skill_scores": {},
+            "reasons": {},
+            "agent_path": None,
+            "skill_paths": {},
+        }
 
     reasons: dict[str, list[str]] = defaultdict(list)
     skill_scores = _score_skills(skills, query, query_tokens, allowed_skills, platform, reasons)

@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 42,
-    "passed": 42,
+    "total": 43,
+    "passed": 43,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -9,6 +9,7 @@
     "ordered_skill_failures": 0,
     "forbidden_skill_leaks": 0,
     "supporting_skill_overflows": 0,
+    "primary_skill_overflows": 0,
     "negative_query_failures": 0
   },
   "rows": [
@@ -18,21 +19,11 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
-          "bio-reads-qc-mapping",
-          "bio-logic"
+          "bio-reads-qc-mapping"
         ],
-        "supporting_skills": [
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "ai-scientist-evaluator",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "bio-logic"
+          "bio-reads-qc-mapping"
         ]
       }
     },
@@ -508,22 +499,18 @@
         "agent": "science-writer",
         "primary_skills": [
           "manuscript-review-council",
-          "bio-logic",
           "scientific-writing"
         ],
         "supporting_skills": [
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
           "ai-scientist-evaluator",
-          "proposal-review",
-          "crossref-lookup"
+          "bio-logic",
+          "polars-dovmed",
+          "crossref-lookup",
+          "proposal-review"
         ],
         "ordered_skills": [
           "manuscript-review-council",
-          "scientific-writing",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "bio-logic"
+          "scientific-writing"
         ]
       }
     },
@@ -533,22 +520,15 @@
       "actual": {
         "agent": "science-writer",
         "primary_skills": [
-          "proposal-review",
-          "bio-logic",
-          "manuscript-review-council"
+          "proposal-review"
         ],
         "supporting_skills": [
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "ai-scientist-evaluator",
+          "bio-logic",
+          "manuscript-review-council",
           "scientific-writing"
         ],
         "ordered_skills": [
-          "manuscript-review-council",
-          "proposal-review",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "bio-logic"
+          "proposal-review"
         ]
       }
     },
@@ -602,14 +582,16 @@
           "manuscript-review-council"
         ],
         "supporting_skills": [
+          "pdf-to-md",
           "ai-scientist-evaluator",
           "bio-logic",
           "polars-dovmed",
           "scientific-writing"
         ],
         "ordered_skills": [
-          "csag-extraction",
-          "manuscript-review-council"
+          "manuscript-review-council",
+          "pdf-to-md",
+          "csag-extraction"
         ]
       }
     },
@@ -703,20 +685,11 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
-          "bio-reads-qc-mapping",
-          "bio-logic"
+          "bio-reads-qc-mapping"
         ],
-        "supporting_skills": [
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "bio-reads-qc-mapping",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "bio-logic"
+          "bio-reads-qc-mapping"
         ]
       }
     },
@@ -797,6 +770,16 @@
       "passed": true,
       "actual": {
         "agent": "science-writer",
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "perform a critical code review of this repo and its usefulness functionality repo structure and documentation",
+      "passed": true,
+      "actual": {
+        "agent": null,
         "primary_skills": [],
         "supporting_skills": [],
         "ordered_skills": []

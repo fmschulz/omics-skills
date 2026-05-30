@@ -109,6 +109,14 @@ def evaluate_row(row: dict[str, Any]) -> RowResult:
     if missing_primary:
         failures.append(f"missing primary skills: {missing_primary}")
 
+    expected_primary_exact = row.get("expected_primary_exact")
+    if expected_primary_exact is not None:
+        expected = list(expected_primary_exact)
+        if result["primary_skills"] != expected:
+            failures.append(
+                f"primary skills not exact: expected {expected}, got {result['primary_skills']}"
+            )
+
     expected_ordered = row.get("expected_ordered_includes") or []
     missing_ordered = [s for s in expected_ordered if s not in result["ordered_skills"]]
     if missing_ordered:
@@ -133,6 +141,16 @@ def evaluate_row(row: dict[str, Any]) -> RowResult:
             failures.append(
                 f"too many supporting skills: {actual_supporting} > {limit} "
                 f"({result['supporting_skills']})"
+            )
+
+    max_primary = row.get("max_primary_skills")
+    if max_primary is not None:
+        limit = int(max_primary)
+        actual_primary = len(result["primary_skills"])
+        if actual_primary > limit:
+            failures.append(
+                f"too many primary skills: {actual_primary} > {limit} "
+                f"({result['primary_skills']})"
             )
 
     # Hard-negative guard: off-domain queries must not surface a confident
@@ -160,10 +178,18 @@ def aggregate(results: list[RowResult]) -> dict[str, Any]:
     total = len(results)
     passed = sum(1 for r in results if r.passed)
     agent_failures = sum(1 for r in results if any(f.startswith("agent:") for f in r.failures))
-    primary_failures = sum(1 for r in results if any("primary skills" in f for f in r.failures))
+    primary_failures = sum(
+        1
+        for r in results
+        if any(
+            f.startswith("missing primary skills") or f.startswith("primary skills not exact")
+            for f in r.failures
+        )
+    )
     ordered_failures = sum(1 for r in results if any("ordered skills" in f for f in r.failures))
     forbidden_failures = sum(1 for r in results if any("forbidden" in f for f in r.failures))
     supporting_overflows = sum(1 for r in results if any("too many supporting" in f for f in r.failures))
+    primary_overflows = sum(1 for r in results if any("too many primary" in f for f in r.failures))
     negative_failures = sum(1 for r in results if any("no confident primary" in f for f in r.failures))
     return {
         "total": total,
@@ -175,6 +201,7 @@ def aggregate(results: list[RowResult]) -> dict[str, Any]:
         "ordered_skill_failures": ordered_failures,
         "forbidden_skill_leaks": forbidden_failures,
         "supporting_skill_overflows": supporting_overflows,
+        "primary_skill_overflows": primary_overflows,
         "negative_query_failures": negative_failures,
     }
 

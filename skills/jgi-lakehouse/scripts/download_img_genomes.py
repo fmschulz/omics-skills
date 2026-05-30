@@ -19,17 +19,74 @@ import time
 from pathlib import Path
 
 import requests
-import urllib3
-urllib3.disable_warnings()
 
 # Configuration
 DREMIO_HOST = os.getenv("DREMIO_HOST", "lakehouse-1.jgi.lbl.gov")
 DREMIO_PORT = os.getenv("DREMIO_PORT", "9047")
 DREMIO_BASE_URL = f"https://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
+DREMIO_REQUEST_TIMEOUT = float(os.getenv("DREMIO_REQUEST_TIMEOUT", "60"))
+TLS_DISABLED_VALUES = {"0", "false", "no", "off"}
+ALLOWED_DOMAINS = {"Archaea", "Bacteria", "Eukaryota", "Viruses"}
+MAX_QUERY_LIMIT = 5000
 
 # JGI Filesystem paths
-IMG_DOWNLOAD_DIR = Path("/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download")
-IMG_DATA_DIR = Path("/clusterfs/jgi/img_merfs-ro/img_web_data_merfs")
+IMG_DOWNLOAD_DIR = Path(
+    os.getenv("IMG_DOWNLOAD_DIR", "/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download")
+)
+IMG_DATA_DIR = Path(os.getenv("IMG_DATA_DIR", "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs"))
+
+
+def verify_tls() -> bool:
+    """Return whether Dremio HTTPS requests should verify TLS certificates."""
+    return os.getenv("DREMIO_VERIFY_TLS", "1").strip().lower() not in TLS_DISABLED_VALUES
+
+
+def validate_domain(domain: str) -> str:
+    """Whitelist IMG domain values before building SQL text."""
+    if domain not in ALLOWED_DOMAINS:
+        allowed = ", ".join(sorted(ALLOWED_DOMAINS))
+        raise ValueError(f"Unsupported domain {domain!r}. Allowed values: {allowed}")
+    return domain
+
+
+def validate_limit(limit: int) -> int:
+    limit = int(limit)
+    if limit < 1 or limit > MAX_QUERY_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_QUERY_LIMIT}")
+    return limit
+
+
+def bounded_count_arg(value: str) -> int:
+    """argparse type for --count with a clean CLI error instead of a traceback."""
+    try:
+        return validate_limit(int(value))
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
+
+
+def _is_relative_to(path: Path, base: Path) -> bool:
+    try:
+        path.relative_to(base)
+    except ValueError:
+        return False
+    return True
+
+
+def safe_extract_tar(tar: tarfile.TarFile, extract_dir: Path) -> None:
+    """Extract a tarball after rejecting members that escape extract_dir."""
+    base = extract_dir.resolve()
+    for member in tar.getmembers():
+        target = (base / member.name).resolve()
+        if not _is_relative_to(target, base):
+            raise ValueError(f"Unsafe tar member path: {member.name}")
+        if member.issym() or member.islnk():
+            link_target = (target.parent / member.linkname).resolve()
+            if not _is_relative_to(link_target, base):
+                raise ValueError(f"Unsafe tar link target: {member.name} -> {member.linkname}")
+    try:
+        tar.extractall(base, filter="data")
+    except TypeError:
+        tar.extractall(base)
 
 
 def get_token():
@@ -46,6 +103,7 @@ def get_token():
 
 def query(sql: str, limit: int = 100) -> list:
     """Execute SQL query against Lakehouse."""
+    limit = validate_limit(limit)
     token = get_token()
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
@@ -54,7 +112,8 @@ def query(sql: str, limit: int = 100) -> list:
         f"{DREMIO_BASE_URL}/sql",
         headers=headers,
         json={"sql": sql},
-        verify=False
+        timeout=DREMIO_REQUEST_TIMEOUT,
+        verify=verify_tls(),
     )
     response.raise_for_status()
     job_id = response.json().get("id")
@@ -64,13 +123,16 @@ def query(sql: str, limit: int = 100) -> list:
         status = requests.get(
             f"{DREMIO_BASE_URL}/job/{job_id}",
             headers=headers,
-            verify=False
-        ).json()
+            timeout=DREMIO_REQUEST_TIMEOUT,
+            verify=verify_tls(),
+        )
+        status.raise_for_status()
+        status_json = status.json()
 
-        if status.get("jobState") == "COMPLETED":
+        if status_json.get("jobState") == "COMPLETED":
             break
-        elif status.get("jobState") in ("FAILED", "CANCELED"):
-            raise RuntimeError(f"Query failed: {status.get('errorMessage')}")
+        elif status_json.get("jobState") in ("FAILED", "CANCELED", "CANCELLED"):
+            raise RuntimeError(f"Query failed: {status_json.get('errorMessage')}")
         time.sleep(1)
 
     # Get results
@@ -78,13 +140,17 @@ def query(sql: str, limit: int = 100) -> list:
         f"{DREMIO_BASE_URL}/job/{job_id}/results",
         headers=headers,
         params={"limit": limit},
-        verify=False
+        timeout=DREMIO_REQUEST_TIMEOUT,
+        verify=verify_tls(),
     )
+    results.raise_for_status()
     return results.json().get("rows", [])
 
 
 def find_genomes(domain: str = "Bacteria", limit: int = 100) -> list:
     """Query Lakehouse for finished isolate genomes."""
+    domain = validate_domain(domain)
+    limit = validate_limit(limit)
     sql = f"""
     SELECT
         taxon_oid,
@@ -147,8 +213,8 @@ def download_genome(taxon_oid: str, output_dir: Path) -> dict:
         extract_dir = output_dir / taxon_oid
         extract_dir.mkdir(exist_ok=True)
 
-        with tarfile.open(dst, 'r:gz') as tar:
-            tar.extractall(extract_dir)
+        with tarfile.open(dst, "r:gz") as tar:
+            safe_extract_tar(tar, extract_dir)
 
         return {
             "success": True,
@@ -183,17 +249,18 @@ def download_genome(taxon_oid: str, output_dir: Path) -> dict:
     return {"success": False, "error": "Unknown file type"}
 
 
-def main():
+def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="Download IMG genomes from JGI Lakehouse")
-    parser.add_argument("--count", type=int, default=5, help="Number of genomes to download")
-    parser.add_argument("--domain", default="Bacteria", help="Domain (Bacteria, Archaea)")
+    parser.add_argument("--count", type=bounded_count_arg, default=5, help="Number of genomes to download")
+    parser.add_argument("--domain", default="Bacteria", choices=sorted(ALLOWED_DOMAINS), help="IMG domain")
     parser.add_argument("--output-dir", default="img_genomes", help="Output directory")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    count = args.count
 
     output_dir = Path(args.output_dir)
 
     print("=" * 70)
-    print(f"Downloading {args.count} {args.domain} genomes from JGI Lakehouse")
+    print(f"Downloading {count} {args.domain} genomes from JGI Lakehouse")
     print("=" * 70)
 
     # Step 1: Query Lakehouse
@@ -210,25 +277,25 @@ def main():
         if avail["available"]:
             g.update(avail)
             available.append(g)
-            if len(available) >= args.count * 2:  # Get more than needed for diversity
+            if len(available) >= count * 2:  # Get more than needed for diversity
                 break
 
     print(f"   Found {len(available)} genomes with files available")
 
     # Step 3: Select diverse genomes
-    print(f"\n3. Selecting {args.count} diverse genomes...")
+    print(f"\n3. Selecting {count} diverse genomes...")
     selected = []
     phyla_seen = set()
 
     for g in available:
         phylum = g.get("phylum", "Unknown")
-        if phylum not in phyla_seen and len(selected) < args.count:
+        if phylum not in phyla_seen and len(selected) < count:
             selected.append(g)
             phyla_seen.add(phylum)
 
     # Fill remaining
     for g in available:
-        if g not in selected and len(selected) < args.count:
+        if g not in selected and len(selected) < count:
             selected.append(g)
 
     # Step 4: Download

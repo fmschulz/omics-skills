@@ -28,9 +28,9 @@ Typical output:
 
 ```text
 Agent: omics-scientist
-Primary skills: bio-assembly-qc, bio-binning-qc
-Supporting skills: bio-reads-qc-mapping
-Suggested order: bio-reads-qc-mapping -> bio-assembly-qc -> bio-binning-qc
+Primary skills: bio-assembly-qc, bio-binning-qc, tracking-taxonomy-updates
+Supporting skills: bio-reads-qc-mapping, bio-annotation, bio-gene-calling, bio-viromics
+Suggested order: bio-reads-qc-mapping -> bio-assembly-qc -> tracking-taxonomy-updates -> bio-binning-qc
 ```
 
 ## Install the Hook
@@ -53,7 +53,7 @@ export OMICS_SKILLS_AUTOROUTE=0
 The router uses:
 
 - Skill names and descriptions.
-- Agent task-recognition patterns.
+- Agent task-recognition patterns, with generic one-word overlaps suppressed for multi-word patterns.
 - Agent-to-skill ownership.
 - Workflow edges from each agent's decision tree.
 - Skill-to-skill references from skill bodies.

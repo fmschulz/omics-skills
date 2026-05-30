@@ -117,6 +117,29 @@ class SkillIndexTests(unittest.TestCase):
         self.assertIn("bio-binning-qc", result["primary_skills"])
         self.assertIn("bio-reads-qc-mapping", result["ordered_skills"])
 
+    def test_code_review_query_is_a_hard_negative(self) -> None:
+        result = skill_index.route_request(
+            task="perform a critical code review of this repo and its usefulness functionality repo structure and documentation",
+            agent=None,
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertEqual(result["primary_skills"], [])
+        self.assertEqual(result["ordered_skills"], [])
+
+    def test_generic_single_token_pattern_overlap_is_suppressed(self) -> None:
+        query_tokens = skill_index.tokenize("perform a code review of this repository")
+        self.assertEqual(
+            skill_index.task_pattern_overlap(query_tokens, skill_index.tokenize("peer review")),
+            0.0,
+        )
+        self.assertGreater(
+            skill_index.task_pattern_overlap(query_tokens, skill_index.tokenize("code review")),
+            0.0,
+        )
+
     def test_route_request_uses_installed_paths_when_running_from_installed_catalog(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -195,6 +218,48 @@ class SkillIndexTests(unittest.TestCase):
                 result["skill_paths"]["assembly"],
                 str(skills_root / "assembly" / "SKILL.md"),
             )
+
+    def test_filter_catalog_payload_removes_unselected_agents_and_skills(self) -> None:
+        payload = skill_index.build_outputs(REPO_ROOT)
+        filtered = skill_index.filter_catalog_payload(
+            payload,
+            include_agents=["science-writer.md"],
+            include_skills=["bio-logic", "scientific-writing"],
+        )
+        catalog = filtered["catalog"]
+        self.assertEqual([agent["name"] for agent in catalog["agents"]], ["science-writer"])
+        self.assertEqual(
+            [skill["name"] for skill in catalog["skills"]],
+            ["bio-logic", "scientific-writing"],
+        )
+        for agent in catalog["agents"]:
+            for section_skills in agent["skill_sections"].values():
+                self.assertLessEqual(set(section_skills), {"bio-logic", "scientific-writing"})
+            for pattern in agent["task_patterns"]:
+                self.assertIn(pattern["skill_name"], {"bio-logic", "scientific-writing"})
+        for edge in catalog["edges"]:
+            if edge["source_type"] == "agent":
+                self.assertEqual(edge["source"], "science-writer")
+                self.assertIn(edge["target"], {"bio-logic", "scientific-writing"})
+            if edge["source_type"] == "skill":
+                self.assertIn(edge["source"], {"bio-logic", "scientific-writing"})
+                self.assertIn(edge["target"], {"bio-logic", "scientific-writing"})
+
+    def test_filter_catalog_payload_supports_skills_only_install(self) -> None:
+        payload = skill_index.build_outputs(REPO_ROOT)
+        filtered = skill_index.filter_catalog_payload(
+            payload,
+            include_agents=["__none__"],
+            include_skills=["scientific-writing"],
+        )
+        catalog = filtered["catalog"]
+        self.assertEqual(catalog["agents"], [])
+        self.assertEqual([skill["name"] for skill in catalog["skills"]], ["scientific-writing"])
+        self.assertEqual(catalog["metadata"]["agent_count"], 0)
+        self.assertEqual(catalog["metadata"]["skill_count"], 1)
+        self.assertFalse(
+            any(edge["source_type"] == "agent" or edge.get("target_type") == "agent" for edge in catalog["edges"])
+        )
 
     def test_prompt_guidance_uses_catalog_wrapper(self) -> None:
         agents_md = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
@@ -524,6 +589,29 @@ class CliTests(unittest.TestCase):
             self.assertFalse((out / "routing.json").exists())
             printed = json.loads(buffer.getvalue())
             self.assertEqual(set(printed), {"catalog"})
+
+    def test_build_command_can_emit_selected_subset_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir)
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                rc = skill_index.main(
+                    [
+                        "build",
+                        "--repo",
+                        str(REPO_ROOT),
+                        "--out",
+                        str(out),
+                        "--include-agent",
+                        "science-writer.md",
+                        "--include-skill",
+                        "scientific-writing",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            catalog = json.loads((out / "catalog.json").read_text(encoding="utf-8"))
+            self.assertEqual([agent["name"] for agent in catalog["agents"]], ["science-writer"])
+            self.assertEqual([skill["name"] for skill in catalog["skills"]], ["scientific-writing"])
 
     def test_route_command_text_output(self) -> None:
         buffer = io.StringIO()

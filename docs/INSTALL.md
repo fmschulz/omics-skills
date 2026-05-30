@@ -12,7 +12,7 @@ Complete guide for installing Omics Skills for Claude Code and Codex CLI.
 - **Bash** shell (Linux, macOS, WSL on Windows)
 
 ### Optional
-- **Python 3** with pip3 (required for some skills with Python dependencies)
+- **Python 3** and **uv** (required for some skills with Python dependencies)
 - **Make** (for using Makefile, or use `scripts/install.sh` instead)
 
 ### Check Prerequisites
@@ -26,7 +26,7 @@ codex --version
 
 # Check Python (optional, needed for some skills)
 python3 --version
-pip3 --version
+uv --version
 ```
 
 ---
@@ -337,10 +337,13 @@ Some skills require Python packages. Install them with:
 make install-python-deps
 ```
 
+This creates or reuses a repository-local `.venv` via `uv`.
+
 **Manual installation:**
 ```bash
 # Only bio-workflow-methods-docwriter has Python deps
-pip3 install -r skills/bio-workflow-methods-docwriter/requirements.txt
+uv venv .venv
+uv pip install --python .venv/bin/python -r skills/bio-workflow-methods-docwriter/requirements.txt
 ```
 
 **Dependencies installed:**

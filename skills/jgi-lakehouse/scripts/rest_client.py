@@ -7,7 +7,7 @@ Uses internal HTTP endpoint (requires LBNL network access)
 import os
 import time
 import requests
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Configuration
 DREMIO_HOST = os.getenv("DREMIO_HOST", "lakehouse-1.jgi.lbl.gov")
@@ -16,6 +16,18 @@ DREMIO_BASE_URL = f"https://{DREMIO_HOST}:{DREMIO_PORT}/api/v3"
 
 # Default timeout for job polling (seconds)
 DEFAULT_JOB_TIMEOUT = 300
+DEFAULT_REQUEST_TIMEOUT = float(os.getenv("DREMIO_REQUEST_TIMEOUT", "60"))
+TLS_DISABLED_VALUES = {"0", "false", "no", "off"}
+
+
+def verify_tls() -> bool:
+    """Return whether Dremio HTTPS requests should verify TLS certificates."""
+    return os.getenv("DREMIO_VERIFY_TLS", "1").strip().lower() not in TLS_DISABLED_VALUES
+
+
+def request_options() -> Dict[str, Any]:
+    """Shared requests kwargs for TLS verification and request timeout."""
+    return {"verify": verify_tls(), "timeout": DEFAULT_REQUEST_TIMEOUT}
 
 
 def _get_token() -> str:
@@ -56,7 +68,7 @@ def execute_sql(sql: str, context: Optional[List[str]] = None) -> Dict[str, Any]
     if context:
         payload["context"] = context
 
-    response = requests.post(url, headers=_get_headers(), json=payload, verify=False)
+    response = requests.post(url, headers=_get_headers(), json=payload, **request_options())
     response.raise_for_status()
 
     return response.json()
@@ -73,7 +85,7 @@ def get_job_status(job_id: str) -> Dict[str, Any]:
         dict with jobState and other metadata
     """
     url = f"{DREMIO_BASE_URL}/job/{job_id}"
-    response = requests.get(url, headers=_get_headers(), verify=False)
+    response = requests.get(url, headers=_get_headers(), **request_options())
     response.raise_for_status()
     return response.json()
 
@@ -128,7 +140,7 @@ def get_job_results(job_id: str, offset: int = 0, limit: int = 100) -> Dict[str,
     url = f"{DREMIO_BASE_URL}/job/{job_id}/results"
     params = {"offset": offset, "limit": min(limit, 500)}
 
-    response = requests.get(url, headers=_get_headers(), params=params, verify=False)
+    response = requests.get(url, headers=_get_headers(), params=params, **request_options())
     response.raise_for_status()
 
     return response.json()
@@ -216,7 +228,7 @@ def list_catalogs() -> List[Dict[str, Any]]:
     """List available catalogs/sources"""
     url = f"{DREMIO_BASE_URL}/catalog"
 
-    response = requests.get(url, headers=_get_headers(), verify=False)
+    response = requests.get(url, headers=_get_headers(), **request_options())
     response.raise_for_status()
 
     data = response.json()
@@ -238,7 +250,7 @@ def get_catalog_item(path: str) -> Dict[str, Any]:
 
     url = f"{DREMIO_BASE_URL}/catalog/{encoded_path}"
 
-    response = requests.get(url, headers=_get_headers(), verify=False)
+    response = requests.get(url, headers=_get_headers(), **request_options())
     response.raise_for_status()
 
     return response.json()
@@ -270,7 +282,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print(f"Endpoint: {DREMIO_BASE_URL}")
-    print(f"Token: {token[:20]}...")
+    print("Token: configured")
     print()
 
     try:

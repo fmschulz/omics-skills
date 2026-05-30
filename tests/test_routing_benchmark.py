@@ -28,11 +28,26 @@ class RoutingBenchmarkTests(unittest.TestCase):
             "platform": "codex",
             "expected_agent": "omics-scientist",
             "expected_primary_skills": ["bio-reads-qc-mapping"],
+            "expected_primary_exact": ["bio-reads-qc-mapping"],
         }
         result = routing_benchmark.evaluate_row(sample)
         self.assertTrue(result.passed, f"unexpected failures: {result.failures}")
         self.assertEqual(result.actual["agent"], "omics-scientist")
         self.assertIn("bio-reads-qc-mapping", result.actual["primary_skills"])
+
+    def test_evaluate_row_flags_exact_primary_mismatch(self) -> None:
+        sample = {
+            "task": "quality-control Illumina short reads with fastp and trim adapters",
+            "platform": "codex",
+            "expected_agent": "omics-scientist",
+            "expected_primary_exact": ["bio-reads-qc-mapping", "notebooks"],
+        }
+        result = routing_benchmark.evaluate_row(sample)
+        self.assertFalse(result.passed)
+        self.assertTrue(
+            any("primary skills not exact" in failure for failure in result.failures),
+            result.failures,
+        )
 
     def test_baseline_snapshot_exists_and_is_wellformed(self) -> None:
         baseline_path = REPO_ROOT / "docs" / "routing_baseline.json"
@@ -87,12 +102,19 @@ class RoutingBenchmarkTests(unittest.TestCase):
                 failures=["missing primary skills: ['z']"],
                 actual={},
             ),
+            RowResult(
+                task="d",
+                passed=False,
+                failures=["too many primary skills: 3 > 1"],
+                actual={},
+            ),
         ]
         summary = aggregate(results)
-        self.assertEqual(summary["total"], 3)
+        self.assertEqual(summary["total"], 4)
         self.assertEqual(summary["passed"], 1)
         self.assertEqual(summary["agent_failures"], 1)
         self.assertEqual(summary["primary_skill_failures"], 1)
+        self.assertEqual(summary["primary_skill_overflows"], 1)
 
 
 if __name__ == "__main__":

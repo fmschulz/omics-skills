@@ -359,7 +359,6 @@
         "bias",
         "causal",
         "causation",
-        "critique",
         "design experiment",
         "evidence quality",
         "experimental design",
@@ -369,12 +368,13 @@
         "hypothesis",
         "intermediate result",
         "interpret",
+        "methodological bias",
         "methodology",
         "observational",
         "reason",
-        "review",
         "review evidence",
         "revise hypothesis",
+        "scientific critique",
         "surprising",
         "unexpected",
         "why"
@@ -2057,10 +2057,10 @@
         {
           "skill_name": "bio-logic",
           "phrases": [
-            "review",
-            "critique",
-            "bias",
-            "evidence quality"
+            "scientific critique",
+            "methodological bias",
+            "evidence quality",
+            "review evidence"
           ]
         },
         {

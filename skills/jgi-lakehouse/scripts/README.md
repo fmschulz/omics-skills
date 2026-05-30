@@ -50,6 +50,8 @@ results = query(
 **Important behavior:**
 - `rest_client` resolves `DREMIO_PAT` at call time. Set/export token before query calls.
 - `show_schemas()` should use a high limit (for example `2000`) to avoid truncation.
+- HTTPS certificate verification is enabled by default. Prefer configuring a local CA bundle; set `DREMIO_VERIFY_TLS=false` only as an explicit internal-network fallback.
+- `DREMIO_REQUEST_TIMEOUT` controls per-request timeout in seconds; default is `60`.
 
 ### Arrow Flight Python Example (Optional)
 For a performant Arrow Flight workflow, see:
@@ -84,7 +86,7 @@ Download genomes with IMG taxon OIDs from JGI filesystem.
 **Usage:**
 ```bash
 export DREMIO_PAT=$(cat ~/.secrets/dremio_pat)
-python download_img_genomes.py --domain Bacteria --limit 5 --output ./genomes
+python download_img_genomes.py --domain Bacteria --count 5 --output-dir ./genomes
 ```
 
 **Features:**
@@ -97,6 +99,12 @@ python download_img_genomes.py --domain Bacteria --limit 5 --output ./genomes
 - DREMIO_PAT environment variable
 - JGI cluster account with filesystem access
 - Access to `/clusterfs/jgi/img_merfs-ro/`
+
+**Configuration:**
+- `DREMIO_VERIFY_TLS`: defaults to `1`; set `false` only when an internal endpoint cannot validate against the available CA bundle.
+- `DREMIO_REQUEST_TIMEOUT`: request timeout in seconds; defaults to `60`.
+- `IMG_DOWNLOAD_DIR`: genome package root; defaults to `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download`.
+- `IMG_DATA_DIR`: extracted IMG data root; defaults to `/clusterfs/jgi/img_merfs-ro/img_web_data_merfs`.
 
 ## Authentication Setup
 
@@ -157,7 +165,7 @@ response = requests.post(
     f"{BASE_URL}/sql",
     headers=headers,
     json={"sql": "SHOW SCHEMAS"},
-    verify=False
+    timeout=60,
 )
 job_id = response.json()["id"]
 
@@ -188,6 +196,9 @@ results = response.json()["rows"]
 
 **"HTTP 302"**
 → Cloudflare Access blocking. Use internal endpoint.
+
+**"SSLCertVerificationError"**
+→ Configure the appropriate CA bundle if possible. For an explicit internal-network fallback, set `DREMIO_VERIFY_TLS=false`.
 
 **"ModuleNotFoundError: requests"**
 → `pip install requests` or use pixi environment.

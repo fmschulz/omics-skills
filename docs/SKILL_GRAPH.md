@@ -86,7 +86,7 @@ The router:
 1. Loads the built catalog or rebuilds it from the repo.
 2. Scores skills against the task using:
    - skill name and description overlap
-   - `Task Recognition Patterns`
+   - `Task Recognition Patterns`, with generic one-word overlaps such as `review` suppressed for multi-word patterns
    - optional agent filter
    - optional platform filter such as `--platform codex`
 3. Selects the best matching primary skills.
@@ -109,9 +109,9 @@ Typical output shape:
 
 ```text
 Agent: omics-scientist
-Primary skills: bio-assembly-qc, bio-binning-qc
-Supporting skills: bio-reads-qc-mapping
-Suggested order: bio-reads-qc-mapping -> bio-assembly-qc -> bio-binning-qc
+Primary skills: bio-assembly-qc, bio-binning-qc, tracking-taxonomy-updates
+Supporting skills: bio-reads-qc-mapping, bio-annotation, bio-gene-calling, bio-viromics
+Suggested order: bio-reads-qc-mapping -> bio-assembly-qc -> tracking-taxonomy-updates -> bio-binning-qc
 ```
 
 ## How Claude Code Uses It

@@ -25,6 +25,7 @@ SKILLS_DIR="$REPO_ROOT/skills"
 AGENT_FILES=("omics-scientist.md" "literature-expert.md" "science-writer.md" "dataviz-artist.md")
 
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 CODEX_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_SKILLS_DIR="$HOME/.codex/skills"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
@@ -88,6 +89,16 @@ uninstall_from_claude() {
         echo -e "  ${GREEN}✓${NC} Removed backup files"
     fi
 
+    if [ -L "$CLAUDE_SKILLS_DIR" ]; then
+        target=$(readlink "$CLAUDE_SKILLS_DIR")
+        if [ "$target" = "$AGENTS_SKILLS_DIR" ]; then
+            rm "$CLAUDE_SKILLS_DIR"
+            echo -e "  ${GREEN}✓${NC} Removed Claude skills link"
+        else
+            echo -e "  ${YELLOW}○${NC} Preserved non-omics Claude skills symlink: $target"
+        fi
+    fi
+
     echo -e "${GREEN}✓ Claude Code uninstalled${NC}"
 }
 
@@ -111,8 +122,13 @@ uninstall_from_codex() {
     fi
 
     if [ -L "$CODEX_SKILLS_DIR" ]; then
-        rm "$CODEX_SKILLS_DIR"
-        echo -e "  ${GREEN}✓${NC} Removed Codex skills link"
+        target=$(readlink "$CODEX_SKILLS_DIR")
+        if [ "$target" = "$AGENTS_SKILLS_DIR" ]; then
+            rm "$CODEX_SKILLS_DIR"
+            echo -e "  ${GREEN}✓${NC} Removed Codex skills link"
+        else
+            echo -e "  ${YELLOW}○${NC} Preserved non-omics Codex skills symlink: $target"
+        fi
     fi
 
     echo -e "${GREEN}✓ Codex CLI uninstalled${NC}"

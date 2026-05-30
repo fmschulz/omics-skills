@@ -121,8 +121,8 @@ Skills are also invocable individually as `/<skill-name>`. Agent files list the 
 | Agent | Focus | Skills |
 |---|---|---:|
 | `omics-scientist` | Sequencing reads, assembly, binning, annotation, phylogenomics, MAG recovery, JGI access | 21 |
-| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact, API docs | 11 |
-| `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 10 |
+| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact, API docs | 12 |
+| `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 11 |
 | `dataviz-artist` | marimo and Jupyter notebooks (executed end-to-end), scientific data inspection, matplotlib/seaborn figures, Plotly Dash dashboards | 7 |
 
 Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a specific agent routes a given task.
@@ -132,7 +132,7 @@ Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a
 ```
 agents/                     4 agent definitions
 skills/                     skill directories; each has a SKILL.md
-catalog/                    generated router artifacts (catalog, relationships, routing)
+catalog/                    generated router artifact (catalog.json)
 scripts/
   skill_index.py            router and catalog builder
   routing_benchmark.py      regression harness
@@ -142,6 +142,8 @@ scripts/
   uninstall.sh, test-install.sh, validate-skills.py
 tests/
   test_skill_index.py       unit tests for catalog and router
+  test_install_selected.py  selected-install and uninstall integration tests
+  test_jgi_lakehouse_helpers.py JGI helper safety tests
   test_routing_benchmark.py harness sanity tests
   test_emit_routing_hint.py hook-script tests
   routing_benchmark.yaml    routing regression suite

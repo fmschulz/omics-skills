@@ -6,7 +6,7 @@ Guidance for AI coding agents (Claude Code, Cursor, Copilot) working in this rep
 
 ## Repository overview
 
-4 agents and 35 skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
+4 agents and 36 skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
 
 Layout:
 - `agents/` — 4 agent definitions (markdown)

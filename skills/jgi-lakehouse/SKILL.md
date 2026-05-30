@@ -55,6 +55,7 @@ WHERE is_public = 'Yes' LIMIT 5;
 - JGI/GOLD/IMG identifier, taxonomy, project filter, term, or file target.
 - `DREMIO_PAT` for SQL; filesystem/JAMO access for files or reads.
 - Whether the result is exploratory, comprehensive, or a download.
+- Optional runtime settings: `DREMIO_VERIFY_TLS` (default `1`; set `false` only for internal endpoints with unavailable CA validation), `DREMIO_REQUEST_TIMEOUT` (default `60` seconds), `IMG_DOWNLOAD_DIR`, and `IMG_DATA_DIR`.
 
 ## Output
 
@@ -81,12 +82,7 @@ See `examples/04-download-img-genomes.md` and `examples/05-query-numg-metagenome
 
 **Issue**: Final answer is based on 50 or 100 rows. **Solution**: Remove exploratory limits or use aggregation.
 
----
-
-## Best practices
- - When reporting results from database queries, always provide a clear summary of the exact criteria that were used for filtering. This should include a list of each field that was used in the query/filter, and the query/filter was applied (string used in exact match, regular expression, exact number searched for or range, etc) 
-
----
+**Issue**: Dremio HTTPS fails with certificate verification errors on the internal endpoint. **Solution**: Prefer configuring the local CA bundle; for an explicit internal-network fallback, set `DREMIO_VERIFY_TLS=false` and record that opt-out in the run notes.
 
 ## Data Access: Lakehouse vs Filesystem
 

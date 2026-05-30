@@ -14,6 +14,8 @@ AGENTS_DIR := $(CURDIR)/agents
 SKILLS_DIR := $(CURDIR)/skills
 SCRIPTS_DIR := $(CURDIR)/scripts
 CATALOG_DIR := $(CURDIR)/catalog
+CATALOG_SRC_DIR ?= $(CATALOG_DIR)
+PYTHON_ENV_DIR ?= $(CURDIR)/.venv
 
 # Specific agent files (flattened in agents/ directory)
 AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md dataviz-artist.md
@@ -119,7 +121,17 @@ install-all: install-claude install-codex ## Install all agents and skills witho
 
 install-selected:
 	@if [ -n "$(strip $(SELECTED_SKILL_DIRS))" ]; then \
-		$(MAKE) --no-print-directory build-catalog install-skills install-catalog link-claude-skills link-codex-skills SELECTED_SKILL_DIRS="$(SELECTED_SKILL_DIRS)"; \
+		set -e; \
+		tmp_catalog=$$(mktemp -d); \
+		trap 'rm -rf "$$tmp_catalog"' EXIT; \
+		python3 $(SCRIPTS_DIR)/skill_index.py build \
+			--repo $(CURDIR) \
+			--out "$$tmp_catalog" \
+			$(if $(strip $(SELECTED_AGENT_FILES)),$(foreach agent,$(SELECTED_AGENT_FILES),--include-agent $(agent)),--include-agent __none__) \
+			$(foreach skill,$(SELECTED_SKILL_DIRS),--include-skill $(skill)) >/dev/null; \
+		$(MAKE) --no-print-directory install-skills SELECTED_SKILL_DIRS="$(SELECTED_SKILL_DIRS)"; \
+		$(MAKE) --no-print-directory install-catalog CATALOG_SRC_DIR="$$tmp_catalog"; \
+		$(MAKE) --no-print-directory link-claude-skills link-codex-skills; \
 	else \
 		echo "$(YELLOW)Skipping shared skills and catalog$(NC)"; \
 	fi
@@ -163,6 +175,8 @@ install-catalog: ## Install the shared skill catalog to ~/.agents/omics-skills
 	@for item in skill_index.py README.md catalog.json; do \
 		if [ "$$item" = "skill_index.py" ]; then \
 			src=$(SCRIPTS_DIR)/$$item; \
+		elif [ "$$item" = "catalog.json" ]; then \
+			src=$(CATALOG_SRC_DIR)/$$item; \
 		else \
 			src=$(CATALOG_DIR)/$$item; \
 		fi; \
@@ -170,7 +184,7 @@ install-catalog: ## Install the shared skill catalog to ~/.agents/omics-skills
 		if [ -L $$target ] || [ -e $$target ]; then \
 			rm -rf $$target; \
 		fi; \
-		if [ "$(INSTALL_METHOD)" = "symlink" ]; then \
+		if [ "$(INSTALL_METHOD)" = "symlink" ] && { [ "$$item" != "catalog.json" ] || [ "$(CATALOG_SRC_DIR)" = "$(CATALOG_DIR)" ]; }; then \
 			ln -sf $$src $$target; \
 		else \
 			cp $$src $$target; \
@@ -298,24 +312,25 @@ check-deps: ## Check if required commands are available
 	@command -v claude >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Claude Code CLI found" || echo "  $(YELLOW)○$(NC) Claude Code CLI not found (install from https://claude.com/claude-code)"
 	@command -v codex >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Codex CLI found" || echo "  $(YELLOW)○$(NC) Codex CLI not found (optional)"
 	@command -v python3 >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) Python 3 found" || echo "  $(YELLOW)○$(NC) Python 3 not found (required for installation and some skills)"
+	@command -v uv >/dev/null 2>&1 && echo "  $(GREEN)✓$(NC) uv found" || echo "  $(YELLOW)○$(NC) uv not found (required only for make install-python-deps)"
 	@echo ""
 
 install-python-deps: ## Install Python dependencies for skills
 	@echo "$(BLUE)Installing Python dependencies for skills...$(NC)"
-	@if command -v pip3 >/dev/null 2>&1; then \
-		for req in $(SKILLS_DIR)/*/requirements.txt; do \
-			if [ -f $$req ]; then \
-				skill=$$(dirname $$req); \
-				basename=$$(basename $$skill); \
-				echo "  Installing deps for $$basename..."; \
-				pip3 install -r $$req --quiet; \
-				echo "  $(GREEN)✓$(NC) $$basename"; \
-			fi; \
-		done; \
-	else \
-		echo "  $(RED)✗$(NC) pip3 not found - cannot install Python dependencies"; \
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "  $(RED)✗$(NC) uv not found - cannot install Python dependencies"; \
 		exit 1; \
 	fi
+	@uv venv $(PYTHON_ENV_DIR) >/dev/null
+	@for req in $(SKILLS_DIR)/*/requirements.txt; do \
+		if [ -f $$req ]; then \
+			skill=$$(dirname $$req); \
+			basename=$$(basename $$skill); \
+			echo "  Installing deps for $$basename..."; \
+			uv pip install --python $(PYTHON_ENV_DIR)/bin/python -r $$req --quiet; \
+			echo "  $(GREEN)✓$(NC) $$basename"; \
+		fi; \
+	done
 
 ##@ Uninstallation
 
@@ -371,6 +386,15 @@ uninstall-claude: ## Uninstall from Claude Code
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$current/$(AGENT_COUNT) agents"; \
 	fi
+	@if [ -L "$(CLAUDE_SKILLS_DIR)" ]; then \
+		target=$$(readlink "$(CLAUDE_SKILLS_DIR)"); \
+		if [ "$$target" = "$(AGENTS_SKILLS_DIR)" ]; then \
+			rm "$(CLAUDE_SKILLS_DIR)"; \
+			echo "  $(GREEN)✓$(NC) Removed $(CLAUDE_SKILLS_DIR) symlink"; \
+		else \
+			echo "  $(YELLOW)○$(NC) Preserved non-omics Claude skills symlink: $$target"; \
+		fi; \
+	fi
 	@echo "$(GREEN)✓ Claude Code uninstalled$(NC)"
 
 uninstall-codex: ## Uninstall from Codex CLI
@@ -394,9 +418,14 @@ uninstall-codex: ## Uninstall from Codex CLI
 	else \
 		echo "  $(GREEN)✓$(NC) Completed: $$current/$(AGENT_COUNT) agents"; \
 	fi
-	@if [ -L $(CODEX_SKILLS_DIR) ]; then \
-		rm $(CODEX_SKILLS_DIR); \
-		echo "  $(GREEN)✓$(NC) Removed $(CODEX_SKILLS_DIR) symlink"; \
+	@if [ -L "$(CODEX_SKILLS_DIR)" ]; then \
+		target=$$(readlink "$(CODEX_SKILLS_DIR)"); \
+		if [ "$$target" = "$(AGENTS_SKILLS_DIR)" ]; then \
+			rm "$(CODEX_SKILLS_DIR)"; \
+			echo "  $(GREEN)✓$(NC) Removed $(CODEX_SKILLS_DIR) symlink"; \
+		else \
+			echo "  $(YELLOW)○$(NC) Preserved non-omics Codex skills symlink: $$target"; \
+		fi; \
 	fi
 	@echo "$(GREEN)✓ Codex CLI uninstalled$(NC)"
 

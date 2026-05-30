@@ -118,7 +118,7 @@ START
 
 ## Task Recognition Patterns
 
-- **"review", "critique", "bias", "evidence quality"** → `/bio-logic`
+- **"scientific critique", "methodological bias", "evidence quality", "review evidence"** → `/bio-logic`
 - **"peer review", "review this manuscript", "major revision", "decision letter", "rebuttal", "reviewer comments", "multi-reviewer", "review council", "critique manuscript", "manuscript review"** → `/manuscript-review-council`
 - **"proposal", "grant", "funding proposal", "review this proposal"** → `/proposal-review`
 - **"AI scientist", "evaluate agent output", "score AI output", "rank AI scientists"** → `/ai-scientist-evaluator`
