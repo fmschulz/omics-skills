@@ -60,6 +60,10 @@ MAX_TERM_SPANS_PER_TERM = 4
 MAX_FULLTEXT_CONTEXTS = 36
 CONTEXT_SNIPPET_CHARS = 240
 DEFAULT_LOCAL_REPO = str(Path("~/dev/polars-dovmed").expanduser())
+LOCAL_CORPUS_ENV = {
+    "pmc": "DOVMED_PMC_PARQUET",
+    "biorxiv": "DOVMED_BIORXIV_PARQUET",
+}
 CLEAN_YEAR_BANDS = ("2024_plus", "2021_2023", "2010_2020", "pre_2010")
 RECENT_YEAR_BANDS = ("2024_plus", "2021_2023")
 YEAR_BAND_ALIASES = {
@@ -185,7 +189,7 @@ def parse_args():
             "2024_plus",
         ],
         default="all",
-        help="Restrict API/local search to a materialized publication-year band.",
+        help="Restrict hosted API search to a materialized publication-year band.",
     )
     parser.add_argument(
         "--year-bands",
@@ -227,6 +231,13 @@ def parse_args():
         "--local-repo-dir",
         default=DEFAULT_LOCAL_REPO,
         help="Path to the local polars-dovmed repo used for local scans.",
+    )
+    parser.add_argument(
+        "--local-parquet-pattern",
+        help=(
+            "Glob pattern or file path for local dovmed scan. Overrides "
+            "DOVMED_PMC_PARQUET/DOVMED_BIORXIV_PARQUET."
+        ),
     )
     parser.add_argument(
         "--local-output-dir",
@@ -327,6 +338,27 @@ def determine_execution_mode(args):
 
 def effective_corpus(args):
     return args.corpus or args.local_corpus
+
+
+def local_parquet_pattern(args):
+    if args.local_parquet_pattern:
+        return args.local_parquet_pattern
+
+    corpus = effective_corpus(args)
+    env_var = LOCAL_CORPUS_ENV.get(corpus)
+    if not env_var:
+        raise SystemExit(
+            "local corpus 'both' requires --local-parquet-pattern covering both corpora, "
+            "or separate local scans for pmc and biorxiv"
+        )
+    value = os.environ.get(env_var)
+    if value:
+        return value
+    raise SystemExit(
+        f"missing local parquet pattern for {corpus}; set {env_var} or pass "
+        "--local-parquet-pattern. Prepare PMC parquet files with "
+        "https://github.com/UriNeri/polars-dovmed"
+    )
 
 
 def parse_group(spec):
@@ -482,6 +514,11 @@ def execute_local_scan(args):
         raise SystemExit(
             "local mode currently supports --queries-file or --group, not --query or --details"
         )
+    if args.year_band != "all":
+        raise SystemExit(
+            "local --year-band is not supported by upstream dovmed; pass a "
+            "year-specific --local-parquet-pattern instead"
+        )
     if args.group:
         queries = dict(parse_group(spec) for spec in args.group)
         query_file = Path(tempfile.mkdtemp(prefix="dovmed_query_")) / "query.json"
@@ -493,16 +530,15 @@ def execute_local_scan(args):
     repo_dir = Path(args.local_repo_dir).expanduser()
     output_dir = local_output_dir(args)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
+    parquet_pattern = local_parquet_pattern(args)
 
     command = [
         os.path.expanduser("~/.pixi/bin/pixi"),
         "run",
         "dovmed",
         "scan",
-        "--corpus",
-        effective_corpus(args),
-        "--year-band",
-        args.year_band,
+        "--parquet-pattern",
+        parquet_pattern,
         "--queries-file",
         str(query_file),
         "--search-columns",
@@ -521,6 +557,7 @@ def execute_local_scan(args):
         "execution_mode": "local",
         "corpus": effective_corpus(args),
         "repo_dir": str(repo_dir),
+        "parquet_pattern": parquet_pattern,
         "command": command,
         "primary_queries": queries,
     }
@@ -547,6 +584,7 @@ def execute_local_scan(args):
         "execution_mode": "local",
         "corpus": effective_corpus(args),
         "repo_dir": str(repo_dir),
+        "parquet_pattern": parquet_pattern,
         "command": command,
         "returncode": result.returncode,
         "stdout": result.stdout,
@@ -1272,7 +1310,7 @@ def main():
         if args.year_bands:
             raise SystemExit(
                 "--year-bands parallel fan-out is supported for hosted API mode; "
-                "use --year-band for one local scan"
+                "pass a year-specific --local-parquet-pattern for local scans"
             )
         result = execute_local_scan(args)
         if args.raw:

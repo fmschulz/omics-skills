@@ -1117,9 +1117,15 @@
         "screen bioRxiv with polars-dovmed"
       ],
       "internal_references": [
-        "api"
+        "api",
+        "dev",
+        "path"
       ],
       "reference_contexts": {
+        "dev": [
+          "- Repo/pixi setup for this helper's local mode: clone the upstream repo to `~/dev/polars-dovmed` or pass `--local-repo-dir`; the helper runs `pixi run dovmed scan` from that repo.",
+          "Public setup path: install or clone <https://github.com/UriNeri/polars-dovmed>, then follow its `dovmed download` and `dovmed build-parquet` workflow to create local PMC OA parquet files. The upstream README notes that the PMC OA data are not redistributed and must be downloaded from the official NCBI FTP source. For the bundled helper, clone the repo to `~/dev/polars-dovmed` or pass `--local-repo-dir /path/to/polars-dovmed`."
+        ],
         "api": [
           "3. run `POST /api/scan_literature_advanced` with `mode=\"discovery\"`",
           "5. run `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` plus `dois` for bioRxiv",
@@ -1131,6 +1137,9 @@
           "| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` with `dois` |",
           "- Search endpoint: `POST /api/scan_literature_advanced`",
           "- Details endpoint: `POST /api/get_paper_details`"
+        ],
+        "path": [
+          "Public setup path: install or clone <https://github.com/UriNeri/polars-dovmed>, then follow its `dovmed download` and `dovmed build-parquet` workflow to create local PMC OA parquet files. The upstream README notes that the PMC OA data are not redistributed and must be downloaded from the official NCBI FTP source. For the bundled helper, clone the repo to `~/dev/polars-dovmed` or pass `--local-repo-dir /path/to/polars-dovmed`."
         ]
       }
     },

@@ -20,6 +20,14 @@ Search execution has two modes:
 - Preferred when available: hosted API over `pmc`/OpenPMC, `biorxiv`, or `both`
 - Fallback: local `dovmed scan` over local parquet files for `pmc`, `biorxiv`, or `both`
 
+Public access note:
+- `omics-skills` does not provide a hosted API key, JGI Lakehouse access, or the PMC/bioRxiv parquet corpora.
+- Public users can set up local PMC searches from Uri Neri's upstream package: <https://github.com/UriNeri/polars-dovmed>.
+- Direct CLI setup: `pip install polars-dovmed`, then use upstream `dovmed download`, `dovmed build-parquet`, and `dovmed scan`.
+- Repo/pixi setup for this helper's local mode: clone the upstream repo to `~/dev/polars-dovmed` or pass `--local-repo-dir`; the helper runs `pixi run dovmed scan` from that repo.
+- After local corpora exist, set `DOVMED_PMC_PARQUET` and/or `DOVMED_BIORXIV_PARQUET`, or pass `--local-parquet-pattern`.
+- If no API key and no local corpus exist, report that `polars-dovmed` is not configured and use another literature fallback instead.
+
 PMC is physically materialized into clean publication-year chunks:
 - `pre_2010`
 - `2010_2020`
@@ -45,7 +53,7 @@ For every search prompt, create a dedicated run directory and save:
 ## Input Requirements
 
 - A search prompt or an inspected `query.json`.
-- A hosted API key, or mounted local parquet files for `pmc`, `biorxiv`, or `both`.
+- A hosted API key for an accessible service, or user-prepared local parquet files for `pmc`, `biorxiv`, or `both`.
 - A writable run directory for prompts, payloads, raw results, and summaries.
 
 ## Hosted API Reachability Rules
@@ -79,6 +87,7 @@ bare `urllib` returns `403`/`1010`, use the helper or set `User-Agent` and retry
    - Check API availability first.
    - If `POLARS_DOVMED_API_KEY` is available in the environment, in the configured polars-dovmed env file, or the user provides an API key, use the hosted API for `pmc`, `biorxiv`, or `both` searches.
    - Use local `dovmed` CLI plus local parquet files when there is no hosted API key or the user explicitly requests a local scan.
+   - Do not imply that omics-skills includes hosted access or corpora; users must provide their own.
 2. Author a structured query JSON directly.
    - The agent should write the JSON itself instead of calling another helper to generate it.
    - If the user already gave a query JSON, inspect it before use.
@@ -259,9 +268,11 @@ Use `--corpus biorxiv` or `--corpus both` with the same helper to route hosted A
 
 Use this mode when no hosted API key is available, or when the user explicitly wants a local parquet scan.
 
+Public setup path: install or clone <https://github.com/UriNeri/polars-dovmed>, then follow its `dovmed download` and `dovmed build-parquet` workflow to create local PMC OA parquet files. The upstream README notes that the PMC OA data are not redistributed and must be downloaded from the official NCBI FTP source. For the bundled helper, clone the repo to `~/dev/polars-dovmed` or pass `--local-repo-dir /path/to/polars-dovmed`.
+
 ```bash
 ~/.pixi/bin/pixi run dovmed scan \
-  --corpus pmc \
+  --parquet-pattern "$DOVMED_PMC_PARQUET" \
   --queries-file runs/klosneuvirinae-hosts/query.json \
   --extract-matches primary \
   --add-group-counts primary \
@@ -270,9 +281,10 @@ Use this mode when no hosted API key is available, or when the user explicitly w
 ```
 
 Local corpus aliases:
-- `--corpus pmc`: set `DOVMED_PMC_PARQUET` or pass a local PMC parquet path.
-- `--corpus biorxiv`: set `DOVMED_BIORXIV_PARQUET` or pass a local bioRxiv parquet path.
-- `--corpus both`: both corpora in one scan
+- Direct upstream CLI uses `--parquet-pattern "path/or/glob/*.parquet"`.
+- Helper `--corpus pmc`: set `DOVMED_PMC_PARQUET` or pass `--local-parquet-pattern`.
+- Helper `--corpus biorxiv`: set `DOVMED_BIORXIV_PARQUET` or pass `--local-parquet-pattern`.
+- Helper `--corpus both`: pass one compatible `--local-parquet-pattern`, or run separate local scans for PMC and bioRxiv.
 
 The bioRxiv schema is compatible with `dovmed scan` and includes the same search-critical fields as PMC: `title`, `abstract_text`, `full_text`, `authors`, `journal`, `publication_date`, `doi`, `pmc_id`, `pmid`, and `file_path`. For bioRxiv records, `pmc_id` and `pmid` are blank.
 
@@ -280,19 +292,11 @@ Examples:
 
 ```bash
 ~/.pixi/bin/pixi run dovmed scan \
-  --corpus biorxiv \
+  --parquet-pattern "$DOVMED_BIORXIV_PARQUET" \
   --queries-file runs/mirusvirus/query.json \
   --extract-matches primary \
   --add-group-counts primary \
   --output-path results/mirusvirus_biorxiv \
-  --verbose
-
-~/.pixi/bin/pixi run dovmed scan \
-  --corpus both \
-  --queries-file runs/mirusvirus/query.json \
-  --extract-matches primary \
-  --add-group-counts primary \
-  --output-path results/mirusvirus_pmc_plus_biorxiv \
   --verbose
 ```
 
@@ -302,12 +306,13 @@ The helper wrapper also supports local execution directly:
 python skills/polars-dovmed/scripts/query_literature.py \
   --execution-mode local \
   --corpus biorxiv \
+  --local-parquet-pattern "$DOVMED_BIORXIV_PARQUET" \
   --queries-file runs/mirusvirus/query.json \
   --save-payload runs/mirusvirus/payload_local.json \
   --save-response runs/mirusvirus/results_local.json
 ```
 
-Use `--corpus both` to scan PMC plus bioRxiv in one pass. `--local-corpus` is retained as a backward-compatible alias for local scans.
+Use `--corpus both` only with an explicit compatible `--local-parquet-pattern`; otherwise run separate local scans. `--local-corpus` is retained as a backward-compatible alias for local scans.
 
 ## Search Semantics
 
@@ -375,7 +380,7 @@ Instead:
 
 ## Quick Smoke Test
 
-Use this to verify that the API-backed discovery path, paper-details lookup, saved payloads, saved responses, and expected output shape are all working before a real run.
+Use this to verify that the API-backed discovery path, paper-details lookup, saved payloads, saved responses, and expected output shape are all working before a real run. This requires hosted API access.
 
 Run:
 
@@ -391,16 +396,8 @@ skills/polars-dovmed/runs/smoke-test/
 
 Expected success indicators in `summary.json`:
 - `success: true`
-- discovery result has:
-  - `mode: "discovery"`
-  - `strategy_used`
-  - `elapsed_ms`
-  - at least one paper
-  - per-paper `ranking`
-- details result has:
-  - `found >= 1`
-  - `normalized_pmc_ids`
-  - empty `missing_ids` for the known test PMC
+- discovery result includes `mode: "discovery"`, `strategy_used`, `elapsed_ms`, at least one paper, and per-paper `ranking`
+- details result includes `found >= 1`, `normalized_pmc_ids`, and empty `missing_ids` for the known test PMC
 
 ## Quick Reference
 
@@ -466,13 +463,13 @@ Use the same hosted API examples for `--corpus pmc`, `--corpus biorxiv`, or `--c
 ## Troubleshooting
 
 **Issue**: Hosted API key is missing  
-**Solution**: Fall back to local `dovmed scan` if local parquet files exist.
+**Solution**: Fall back to local `dovmed scan` if local parquet files exist. Otherwise tell the user to set up <https://github.com/UriNeri/polars-dovmed> and prepare local parquet corpora, or use another literature-search fallback.
 
 **Issue**: Hosted API reported as unreachable after a `urllib` `403`
 **Solution**: Retry with the helper, `curl`, or `httpx`. For raw `urllib`, set a normal `User-Agent` plus `X-API-Key`; Cloudflare `1010` is a client block, not proof of outage.
 
 **Issue**: Local parquet files are missing  
-**Solution**: Use hosted API mode if a key is available, otherwise state that the local corpus must be prepared first.
+**Solution**: Use hosted API mode if a key is available, otherwise state that the local corpus must be prepared first with the upstream `dovmed download` and `dovmed build-parquet` workflow.
 
 **Issue**: Authored query JSON is noisy  
 **Solution**: Tighten anchor terms, remove generic support groups, and add `disqualifying_terms`.

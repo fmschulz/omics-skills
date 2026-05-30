@@ -32,7 +32,7 @@ Every skill can be used on its own. The bio-* skills also share a few habits tha
 - **Reflection after each step.** After each major result or QC gate, the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
 - **Literature-derived analysis plan.** Before deciding what is "interesting" the agent reads the literature for the inferred group and summarises which markers, comparison sets, plots, and outliers are diagnostic.
 - **Comparative axes against close relatives.** When relatives are available, the query is run through five axes — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, and non-coding RNA census — each producing a side-by-side comparison file.
-- **Literature search with fallbacks.** `polars-dovmed` queries PMC and bioRxiv through the hosted API, falls back to a local parquet `dovmed scan`, and finally to targeted `WebFetch` / `WebSearch` so endpoint outages do not silently skip the literature step.
+- **Literature search with fallbacks.** When users provide API access or local corpora, `polars-dovmed` queries PMC and bioRxiv through the hosted API or a local parquet `dovmed scan`, then falls back to targeted `WebFetch` / `WebSearch` so endpoint outages do not silently skip the literature step.
 
 ## Tooling baseline
 

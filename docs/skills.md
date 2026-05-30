@@ -31,7 +31,7 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 
 | Skill | Use when | Main result |
 |---|---|---|
-| `polars-dovmed` | Searching PMC Open Access and bioRxiv with structured literature queries. | Source-backed literature summaries with fallback paths when the hosted API is unavailable. |
+| `polars-dovmed` | Searching PMC Open Access and bioRxiv with structured literature queries. | Source-backed literature summaries when users provide API access or local parquet corpora prepared with upstream `polars-dovmed`. |
 | `arxiv-search` | Searching recent or specific arXiv preprints. | Local Markdown summaries from arXiv metadata and IDs. |
 | `biorxiv-search` | Searching bioRxiv preprints by keyword, date range, DOI, or author. | Filtered preprint shortlists with bioRxiv-native metadata. |
 | `crossref-lookup` | Validating DOIs or matching titles to citation metadata. | Crossref records, DOI matches, and bibliography cleanup evidence. |
