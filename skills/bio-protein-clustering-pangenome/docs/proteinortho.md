@@ -1,9 +1,14 @@
 # ProteinOrtho Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: ProteinOrtho v6.3.6
+Official docs/manual: https://gitlab.com/paulklemm_PHD/proteinortho/-/blob/master/README.md
+Release/source: https://gitlab.com/paulklemm_PHD/proteinortho/-/releases/v6.3.6
+
 ## Official Documentation
 - GitLab: https://gitlab.com/paulklemm_PHD/proteinortho
-- Manual: http://legacy.bioinf.uni-leipzig.de/Software/proteinortho/manual.html
-- Debian Manpage: https://manpages.debian.org/testing/proteinortho/proteinortho.1.en.html
+- README/manual: https://gitlab.com/paulklemm_PHD/proteinortho/-/blob/master/README.md
+- Releases: https://gitlab.com/paulklemm_PHD/proteinortho/-/releases
 - Paper: https://pmc.ncbi.nlm.nih.gov/articles/PMC10751348/
 
 ## Installation
@@ -40,6 +45,7 @@ Download from GitLab repository and run directly:
 git clone https://gitlab.com/paulklemm_PHD/proteinortho.git
 cd proteinortho
 ./proteinortho6.pl --help
+./proteinortho6.pl -version
 ```
 
 ## Key Command-Line Flags
@@ -48,6 +54,9 @@ cd proteinortho
 ```bash
 proteinortho6 [OPTIONS] FASTA1 FASTA2 [FASTA...]
 ```
+
+Bioconda/Homebrew installs commonly expose `proteinortho6`; source checkouts
+use `proteinortho6.pl`.
 
 ### Alignment Program Selection
 - `-p=PROGRAM` - Blast program selection (default: diamond)
@@ -383,3 +392,7 @@ proteinortho6 -project=synteny \
 - **Portability**: Runs on Linux, macOS, Windows (WSL)
 - **Scalability**: Tested on 1000+ genomes
 - **Dependencies**: Minimal (10 packages in Bioconda)
+
+## Version Information
+
+This guide was verified against ProteinOrtho v6.3.6 and the official GitLab README/release pages on 2026-05-30.

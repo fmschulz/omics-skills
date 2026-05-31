@@ -1,5 +1,10 @@
 # DIAMOND Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: DIAMOND v2.2.1
+Official docs/manual: https://github.com/bbuchfink/diamond/wiki
+Release/source: https://github.com/bbuchfink/diamond/releases/tag/v2.2.1
+
 ## Overview
 
 DIAMOND is an accelerated BLAST-compatible local sequence aligner designed for high-performance analysis of large sequence datasets. It achieves 100x-10,000x speedup compared to BLAST while maintaining similar sensitivity.
@@ -8,20 +13,22 @@ DIAMOND is an accelerated BLAST-compatible local sequence aligner designed for h
 
 - GitHub Repository: https://github.com/bbuchfink/diamond
 - Official Website: http://www.diamondsearch.org
-- Documentation: https://github.com/bbuchfink/diamond_docs/blob/master/Documentation.MD
+- Documentation: https://github.com/bbuchfink/diamond/wiki
+- Releases: https://github.com/bbuchfink/diamond/releases
 - Citation: https://doi.org/10.1038/s41592-021-01101-x (Nature Methods 2021)
 
 ## Installation
 
 ### Binary Download (Recommended)
 ```bash
-wget http://github.com/bbuchfink/diamond/releases/download/v2.1.18/diamond-linux64.tar.gz
+wget https://github.com/bbuchfink/diamond/releases/download/v2.2.1/diamond-linux64.tar.gz
 tar xzf diamond-linux64.tar.gz
+./diamond version
 ```
 
 ### Conda/Bioconda
 ```bash
-conda install -c bioconda -c conda-forge diamond=2.1.18
+conda install -c bioconda -c conda-forge diamond=2.2.1
 ```
 
 ### Other Methods
@@ -205,4 +212,4 @@ diamond view --daa results.daa --out results.tsv --outfmt 6
 
 ## Version Information
 
-This documentation is based on DIAMOND v2.1.6.160 and reflects features available as of January 2026.
+This documentation was verified against DIAMOND v2.2.1 and the official GitHub wiki/releases on 2026-05-30.

@@ -9,6 +9,8 @@ description: "Curate, validate, and standardize FASTA/FAA sequence databases: st
 
 Automate the curation and standardization of biological sequence databases. This skill handles the tedious work of processing FASTA/FAA files, ensuring consistent header formats, removing duplicates, and preparing databases for downstream analysis.
 
+Supplementary version-grounded tool notes: [tools.md](tools.md).
+
 **Key Capabilities:**
 - Header format standardization (pipe separators, prefixes)
 - Duplicate detection and removal (by sequence or ID)

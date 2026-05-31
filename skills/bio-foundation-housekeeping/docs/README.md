@@ -1,13 +1,16 @@
 # Tool Documentation
 
-Documentation created: 2026-02-01
+Last verified: 2026-05-30
+Tool version/release checked: Pixi v0.69.0; LinkML v1.11.1; Pydantic v2.13.4; DuckDB v1.5.3
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 This directory contains practical usage guides for the core tools used in bio-foundation-housekeeping.
 
 ## Tools Covered
 
 ### [Pixi](pixi.md)
-**Version**: v0.43.0+
+**Version checked**: v0.69.0
 **Purpose**: Developer workflow and environment management for multi-platform, language-agnostic workspaces
 **Key Use**: Creating reproducible conda/mamba environments with lockfiles
 
@@ -20,7 +23,7 @@ pixi install
 ```
 
 ### [LinkML](linkml.md)
-**Version**: v1.9.6+
+**Version checked**: v1.11.1
 **Purpose**: Flexible modeling language for authoring schemas in YAML
 **Key Use**: Defining metadata schemas and generating Pydantic models
 
@@ -32,7 +35,7 @@ linkml validate --schema schema.yaml data.yaml
 ```
 
 ### [Pydantic](pydantic.md)
-**Version**: v2.12.5+
+**Version checked**: v2.13.4
 **Purpose**: Data validation using Python type hints
 **Key Use**: Runtime validation of sample metadata and configuration
 
@@ -49,7 +52,7 @@ sample = Sample(sample_id="S001", organism="Human", coverage=30.5)
 ```
 
 ### [DuckDB](duckdb.md)
-**Version**: v1.4.3+
+**Version checked**: v1.5.3
 **Purpose**: In-process SQL OLAP database
 **Key Use**: Creating data catalogs and querying Parquet files
 
@@ -88,7 +91,14 @@ The default pattern is schema-first. Define records in LinkML, validate incoming
 - Pixi: https://pixi.sh/latest/
 - LinkML: https://linkml.io/linkml/
 - Pydantic: https://docs.pydantic.dev/latest/
-- DuckDB: https://duckdb.org/docs/
+- DuckDB: https://duckdb.org/docs/stable/
+
+## Release Sources Checked
+
+- Pixi: https://github.com/prefix-dev/pixi/releases/tag/v0.69.0
+- LinkML: https://github.com/linkml/linkml/releases/tag/v1.11.1
+- Pydantic: https://github.com/pydantic/pydantic/releases/tag/v2.13.4
+- DuckDB: https://github.com/duckdb/duckdb/releases/tag/v1.5.3
 
 ## Notes
 

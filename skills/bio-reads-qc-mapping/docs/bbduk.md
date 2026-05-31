@@ -1,4 +1,9 @@
-# BBDuk - Quality Control and Adapter Trimming
+# BBDuk (BBTools v39.85) - Quality Control and Adapter Trimming
+
+Last verified: 2026-05-30
+Tool version/release checked: BBTools/BBDuk v39.85 via `bryce911/bbtools:39.85` (`latest` digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`)
+Official docs/manual: https://bbmap.org/tools/bbduk
+Release/source: https://hub.docker.com/r/bryce911/bbtools/tags and https://github.com/bbushnell/BBTools
 
 ## Overview
 
@@ -7,6 +12,7 @@ BBDuk (Decontamination Using Kmers) is a high-performance tool from BBTools that
 ## Official Documentation
 
 - [BBDuk Guide - JGI DOE](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
+- [BBDuk Manual - BBMap.org](https://bbmap.org/tools/bbduk)
 - [BBDuk Guide - GitHub](https://github.com/BioInfoTools/BBMap/blob/master/docs/guides/BBDukGuide.txt)
 
 ## Installation
@@ -15,19 +21,19 @@ BBDuk is part of the BBTools suite. Prefer Bryce Foster's official BBTools
 container for reproducible runs:
 
 ```bash
-docker pull bryce911/bbtools:39.84
+docker pull bryce911/bbtools:39.85
 
 bbtools() {
   docker run --rm -u "$(id -u):$(id -g)" \
     -v "$PWD":/work -w /work \
-    bryce911/bbtools:39.84 "$@"
+    bryce911/bbtools:39.85 "$@"
 }
 
 bbtools bbduk.sh --help
 ```
 
-As of 2026-05-15, `bryce911/bbtools:39.84` and `latest` point to digest
-`sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
+As of 2026-05-30, `bryce911/bbtools:39.85` and `latest` point to digest
+`sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`.
 
 ## Key Command-Line Flags
 

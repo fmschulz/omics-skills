@@ -1,8 +1,9 @@
 # XGBoost Usage Guide
 
-**Official Documentation:** https://xgboost.readthedocs.io/
-
-**Version:** 3.1.3
+Last verified: 2026-05-30
+Tool version/release checked: XGBoost v3.2.0
+Official docs/manual: https://xgboost.readthedocs.io/en/stable/
+Release/source: https://github.com/dmlc/xgboost/releases/tag/v3.2.0
 
 ## Installation
 
@@ -11,11 +12,13 @@
 pip install xgboost
 
 # Specific version
-pip install xgboost==3.1.3
+pip install xgboost==3.2.0
 
-# With GPU support (CUDA required)
-pip install xgboost[gpu]
+# CPU-only minimal wheel
+pip install xgboost-cpu
 ```
+
+The standard `xgboost` wheel includes GPU algorithms on supported Linux and Windows platforms. Enable CUDA at runtime with `device='cuda'`; use `xgboost-cpu` only when you explicitly want the smaller CPU-only package.
 
 ## Key Parameters
 
@@ -38,7 +41,8 @@ pip install xgboost[gpu]
 - `early_stopping_rounds`: Stop if no improvement for N rounds
 
 **Computational:**
-- `tree_method`: Tree construction algorithm ('auto', 'exact', 'approx', 'hist', 'gpu_hist')
+- `tree_method`: Tree construction algorithm ('auto', 'exact', 'approx', 'hist')
+- `device`: Device selection (`cpu`, `cuda`, or CUDA ordinal). For modern XGBoost GPU runs, prefer `tree_method='hist'` with `device='cuda'`.
 - `n_jobs` (nthread): Number of parallel threads (-1 for all cores)
 - `random_state` (seed): Random seed for reproducibility
 

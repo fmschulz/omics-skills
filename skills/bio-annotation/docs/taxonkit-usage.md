@@ -1,5 +1,10 @@
 # TaxonKit Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: TaxonKit v0.20.0
+Official docs/manual: https://bioinf.shenwei.me/taxonkit/usage/
+Release/source: https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0
+
 ## Overview
 
 TaxonKit is a practical and efficient command-line toolkit for comprehensive manipulation of NCBI Taxonomy data. It is implemented in Go and provides cross-platform support with fast performance.
@@ -9,6 +14,7 @@ TaxonKit is a practical and efficient command-line toolkit for comprehensive man
 - Official Website: https://bioinf.shenwei.me/taxonkit/
 - GitHub Repository: https://github.com/shenwei356/taxonkit
 - Usage Documentation: https://bioinf.shenwei.me/taxonkit/usage/
+- Releases: https://github.com/shenwei356/taxonkit/releases
 - Citation: https://doi.org/10.1016/j.jgg.2021.03.006 (Journal of Genetics and Genomics 2021)
 
 ## Installation
@@ -66,14 +72,17 @@ echo "9606" | taxonkit lineage
 echo "9606" | taxonkit lineage -n
 ```
 
-### reformat - Reformat Lineage
+### reformat2 - Reformat Lineage
 ```bash
-# Standard seven-rank format (K;P;C;O;F;G;S)
-echo "9606" | taxonkit lineage | taxonkit reformat
+# Domain-aware seven-rank format
+echo "9606" | taxonkit lineage | \
+  taxonkit reformat2 \
+    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}"
 # Output: 9606    ...    Eukaryota;Chordata;Mammalia;Primates;Hominidae;Homo;Homo sapiens
 
 # Custom format
-echo "9606" | taxonkit lineage | taxonkit reformat -f "{k};{p};{c};{o};{f};{g};{s}"
+echo "9606" | taxonkit lineage | \
+  taxonkit reformat2 -f "{domain|acellular root|superkingdom};{phylum};{genus};{species}"
 ```
 
 ### name2taxid - Convert Names to TaxIDs
@@ -130,7 +139,7 @@ echo "9606,9597" | taxonkit lca
 - `-t, --show-status-code` - Show status code
 
 ### Reformat Options
-- `-f, --format` - Output format (default: "{k};{p};{c};{o};{f};{g};{s}")
+- `reformat2 -f, --format` - Output format with explicit rank names, including March 2025 NCBI rank changes such as `domain` and viral `realm`
 - `-d, --delimiter` - Field delimiter (default: tab)
 - `-F, --fill-miss-rank` - Fill missing ranks with placeholder
 - `-P, --add-prefix` - Add rank prefix to names
@@ -161,7 +170,8 @@ echo "9606,9597" | taxonkit lca
 # Extract TaxIDs from DIAMOND results (column 13)
 cut -f13 diamond_results.tsv | \
   taxonkit lineage -n -r | \
-  taxonkit reformat -f "{k};{p};{c};{o};{f};{g};{s}" > taxonomy.tsv
+  taxonkit reformat2 \
+    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" > taxonomy.tsv
 ```
 
 ### Get full lineage with names
@@ -175,7 +185,8 @@ echo "562" | taxonkit lineage -n -r -L
 cat species_list.txt | \
   taxonkit name2taxid | \
   taxonkit lineage | \
-  taxonkit reformat > species_taxonomy.tsv
+  taxonkit reformat2 \
+    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" > species_taxonomy.tsv
 ```
 
 ### Filter for genus-level and below
@@ -213,26 +224,21 @@ echo "9606,9597,9598" | taxonkit lca -d ","
 
 ## Reformat Format String
 
-Format placeholders:
-- `{k}` - Kingdom
-- `{p}` - Phylum
-- `{c}` - Class
-- `{o}` - Order
-- `{f}` - Family
-- `{g}` - Genus
-- `{s}` - Species
-- `{t}` - Subspecies/strain
+Use `reformat2` for current NCBI taxonomy because v0.20.0 handles the March
+2025 rank update from `superkingdom` to `domain` and adds viral `realm`.
+Classic `reformat` with short placeholders (`{k};{p};...`) is retained for
+legacy seven-rank output.
 
 Example formats:
 ```bash
-# NCBI seven-rank
--f "{k};{p};{c};{o};{f};{g};{s}"
+# Domain-aware seven-rank output
+-f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}"
 
 # With rank prefixes
--f "{K};{P};{C};{O};{F};{G};{S}" -P
+-f "{domain};{phylum};{class};{order};{family};{genus};{species}" -P
 
 # Custom separator
--f "{k}|{p}|{c}|{o}|{f}|{g}|{s}"
+-f "{domain|acellular root|superkingdom}|{phylum}|{class}|{order}|{family}|{genus}|{species}"
 ```
 
 ## Performance Tips
@@ -261,7 +267,8 @@ diamond blastp --query proteins.faa --db clusterednr.dmnd \
 cut -f3 results.tsv | \
   sed '1d' | \
   taxonkit lineage -n -r | \
-  taxonkit reformat -f "{k};{p};{c};{o};{f};{g};{s}" | \
+  taxonkit reformat2 \
+    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" | \
   paste results.tsv - > results_with_taxonomy.tsv
 ```
 
@@ -270,7 +277,7 @@ cut -f3 results.tsv | \
 # Count sequences per phylum
 cut -f3 results.tsv | \
   taxonkit lineage | \
-  taxonkit reformat -f "{p}" | \
+  taxonkit reformat2 -f "{phylum}" | \
   cut -f3 | \
   sort | uniq -c | \
   sort -rn > phylum_counts.txt
@@ -281,7 +288,9 @@ cut -f3 results.tsv | \
 # Fill missing ranks with "unclassified"
 echo "12345" | \
   taxonkit lineage | \
-  taxonkit reformat -F -r "unclassified"
+  taxonkit reformat2 \
+    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" \
+    -F -r "unclassified"
 ```
 
 ## Troubleshooting
@@ -307,4 +316,4 @@ taxonkit version
 
 ## Version Information
 
-This documentation is based on TaxonKit v0.14.2-v0.20.0 and reflects features available as of January 2026.
+This documentation was verified against TaxonKit v0.20.0 and the official usage documentation/release notes on 2026-05-30.

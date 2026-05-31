@@ -1,5 +1,10 @@
 # geNomad Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: geNomad v1.12.0; geNomad database v1.9 listed in the official NERSC database index
+Official docs/manual: https://portal.nersc.gov/genomad/
+Release/source: https://github.com/apcamargo/genomad/releases/tag/v1.12.0 ; https://github.com/apcamargo/genomad
+
 ## Official Documentation
 - Primary: https://portal.nersc.gov/genomad/
 - GitHub: https://github.com/apcamargo/genomad
@@ -34,7 +39,7 @@ Download required database before first use:
 genomad download-database .
 ```
 
-The database directory (`genomad_db`) contains marker profiles, taxonomic data, and functional annotations.
+The database directory (`genomad_db`) contains marker profiles, taxonomic data, and functional annotations. The official NERSC index listed database v1.9 as compatible with geNomad v1.12.x at verification time.
 
 ## Key Commands & Flags
 
@@ -52,6 +57,9 @@ genomad end-to-end [OPTIONS] INPUT OUTPUT DATABASE
 | `--relaxed` | Disable post-classification filters for lenient predictions |
 | `--conservative` | Apply aggressive filters for strict, high-confidence results |
 | `-t, --threads` | Number of threads to use for parallel processing |
+| `--lenient-taxonomy` | Allow assignments below family rank where supported |
+| `--full-ictv-lineage` | Emit full ICTV lineage fields, including ranks hidden by default |
+| `--max-fdr FLOAT` | Maximum false discovery rate for classification filtering |
 
 ## Common Usage Examples
 
@@ -70,6 +78,15 @@ genomad end-to-end --cleanup --splits 8 input.fna.gz output_dir genomad_db
 genomad end-to-end --conservative --cleanup input.fna.gz output_dir genomad_db
 ```
 
+### Full ICTV lineage reporting
+```bash
+genomad end-to-end \
+  --full-ictv-lineage \
+  --lenient-taxonomy \
+  --cleanup \
+  input.fna.gz output_dir genomad_db
+```
+
 ### Relaxed mode for metatranscriptomes
 ```bash
 genomad end-to-end --relaxed --splits 8 metatranscriptome.fna.gz output_dir genomad_db
@@ -79,7 +96,7 @@ genomad end-to-end --relaxed --splits 8 metatranscriptome.fna.gz output_dir geno
 
 ### Input Formats
 - FASTA files (nucleotide sequences)
-- Compressed formats: `.gz`, `.bz2`, `.xz`
+- Compressed formats: `.gz`, `.bz2`, `.xz`; v1.11.2 added `.zst` support on Python versions with Zstandard support
 - Works with: isolate genomes, metagenomes, metatranscriptomes
 
 ### Output Files

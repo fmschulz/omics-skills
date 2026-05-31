@@ -2,7 +2,10 @@
 
 Comprehensive usage guides for metagenomic binning and quality control tools.
 
-Last updated: 2026-05-15
+Last verified: 2026-05-30
+Tool version/release checked: CheckM2 v1.1.0; CoverM v0.7.0; EukCC2 v2.1.3; GUNC v1.1.1; MetaBAT2 v2.18; QuickBin/BBTools v39.85; SemiBin2 v2.3.0
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 ## Overview
 
@@ -17,18 +20,18 @@ This directory contains practical documentation for the tools used in the bio-bi
 - [coverm.md](coverm.md) - CoverM v0.7.0: Read alignment statistics and coverage computation
 
 ### Binning tools (in recommended order)
-- [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.84 via `bryce911/bbtools`)**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
-- [semibin2.md](semibin2.md) - **SemiBin2 v2.2.1+**: deep-learning binner with pre-trained models; use as the GPU alternative to QuickBin on CUDA-equipped nodes
-- [metabat2.md](metabat2.md) - MetaBAT2 v2.15+: legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
+- [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.85 via `bryce911/bbtools`)**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
+- [semibin2.md](semibin2.md) - **SemiBin2 v2.3.0**: deep-learning binner with pre-trained models; use as the GPU alternative to QuickBin on CUDA-equipped nodes
+- [metabat2.md](metabat2.md) - MetaBAT2 v2.18: legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
 
 ### Quality-control tools
 
 #### Domain-specific QC
-- [checkm2.md](checkm2.md) - **CheckM2 v1.1.0+**: completeness/contamination for bacteria and archaea. v1.1.0 is a breaking upgrade — new DIAMOND v3 database from Zenodo (DOI 10.5281/zenodo.14897628) and new dependency tree; refresh the install and DB before use.
-- [eukcc.md](eukcc.md) - EukCC v2.1.3+: quality assessment for eukaryotic MAGs
+- [checkm2.md](checkm2.md) - **CheckM2 v1.1.0**: completeness/contamination for bacteria and archaea. v1.1.0 is a breaking upgrade with the DIAMOND v3 database from Zenodo (DOI 10.5281/zenodo.14897628); refresh the install and DB before use.
+- [eukcc.md](eukcc.md) - EukCC v2.1.3: quality assessment for eukaryotic MAGs
 
 #### Contamination detection
-- [gunc.md](gunc.md) - GUNC v1.0.6+: chimerism and contamination detection across all domains
+- [gunc.md](gunc.md) - GUNC v1.1.1: chimerism and contamination detection for prokaryotic genomes
 
 ## Quick Reference
 
@@ -41,11 +44,11 @@ mamba install -c bioconda -c conda-forge \
   coverm metabat2 semibin checkm2 gunc
 
 # QuickBin is provided by Bryce Foster's official BBTools container
-docker pull bryce911/bbtools:39.84
+docker pull bryce911/bbtools:39.85
 
 # Download databases
 checkm2 database --download
-gunc download_db -db progenomes -o gunc_db/
+gunc download_db -db progenomes_3 -o gunc_db/
 wget http://ftp.ebi.ac.uk/pub/databases/metagenomics/eukcc/eukcc2_db_ver_1.2.tar.gz
 tar -xzvf eukcc2_db_ver_1.2.tar.gz
 export EUKCC2_DB=$(realpath eukcc2_db_ver_1.2)
@@ -61,7 +64,7 @@ coverm contig --bam-files *.bam -m mean variance -o depth.txt
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam xstrict
 # GPU alternative:
 # SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment human_gut -o semibin/ -p 16
@@ -76,7 +79,8 @@ checkm2 predict --input prokaryotic_bins/ --output-directory qc_prok/ -t 16
 eukcc folder eukaryotic_bins/ --db $EUKCC2_DB --threads 16
 
 # 5. Detect contamination/chimerism
-gunc run --input_dir prokaryotic_bins/ --db_file gunc_db/gunc_db_progenomes2.1.dmnd -o gunc_qc/ -t 16
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
+gunc run --input_dir prokaryotic_bins/ --db_file "$GUNC_DB" --out_dir gunc_qc/ -t 16
 
 # 6. Filter high-quality bins
 # Criteria: ≥90% complete, ≤5% contamination, pass GUNC
@@ -133,7 +137,7 @@ coverm contig --bam-files sample.bam -m mean variance -o depth.txt
 mkdir -p bins
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=bins/bin%.fa sample.bam strict
 checkm2 predict --input bins/ --output-directory qc/ -t 16
 ```
@@ -144,10 +148,11 @@ coverm contig --bam-files sample*.bam -m mean variance -o depth.txt
 mkdir -p bins
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=bins/bin%.fa sample*.bam xstrict
 checkm2 predict --input bins/ --output-directory qc/ -t 16
-gunc run --input_dir bins/ --db_file gunc_db/gunc_db_progenomes2.1.dmnd -o gunc_qc/ -t 16
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
+gunc run --input_dir bins/ --db_file "$GUNC_DB" --out_dir gunc_qc/ -t 16
 ```
 
 ### Ensemble Binning with QC
@@ -158,13 +163,14 @@ SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam --environment soil -o sem
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa *.bam
 
 # Combine with DAS Tool or similar
 # Then QC
 checkm2 predict --input final_bins/ --output-directory qc/ -t 16
-gunc run --input_dir final_bins/ --db_file gunc_db/gunc_db_progenomes2.1.dmnd -o gunc_qc/ -t 16
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
+gunc run --input_dir final_bins/ --db_file "$GUNC_DB" --out_dir gunc_qc/ -t 16
 ```
 
 ## Troubleshooting
@@ -217,8 +223,8 @@ gunc run --input_dir final_bins/ --db_file gunc_db/gunc_db_progenomes2.1.dmnd -o
 - SemiBin2: https://github.com/BigDataBiology/SemiBin
 - QuickBin: https://bbmap.org/tools/quickbin
 - CheckM2: https://github.com/chklovski/CheckM2
-- EukCC: https://github.com/EBI-Metagenomics/EukCC
-- GUNC: https://github.com/grp-bork/gunc
+- EukCC: https://eukcc.readthedocs.io/en/latest/ and https://github.com/EBI-Metagenomics/EukCC
+- GUNC: https://github.com/grp-bork/gunc/releases/tag/v1.1.1
 
 ### Key Publications
 - MetaBAT2: Kang et al. (2019) *PeerJ* https://doi.org/10.7717/peerj.7359

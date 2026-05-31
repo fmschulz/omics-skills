@@ -1,5 +1,10 @@
 # eggNOG-mapper Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: eggNOG-mapper v2.1.15 (final v2 release tag); v2.1.14 is the latest GitHub release endpoint observed
+Official docs/manual: https://github.com/eggnogdb/eggnog-mapper
+Release/source: https://github.com/eggnogdb/eggnog-mapper/releases/tag/v2.1.15
+
 ## Overview
 
 eggNOG-mapper is a tool for fast genome-wide functional annotation through orthology assignment. It uses precomputed orthologous groups and phylogenies from the eggNOG database to transfer functional information from sequences with known annotation to novel sequences.
@@ -7,9 +12,9 @@ eggNOG-mapper is a tool for fast genome-wide functional annotation through ortho
 ## Official Documentation
 
 - GitHub Repository: https://github.com/eggnogdb/eggnog-mapper
+- Releases: https://github.com/eggnogdb/eggnog-mapper/releases
 - Bioconda Package: https://bioconda.github.io/recipes/eggnog-mapper/README.html
 - eggNOG Database: http://eggnog-mapper.embl.de/
-- Installation Guide: https://deepwiki.com/eggnogdb/eggnog-mapper/2-installation-and-setup
 
 ## Installation
 
@@ -29,8 +34,8 @@ conda install -c bioconda eggnog-mapper
 # Install latest version
 pip install eggnog-mapper
 
-# Install specific version
-pip install eggnog-mapper==2.1.13
+# Install the tagged final-v2 release from GitHub
+pip install "git+https://github.com/eggnogdb/eggnog-mapper.git@v2.1.15"
 ```
 
 ### Requirements
@@ -423,10 +428,11 @@ emapper.py -i chunk.faa -o chunk_out \
 - Merge annotations with: `grep '^#query' chunk_001.emapper.annotations | head -1 > merged.tsv`
   then `grep -hv '^#' chunk_*/chunk_*.emapper.annotations >> merged.tsv`
 
-### Database download URL fix (as of 2025-09)
+### Legacy database download URL fix for v2.1.13
 
-The default download URL `eggnogdb.embl.de` is **dead** (returns 404).
-The domain moved to `eggnog5.embl.de`. You must patch the download script:
+eggNOG-mapper v2.1.14 fixed the database download URL in the official
+`download_eggnog_data.py` script. Only patch older v2.1.13 installations that
+still point at `eggnogdb.embl.de` and fail with 404 responses:
 
 ```bash
 # In download_eggnog_data.py (line ~15), change:
@@ -438,8 +444,7 @@ sed -i 's|eggnogdb.embl.de|eggnog5.embl.de|g' \
   "$(which download_eggnog_data.py)"
 ```
 
-This applies to eggnog-mapper v2.1.13 (latest as of March 2026).
-The fix has been reported (GitHub issues #571, #574, #576) but not merged.
+Prefer upgrading to v2.1.14+ rather than carrying this local patch.
 
 ### Diamond binary PATH issue
 
@@ -484,4 +489,4 @@ emapper.py -i proteins.faa -o results --dmnd_db custom.dmnd
 
 ## Version Information
 
-This documentation is based on eggNOG-mapper v2.1.13 and reflects features available as of January 2026. The latest version is maintained on GitHub and Bioconda.
+This documentation was verified against the official eggNOG-mapper GitHub repository, the v2.1.15 final-v2 release tag, and the v2.1.14 release note for the database download URL fix on 2026-05-30.

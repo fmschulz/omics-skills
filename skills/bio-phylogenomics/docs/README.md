@@ -2,19 +2,22 @@
 
 Documentation for phylogenetic tree inference and post-processing tools.
 
-**Last Updated**: 2026-02-01
+**Last verified:** 2026-05-30
+**Tool version/release checked:** IQ-TREE v3.1.2; VeryFastTree v4.0.5; ETE Toolkit 4.4.0
+**Official docs/manual:** See linked per-tool guides in this directory.
+**Release/source:** See linked per-tool guides in this directory.
 
 ## Documentation Files
 
 ### Tree inference tools
 
-- **[iqtree.md](iqtree.md)** - IQ-TREE v3.1.2+ usage guide
+- **[iqtree.md](iqtree.md)** - IQ-TREE v3.1.2 usage guide (source: https://github.com/iqtree/iqtree3/releases/tag/v3.1.2)
   - Maximum likelihood tree inference with comprehensive model selection
   - MAST and GTRpmix models (new in v3)
   - Default choice for final/publication-quality trees up to ~2,000 taxa
   - UFBoot, SH-aLRT, and standard bootstrap support
 
-- **[veryfasttree.md](veryfasttree.md)** - VeryFastTree v4.0+ usage guide
+- **[veryfasttree.md](veryfasttree.md)** - VeryFastTree v4.0.5 usage guide (source: https://github.com/citiususc/veryfasttree/releases/tag/v4.0.5)
   - Default choice for exploratory trees and when leaf count exceeds ~2,000
   - Parallelization and SIMD optimizations
   - "Disk computing" mode scales to >1M taxa
@@ -22,7 +25,7 @@ Documentation for phylogenetic tree inference and post-processing tools.
 
 ### Tree post-processing
 
-- **[ete-toolkit.md](ete-toolkit.md)** - ETE v4 (`ete4`) usage guide
+- **[ete-toolkit.md](ete-toolkit.md)** - ETE v4.4.0 (`ete4`) usage guide (source: https://github.com/etetoolkit/ete/releases/tag/4.4.0)
   - Python API for tree manipulation and analysis
   - Tree statistics, rooting, pruning, filtering
   - Distance calculations and topology comparison
@@ -39,7 +42,7 @@ Documentation for phylogenetic tree inference and post-processing tools.
 | Up to ~2,000, final | IQ-TREE v3 standard | Full model selection (`-m MFP`), UFBoot/SH-aLRT. Publication-quality. |
 | Up to ~2,000, exploratory fallback | `iqtree3 -fast` | Use only when VeryFastTree is unavailable or IQ-TREE-compatible exploratory output is explicitly required. |
 | ~2,000 to ~100,000 | VeryFastTree v4 | Default beyond the IQ-TREE 3 sweet spot. |
-| >100,000 | VeryFastTree v4 with `--disk-computing` | Scales to >1M taxa. |
+| >100,000 | VeryFastTree v4 with `-disk-computing` | Scales to >1M taxa. |
 
 ### When to Use ETE Toolkit
 
@@ -58,7 +61,7 @@ Use ETE Toolkit for **all** tree post-processing tasks:
 ### Small Dataset (Publication Quality)
 ```bash
 # 1. Tree inference with IQ-TREE
-iqtree -s alignment.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
+iqtree3 -s alignment.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
 
 # 2. Post-process with ETE
 python << EOF
@@ -116,25 +119,27 @@ EOF
 - Command Reference: https://iqtree.github.io/doc/Command-Reference
 - Quickstart: https://iqtree.github.io/doc/Quickstart
 - Tutorial: https://iqtree.github.io/doc/Tutorial
+- Source/release: https://github.com/iqtree/iqtree3/releases/tag/v3.1.2
 
 ### VeryFastTree
 - GitHub: https://github.com/citiususc/veryfasttree
+- Source/release: https://github.com/citiususc/veryfasttree/releases/tag/v4.0.5
 - Based on FastTree-2 algorithm
 
 ### ETE Toolkit
 - Main: https://etetoolkit.github.io/ete/
 - Tutorial: https://etetoolkit.github.io/ete/tutorial/tutorial_trees.html
 - API Reference: https://etetoolkit.github.io/ete/reference/reference_tree.html
-- GitHub: https://github.com/etetoolkit/ete
+- Source/release: https://github.com/etetoolkit/ete/releases/tag/4.4.0
 
 ## Quick Reference
 
 ### IQ-TREE Essential Commands
 ```bash
-iqtree -s alignment.phy                       # Auto model selection
-iqtree -s alignment.phy -m GTR+I+G            # Specific model
-iqtree -s alignment.phy -m MFP -bb 1000       # Model selection + UFBoot
-iqtree -s alignment.phy -fast -nt AUTO        # Exploratory fallback when VeryFastTree cannot be used
+iqtree3 -s alignment.phy                      # Auto model selection
+iqtree3 -s alignment.phy -m GTR+I+G           # Specific model
+iqtree3 -s alignment.phy -m MFP -bb 1000      # Model selection + UFBoot
+iqtree3 -s alignment.phy -fast -nt AUTO       # Exploratory fallback when VeryFastTree cannot be used
 ```
 
 ### VeryFastTree Essential Commands
@@ -172,6 +177,7 @@ t.write(outfile='output.nw')
 ### IQ-TREE
 ```bash
 conda install -c bioconda iqtree
+iqtree3 --version
 # or
 brew install brewsci/bio/iqtree3
 ```
@@ -185,7 +191,7 @@ brew install veryfasttree
 
 ### ETE Toolkit
 ```bash
-pip install ete4
+pip install ete4==4.4.0
 # or
 conda install conda-forge::ete4
 ```

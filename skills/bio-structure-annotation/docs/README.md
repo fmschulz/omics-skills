@@ -1,6 +1,9 @@
 # Tool Documentation
 
-Updated: 2026-02-01
+Last verified: 2026-05-30
+Tool version/release checked: Boltz v2.2.1; ColabFold v1.6.1; Foldseek 10-941cd33; TM-Vec 1.0.2
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 ## Overview
 
@@ -12,11 +15,13 @@ This directory contains practical usage guides for structure prediction and anno
 
 - **[boltz](boltz.md)** - Boltz-2 (MIT license, CUDA, NVIDIA cuEquivariance kernels)
   - GitHub: https://github.com/jwohlwend/boltz
+  - Version checked: v2.2.1
   - Use for: default structure and complex prediction, protein-ligand binding affinity, drug discovery
   - Notes: replaces Boltz-1; ~1000× faster than FEP for affinity; benchmarked competitively with AlphaFold3
 
 - **[colabfold](colabfold.md)** - ColabFold with MMseqs2-GPU MSA backend
   - GitHub: https://github.com/sokrypton/ColabFold
+  - Version checked: v1.6.1
   - Use for: cases where a wider MSA than Boltz-2 builds is needed
   - Notes: MMseqs2-GPU backend provides ~31.8× MSA-generation speedup over the standard AF2 pipeline
 
@@ -27,12 +32,13 @@ This directory contains practical usage guides for structure prediction and anno
 
 ### Structure search and annotation
 
-- **[foldseek](foldseek.md)** - Foldseek v9+ with `--gpu 1` mode (ProstT5 on CUDA Turing+)
+- **[foldseek](foldseek.md)** - Foldseek 10-941cd33 with `--gpu 1` mode (ProstT5 on CUDA Turing+)
   - GitHub: https://github.com/steineggerlab/foldseek
   - Use for: structure similarity search, clustering, large-scale database searches; ~4–27× speedup over CPU Foldseek
 
 - **[tm-vec](tm-vec.md)** - Transformer-based structure embedding for rapid similarity search
   - GitHub: https://github.com/tymor22/tm-vec
+  - Version checked: 1.0.2
   - Use for: fast pre-screening, large-scale structure comparisons, vector-based search
 
 ## Quick reference
@@ -45,7 +51,7 @@ This directory contains practical usage guides for structure prediction and anno
 | Fast monomer pre-screening (structure) | ESMFold | Lowest VRAM; lower accuracy — triage only |
 | Default structure + complex + affinity | Boltz-2 | MIT license; CUDA-native; strong benchmark performance |
 | Wider MSA than Boltz-2 builds | ColabFold + MMseqs2-GPU | Fastest MSA pipeline for AF2-style runs |
-| Detailed structure search | Foldseek v9 (`--gpu 1`) | High sensitivity, GPU-accelerated structural alignment |
+| Detailed structure search | Foldseek 10 (`--gpu 1`) | High sensitivity, GPU-accelerated structural alignment |
 | Structure clustering | Foldseek | Built-in clustering algorithms |
 
 ### Installation Quick Start
@@ -80,7 +86,7 @@ pip install boltz[cuda] -U
    - Triage only: ESMFold
 
 3. **Detailed structure search**
-   - Use Foldseek v9 (`--gpu 1` on Turing+ GPUs) against PDB, AlphaFoldDB, or custom databases
+   - Use Foldseek 10 (`--gpu 1` on Turing+ GPUs) against PDB, AlphaFoldDB, or custom databases
    - High-sensitivity mode for distant homologs
    - Fast mode for close homologs
 

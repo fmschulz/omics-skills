@@ -1,12 +1,17 @@
-# CheckM2 v1.0.2
+# CheckM2 v1.1.0
 
 Rapid assessment of genome quality (completeness and contamination) for bacterial and archaeal bins using machine learning.
+
+Last verified: 2026-05-30
+Tool version/release checked: CheckM2 v1.1.0 (GitHub release, 2025-02-19)
+Official docs/manual: https://github.com/chklovski/CheckM2
+Release/source: https://github.com/chklovski/CheckM2/releases/tag/1.1.0
 
 ## Official Documentation
 - GitHub: https://github.com/chklovski/CheckM2
 - Publication: Chklovski et al. (2023) *Nature Methods*
-- Database: Zenodo (v1.1.0)
-- Version: 1.0.2
+- Database: Zenodo v1.1.0 (DOI 10.5281/zenodo.14897628)
+- Version: 1.1.0
 
 ## Installation
 
@@ -20,6 +25,7 @@ conda activate checkm2
 ```bash
 git clone --recursive https://github.com/chklovski/checkm2.git
 cd checkm2
+git checkout 1.1.0
 conda env create -n checkm2 -f checkm2.yml
 conda activate checkm2
 python setup.py install
@@ -49,7 +55,9 @@ checkm2 database --download --path /custom/path/checkm2_db/
 export CHECKM2DB="/path/to/checkm2_db/"
 ```
 
-**Database version:** v1.1.0 (available at https://zenodo.org/record/14897628)
+**Database version:** v1.1.0 (available at https://zenodo.org/records/14897628)
+
+CheckM2 v1.1.0 is a breaking database/dependency upgrade. Refresh older installations and redownload the database before comparing new results with runs made under v1.0.x.
 
 ## Key Command-Line Flags
 

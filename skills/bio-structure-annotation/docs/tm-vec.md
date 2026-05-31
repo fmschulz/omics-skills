@@ -2,11 +2,10 @@
 
 Fast protein structure embedding and similarity search using transformer-based vector representations.
 
-## Official Documentation
-
-- GitHub: https://github.com/tymor22/tm-vec
-- Paper: https://www.biorxiv.org/content/10.1101/2022.07.25.501437v1
-- DeepBLAST wiki: https://github.com/valentynbez/tmvec (database building & search examples)
+Last verified: 2026-05-30
+Tool version/release checked: TM-Vec 1.0.2
+Official docs/manual: https://github.com/tymor22/tm-vec; https://github.com/valentynbez/tmvec
+Release/source: https://github.com/tymor22/tm-vec/releases/tag/1.0.2
 
 ## Installation
 

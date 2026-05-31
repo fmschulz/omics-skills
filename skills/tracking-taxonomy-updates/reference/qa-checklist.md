@@ -1,5 +1,8 @@
 # QA checklist (taxonomy work is fragile)
 
+Last verified: 2026-05-30
+Source/version summary: checklist updated against current NCBI/GTDB/ICTV source pages and current tool docs listed in `tools.md`.
+
 Use this before delivering results.
 
 ---

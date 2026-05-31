@@ -1,7 +1,14 @@
 # IMG and GOLD Terms Glossary
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** IMG/GOLD glossary is a live help page (not versioned); GOLD public release checked as v.10.
+**Official docs/manual:** https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms ; https://gold.jgi.doe.gov/resources/project_help_doc.pdf
+**Release/source:** GOLD Release v.10 public site; `"img-db-2 postgresql".img_core_v400.*`; `"gold-db-2 postgresql".gold.*`.
+
 Reference for terminology used across the IMG and GOLD databases.
-Source: https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms
+Primary source: https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms
+
+Coverage percentages and Lakehouse field notes are local query observations; re-check them in the live Lakehouse before using them as current statistics.
 
 ---
 

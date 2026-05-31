@@ -1,5 +1,10 @@
 # tRNAscan-SE
 
+Last verified: 2026-05-30
+Tool version/release checked: tRNAscan-SE v2.0.12
+Official docs/manual: http://lowelab.ucsc.edu/tRNAscan-SE/ ; https://github.com/UCSC-LoweLab/tRNAscan-SE/blob/master/README
+Release/source: https://github.com/UCSC-LoweLab/tRNAscan-SE/releases/tag/v2.0.12 ; https://github.com/UCSC-LoweLab/tRNAscan-SE
+
 tRNA gene detection using covariance models and Infernal.
 
 ## Official Documentation
@@ -23,8 +28,7 @@ cd infernal-1.1.5
 make
 make install
 
-# Install tRNAscan-SE
-# Via conda (recommended)
+# Install tRNAscan-SE via conda (recommended)
 conda install -c bioconda trnascan-se
 
 # From source
@@ -49,12 +53,15 @@ make install
 - `-m FILE` - Save statistics summary
 - `-b FILE` - Save results in BED format
 - `-a FILE` - Save results in FASTA format
-- `-g FILE` - Save results in GTF format
+- `-j FILE`, `--gff FILE` - Save results in GFF3 format
+- `-g FILE`, `--gencode FILE` - Use an alternate genetic-code file; this is not a GFF/GTF output flag
 
 ### Search Parameters
 - `-H` - Report possible pseudogenes
 - `--detail` - Detailed output with scores
 - `--thread N` - Number of CPU threads
+- `--max` - Maximum-sensitivity Infernal search without the HMM filter; slow
+- `--fast` - Faster search mode with a stricter filter
 
 ## Common Usage Examples
 
@@ -84,7 +91,7 @@ tRNAscan-SE -B \
     -f structures.ss \
     -b results.bed \
     -a results.fa \
-    -g results.gtf \
+    -j results.gff3 \
     genome.fna
 ```
 
@@ -119,7 +126,7 @@ tRNAscan-SE -B -H -o results_with_pseudo.txt genome.fna
 
 4. **BED (-b)** - Genome browser format
 
-5. **GTF (-g)** - Gene annotation format
+5. **GFF3 (-j/--gff)** - Gene annotation format
 
 ## Search Modes Explained
 

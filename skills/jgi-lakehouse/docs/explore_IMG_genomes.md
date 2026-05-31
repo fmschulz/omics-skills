@@ -1,6 +1,13 @@
 # Exploring IMG Genomes: Genome Metadata Queries
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse live service (not versioned); IMG source status checked against public IMG/GOLD docs and local Lakehouse guide snapshot.
+**Official docs/manual:** https://img.jgi.doe.gov/ ; https://img.jgi.doe.gov/data-model.html ; https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms
+**Release/source:** `"img-db-2 postgresql".img_core_v400.taxon`, `taxon_stats`, and `taxon_gtdbtk_lineage`; `"gold-db-2 postgresql".gold.gtdb`.
+
 This guide documents patterns for querying genome-level metadata (genome size, GC content, taxonomy, quality) across the IMG and GOLD databases. It is based on experience with genus-level taxon lookups but applies broadly to any genome metadata query.
+
+Count and coverage percentages below are historical local Lakehouse query results. Re-run the shown SQL for final analyses because IMG/GOLD sources are live services, not fixed releases.
 
 ---
 

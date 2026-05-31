@@ -1,25 +1,30 @@
 # Dremio Lakehouse Authentication Setup
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse Dremio live service (not versioned); Dremio REST API docs current [26.x]; local token helper script has no upstream release.
+**Official docs/manual:** https://docs.dremio.com/current/security/authentication/personal-access-tokens/ ; https://docs.dremio.com/current/reference/api/sql/ ; https://docs.dremio.com/current/reference/api/job/job-results/
+**Release/source:** `skills/jgi-lakehouse/scripts/get_dremio_token.sh`; `skills/jgi-lakehouse/scripts/rest_client.py`; https://lakehouse.jgi.lbl.gov
+
 ## Endpoints
 - Lakehouse URL: https://lakehouse.jgi.lbl.gov
 
-## Generate Personal Access Token (Recommended)
+## Generate a Token
 
-The lakehouse is protected by Cloudflare Access. To use the API programmatically:
+The public Lakehouse UI is protected by Cloudflare Access. Use a Dremio Personal Access Token (PAT) when the UI exposes PAT management for your account; otherwise use the local `get_dremio_token.sh` helper from an internal network or SSH tunnel to create a short-lived login token.
 
 ### 1. Access Dremio UI
 1. Open browser and navigate to: https://lakehouse.jgi.lbl.gov
 2. Authenticate through Cloudflare Access (SSO)
 3. Login with your JGI credentials
 
-### 2. Generate PAT
+### 2. Generate PAT if available
 1. Click your profile icon (top right)
 2. Go to **Account Settings**
 3. Navigate to **Personal Access Tokens** tab
 4. Click **"New Token"**
 5. Set token properties:
    - **Label**: "CLI API Access" (or your preferred name)
-   - **Expiration**: Choose duration (recommend 90 days or longer)
+   - **Expiration**: Choose a duration allowed by the deployment policy
 6. Click **Create**
 7. **IMPORTANT**: Copy the token immediately (shown only once)
 
@@ -48,7 +53,7 @@ source ~/.bashrc  # or source ~/.zshrc
 Test the token (from LBNL network or SSH tunnel):
 
 ```bash
-python3 << 'EOF'
+uv run --with requests python << 'EOF'
 import os
 import sys
 
@@ -82,7 +87,7 @@ export DREMIO_HOST=localhost
 ## Security Notes
 - Never commit ~/.secrets/* to git (already gitignored)
 - Token file permissions are 600 (read/write owner only)
-- Rotate tokens periodically (every 90 days recommended)
+- Rotate tokens according to the deployment's token lifetime and local security policy
 - Revoke tokens from Dremio UI if compromised
 
 ## Operational Pitfalls (Important)
@@ -105,5 +110,5 @@ from rest_client import query
 
 ### 2. Token lifetime depends on how token was created
 
-- **Dremio UI PAT**: configurable expiration (often longer)
+- **Dremio UI PAT**: configurable expiration when PATs are enabled for the deployment
 - **`get_dremio_token.sh` (`/apiv2/login`)**: short-lived token (~30 hours)

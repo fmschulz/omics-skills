@@ -1,8 +1,14 @@
 # SPAdes v4.2.0 Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: SPAdes v4.2.0 (GitHub release, 2025-05-06)
+Official docs/manual: https://github.com/ablab/spades#manual
+Release/source: https://github.com/ablab/spades/releases/tag/v4.2.0
+
 ## Official Documentation
 - Website: https://github.com/ablab/spades
 - Manual: https://github.com/ablab/spades#manual
+- Releases: https://github.com/ablab/spades/releases
 
 ## Installation
 

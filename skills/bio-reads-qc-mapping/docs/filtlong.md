@@ -1,61 +1,77 @@
-# Filtlong - Long Read Quality Filtering
+# Filtlong v0.3.1 - Long Read Quality Filtering
+
+Last verified: 2026-05-30
+Tool version/release checked: Filtlong v0.3.1 (GitHub release)
+Official docs/manual: https://github.com/rrwick/Filtlong/tree/v0.3.1#full-usage
+Release/source: https://github.com/rrwick/Filtlong/releases/tag/v0.3.1
 
 ## Overview
 
-Filtlong is a tool for filtering long reads by quality. It can take a set of long reads and produce a smaller, better subset using both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter. Works with both Nanopore and PacBio data.
+Filtlong filters Nanopore or PacBio long-read FASTQ by read length and quality. Without an external reference it scores reads from FASTQ quality values; with an assembly or short-read reference it scores read identity through k-mer matches. In v0.3.0+, the old `--illumina_1`/`--illumina_2` long options were renamed to `--short_1`/`--short_2`, while `-1`/`-2` stayed valid. v0.3.1 adds short-form options and unit suffixes.
 
 ## Official Documentation
 
 - [Filtlong GitHub Repository](https://github.com/rrwick/Filtlong)
-- [Filtlong README](https://github.com/rrwick/Filtlong/blob/main/README.md)
+- [Filtlong v0.3.1 README / full usage](https://github.com/rrwick/Filtlong/tree/v0.3.1#full-usage)
+- [Filtlong v0.3.1 Release](https://github.com/rrwick/Filtlong/releases/tag/v0.3.1)
 
 ## Installation
 
 ```bash
 # Via conda/mamba
-conda install -c bioconda filtlong
+conda install -c bioconda filtlong=0.3.1
 
-# Via pixi (recommended for this workflow)
+# Via pixi
 pixi add filtlong
 
 # From source
 git clone https://github.com/rrwick/Filtlong.git
 cd Filtlong
+git checkout v0.3.1
 make
 ```
 
 ## Key Command-Line Flags
 
 ### Basic Syntax
+
 ```bash
 filtlong [options] input.fastq.gz | gzip > output.fastq.gz
 ```
 
 ### Output Thresholds
-- `--min_length <int>` (or `-l`) - Discard reads shorter than this length (e.g., 1000)
-- `--keep_percent <float>` (or `-p`) - Keep only the best percent of reads (by bp, not count)
-- `--target_bases <int>` (or `-t`) - Remove worst reads until only this many bases remain
-- `--min_mean_q <float>` - Discard reads with mean quality below this threshold
-- `--min_window_q <float>` - Discard reads with window quality below this threshold
+
+- `-l, --min_length <int>` - Discard reads shorter than this length; supports `k`, `kb`, `m`, `mb`, `g`, `gb` suffixes.
+- `-L, --max_length <int>` - Discard reads longer than this length; supports unit suffixes.
+- `--keep_percent <float>` - Keep the best percent of input bases.
+- `-t, --target_bases <int>` - Keep the best reads until this many bases remain; supports unit suffixes.
+- `--min_mean_q <float>` - Discard reads below this mean quality.
+- `--min_window_q <float>` - Discard reads with a low-quality window below this threshold.
 
 ### External References
-- `--assembly <file>` (or `-a`) - Reference assembly in FASTA format
-- `--illumina_1 <file>` (or `-1`) - Illumina reads R1 (for quality assessment)
-- `--illumina_2 <file>` (or `-2`) - Illumina reads R2 (for quality assessment)
 
-### Read Modification
-- `--trim` - Trim bases from start/end that don't match reference kmers
-- `--split <int>` - Split reads when this many consecutive bases fail to match reference
-- `--window_size <int>` - Window size for quality filtering (default: 250)
+- `-a, --assembly <file>` - Reference assembly in FASTA format.
+- `-1, --short_1 <file>` - First short-read FASTQ reference file.
+- `-2, --short_2 <file>` - Second short-read FASTQ reference file.
+
+Avoid the pre-v0.3.0 long names `--illumina_1` and `--illumina_2`; use `--short_1` and `--short_2`. The short forms `-1` and `-2` are unchanged.
+
+### Trimming
+
+- `--trim` - With an external reference, trim non-k-mer-matching bases from read ends.
+- `--split <int>` - With an external reference, split reads at this many consecutive non-k-mer-matching bases; supports unit suffixes.
 
 ### Score Weights
-- `--length_weight <float>` - Weight for length score (default: 1)
-- `--mean_q_weight <float>` - Weight for mean quality score (default: 1)
-- `--window_q_weight <float>` - Weight for window quality score (default: 1)
+
+- `--length_weight <float>` - Weight for length score.
+- `--mean_q_weight <float>` - Weight for mean quality score.
+- `--window_q_weight <float>` - Weight for window quality score.
 
 ### Output Control
-- `--verbose` - Verbose output to stderr
-- `--version` - Display version and exit
+
+- `--window_size <int>` - Sliding window size for window-quality scoring.
+- `--verbose` - Write filtering summary to stderr.
+- `--version` - Display version and exit.
 
 ## Common Usage Examples
 
@@ -74,7 +90,7 @@ filtlong --keep_percent 90 input.fastq.gz | gzip > filtered.fastq.gz
 ### Target Specific Coverage
 
 ```bash
-# Keep best reads totaling 500 Mbp
+# Keep best reads totaling 500 Mbp.
 filtlong --target_bases 500000000 input.fastq.gz | gzip > filtered.fastq.gz
 ```
 
@@ -85,43 +101,26 @@ filtlong --min_mean_q 10 --min_window_q 10 \
   input.fastq.gz | gzip > filtered.fastq.gz
 ```
 
-### Reference-Guided Filtering
+### End Trimming Before Filtering
 
 ```bash
-filtlong --assembly reference.fasta \
-  --min_length 1000 \
+filtlong -1 short_R1.fastq.gz -2 short_R2.fastq.gz \
+  --trim --min_length 1kb \
   input.fastq.gz | gzip > filtered.fastq.gz
 ```
 
-### Illumina-Assisted Filtering
+### Short-Read-Assisted Filtering and Splitting
 
 ```bash
-filtlong \
-  --illumina_1 illumina_R1.fastq.gz \
-  --illumina_2 illumina_R2.fastq.gz \
-  --min_length 1000 \
-  input.fastq.gz | gzip > filtered.fastq.gz
-```
-
-### Trim Low-Quality Ends
-
-```bash
-filtlong --assembly reference.fasta \
+filtlong -1 short_R1.fastq.gz -2 short_R2.fastq.gz \
+  --min_length 1kb \
+  --target_bases 500mb \
   --trim \
-  --min_length 1000 \
-  input.fastq.gz | gzip > filtered.fastq.gz
-```
-
-### Split Chimeric Reads
-
-```bash
-filtlong --assembly reference.fasta \
   --split 500 \
-  --min_length 1000 \
   input.fastq.gz | gzip > filtered.fastq.gz
 ```
 
-### Aggressive Filtering for High-Quality Subset
+### Aggressive High-Quality Subset
 
 ```bash
 filtlong \
@@ -131,140 +130,88 @@ filtlong \
   input.fastq.gz | gzip > filtered.fastq.gz
 ```
 
-### Combined Filtering Strategy
+### Prefer Length Over Quality
 
 ```bash
-filtlong \
-  --assembly reference.fasta \
-  --illumina_1 illumina_R1.fastq.gz \
-  --illumina_2 illumina_R2.fastq.gz \
-  --min_length 1000 \
-  --keep_percent 90 \
-  --trim \
+filtlong --length_weight 2 --mean_q_weight 1 --window_q_weight 1 \
   input.fastq.gz | gzip > filtered.fastq.gz
 ```
 
 ## Input/Output Formats
 
 ### Input Formats
-- FASTQ (gzipped or uncompressed)
-- Supports both Nanopore and PacBio data
-- Can handle multiple input files (concatenated)
+
+- FASTQ, gzip-compressed or uncompressed.
+- Nanopore or PacBio long reads.
+- Multiple files can be concatenated before filtering.
 
 ### Output Format
-- FASTQ (typically piped to gzip)
-- Writes to stdout by default
 
-### Reference Formats
-- FASTA for `--assembly`
-- FASTQ (gzipped or uncompressed) for Illumina reads
+- FASTQ written to stdout; pipe to `gzip` for compressed output.
 
 ## Performance Tips
 
-### Memory Usage
-- Filtlong loads all reads into memory for scoring
-- Memory requirement: ~10-20 bytes per base of input
-- For 10GB of reads, expect ~100-200GB RAM usage
-- Consider filtering in batches for very large datasets
-
-### Processing Speed
-- Single-threaded operation
-- Speed depends on:
-  - Read count and total bases
-  - Whether external references are used
-  - Trimming/splitting operations
-
-### Optimization Strategies
-- Use `--target_bases` instead of `--keep_percent` when possible (faster)
-- Pre-filter by length first if you have a hard length cutoff
-- Avoid `--trim` and `--split` if not needed (significant slowdown)
-- Process gzipped files directly (no need to decompress)
-
-### Pipeline Integration
-- Use pipes to avoid writing intermediate files
-- Combine with other tools efficiently:
-
-```bash
-# Filtlong → minimap2 → samtools
-filtlong --min_length 1000 input.fastq.gz | \
-  minimap2 -ax map-ont reference.fa - | \
-  samtools sort -o output.bam
-```
+1. Filtlong is single-threaded.
+2. Memory scales with total input bases because reads are scored before final selection.
+3. Use `--target_bases` when you need a fixed assembly coverage target.
+4. Use `--assembly` or `--short_1`/`--short_2` only when the reference is high quality and representative; poor short-read coverage or biological differences can make valid long reads look low quality.
 
 ## Scoring System
 
-Filtlong assigns each read a quality score based on:
+Filtlong v0.3.1 scores reads from:
 
-1. **Length score** - Longer reads score higher
-2. **Mean quality score** - Higher average base quality
-3. **Window quality score** - Consistent quality across read
+1. **Length score** - Longer reads score higher.
+2. **Mean quality score** - Higher average base quality scores higher; with an external reference this is inferred from reference k-mer matches instead of FASTQ qualities.
+3. **Window quality score** - Reads with consistent high-quality windows score higher; `--window_size` controls the sliding window.
 
-### With External References
+Adjust relative importance with the three score-weight flags:
 
-When using `--assembly` or Illumina reads:
-- Reads are scored based on kmer matches to reference
-- Matches increase score, mismatches decrease score
-- Helps identify high-quality reads without relying on quality scores alone
-
-### Score Weights
-
-Adjust relative importance:
 ```bash
-# Emphasize length over quality
-filtlong --length_weight 2 --mean_q_weight 1 input.fastq.gz
+# Emphasize length.
+filtlong --length_weight 2 --mean_q_weight 1 --window_q_weight 1 input.fastq.gz
 
-# Emphasize quality over length
-filtlong --length_weight 1 --mean_q_weight 3 input.fastq.gz
+# Emphasize quality.
+filtlong --length_weight 1 --mean_q_weight 3 --window_q_weight 3 input.fastq.gz
 ```
 
 ## Parameter Recommendations
 
-### Nanopore Genomic DNA (Standard)
+### Nanopore Genomic DNA
+
 ```bash
 filtlong --min_length 1000 --keep_percent 90
 ```
 
-### Nanopore Genomic DNA (High Quality)
+### Nanopore High-Quality Subset
+
 ```bash
 filtlong --min_length 5000 --keep_percent 50 --min_mean_q 10
 ```
 
 ### PacBio CLR
+
 ```bash
 filtlong --min_length 500 --keep_percent 90
 ```
 
-### PacBio HiFi (Less Aggressive)
+### PacBio HiFi
+
 ```bash
 filtlong --min_length 1000 --keep_percent 95 --min_mean_q 15
 ```
 
-### Target Coverage (e.g., 50X for 100 Mbp genome)
+### Target Coverage
+
 ```bash
+# 50x for a 100 Mbp genome.
 filtlong --target_bases 5000000000 --min_length 1000
-```
-
-### Reference-Guided (Best Quality)
-```bash
-filtlong \
-  --assembly reference.fasta \
-  --illumina_1 R1.fastq.gz \
-  --illumina_2 R2.fastq.gz \
-  --min_length 1000 \
-  --keep_percent 75 \
-  --trim
-```
-
-### Quick Pre-Filter (Length Only)
-```bash
-filtlong --min_length 1000
 ```
 
 ## Common Workflows
 
 ### Pre-Assembly Filtering
+
 ```bash
-# Filter for best long reads before assembly
 filtlong \
   --target_bases 5000000000 \
   --min_length 5000 \
@@ -272,24 +219,21 @@ filtlong \
   raw_reads.fastq.gz | gzip > filtered_reads.fastq.gz
 ```
 
-### Hybrid Assembly Preparation
+### Short-Read-Assisted Nanopore Cleanup
+
 ```bash
-# Use Illumina reads to assess long read quality
-filtlong \
-  --illumina_1 illumina_R1.fastq.gz \
-  --illumina_2 illumina_R2.fastq.gz \
-  --min_length 2000 \
-  --keep_percent 80 \
+filtlong -1 short_R1.fastq.gz -2 short_R2.fastq.gz \
+  --trim \
+  --split 1kb \
+  --min_length 1kb \
   nanopore_reads.fastq.gz | gzip > filtered_nanopore.fastq.gz
 ```
 
 ### Polishing Read Selection
+
 ```bash
-# Select high-quality reads for polishing
 filtlong \
-  --assembly draft_assembly.fasta \
   --min_length 1000 \
   --keep_percent 90 \
-  --trim \
   reads.fastq.gz | gzip > polishing_reads.fastq.gz
 ```

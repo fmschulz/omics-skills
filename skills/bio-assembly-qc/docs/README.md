@@ -1,28 +1,34 @@
 # Tool Documentation
 
-Last updated: 2026-02-01
+Last verified: 2026-05-30
+Tool version/release checked: SPAdes v4.2.0; Flye v2.9.6; Autocycler v0.6.2; QUAST v5.3.0
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 ## Assembly tools
 
-### SPAdes v4.0.0+
-Versatile genome assembler for short-read data (Illumina, IonTorrent) with support for hybrid assembly using long reads. v4.0.0 is the final feature release; the project continues with bug-fix-only updates.
+### SPAdes v4.2.0
+Versatile genome assembler for short-read data (Illumina, IonTorrent) with support for hybrid assembly using long reads. Current upstream release checked: v4.2.0.
 
 - Documentation: [spades.md](spades.md)
 - Official website: https://github.com/ablab/spades
+- Release/source: https://github.com/ablab/spades/releases/tag/v4.2.0
 - Use cases: bacterial genomes, metagenomes, plasmids, single-cell, hybrid assemblies
 
-### Flye / metaFlye v2.9.5+
+### Flye / metaFlye v2.9.6
 Long-read assembler for PacBio and Oxford Nanopore data with sophisticated repeat resolution. metaFlye mode (`--meta`) is the baseline for long-read metagenome assembly when HiFi-tuned alternatives are not available.
 
 - Documentation: [flye.md](flye.md)
 - Official website: https://github.com/fenderglass/Flye
+- Release/source: https://github.com/mikolmogorov/Flye/releases/tag/2.9.6
 - Use cases: PacBio/ONT isolates and metagenomes; ONT-only HiFi-poor datasets
 
-### Autocycler v0.6+ (bacterial isolate consensus)
+### Autocycler v0.6.2 (bacterial isolate consensus)
 Consensus assembler for bacterial isolate genomes. Use it when the goal is a complete, high-confidence isolate genome from multiple independent long-read assembly attempts. It complements Flye/Raven/miniasm-style draft assemblies; it is not the default path for mixed-community metagenomes.
 
 - Documentation: [autocycler.md](autocycler.md)
 - Official website: https://github.com/rrwick/Autocycler
+- Release/source: https://github.com/rrwick/Autocycler/releases/tag/v0.6.2
 - Use cases: haploid prokaryotic isolate genomes with enough long-read coverage to compare multiple draft assemblies
 
 ### metaMDBG v1.1 (preferred for HiFi metagenomes)
@@ -38,11 +44,12 @@ Fast long-read metagenome assembler released in 2025. Consider when runtime is t
 
 ## Quality Control Tools
 
-### QUAST v5.3+
+### QUAST v5.3.0
 Comprehensive assembly quality assessment tool providing contiguity, completeness, and correctness metrics.
 
 - Documentation: [quast.md](quast.md)
 - Official website: http://quast.sourceforge.net/
+- Release/source: https://github.com/ablab/quast/releases/tag/quast_5.3.0
 - Use cases: Assembly QC, assembler comparison, reference-based/free evaluation
 
 ## Quick Start

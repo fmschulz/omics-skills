@@ -1,13 +1,16 @@
 # Tool Documentation
 
-**Last Updated:** 2026-02-01
+Last verified: 2026-05-30
+Tool version/release checked: DuckDB v1.5.3; scikit-learn 1.8.0; XGBoost v3.2.0; crossrefapi 1.7.0
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 This directory contains practical usage guides for the tools used in the bio-stats-ml-reporting skill.
 
 ## Tools
 
 ### Data Processing & Analytics
-- **[DuckDB](duckdb.md)** (v1.4.3) - SQL analytics database for aggregating and joining results
+- **[DuckDB](duckdb.md)** (v1.5.3) - SQL analytics database for aggregating and joining results
   - CLI usage, Parquet/TSV handling, performance optimization
   - Official docs: https://duckdb.org/docs/stable/
 
@@ -16,7 +19,7 @@ This directory contains practical usage guides for the tools used in the bio-sta
   - Classification, regression, model selection, pipelines
   - Official docs: https://scikit-learn.org/stable/
 
-- **[XGBoost](xgboost.md)** (v3.1.3) - Gradient boosting library for high-performance models
+- **[XGBoost](xgboost.md)** (v3.2.0) - Gradient boosting library for high-performance models
   - Parameter tuning, feature importance, early stopping
   - Official docs: https://xgboost.readthedocs.io/
 
@@ -72,6 +75,13 @@ pixi install
 # Run in pixi environment
 pixi run python train_models.py
 ```
+
+## Release Sources Checked
+
+- DuckDB: https://github.com/duckdb/duckdb/releases/tag/v1.5.3
+- scikit-learn: https://github.com/scikit-learn/scikit-learn/releases/tag/1.8.0
+- XGBoost: https://github.com/dmlc/xgboost/releases/tag/v3.2.0
+- crossrefapi: https://github.com/fabiobatalha/crossrefapi/releases/tag/1.7.0
 
 ## Contributing
 

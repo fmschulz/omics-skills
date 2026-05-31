@@ -1,6 +1,11 @@
-# QuickBin (BBTools) v39.84
+# QuickBin (BBTools) v39.85
 
 High-fidelity metagenomic binning using neural networks with conservative contig merging.
+
+Last verified: 2026-05-30
+Tool version/release checked: QuickBin in BBTools v39.85 via `bryce911/bbtools:39.85` (`latest` digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`)
+Official docs/manual: https://bbmap.org/tools/quickbin
+Release/source: https://hub.docker.com/r/bryce911/bbtools/tags and https://github.com/bbushnell/BBTools
 
 ## Official Documentation
 - BBTools Homepage: https://jgi.doe.gov/data-and-tools/software-tools/bbtools/
@@ -8,21 +13,22 @@ High-fidelity metagenomic binning using neural networks with conservative contig
 - QuickBin: https://bbmap.org/tools/quickbin
 - GitHub: https://github.com/bbushnell/BBTools
 - Preprint: https://www.biorxiv.org/content/10.64898/2026.01.08.698506v3
-- Version checked: 39.84
+- Container tags: https://hub.docker.com/r/bryce911/bbtools/tags
+- Version checked: 39.85
 
 ## Installation
 
 **Preferred container (Bryce Foster's official BBTools image):**
 ```bash
-docker pull bryce911/bbtools:39.84
-docker run --rm bryce911/bbtools:39.84 quickbin.sh --help
+docker pull bryce911/bbtools:39.85
+docker run --rm bryce911/bbtools:39.85 quickbin.sh --help
 ```
 
-As of 2026-05-15, Docker Hub reports `bryce911/bbtools:39.84` and `latest` at digest `sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`. Pin the tag in workflow docs and record the digest in run provenance.
+As of 2026-05-30, Docker Hub reports `bryce911/bbtools:39.85` and `latest` at digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`. Pin the tag in workflow docs and record the digest in run provenance.
 
 **Apptainer/Singularity:**
 ```bash
-apptainer exec docker://bryce911/bbtools:39.84 quickbin.sh --help
+apptainer exec docker://bryce911/bbtools:39.85 quickbin.sh --help
 ```
 
 Local BBTools or conda installs are acceptable only when the container runtime is unavailable; record the local BBTools version and install path.
@@ -59,7 +65,7 @@ Local BBTools or conda installs are acceptable only when the container runtime i
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa \
     sample1.sam sample2.sam sample3.sam covout=quickbin/coverage.txt
 ```
@@ -69,7 +75,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 mkdir -p bins
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=assembly.fasta out=bins/bin%.fa \
     reads=sample1.bam,sample2.bam,sample3.bam \
     readthreads=8
@@ -81,7 +87,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa \
     sample*.sam covout=quickbin/coverage.txt
 
@@ -89,7 +95,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 mkdir -p quickbin_rerun
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin_rerun/bin%.fa \
     cov=quickbin/coverage.txt cutoff=0.55
 ```
@@ -99,7 +105,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xstrict
 ```
 
@@ -108,7 +114,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xloose
 ```
 
@@ -117,7 +123,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.sam cutoff=0.60
 ```
 
@@ -139,7 +145,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 bbtools() {
   docker run --rm -u "$(id -u):$(id -g)" \
     -v "$PWD":/work -w /work \
-    bryce911/bbtools:39.84 "$@"
+    bryce911/bbtools:39.85 "$@"
 }
 
 bbtools bbmap.sh ref=contigs.fasta in=reads_1.fq.gz in2=reads_2.fq.gz \
@@ -221,7 +227,7 @@ Conservative approach prioritizes **high-fidelity bins** (low contamination) ove
 mkdir -p bins
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=bins/bin%.fa sample*.bam xstrict
 
 # Assess bacterial/archaeal bins
@@ -249,11 +255,11 @@ QuickBin can be used in ensemble binning approaches:
 ```bash
 # Run multiple binners
 metabat2 -i contigs.fasta -a depth.txt -o metabat/bin
-semibin2 single_easy_bin -i contigs.fasta -b reads.bam -o semibin/
+SemiBin2 single_easy_bin -i contigs.fasta -b reads.bam -o semibin/
 mkdir -p quickbin
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  bryce911/bbtools:39.84 \
+  bryce911/bbtools:39.85 \
   quickbin.sh in=contigs.fasta out=quickbin/bin%.fa sample*.bam xstrict
 
 # Refine with DAS Tool or similar

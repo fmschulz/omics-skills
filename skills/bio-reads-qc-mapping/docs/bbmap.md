@@ -1,4 +1,9 @@
-# BBMap - Short Read Aligner
+# BBMap (BBTools v39.85) - Short Read Aligner
+
+Last verified: 2026-05-30
+Tool version/release checked: BBTools/BBMap v39.85 via `bryce911/bbtools:39.85` (`latest` digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`)
+Official docs/manual: https://bbmap.org/docs.html
+Release/source: https://hub.docker.com/r/bryce911/bbtools/tags and https://github.com/bbushnell/BBTools
 
 ## Overview
 
@@ -17,19 +22,19 @@ BBMap is part of the BBTools suite. Prefer Bryce Foster's official BBTools
 container for reproducible runs:
 
 ```bash
-docker pull bryce911/bbtools:39.84
+docker pull bryce911/bbtools:39.85
 
 bbtools() {
   docker run --rm -u "$(id -u):$(id -g)" \
     -v "$PWD":/work -w /work \
-    bryce911/bbtools:39.84 "$@"
+    bryce911/bbtools:39.85 "$@"
 }
 
 bbtools bbmap.sh --help
 ```
 
-As of 2026-05-15, `bryce911/bbtools:39.84` and `latest` point to digest
-`sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
+As of 2026-05-30, `bryce911/bbtools:39.85` and `latest` point to digest
+`sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`.
 
 ## Key Command-Line Flags
 

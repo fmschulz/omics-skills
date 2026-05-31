@@ -1,8 +1,15 @@
 # Metagenome Comparability Guide
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse live service (not versioned); IMG/GOLD terminology checked against live public help pages; numeric counts retained from local Lakehouse query snapshots.
+**Official docs/manual:** https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms ; https://gold.jgi.doe.gov/resources/project_help_doc.pdf ; https://img.jgi.doe.gov/
+**Release/source:** `"img-db-2 postgresql".img_core_v400.taxon`; `"gold-db-2 postgresql".gold.project`; `"img-db-2 postgresql".img_core_v400.taxon_assembly_stats`.
+
 ## Critical Overview
 
 Metagenomes from different sources, sequencing strategies, and protocols **may not be directly comparable** in the same analysis. This guide helps you identify metagenome characteristics that affect comparability and build homogeneous datasets for robust comparative analysis.
+
+Count note: counts and percentages in this guide are local Lakehouse query snapshots. Treat them as scale/context and re-run the adjacent SQL before using exact current values.
 
 ### Key Comparability Factors:
 1. **Sequencing Type** - DNA vs RNA-based (metatranscriptomes)

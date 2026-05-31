@@ -1,11 +1,16 @@
 # GVClass Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: GVClass v1.6.0 software; compatible runtime resource bundle v1.5.0
+Official docs/manual: https://github.com/NeLLi-team/gvclass#readme
+Release/source: https://github.com/NeLLi-team/gvclass/tree/v1.6.0 ; https://github.com/NeLLi-team/gvclass
+
 ## Official Documentation
 - GitHub: https://github.com/NeLLi-team/gvclass
 - Publication: "Conservative taxonomy and quality assessment of giant virus genomes with GVClass." npj Viruses (2024), DOI: 10.1038/s44298-024-00069-7
 
 ## Overview
-GVClass is a specialized tool for identifying giant viruses (Nucleocytoviricota) in sequence data. It assigns taxonomy from domain to species level using phylogenetic analysis based on giant virus orthologous groups (GVOGs). Performance benchmarking shows >90% accuracy at genus level and >99% at higher taxonomic ranks.
+GVClass is a specialized tool for identifying giant viruses (Nucleocytoviricota) in sequence data. It assigns taxonomy with GVOG-based phylogenetic analysis and reports quality metrics. Current upstream guidance treats genus/species labels as nearest-reference labels unless the query is very close to an existing reference.
 
 ## Installation
 
@@ -15,6 +20,7 @@ curl -fsSL https://pixi.sh/install.sh | bash
 git clone https://github.com/NeLLi-team/gvclass.git
 cd gvclass
 pixi install
+pixi run setup-db
 ```
 
 ### Apptainer/Singularity (HPC - Recommended)
@@ -23,7 +29,7 @@ wget https://raw.githubusercontent.com/NeLLi-team/gvclass/main/gvclass-a
 chmod +x gvclass-a
 ```
 
-The Apptainer image includes database (~700MB) and all dependencies.
+The Apptainer image includes the database (~700MB) and dependencies.
 
 ## Key Commands & Flags
 
@@ -50,6 +56,7 @@ pixi run gvclass INPUT_DIR -o OUTPUT_DIR [OPTIONS]
 | `--mode-fast` | `-f` | Skip order-level markers (2-3x faster) | False |
 | `--extended` | `-e` | Include all marker trees in output | False |
 | `--contigs` | `-C` | Classify individual contigs separately | False |
+| `--sensitive` | - | Sensitive HMM search mode using E-value 1e-5 | Default behavior in current resources |
 | `--resume` | - | Continue interrupted run | False |
 | `--verbose` | `-v` | Enable debug output | False |
 | `--database` | `-d` | Override default database path | Auto |
@@ -74,6 +81,11 @@ pixi run gvclass my_genomes -t 32 --tree-method iqtree
 ### Classify individual contigs from assembly
 ```bash
 pixi run gvclass --contigs assembled_contigs.fna -o results -t 32
+```
+
+### Sensitive HMM search mode
+```bash
+pixi run gvclass my_genomes -o my_results -t 32 --sensitive
 ```
 
 ### Control parallelization (4 workers × 8 threads each)
@@ -104,6 +116,7 @@ pixi run gvclass my_genomes -o my_results --resume
 - Clean filenames: avoid special characters (`;`, `:`)
 - Protein headers: format as `filename|proteinid`
 - Input as directory containing multiple genome files
+- GVClass works best on bins/GVMAGs; use `--contigs` when treating contigs in a multi-contig FASTA as independent genomes
 
 ### Output Structure
 
@@ -120,13 +133,16 @@ Results saved to `<input_name>_results/` containing:
 |--------|-------------|
 | `taxonomy_majority` | Full taxonomic lineage (majority rule) |
 | `taxonomy_strict` | Conservative taxonomy (strict consensus) |
-| `order_completeness` | Percentage of order-specific markers detected |
-| `order_dup` | Duplication factor (contamination indicator) |
+| `estimated_completeness` | Estimated percentage of the expected genome recovered |
+| `estimated_contamination` | Estimated percentage of assembly likely to represent contaminant or mixed-origin sequence |
+| `contamination_type` | High-level contamination interpretation when contamination is elevated |
+| `order_dup` | Average copy number of expected order-level markers; elevated values suggest duplicated, chimeric, or mixed bins |
 | `gvog8_unique` | Unique GVOG8 core markers found |
 | `gvog8_total` | Total GVOG8 markers (including duplicates) |
 | `gvog8_dup` | GVOG8 duplication level |
 | `weighted_order_completeness` | Conservation-weighted completeness |
 | `avgdist` | Average phylogenetic distance to references |
+| `LENbp`, `GCperc`, `genecount`, `CODINGperc`, `ttable` | Basic genome statistics and gene-calling metadata |
 
 ## Performance Tips
 
@@ -140,14 +156,13 @@ Results saved to `<input_name>_results/` containing:
 
 ## Quality Interpretation
 
-**Completeness thresholds:**
-- >80%: High-quality, suitable for taxonomy
-- 50-80%: Medium-quality, order/family level reliable
-- <50%: Low-quality, use with caution
+**Completeness interpretation:**
+- Higher `estimated_completeness` supports more confident taxonomy, but final confidence depends on marker support and distance to references.
+- Use low-completeness results cautiously and report the likely rank limit.
 
 **Contamination indicators:**
-- `order_dup` >1.5: Possible contamination or chimera
-- `gvog8_dup` >1.3: Check for co-assemblies or mixed populations
+- Elevated `estimated_contamination`: inspect `contamination_type` and any per-query contamination candidate tables
+- `order_dup` or `gvog8_dup` >1: check for co-assemblies, mixed bins, or duplicated marker sets
 - High `avgdist`: May indicate novel lineage or poor quality
 
 ## Integration with Viromics Workflow
@@ -181,10 +196,14 @@ Create `gvclass_config.yaml` for custom defaults:
 ```yaml
 database:
   path: resources
+  download_url: https://zenodo.org/records/19674504/files/resources_v1_5_0.tar.gz?download=1
+  download_version: v1.5.0
 
 pipeline:
   tree_method: fasttree
   mode_fast: false
+  completeness_mode: novelty-aware
+  sensitive_mode: true
   threads: 16
 ```
 

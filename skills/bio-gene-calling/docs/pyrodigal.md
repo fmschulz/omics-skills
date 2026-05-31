@@ -1,63 +1,122 @@
 # Pyrodigal
 
-Python binding to Prodigal for fast prokaryotic gene finding.
+Last verified: 2026-05-30
+Tool version/release checked: Pyrodigal v3.7.1
+Official docs/manual: https://pyrodigal.readthedocs.io/en/stable/
+Release/source: https://github.com/althonos/pyrodigal/releases/tag/v3.7.1 ; https://github.com/althonos/pyrodigal
+
+Python bindings and a command-line interface around Prodigal for fast prokaryotic gene finding.
 
 ## Official Documentation
 - GitHub: https://github.com/althonos/pyrodigal
 - Documentation: https://pyrodigal.readthedocs.io/
+- CLI guide: https://pyrodigal.readthedocs.io/en/stable/guide/cli.html
+- Output writer guide: https://pyrodigal.readthedocs.io/en/stable/guide/outputs.html
 
 ## Installation
 
 ```bash
-# PyPI (recommended)
+# uv/pip
+uv pip install pyrodigal
 pip install pyrodigal
 
-# Conda/Bioconda
+# Conda/Bioconda, when using a conda-style environment
 conda install -c bioconda pyrodigal
 ```
 
-Requires Python 3.7+. Pre-built wheels available for Linux, macOS, and Windows (x86-64 and Aarch64).
+Pre-built wheels are published on PyPI. Use the version bundled by the active pixi or conda environment when reproducibility matters.
 
 ## Key Features
 
-- Pure Python API (no CLI)
+- Python API plus `pyrodigal` CLI
+- CLI is a near drop-in replacement for `prodigal` on FASTA input
 - Thread-safe for parallel processing
 - SIMD-accelerated (up to 50% faster than original Prodigal)
 - No intermediate files
 - In-memory processing
+- Python output writers for CDS FASTA, protein FASTA, GFF3-like output, GenBank, and score files
 
-## Common Usage Examples
+## Command-Line Examples
 
-### Metagenomic Mode (Pre-trained)
+### Metagenomic mode
+
+```bash
+pyrodigal \
+  -p meta \
+  -i contigs.fna \
+  -o genes.gff \
+  -f gff \
+  -a proteins.faa \
+  -d cds.fna \
+  -j 8
+```
+
+### Single-genome mode with a training file
+
+```bash
+pyrodigal \
+  -p single \
+  -i genome.fna \
+  -o genes.gff \
+  -f gff \
+  -a proteins.faa \
+  -d cds.fna \
+  -t training.trn
+```
+
+### Standard input
+
+```bash
+zcat contigs.fna.gz | pyrodigal -p meta -i - -o genes.gff -f gff -a proteins.faa
+```
+
+The CLI accepts FASTA input only. Stdin is supported, but compressed streams must be decompressed before piping.
+
+## Python Usage Examples
+
+### Metagenomic mode
 
 ```python
 import pyrodigal
 
-# Initialize gene finder with metagenomic model
 gene_finder = pyrodigal.GeneFinder(meta=True)
-
-# Find genes
 genes = gene_finder.find_genes(sequence_bytes)
 
-# Extract protein sequences
 for gene in genes:
     print(f">{gene.name}")
     print(gene.translate())
 ```
 
-### Single Mode (Train on Genome)
+### Single mode
 
 ```python
 gene_finder = pyrodigal.GeneFinder()
-
-# Train on genome sequence
 gene_finder.train(training_sequence)
-
-# Predict genes
 genes = gene_finder.find_genes(sequence_bytes)
 ```
 
-### Parallel Processing
+### Write standard output files from Python
+
+```python
+genes = gene_finder.find_genes(sequence_bytes)
+
+with open("cds.fna", "w") as dst:
+    genes.write_genes(dst, sequence_id="contig_1")
+
+with open("proteins.faa", "w") as dst:
+    genes.write_translations(dst, sequence_id="contig_1")
+
+with open("genes.gff", "w") as dst:
+    genes.write_gff(dst, sequence_id="contig_1", header=True)
+
+with open("genes.gbk", "w") as dst:
+    genes.write_genbank(dst, sequence_id="contig_1")
+
+with open("scores.sco", "w") as dst:
+    genes.write_scores(dst, sequence_id="contig_1")
+```
+
+### Parallel processing
 
 ```python
 import multiprocessing.pool
@@ -65,7 +124,6 @@ import multiprocessing.pool
 gene_finder = pyrodigal.GeneFinder()
 gene_finder.train(training_seq)
 
-# Thread-safe parallel prediction
 with multiprocessing.pool.ThreadPool() as pool:
     results = pool.map(gene_finder.find_genes, sequences)
 ```
@@ -73,12 +131,12 @@ with multiprocessing.pool.ThreadPool() as pool:
 ## Input/Output Formats
 
 **Input:**
-- Raw bytes or strings (DNA sequences)
-- No FASTA formatting required
+- CLI: FASTA nucleotide sequences
+- Python API: raw bytes or strings containing DNA sequence
 
 **Output:**
-- Gene objects with `.translate()` method
-- Protein sequences via translation
+- CLI: coordinate output via `-o`, proteins via `-a`, CDS via `-d`, scores via `-s`
+- Python API: `Genes` objects with `.write_genes()`, `.write_translations()`, `.write_gff()`, `.write_genbank()`, `.write_scores()`
 - Training data can be serialized and reused
 
 ## Key Parameters
@@ -87,6 +145,8 @@ with multiprocessing.pool.ThreadPool() as pool:
 - `closed=True` - Ignore genes running off sequence edges
 - `mask=True` - Prevent predictions across unknown nucleotides
 - `translation_table` - Set genetic code (default: 11)
+- `min_gene`, `min_edge_gene`, `max_overlap` - Control small-gene and overlap behavior in the API or matching CLI flags
+- CLI `-j/--jobs` - Parallelize across multiple input sequences
 
 ## Performance Tips
 

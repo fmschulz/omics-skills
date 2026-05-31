@@ -1,12 +1,18 @@
-# GUNC v1.0.6
+# GUNC v1.1.1
 
 Detection of chimerism and contamination in prokaryotic genomes using lineage homogeneity analysis.
+
+Last verified: 2026-05-30
+Tool version/release checked: GUNC v1.1.1 (GitHub release, 2026-02-18)
+Official docs/manual: https://grp-bork.embl-community.io/gunc/
+Release/source: https://github.com/grp-bork/gunc/releases/tag/v1.1.1
 
 ## Official Documentation
 - GitHub: https://github.com/grp-bork/gunc
 - Documentation: https://grp-bork.embl-community.io/gunc/
 - Publication: Orakov et al. (2021) *Genome Biology*
-- Version: 1.0.6
+- Releases: https://github.com/grp-bork/gunc/releases
+- Version: 1.1.1
 
 ## Installation
 
@@ -35,11 +41,11 @@ pip install -e .
 GUNC requires one of two reference databases:
 
 ```bash
-# Option 1: ProGenomes database
-gunc download_db -db progenomes -o gunc_db/
+# Option 1: ProGenomes 3 database
+gunc download_db -db progenomes_3 -o gunc_db/
 
-# Option 2: GTDB database (larger, more comprehensive)
-gunc download_db -db gtdb -o gunc_db/
+# Option 2: GTDB release 214 database (larger, more comprehensive)
+gunc download_db -db gtdb_214 -o gunc_db/
 ```
 
 **Database sizes:**
@@ -65,24 +71,27 @@ gunc download_db -db gtdb -o gunc_db/
 
 ### Run on directory of bins
 ```bash
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_dir bins/ \
-  --db_file gunc_db/gunc_db_progenomes2.1.dmnd \
+  --db_file "$GUNC_DB" \
   --out_dir gunc_output/ \
   --threads 16
 ```
 
 ### Run on single genome
 ```bash
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_file bin1.fasta \
-  --db_file gunc_db/gunc_db_progenomes2.1.dmnd \
+  --db_file "$GUNC_DB" \
   --out_dir gunc_output/ \
   --threads 8
 ```
 
 ### With detailed output and sensitive mode
 ```bash
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_dir bins/ \
-  --db_file gunc_db/gunc_db_gtdb.dmnd \
+  --db_file "$GUNC_DB" \
   --out_dir gunc_output/ \
   --threads 16 \
   --detailed_output \
@@ -91,8 +100,9 @@ gunc run --input_dir bins/ \
 
 ### Using GTDB database
 ```bash
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_dir bins/ \
-  --db_file gunc_db/gunc_db_gtdb.dmnd \
+  --db_file "$GUNC_DB" \
   --out_dir gunc_output/ \
   --threads 32
 ```
@@ -110,7 +120,7 @@ GUNC is designed for **prokaryotic genomes only**. Do not use on eukaryotic bins
 
 ## Output Format
 
-**Main output file:** `GUNC.progenomes_2.1.maxCSS_level.tsv` (or GTDB equivalent)
+**Main output file:** `GUNC.progenomes_3.maxCSS_level.tsv` (or GTDB release 214 equivalent)
 
 Key columns:
 - `genome` - Genome/bin name
@@ -131,25 +141,25 @@ Key columns:
 
 **CSS is the primary metric for detecting chimeras:**
 - Range: 0.0 to 1.0
-- **CSS > 0.45**: Genome flagged as putatively contaminated/chimeric
+- **CSS > 0.45**: Genome flagged as putatively contaminated/chimeric under the documented cutoff, unless the contamination portion is at or below 0.05
 - Lower values: More homogeneous (likely single organism)
 - Higher values: More heterogeneous (likely chimeric or contaminated)
 
 **Interpretation:**
 - CSS 0.0-0.30: Clean genome (high confidence)
-- CSS 0.30-0.45: Borderline (review manually)
-- CSS 0.45-0.60: Likely contaminated
-- CSS >0.60: Highly chimeric
+- CSS 0.30-0.45: Borderline or lineage-dependent; review manually with `pass.GUNC`
+- CSS 0.45-0.85: Putatively contaminated/chimeric when `contamination_portion > 0.05`
+- CSS >0.85: Highly chimeric
 
 ## Quality Filtering
 
 **Flag contaminated bins:**
 ```bash
 # Extract bins that pass GUNC
-awk -F'\t' '$NF == "True" {print $1}' GUNC.progenomes_2.1.maxCSS_level.tsv > passing_bins.txt
+awk -F'\t' '$NF == "True" {print $1}' GUNC.progenomes_3.maxCSS_level.tsv > passing_bins.txt
 
-# Extract contaminated bins (CSS > 0.45)
-awk -F'\t' '$8 > 0.45 {print $1}' GUNC.progenomes_2.1.maxCSS_level.tsv > contaminated_bins.txt
+# Extract contaminated bins using the documented CSS threshold
+awk -F'\t' '$8 > 0.45 {print $1}' GUNC.progenomes_3.maxCSS_level.tsv > contaminated_bins.txt
 ```
 
 **Combined filtering with CheckM2:**
@@ -176,8 +186,8 @@ join -t $'\t' \
 ## Output Interpretation
 
 **pass.GUNC flag:**
-- `True`: Genome passes (CSS ≤ 0.45 at all taxonomic levels)
-- `False`: Genome fails (CSS > 0.45 at some level)
+- `True`: Genome passes under the configured GUNC cutoff
+- `False`: Genome fails under the configured GUNC cutoff
 
 **contamination_portion:**
 - Estimated fraction of genome that is contamination
@@ -214,8 +224,9 @@ GUNC can detect contamination that CheckM2 misses, especially:
 checkm2 predict --input bins/ --output-directory checkm2_qc/ -t 16
 
 # 2. Detect chimerism
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_dir bins/ \
-  --db_file gunc_db/gunc_db_progenomes2.1.dmnd \
+  --db_file "$GUNC_DB" \
   --out_dir gunc_qc/ \
   --threads 16
 
@@ -244,8 +255,9 @@ done < high_quality_bins.txt
 
 ### Detailed per-contig output
 ```bash
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_dir bins/ \
-  --db_file gunc_db/gunc_db_progenomes2.1.dmnd \
+  --db_file "$GUNC_DB" \
   --out_dir gunc_output/ \
   --threads 16 \
   --detailed_output

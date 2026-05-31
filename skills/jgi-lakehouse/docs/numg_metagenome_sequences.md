@@ -1,22 +1,27 @@
 # NUMG: Metagenome Sequences and Functional Annotations
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** NUMG Lakehouse sources are live/not versioned; source availability statements retained from local Lakehouse source checks.
+**Official docs/manual:** https://img.jgi.doe.gov/ ; https://img.jgi.doe.gov/data-model.html ; https://docs.dremio.com/current/reference/sql/
+**Release/source:** `"numg read only".numg.*`; `"numg-iceberg"."numg-iceberg".*`; local source-status notes in this guide.
+
 ## Overview
 
 The NUMG (Non-redundant Unified Metagenome Gene catalog) data provides sequence-level access to JGI metagenomes directly in the Lakehouse. Unlike the rest of the Lakehouse (which is metadata-only), NUMG tables store **actual nucleotide and protein sequences** alongside functional annotations, partitioned per metagenome.
 
-**Scale:** ~86,800 metagenomes with full sequence and annotation data.
+**Scale:** ~86,800 metagenomes in the 2026-03 local Lakehouse snapshot; re-run the coverage queries below for current counts.
 
 ---
 
 ## Quick Reference: Which Source to Use
 
-Three NUMG-related sources exist in the Lakehouse. Use **`numg read only`** for all production queries.
+Three NUMG-related sources existed in the checked Lakehouse catalog snapshot. When present, prefer **`numg read only`** for production queries.
 
 | Source | Tables | Status | Use |
 |--------|--------|--------|-----|
-| `numg read only` | 9 | Fully accessible | **Primary source — use this** |
-| `numg-iceberg` | 2 (faa, gene2pfam) | Accessible, subset | Legacy/alternative access |
-| `numg-hive ro` | 3 (fna only works) | Partially broken | Avoid |
+| `numg read only` | 9 | Primary in local snapshot | **Preferred source** |
+| `numg-iceberg` | 2 (faa, gene2pfam) | Accessible subset in local snapshot | Legacy/alternative access |
+| `numg-hive ro` | 3 (fna only worked in local snapshot) | Partially broken in local snapshot | Avoid unless re-verified |
 
 ---
 
@@ -29,7 +34,7 @@ All tables in `numg read only` are partitioned by metagenome `oid` (the IMG taxo
 | `oid` | VARCHAR | IMG metagenome taxon OID (partition key) |
 | `dir0` | VARCHAR | Hive partition path, format `oid=<oid>` (same info as `oid`, redundant) |
 
-**Always filter by `oid`** when querying a specific metagenome — this triggers partition pruning and avoids full-table scans across ~86,800 metagenomes.
+**Always filter by `oid`** when querying a specific metagenome — this triggers partition pruning and avoids full-table scans across all NUMG partitions.
 
 ---
 
@@ -269,7 +274,7 @@ WHERE t.taxon_oid IN (2001200001, 2001200003, 2004247004)
 
 ---
 
-## Coverage (as of 2026-03)
+## Coverage (2026-03 Local Lakehouse Snapshot)
 
 | Table | Distinct metagenomes (oid) |
 |-------|---------------------------|

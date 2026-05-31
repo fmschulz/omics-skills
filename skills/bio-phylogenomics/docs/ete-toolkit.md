@@ -1,16 +1,22 @@
 # ETE Toolkit Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: ETE Toolkit 4.4.0 (`ete4`)
+Official docs/manual: https://etetoolkit.github.io/ete/
+Release/source: https://github.com/etetoolkit/ete/releases/tag/4.4.0
+
 ## Official Documentation
 - Main Documentation: https://etetoolkit.github.io/ete/
 - Tutorial: https://etetoolkit.github.io/ete/tutorial/tutorial_trees.html
 - API Reference: https://etetoolkit.github.io/ete/reference/reference_tree.html
 - GitHub Repository: https://github.com/etetoolkit/ete
+- Releases: https://github.com/etetoolkit/ete/releases
 
 ## Installation
 
 ### Quick Installation
 ```bash
-pip install ete4
+pip install ete4==4.4.0
 ```
 
 ### Conda Installation
@@ -22,6 +28,7 @@ conda install conda-forge::ete4
 ```bash
 git clone https://github.com/etetoolkit/ete.git
 cd ete
+git checkout 4.4.0
 pip install -e .
 ```
 
@@ -691,3 +698,7 @@ with open('tree_report.txt', 'w') as f:
 When using ETE Toolkit, cite:
 
 Jaime Huerta-Cepas, François Serra and Peer Bork (2016). ETE 3: Reconstruction, analysis and visualization of phylogenomic data. *Molecular Biology and Evolution*, 33(6):1635-1638. doi: 10.1093/molbev/msw046
+
+## Version Information
+
+This guide was verified against ETE Toolkit 4.4.0, the official ETE documentation, and the GitHub source/release page on 2026-05-30.

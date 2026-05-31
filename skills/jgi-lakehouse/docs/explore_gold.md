@@ -1,8 +1,13 @@
 # How to Explore GOLD Database
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** GOLD Release v.10 public site; JGI Lakehouse live service (not versioned); local exploration script has no upstream release.
+**Official docs/manual:** https://gold.jgi.doe.gov/index ; https://gold.jgi.doe.gov/resources/project_help_doc.pdf ; https://docs.dremio.com/current/reference/api/sql/
+**Release/source:** `"gold-db-2 postgresql".gold.*`; `skills/jgi-lakehouse/scripts/explore_gold_database.sh`.
+
 ## Current Limitation
 
-Your workstation (`jgi-ont.tailfd4067.ts.net`) **cannot access** the Dremio API directly due to network restrictions:
+Current off-network workstations may not be able to access the internal Dremio API directly. On 2026-05-30, direct access from this workspace failed with "No route to host" for `lakehouse-1.jgi.lbl.gov:9047`, while the public HTTPS endpoint remains behind Cloudflare Access:
 - Port 9047 is blocked/firewalled
 - Public HTTPS endpoint has Cloudflare Access protection
 
@@ -56,7 +61,7 @@ If you prefer to explore manually, here are the SQL commands:
 ```bash
 # Set token
 export DREMIO_PAT=$(cat ~/.secrets/dremio_pat)
-BASE_URL="http://lakehouse-1.jgi.lbl.gov:9047/api/v3"
+BASE_URL="https://lakehouse-1.jgi.lbl.gov:9047/api/v3"
 
 # Helper function
 run_query() {
@@ -66,12 +71,12 @@ run_query() {
     -H "Content-Type: application/json" \
     -d "{\"sql\": \"$sql\"}")
 
-  local job_id=$(echo "$job" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))")
+  local job_id=$(echo "$job" | uv run python -c "import sys,json; print(json.load(sys.stdin).get('id',''))")
 
   sleep 1
 
   curl -s --insecure "$BASE_URL/job/$job_id/results?limit=100" \
-    -H "Authorization: Bearer $DREMIO_PAT" | python3 -m json.tool
+    -H "Authorization: Bearer $DREMIO_PAT" | uv run python -m json.tool
 }
 
 # List all schemas

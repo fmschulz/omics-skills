@@ -72,13 +72,20 @@ for skill in bio-logic bio-foundation-housekeeping scientific-writing crossref-l
     fi
 done
 
-# Test 4: Validate skill definitions
+# Test 4: Validate skill definitions and supplementary documentation
 echo -e "\n${BLUE}[4/9] Validating skill definitions...${NC}"
 if ! "$REPO_ROOT/scripts/validate-skills.py" >/dev/null 2>&1; then
     echo -e "  ${RED}✗${NC} Skill validation failed"
     ERRORS=$((ERRORS + 1))
 else
     echo -e "  ${GREEN}✓${NC} Skill validation passed"
+fi
+
+if ! python3 "$REPO_ROOT/scripts/validate-supplementary-docs.py" >/dev/null 2>&1; then
+    echo -e "  ${RED}✗${NC} Supplementary doc validation failed"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "  ${GREEN}✓${NC} Supplementary doc validation passed"
 fi
 
 # Test 5: Check installation scripts

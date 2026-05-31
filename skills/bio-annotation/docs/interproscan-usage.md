@@ -1,5 +1,10 @@
 # InterProScan Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: InterProScan 5.77-108.0; InterProScan 6.0.0
+Official docs/manual: https://interproscan-docs.readthedocs.io/
+Release/source: https://github.com/ebi-pf-team/interproscan/releases/tag/5.77-108.0; https://github.com/ebi-pf-team/interproscan6/releases/tag/6.0.0
+
 ## Overview
 
 InterProScan is a genome-scale protein function classification tool that combines different protein signature recognition methods from the InterPro consortium member databases. It provides functional analysis by scanning protein sequences against predictive models (signatures) from multiple databases.
@@ -8,8 +13,8 @@ InterProScan is a genome-scale protein function classification tool that combine
 
 - Official Documentation: https://interproscan-docs.readthedocs.io/
 - GitHub Repository: https://github.com/ebi-pf-team/interproscan
-- Running Guide: https://interproscan-docsdev.readthedocs.io/en/stable/HowToRun.html
-- Installation Guide: https://interproscan-docsdev.readthedocs.io/en/stable/HowToInstall.html
+- InterProScan 5 Releases: https://github.com/ebi-pf-team/interproscan/releases
+- InterProScan 6 Releases: https://github.com/ebi-pf-team/interproscan6/releases
 - InterPro Website: https://www.ebi.ac.uk/interpro/
 
 ## Installation
@@ -24,22 +29,24 @@ curl -s https://get.nextflow.io | bash
 
 # Run InterProScan6
 nextflow run ebi-pf-team/interproscan6 \
+  -r 6.0.0 \
   -profile docker,local \
   --input proteins.faa \
-  --datadir /path/to/interpro_data
+  --datadir /path/to/interpro_data \
+  --interpro latest
 ```
 
 ### Traditional Installation
 
 ```bash
 # Download from EBI FTP
-wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.XX-XX.X/interproscan-5.XX-XX.X-64-bit.tar.gz
+wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.77-108.0/interproscan-5.77-108.0-64-bit.tar.gz
 
 # Extract
-tar -pxvzf interproscan-5.XX-XX.X-64-bit.tar.gz
+tar -pxvzf interproscan-5.77-108.0-64-bit.tar.gz
 
 # Index HMM models
-cd interproscan-5.XX-XX.X
+cd interproscan-5.77-108.0
 python3 setup.py -f interproscan.properties
 ```
 
@@ -189,7 +196,6 @@ proteins with the exact CLI you plan to submit:
   -dp \
   -iprlookup \
   -goterms \
-  -pa \
   -T ./tmp
 ```
 
@@ -238,9 +244,11 @@ expected TSV output.
 ### InterProScan 6 with Nextflow
 ```bash
 nextflow run ebi-pf-team/interproscan6 \
+  -r 6.0.0 \
   -profile docker,slurm \
   --input proteins.faa \
   --datadir /data/interpro \
+  --interpro latest \
   --outdir results \
   --formats TSV,GFF3 \
   --goterms \
@@ -420,4 +428,4 @@ Key settings:
 
 ## Version Information
 
-This documentation is based on InterProScan v5-6 and reflects features available as of January 2026. Check the official documentation for version-specific details.
+This documentation was verified against InterProScan 5.77-108.0, InterProScan 6.0.0, and the official Read the Docs/GitHub release pages on 2026-05-30.

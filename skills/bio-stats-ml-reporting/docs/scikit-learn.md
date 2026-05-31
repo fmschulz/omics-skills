@@ -1,20 +1,21 @@
 # Scikit-learn Usage Guide
 
-**Official Documentation:** https://scikit-learn.org/stable/
-
-**Version:** 1.8.0
+Last verified: 2026-05-30
+Tool version/release checked: scikit-learn 1.8.0
+Official docs/manual: https://scikit-learn.org/stable/
+Release/source: https://github.com/scikit-learn/scikit-learn/releases/tag/1.8.0
 
 ## Installation
 
 ```bash
 # Via pip
-pip install scikit-learn
+pip install -U scikit-learn
 
 # Specific version
 pip install scikit-learn==1.8.0
 
-# With optional dependencies
-pip install scikit-learn[alldeps]
+# Check installed version and compiled dependencies
+python -c "import sklearn; sklearn.show_versions()"
 ```
 
 ## Key Modules for Stats/ML

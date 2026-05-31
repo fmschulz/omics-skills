@@ -1,10 +1,15 @@
-# SemiBin2 v2.2.1
+# SemiBin2 v2.3.0
 
 Deep learning-based metagenomic binning tool with pre-trained models for various environments.
 
+Last verified: 2026-05-30
+Tool version/release checked: SemiBin2 source version 2.3.0
+Official docs/manual: https://github.com/BigDataBiology/SemiBin
+Release/source: https://github.com/BigDataBiology/SemiBin/blob/main/SemiBin/semibin_version.py
+
 ## Official Documentation
 - GitHub: https://github.com/BigDataBiology/SemiBin
-- Version: 2.2.1
+- Version: 2.3.0
 
 ## Installation
 

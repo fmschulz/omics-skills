@@ -1,10 +1,16 @@
 # BRAKER
 
-Pipeline for eukaryotic genome annotation using GeneMark and AUGUSTUS.
+Last verified: 2026-05-30
+Tool version/release checked: BRAKER v3.0.8
+Official docs/manual: https://github.com/Gaius-Augustus/BRAKER#readme
+Release/source: https://github.com/Gaius-Augustus/BRAKER/releases/tag/v3.0.8 ; https://github.com/Gaius-Augustus/BRAKER
+
+Pipeline for eukaryotic genome annotation using GeneMark and AUGUSTUS. Upstream now recommends BRAKER4 for new work; this guide documents BRAKER3 where the existing bio-gene-calling workflow still requires it.
 
 ## Official Documentation
 - GitHub: https://github.com/Gaius-Augustus/BRAKER
-- Manual: https://github.com/Gaius-Augustus/BRAKER/blob/master/docs/userguide.pdf
+- User guide / README: https://github.com/Gaius-Augustus/BRAKER#readme
+- Container: https://hub.docker.com/r/teambraker/braker3
 
 ## Installation
 
@@ -23,8 +29,8 @@ docker run -v $(pwd):/data teambraker/braker3:latest braker.pl
 ### Manual Setup
 
 Requires:
-- GeneMark-ETP (https://github.com/gatech-genemark/GeneMark-ETP)
-- AUGUSTUS 3.5.0+ (https://github.com/Gaius-Augustus/Augustus)
+- GeneMark-ETP (source details in the BRAKER Dockerfile)
+- AUGUSTUS (https://github.com/Gaius-Augustus/Augustus)
 - Perl modules: File::Spec::Functions, Hash::Merge, Parallel::ForkManager, YAML
 
 ```bash
@@ -45,7 +51,7 @@ export AUGUSTUS_SCRIPTS_PATH=/path/to/Augustus/scripts/
 | `--ab_initio` | De novo prediction without evidence |
 | `--fungus` | Enable fungal-specific parameters |
 | `--stranded=+,-,.` | RNA-Seq strandedness |
-| `--UTR=on` | Predict untranslated regions |
+| `--UTR=on` | Experimental UTR prediction from RNA-Seq coverage; upstream container notes UTR-related tooling is not maintained |
 | `--makehub` | Generate UCSC Genome Browser hub |
 | `--busco_lineage` | Run BUSCO completeness check |
 | `--gff3` | Output in GFF3 format |
@@ -59,7 +65,7 @@ braker.pl \
     --genome=genome.fa \
     --bam=rnaseq.bam \
     --threads=8 \
-    --softmasking
+    --gff3
 ```
 
 ### Protein Homology Based
@@ -68,7 +74,8 @@ braker.pl \
 braker.pl \
     --genome=genome.fa \
     --prot_seq=orthodb_proteins.fa \
-    --threads=8
+    --threads=8 \
+    --gff3
 ```
 
 ### Combined RNA-Seq + Proteins (Highest Accuracy)
@@ -91,16 +98,18 @@ braker.pl \
     --threads=8
 ```
 
-### Fungal Genome with UTR Prediction
+### Fungal Genome
 
 ```bash
 braker.pl \
     --genome=genome.fa \
     --bam=rnaseq.bam \
     --fungus \
-    --UTR=on \
-    --threads=8
+    --threads=8 \
+    --gff3
 ```
+
+Use `--UTR=on` only after checking the current upstream caveats and after comparing predictions with and without UTR parameters.
 
 ## Input/Output Formats
 

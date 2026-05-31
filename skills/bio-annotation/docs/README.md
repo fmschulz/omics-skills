@@ -1,5 +1,10 @@
 # Bio-Annotation Tool Documentation
 
+**Last verified**: 2026-05-30
+**Tool version/release checked:** DIAMOND v2.2.1; eggNOG-mapper v2.1.15; InterProScan 5.77-108.0 / InterProScan6 6.0.0; TaxonKit v0.20.0; MMseqs2 official static build checked 2026-05-30
+**Official docs/manual:** See linked per-tool guides in this directory.
+**Release/source:** See linked per-tool guides in this directory.
+
 This directory contains practical usage guides for the core bioinformatics tools used in the bio-annotation skill workflow.
 
 ## Documentation Overview
@@ -9,38 +14,39 @@ Each tool has a dedicated markdown file with comprehensive usage information inc
 ## Available Tool Guides
 
 ### [DIAMOND](diamond-usage.md)
-**Version**: v2.1.20+
+**Version**: v2.2.1
 **Purpose**: Accelerated BLAST-compatible sequence aligner (CPU)
 **Key features**: 100×–10,000× faster than BLAST; protein and translated-DNA searches
 **Documentation**: [diamond-usage.md](diamond-usage.md)
-**Official site**: http://www.diamondsearch.org
+**Official docs/source**: https://github.com/bbuchfink/diamond/wiki; https://github.com/bbuchfink/diamond/releases/tag/v2.2.1
 
 ### MMseqs2 / MMseqs2-GPU (alternative to DIAMOND on CUDA nodes)
-**Version**: v15-6f452+
+**Version**: latest official static build checked 2026-05-30 (commit `11933403321b1a062d5d82fecd5a1d823d0d3bf6`)
 **Purpose**: Iterative sequence search; GPU-accelerated since the 2025 release
-**Key features**: ~20× faster than CPU MMseqs2 and 177–199× faster than JackHMMER on CUDA Turing or newer; near-identical sensitivity. Reference: Kallenborn et al., *Nature Methods* 2025, DOI 10.1038/s41592-025-02819-8.
+**Key features**: GPU acceleration is available in official CUDA builds; benchmark the current build on the target node before production. Reference: Kallenborn et al., *Nature Methods* 2025, DOI 10.1038/s41592-025-02819-8.
 **Use when**: a GPU is available, or when iterative profile searches are needed in place of JackHMMER.
+**Official docs/source**: https://github.com/soedinglab/MMseqs2/wiki; https://mmseqs.com/latest/userguide.pdf
 
 ### [TaxonKit](taxonkit-usage.md)
-**Version**: v0.20.0+ (required for the March 2025 NCBI rank update: "superkingdom" → "domain", added "realm" for viruses)
+**Version**: v0.20.0 (required for the March 2025 NCBI rank update: "superkingdom" -> "domain", added "realm" for viruses)
 **Purpose**: NCBI taxonomy data manipulation toolkit
 **Key features**: Taxonomy resolution, lineage queries, TaxID conversion
 **Documentation**: [taxonkit-usage.md](taxonkit-usage.md)
-**Official site**: https://bioinf.shenwei.me/taxonkit/
+**Official docs/source**: https://bioinf.shenwei.me/taxonkit/usage/; https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0
 
 ### [InterProScan](interproscan-usage.md)
-**Version**: v5.77-108.0 (stable); InterProScan 6 (Nextflow) is the forward migration path
+**Version**: v5.77-108.0 (stable); InterProScan 6.0.0 (Nextflow) is the forward migration path
 **Purpose**: Protein function classification and domain prediction
 **Key features**: Integrates multiple signature databases, GO terms, pathway annotations
 **Documentation**: [interproscan-usage.md](interproscan-usage.md)
-**Official site**: https://www.ebi.ac.uk/interpro/
+**Official docs/source**: https://interproscan-docs.readthedocs.io/; https://github.com/ebi-pf-team/interproscan/releases/tag/5.77-108.0
 
 ### [eggNOG-mapper](eggnog-mapper-usage.md)
-**Version**: v2.1.13+
+**Version**: v2.1.15 final-v2 tag (v2.1.14 release fixed the database download URL)
 **Purpose**: Functional annotation through orthology assignment
 **Key features**: Fast genome-wide annotation, COG categories, KEGG pathways; supports MMseqs2 as an internal search backend.
 **Documentation**: [eggnog-mapper-usage.md](eggnog-mapper-usage.md)
-**Official site**: http://eggnog-mapper.embl.de/
+**Official docs/source**: https://github.com/eggnogdb/eggnog-mapper; https://github.com/eggnogdb/eggnog-mapper/releases/tag/v2.1.15
 
 ### pyhmmer (preferred HMMER interface)
 **Version**: v0.10+
@@ -72,7 +78,8 @@ diamond blastp --query proteins.faa --db clusterednr.dmnd \
 
 # Resolve taxonomy
 cut -f3 results.tsv | taxonkit lineage -n -r | \
-  taxonkit reformat -f "{k};{p};{c};{o};{f};{g};{s}" | \
+  taxonkit reformat2 \
+    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" | \
   paste results.tsv - > results_with_taxonomy.tsv
 ```
 
@@ -168,7 +175,7 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 
 ## Documentation Updates
 
-**Last Updated**: 2026-03-22
+**Last Updated**: 2026-05-30
 **Documentation Version**: 1.1
 **Tool Versions**: See individual files for version-specific information
 

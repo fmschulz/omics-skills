@@ -1,7 +1,13 @@
 # VeryFastTree Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: VeryFastTree v4.0.5
+Official docs/manual: https://github.com/citiususc/veryfasttree
+Release/source: https://github.com/citiususc/veryfasttree/releases/tag/v4.0.5
+
 ## Official Documentation
 - GitHub Repository: https://github.com/citiususc/veryfasttree
+- Releases: https://github.com/citiususc/veryfasttree/releases
 - Based on FastTree-2 algorithm with parallelization and vectorization optimizations
 
 ## Installation
@@ -27,6 +33,7 @@ Requires CMake 3.5+, C++11 compiler (GCC 5+), and optionally CUDA Toolkit for GP
 ```bash
 git clone https://github.com/citiususc/veryfasttree.git
 cd veryfasttree
+git checkout v4.0.5
 cmake .
 make
 make install  # Optional
@@ -303,7 +310,7 @@ ete4 explore -t tree.nw
 
 ## Performance Benchmarks
 
-Based on published results (VeryFastTree v4.0):
+Based on published results (VeryFastTree v4.0) and checked against the v4.0.5 source release:
 
 | Dataset Size | VeryFastTree | FastTree-2 | IQ-TREE |
 |-------------|--------------|------------|---------|
@@ -319,3 +326,7 @@ When using VeryFastTree, cite:
 - Piñeiro & Pichel (2024) - VeryFastTree 4.0 and 1M taxa analysis (GigaScience)
 - Piñeiro et al. (2020) - Original VeryFastTree parallelization (Bioinformatics)
 - Price et al. (2010) - Original FastTree-2 algorithm (PLoS ONE)
+
+## Version Information
+
+This guide was verified against VeryFastTree v4.0.5 and the official GitHub source/release page on 2026-05-30.

@@ -1,8 +1,9 @@
 # Pydantic Usage Guide
 
-## Official Documentation
-- URL: https://docs.pydantic.dev/latest/
-- Version covered: v2.12.5+
+Last verified: 2026-05-30
+Tool version/release checked: Pydantic v2.13.4
+Official docs/manual: https://docs.pydantic.dev/latest/
+Release/source: https://github.com/pydantic/pydantic/releases/tag/v2.13.4
 
 ## Installation
 
@@ -16,30 +17,28 @@ pip install pydantic
 pip install 'pydantic[email]'
 ```
 
-### With All Extensions
+### With Settings / Dotenv Support
 ```bash
-pip install 'pydantic[email,dotenv]'
+pip install pydantic pydantic-settings
 ```
 
 ## Key Features and Usage
 
 ### Basic Model Definition
 ```python
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from typing import Optional
 from datetime import date
 
 class Sample(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
+
     id: str
     sample_name: str
     organism: str
     tissue_type: Optional[str] = None
     collection_date: Optional[date] = None
     read_depth: PositiveInt
-
-    class Config:
-        str_strip_whitespace = True
-        validate_assignment = True
 ```
 
 ### Validation Modes

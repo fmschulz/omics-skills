@@ -2,22 +2,25 @@
 
 This directory contains comprehensive usage guides for the bioinformatics tools used in the bio-reads-qc-mapping skill.
 
-**Last Updated:** 2026-05-15
+**Last verified:** 2026-05-30
+**Tool version/release checked:** BBTools v39.85; minimap2 v2.31; Filtlong v0.3.1; Porechop_ABI source 0.5.1 / tag v0.5.0
+**Official docs/manual:** See linked per-tool guides in this directory.
+**Release/source:** See linked per-tool guides in this directory.
 
 ## Tools Covered
 
 ### Short Read Processing
-- **[bbduk.md](bbduk.md)** - Quality control, adapter trimming, and contamination filtering
-- **[bbmap.md](bbmap.md)** - Short read alignment to reference genomes
+- **[bbduk.md](bbduk.md)** - BBTools/BBDuk v39.85 quality control, adapter trimming, and contamination filtering
+- **[bbmap.md](bbmap.md)** - BBTools/BBMap v39.85 short read alignment to reference genomes
 
 ### Long Read Processing
 - **Dorado** - ONT basecalling, demultiplexing, summaries, and trimming when starting from signal/BAM
 - **Chopper** - FASTQ-only long-read quality, length, and end trimming
-- **[filtlong.md](filtlong.md)** - Long read quality filtering (Nanopore/PacBio)
-- **[porechop_abi.md](porechop_abi.md)** - Targeted legacy/fallback ONT adapter discovery and trimming
+- **[filtlong.md](filtlong.md)** - Filtlong v0.3.1 long read quality filtering (Nanopore/PacBio)
+- **[porechop_abi.md](porechop_abi.md)** - Porechop_ABI source version 0.5.1 / latest tag v0.5.0 targeted legacy/fallback ONT adapter discovery and trimming
 
 ### Universal Read Mapping
-- **[minimap2.md](minimap2.md)** - Versatile aligner for both short and long reads
+- **[minimap2.md](minimap2.md)** - minimap2 v2.31 versatile aligner for both short and long reads
 
 ## Quick Reference
 
@@ -38,7 +41,7 @@ This directory contains comprehensive usage guides for the bioinformatics tools 
 bbtools() {
   docker run --rm -u "$(id -u):$(id -g)" \
     -v "$PWD":/work -w /work \
-    bryce911/bbtools:39.84 "$@"
+    bryce911/bbtools:39.85 "$@"
 }
 
 # 1. Quality control and adapter trimming
@@ -72,14 +75,14 @@ minimap2 -ax map-hifi reference.fa filtered.fastq.gz > mapped.sam
 ## Installation
 
 Run BBTools programs through Bryce Foster's official Docker image. As of
-2026-05-15, `bryce911/bbtools:39.84` and `latest` point to digest
-`sha256:60d73ca4d99e12434e3ef2135d7441e025272afc5493a580e365a3cbe7fcadc5`.
+2026-05-30, `bryce911/bbtools:39.85` and `latest` point to digest
+`sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`.
 
 Install non-BBTools dependencies via conda/mamba or pixi:
 
 ```bash
 # BBTools container
-docker pull bryce911/bbtools:39.84
+docker pull bryce911/bbtools:39.85
 
 # Other tools
 conda install -c bioconda minimap2 chopper filtlong porechop_abi
@@ -88,12 +91,12 @@ pixi add minimap2 chopper filtlong porechop_abi
 
 ## Documentation Sources
 
-- **bbduk/bbmap**: [BBTools JGI DOE](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/) | [GitHub](https://github.com/BioInfoTools/BBMap)
-- **minimap2**: [GitHub](https://github.com/lh3/minimap2) | [Manual](https://lh3.github.io/minimap2/minimap2.html)
+- **bbduk/bbmap**: [BBTools JGI DOE](https://jgi.doe.gov/data-and-tools/software-tools/bbtools/) | [BBDuk manual](https://bbmap.org/tools/bbduk) | [BBMap manual](https://bbmap.org/docs.html) | [Container tags](https://hub.docker.com/r/bryce911/bbtools/tags)
+- **minimap2**: [GitHub](https://github.com/lh3/minimap2) | [Manual](https://lh3.github.io/minimap2/minimap2.html) | [v2.31 release](https://github.com/lh3/minimap2/releases/tag/v2.31)
 - **Dorado**: [GitHub](https://github.com/nanoporetech/dorado)
 - **Chopper**: [GitHub](https://github.com/wdecoster/chopper)
-- **Filtlong**: [GitHub](https://github.com/rrwick/Filtlong)
-- **Porechop_ABI**: [GitHub](https://github.com/bonsai-team/Porechop_ABI) for targeted fallback adapter discovery. The original Porechop is unmaintained.
+- **Filtlong**: [GitHub](https://github.com/rrwick/Filtlong) | [v0.3.1 release](https://github.com/rrwick/Filtlong/releases/tag/v0.3.1)
+- **Porechop_ABI**: [GitHub](https://github.com/bonsai-team/Porechop_ABI) | [tags](https://github.com/bonsai-team/Porechop_ABI/tags) for targeted fallback adapter discovery. The original Porechop is unmaintained.
 
 ## Performance Guidelines
 
@@ -141,7 +144,7 @@ Each tool provides built-in help:
 bbtools() {
   docker run --rm -u "$(id -u):$(id -g)" \
     -v "$PWD":/work -w /work \
-    bryce911/bbtools:39.84 "$@"
+    bryce911/bbtools:39.85 "$@"
 }
 
 bbtools bbduk.sh --help

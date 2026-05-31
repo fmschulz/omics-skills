@@ -1,5 +1,10 @@
 # Dremio SQL Quick Reference
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** Dremio documentation current [26.x]; JGI Lakehouse Dremio service is live/not versioned.
+**Official docs/manual:** https://docs.dremio.com/current/reference/sql/ ; https://docs.dremio.com/current/reference/sql/sql-functions/ ; https://docs.dremio.com/current/reference/api/sql/
+**Release/source:** Dremio Enterprise current [26.x] docs; JGI Lakehouse source paths from local guide snapshot.
+
 Concise guide for agents querying the JGI Lakehouse.
 
 ---

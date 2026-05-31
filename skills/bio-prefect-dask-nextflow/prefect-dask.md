@@ -1,5 +1,10 @@
 # Prefect + Dask playbook (local-first, scalable to clusters)
 
+Last verified: 2026-05-30
+Tool version/release checked: Prefect 3.7.2; Dask/distributed 2026.3.0; prefect-dask package release v0.2.6 (archived repository; install through `prefect[dask]` per Prefect docs)
+Official docs/manual: https://docs.prefect.io/latest/integrations/prefect-dask/task_runners/; https://docs.dask.org/en/stable/; https://distributed.dask.org/en/stable/
+Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2; https://github.com/dask/dask/releases/tag/2026.3.0; https://github.com/prefect-archive/prefect-dask/releases/tag/v0.2.6
+
 ## What this gives you
 - Prefect handles orchestration (retries, states, schedules, artifacts).
 - Dask handles parallel execution of Prefect tasks (local or distributed).
@@ -27,7 +32,7 @@ from pathlib import Path
 import subprocess
 
 from prefect import flow, task
-from prefect_dask.task_runners import DaskTaskRunner
+from prefect_dask import DaskTaskRunner
 
 @task(retries=2, retry_delay_seconds=30)
 def fastqc(reads: Path, outdir: Path) -> Path:
@@ -62,7 +67,7 @@ If a Dask scheduler is already running (local or remote):
 
 ```python
 from prefect import flow
-from prefect_dask.task_runners import DaskTaskRunner
+from prefect_dask import DaskTaskRunner
 
 @flow(task_runner=DaskTaskRunner(address="tcp://scheduler-host:8786"))
 def my_flow():
@@ -77,4 +82,3 @@ def my_flow():
 ## When NOT to use DaskTaskRunner
 - Work is mostly “shell out to many tiny CLI calls on HPC” (Nextflow is usually a better fit).
 - Tasks depend on non-picklable state (open DB connections, open file handles, GPU contexts) that isn’t recreated inside the task.
-

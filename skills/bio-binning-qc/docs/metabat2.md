@@ -2,6 +2,11 @@
 
 Metagenome binning tool for reconstructing genomes from metagenomic assemblies using coverage depth patterns.
 
+Last verified: 2026-05-30
+Tool version/release checked: MetaBAT2 v2.18 (Bitbucket tag)
+Official docs/manual: https://bitbucket.org/berkeleylab/metabat
+Release/source: https://bitbucket.org/berkeleylab/metabat/src/v2.18/
+
 ## Official Documentation
 - Bitbucket: https://bitbucket.org/berkeleylab/metabat
 - Bioconda: https://bioconda.github.io/recipes/metabat2/README.html
@@ -18,8 +23,8 @@ mamba install -c bioconda metabat2
 
 **From source:**
 ```bash
-wget https://bitbucket.org/berkeleylab/metabat/get/master.tar.gz
-tar xzvf master.tar.gz
+wget https://bitbucket.org/berkeleylab/metabat/get/v2.18.tar.gz
+tar xzvf v2.18.tar.gz
 cd berkeleylab-metabat-*
 mkdir build && cd build
 cmake .. && make && make test && make install

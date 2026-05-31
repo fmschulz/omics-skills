@@ -2,8 +2,14 @@
 
 Read alignment statistics for metagenomics - compute coverage and depth from BAM files.
 
+Last verified: 2026-05-30
+Tool version/release checked: CoverM v0.7.0 (GitHub release)
+Official docs/manual: https://github.com/wwood/CoverM
+Release/source: https://github.com/wwood/CoverM/releases/tag/v0.7.0
+
 ## Official Documentation
 - GitHub: https://github.com/wwood/CoverM
+- Releases: https://github.com/wwood/CoverM/releases/tag/v0.7.0
 - Version: 0.7.0
 
 ## Installation

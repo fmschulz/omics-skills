@@ -1,11 +1,17 @@
-# EukCC v2.x
+# EukCC v2.1.3
 
 Quality assessment tool for eukaryotic metagenome-assembled genomes (MAGs) using marker genes.
 
+Last verified: 2026-05-30
+Tool version/release checked: EukCC2 v2.1.3 (official ReadTheDocs latest)
+Official docs/manual: https://eukcc.readthedocs.io/en/latest/
+Release/source: https://github.com/EBI-Metagenomics/EukCC
+
 ## Official Documentation
 - GitHub: https://github.com/EBI-Metagenomics/EukCC
+- Documentation: https://eukcc.readthedocs.io/en/latest/
 - Publication: Saary et al. (2020) *Genome Biology*
-- Version: 2.x
+- Version: 2.1.3
 
 ## Installation
 

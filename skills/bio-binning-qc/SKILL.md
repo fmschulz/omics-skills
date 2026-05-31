@@ -10,7 +10,7 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 ## Instructions
 
 1. Compute per-sample depth/coverage with CoverM v0.7.0+ (or BBMap for short reads, minimap2 for long reads).
-2. Bin contigs with **QuickBin** through Bryce Foster's official BBTools container (`bryce911/bbtools:39.84`; record digest when pulled). QuickBin is high-fidelity, CheckM2-agnostic, and scales well on both short-read and long-read assemblies. On a GPU node, run **SemiBin2 v2.2.1+** instead — self-supervised contrastive learning with CUDA-backed PyTorch. MetaBAT2 v2.15+ is kept only as a legacy fallback for reproducing prior pipelines.
+2. Bin contigs with **QuickBin** through Bryce Foster's official BBTools container (`bryce911/bbtools:39.85`; record digest when pulled). QuickBin is high-fidelity, CheckM2-agnostic, and scales well on both short-read and long-read assemblies. On a GPU node, run **SemiBin2 v2.3.0+** instead — self-supervised contrastive learning with CUDA-backed PyTorch. MetaBAT2 v2.18+ is kept only as a legacy fallback for reproducing prior pipelines.
 3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible.
 4. Route bins by the QuickClade domain screen:
    - Bacteria or Archaea -> run GTDB-Tk taxonomy assignment. If the GTDB-Tk reference package is missing, set it up under `$BIO_DB_ROOT`, export `GTDBTK_DATA_PATH`, run `gtdbtk check_install`, and record the release before classification.

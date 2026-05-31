@@ -1,8 +1,14 @@
 # Flye v2.9.6 Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: Flye v2.9.6 (GitHub release, 2025-05-02)
+Official docs/manual: https://github.com/fenderglass/Flye/blob/2.9.6/docs/USAGE.md
+Release/source: https://github.com/mikolmogorov/Flye/releases/tag/2.9.6
+
 ## Official Documentation
 - Website: https://github.com/fenderglass/Flye
 - Manual: https://github.com/fenderglass/Flye/blob/2.9.6/docs/USAGE.md
+- Releases: https://github.com/mikolmogorov/Flye/releases
 
 ## Installation
 
@@ -20,6 +26,7 @@ pip install flye
 ```bash
 git clone https://github.com/fenderglass/Flye
 cd Flye
+git checkout 2.9.6
 python setup.py install
 ```
 

@@ -2,11 +2,10 @@
 
 Fast and accessible protein structure prediction using AlphaFold2 and RoseTTAFold with optimized MSA generation.
 
-## Official Documentation
-
-- GitHub: https://github.com/sokrypton/ColabFold
-- Paper: https://www.nature.com/articles/s41592-022-01488-1
-- Google Colab: https://colab.research.google.com/github/sokrypton/ColabFold/blob/main/AlphaFold2.ipynb
+Last verified: 2026-05-30
+Tool version/release checked: ColabFold v1.6.1
+Official docs/manual: https://github.com/sokrypton/ColabFold
+Release/source: https://github.com/sokrypton/ColabFold/releases/tag/v1.6.1; https://colab.research.google.com/github/sokrypton/ColabFold/blob/main/AlphaFold2.ipynb
 
 ## Installation
 

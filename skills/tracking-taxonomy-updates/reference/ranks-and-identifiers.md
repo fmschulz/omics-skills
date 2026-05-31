@@ -1,5 +1,8 @@
 # Ranks and identifiers (get these right)
 
+Last verified: 2026-05-30
+Source/version summary: NCBI Taxonomy guide and taxdump FTP checked; TaxonKit v0.20.0 docs/release checked for command examples.
+
 Taxonomy is hierarchical, but **rank schemas differ** across cellular life vs viruses, and databases use many **“no rank”** clades.
 
 ---

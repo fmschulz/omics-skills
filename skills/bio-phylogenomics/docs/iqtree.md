@@ -1,10 +1,16 @@
 # IQ-TREE Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: IQ-TREE v3.1.2
+Official docs/manual: https://iqtree.github.io/doc/
+Release/source: https://github.com/iqtree/iqtree3/releases/tag/v3.1.2
+
 ## Official Documentation
 - Main: https://iqtree.github.io/doc/
 - Command Reference: https://iqtree.github.io/doc/Command-Reference
 - Quickstart: https://iqtree.github.io/doc/Quickstart
 - Tutorial: https://iqtree.github.io/doc/Tutorial
+- IQ-TREE 3 source/releases: https://github.com/iqtree/iqtree3
 
 ## Installation
 
@@ -12,16 +18,19 @@
 ```bash
 # Conda
 conda install -c bioconda iqtree
+iqtree3 --version
 
 # macOS Homebrew
 brew install brewsci/bio/iqtree3
 ```
 
 ### Manual Installation
-Download from http://www.iqtree.org/ and extract archive. Copy files from `bin/` to system path:
+Download the v3.1.2 archive from the official IQ-TREE 3 release page and copy
+the versioned binary from `bin/` to the system path:
 ```bash
 # Linux/macOS
-cp bin/iqtree /usr/local/bin/
+cp bin/iqtree3 /usr/local/bin/
+iqtree3 --version
 ```
 
 ## Input/Output Formats
@@ -114,42 +123,42 @@ General format: `-m MODEL+FreqType+RateType`
 
 ### Basic Tree Inference with Auto Model Selection
 ```bash
-iqtree -s alignment.phy -nt AUTO
+iqtree3 -s alignment.phy -nt AUTO
 ```
 
 ### Specific Model with Ultrafast Bootstrap
 ```bash
-iqtree -s alignment.phy -m GTR+I+G -bb 1000 -nt AUTO
+iqtree3 -s alignment.phy -m GTR+I+G -bb 1000 -nt AUTO
 ```
 
 ### Model Selection with Multiple Support Tests
 ```bash
-iqtree -s alignment.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
+iqtree3 -s alignment.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
 ```
 
 ### Partitioned Analysis
 ```bash
-iqtree -s alignment.phy -p partitions.nex -m MFP+MERGE -bb 1000 -nt AUTO
+iqtree3 -s alignment.phy -p partitions.nex -m MFP+MERGE -bb 1000 -nt AUTO
 ```
 
 ### Fast Mode for Large Datasets
 ```bash
-iqtree -s large_alignment.phy -m GTR+G -fast -nt AUTO
+iqtree3 -s large_alignment.phy -m GTR+G -fast -nt AUTO
 ```
 
 ### Protein Alignment with AA Model Selection
 ```bash
-iqtree -s proteins.faa -st AA -m MFP -bb 1000 -nt AUTO
+iqtree3 -s proteins.faa -st AA -m MFP -bb 1000 -nt AUTO
 ```
 
 ### Resume Interrupted Run
 ```bash
-iqtree -s alignment.phy -redo
+iqtree3 -s alignment.phy -redo
 ```
 
 ### Ancestral State Reconstruction
 ```bash
-iqtree -s alignment.phy -m GTR+G -asr -nt AUTO
+iqtree3 -s alignment.phy -m GTR+G -asr -nt AUTO
 ```
 
 ## Performance Tips
@@ -185,25 +194,25 @@ iqtree -s alignment.phy -m GTR+G -asr -nt AUTO
 ### Exploratory Analysis
 ```bash
 # Quick tree with reasonable accuracy
-iqtree -s alignment.phy -m GTR+G -fast -bb 1000 -nt AUTO
+iqtree3 -s alignment.phy -m GTR+G -fast -bb 1000 -nt AUTO
 ```
 
 ### Publication-Quality Single Gene Tree
 ```bash
 # Comprehensive model selection with multiple support measures
-iqtree -s gene.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
+iqtree3 -s gene.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
 ```
 
 ### Multi-Gene Concatenated Analysis
 ```bash
 # Partitioned analysis with model testing per partition
-iqtree -s concat.phy -p partitions.nex -m MFP+MERGE -bb 1000 -nt AUTO
+iqtree3 -s concat.phy -p partitions.nex -m MFP+MERGE -bb 1000 -nt AUTO
 ```
 
 ### Bootstrap Convergence Check
 ```bash
 # Use correlation coefficient to assess convergence
-iqtree -s alignment.phy -m GTR+G -bb 1000 -bcor 0.99 -nt AUTO
+iqtree3 -s alignment.phy -m GTR+G -bb 1000 -bcor 0.99 -nt AUTO
 ```
 
 ## Quality Control Checks
@@ -229,3 +238,7 @@ Check `.iqtree` file for:
 - High proportion of invariable sites (>50%) may indicate poor alignment
 - Very long tree length may indicate saturation or alignment errors
 - Extremely short branches may indicate insufficient signal
+
+## Version Information
+
+This guide was verified against IQ-TREE v3.1.2, the official IQ-TREE command reference, and the IQ-TREE 3 GitHub release/source pages on 2026-05-30. Use `iqtree3 --version` to confirm the v3 binary on PATH.

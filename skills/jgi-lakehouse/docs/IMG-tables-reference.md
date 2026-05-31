@@ -1,10 +1,13 @@
 # IMG Database Tables - Complete Reference
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse live service (not versioned); IMG PostgreSQL source status checked from public IMG/GOLD documentation and local Lakehouse guide snapshot.
+**Official docs/manual:** https://img.jgi.doe.gov/ ; https://img.jgi.doe.gov/datasource.html ; https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms
+**Release/source:** `"img-db-2 postgresql".img_core_v400` local Lakehouse catalog snapshot; IMG public site notes July 2025 Oracle-to-PostgreSQL migration.
+
 **Database**: `"img-db-2 postgresql".img_core_v400`
 
-**Total Tables**: 244
-
-**Last Verified**: 2026-02-26
+**Total Tables**: 244 in the local Lakehouse catalog snapshot; re-run `SHOW TABLES IN "img-db-2 postgresql".img_core_v400` for current production counts.
 
 **Purpose**: Complete IMG (Integrated Microbial Genomes) database containing all genome data, gene annotations, functional assignments, metabolic pathways, structural features, and derived statistics for microbial organisms.
 

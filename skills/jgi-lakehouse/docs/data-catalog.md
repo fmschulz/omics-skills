@@ -1,12 +1,17 @@
 # JGI Lakehouse Data Catalog
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse live service (not versioned); Dremio docs current [26.x]; table counts are from the local 2025-02-02 catalog snapshot.
+**Official docs/manual:** https://img.jgi.doe.gov/ ; https://gold.jgi.doe.gov/index ; https://docs.dremio.com/current/reference/sql/
+**Release/source:** JGI Lakehouse source catalog (`SHOW CATALOGS`, `SHOW SCHEMAS`, `SHOW TABLES`); JGI Genome Portal version 8.18.188 shown publicly on 2026-05-30.
+
 Complete map of available data sources in the JGI Dremio Lakehouse.
 
 > For definitions of IMG/GOLD terms (analysis project types, quality flags, sequencing status, IDs, taxonomy systems), see [img_and_gold_terms.md](img_and_gold_terms.md).
 
-**Last Updated**: 2025-02-02
+**Catalog snapshot date**: 2025-02-02
 
-**Total Tables**: 651
+**Total Tables**: 651 in the local catalog snapshot; re-run the schema/table discovery commands for current production counts.
 
 ---
 
@@ -281,7 +286,7 @@ Fungal genomics portal database. Each fungal genome has its own schema named by 
 | `signalp` | Signal peptides |
 | `tmhmm` | Transmembrane domains |
 | `caiwe*` | CAIWE analysis tables |
-| `BlatEST*` | EST mapping data |
+| `BlatEST*` | EST mapping data (table prefix in 2025-02-02 local catalog snapshot) |
 
 ### Example Queries
 

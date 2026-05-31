@@ -1,5 +1,10 @@
 # vConTACT3 Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: vConTACT3 3.2.4 source tag; ReadTheDocs release notes list changes through v3.2.0
+Official docs/manual: https://vcontact3.readthedocs.io/en/latest/
+Release/source: https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4 ; https://bitbucket.org/MAVERICLab/vcontact3
+
 ## Official Documentation
 - ReadTheDocs: https://vcontact3.readthedocs.io/
 - Bitbucket: https://bitbucket.org/MAVERICLab/vcontact3
@@ -11,7 +16,7 @@ vConTACT3 is a viral genome clustering and taxonomic assignment tool that improv
 
 ### Bioconda/Mamba (New Environment - Recommended)
 ```bash
-mamba create --name vcontact3 python=3.10
+mamba create --name vcontact3 python=3.11
 mamba activate vcontact3
 mamba install -c bioconda vcontact3
 ```
@@ -21,7 +26,7 @@ mamba install -c bioconda vcontact3
 mamba install -c bioconda vcontact3
 ```
 
-Requires Python >=3.10 and <3.12
+Requires Python >=3.10 and <3.12.
 
 ### Pip Installation (Latest Version)
 ```bash
@@ -52,7 +57,7 @@ pip install vclust
 | Command | Purpose |
 |---------|---------|
 | `vcontact3 version` | Display current version |
-| `vcontact3 prepare_databases` | Download and setup reference databases |
+| `vcontact3 prepare_databases` | List, download, and setup reference databases |
 | `vcontact3 run` | Perform clustering and taxonomic assignment |
 
 ### Run Command Options
@@ -64,16 +69,27 @@ pip install vclust
 | `--gene2genome` | Gene-to-genome mapping file (TSV) |
 | `--len-nucleotide` | Genome length data (TSV) |
 | `--output` | Output directory for results |
+| `--db-path` | Path to a downloaded vConTACT3 database version or directory |
 | `--db-domain` | Database domain selection (e.g., prokaryotes) |
-| `--exports` | Output format types (graphml, d3js, completeness) |
-| `-t, --threads` | Number of threads for parallel processing |
+| `--exports` | Optional output/export types, for example `graphml`, `cytoscape`, `profiles`, or `ani` |
+| `--threads` | Number of threads for parallel processing |
+| `--reduce-memory` | Downcast arrays to reduce memory use |
+| `--max-iterations` | Mixed-realm component resolution iterations |
 | `-h, --help` | Display help message |
 
 ## Common Usage Examples
 
 ### Basic nucleotide input workflow
 ```bash
-vcontact3 run --nucleotide genomes.fna --output results_dir
+vcontact3 prepare_databases --list-versions
+vcontact3 prepare_databases --get-version latest --set-location ./vcontact3_db
+
+vcontact3 run \
+  --nucleotide genomes.fna \
+  --db-path ./vcontact3_db \
+  --db-domain prokaryotes \
+  --output results_dir \
+  --threads 32
 ```
 
 ### Protein-based workflow
@@ -82,6 +98,7 @@ vcontact3 run \
   --proteins proteins.faa \
   --gene2genome gene2genome.tsv \
   --len-nucleotide genome_lengths.tsv \
+  --db-path ./vcontact3_db \
   --output results_dir
 ```
 
@@ -90,13 +107,14 @@ vcontact3 run \
 vcontact3 run \
   --nucleotide genomes.fna \
   --db-domain prokaryotes \
-  --exports graphml d3js completeness \
+  --exports graphml cytoscape profiles \
   --output results_dir
 ```
 
 ### Database preparation
 ```bash
-vcontact3 prepare_databases --output-dir ./vcontact3_db
+vcontact3 prepare_databases --list-versions
+vcontact3 prepare_databases --get-version latest --set-location ./vcontact3_db
 ```
 
 ### Multi-threaded analysis
@@ -104,7 +122,7 @@ vcontact3 prepare_databases --output-dir ./vcontact3_db
 vcontact3 run \
   --nucleotide viral_genomes.fna \
   --output results \
-  -t 32
+  --threads 32
 ```
 
 ## Input/Output
@@ -123,22 +141,21 @@ vcontact3 run \
 ### Output Files
 
 Located in specified output directory:
-- **genome_by_genome_overview.csv** - Main clustering results
-- **viral_cluster_overview.csv** - Cluster composition and taxonomy
-- **membership.tsv** - Genome-to-cluster assignments
-- **taxonomy_assignments.tsv** - Taxonomic classifications
-- **network files** - GraphML/D3.js network visualizations (if requested)
+- **final_assignments.csv** - Main taxonomy and clustering assignments
+- **network files** - GraphML/Cytoscape visualizations if requested with `--exports`
+- **pc_profiles/** - Protein-cluster profiles when requested with `--exports profiles`
 - **ANI matrices** - Genome similarity data (if vclust installed)
-- **completeness reports** - Quality metrics (if requested)
+- Additional export-specific files, documented in the ReadTheDocs exports page
 
 ## Performance Tips
 
 1. Use `--nucleotide` mode for simplest workflow
-2. Increase thread count (`-t`) for large datasets
+2. Increase `--threads` for large datasets
 3. Use protein mode only if you have pre-computed gene calls
 4. Install vclust for ANI-based similarity analysis
 5. Limit export formats to only what you need to reduce runtime
 6. Pre-filter low-quality genomes using CheckV before clustering
+7. Use `--reduce-memory` for memory-constrained runs
 
 ## Integration with Viromics Workflow
 
@@ -159,4 +176,4 @@ vConTACT3 performs clustering and taxonomic assignment after quality control:
 - **Memory issues**: Reduce dataset size or use more powerful hardware
 - **MMSeqs2 not found (pip install)**: Install MMSeqs2 separately from source
 - **Python version errors**: Ensure Python 3.10 or 3.11 (not 3.12+)
-- **Database errors**: Run `vcontact3 prepare_databases` to download references
+- **Database errors**: Run `vcontact3 prepare_databases --list-versions` and `vcontact3 prepare_databases --get-version latest --set-location ./vcontact3_db`

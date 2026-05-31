@@ -1,8 +1,9 @@
 # DuckDB Usage Guide
 
-**Official Documentation:** https://duckdb.org/docs/stable/
-
-**Version:** 1.4.3
+Last verified: 2026-05-30
+Tool version/release checked: DuckDB v1.5.3
+Official docs/manual: https://duckdb.org/docs/stable/
+Release/source: https://github.com/duckdb/duckdb/releases/tag/v1.5.3
 
 ## Installation
 

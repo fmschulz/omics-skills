@@ -7,6 +7,8 @@ description: Design and scaffold bioinformatics pipelines using Prefect+Dask for
 
 Choose and scaffold the right workflow engine for local, distributed, or HPC bioinformatics pipelines.
 
+Supplementary docs last verified: 2026-05-30. Current source checks cover Prefect 3.7.2, Dask/distributed 2026.3.0, prefect-dask v0.2.6 (archived repository; install through `prefect[dask]`), and Nextflow v26.04.3.
+
 ## Instructions
 
 1. Collect requirements (scheduler, container policy, data location, scale).

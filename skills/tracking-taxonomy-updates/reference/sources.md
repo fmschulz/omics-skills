@@ -1,5 +1,10 @@
 # Authoritative sources to check (by domain)
 
+Last verified: 2026-05-30
+Tool version/release checked: NCBI taxonomy/taxdump checked 2026-05-30; GTDB Release 232; ICTV MSL41; Adl et al. 2019 eukaryote framework plus UniEuk/SILVA source pages
+Official docs/manual: See source URLs in each section below.
+Release/source: See source URLs in each section below.
+
 Use these as “sources of truth” when the user asks for the **most recent** taxonomy proposals, releases, or consensus statements.
 
 Rule: for “most recent” claims, record **(authority + identifier + date)**.
@@ -20,15 +25,25 @@ What to extract:
 - notes about taxid merges/deletions and compatibility
 
 Machine-readable dumps:
-- NCBI taxdump / nodes.dmp / names.dmp (discover current FTP location via the guide above)
+- NCBI taxdump / nodes.dmp / names.dmp:
+  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+- NCBI new_taxdump directory:
+  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
+
+Verified snapshot note (2026-05-30):
+- The NCBI taxonomy FTP listing showed `taxdump.tar.gz` and `taxdmp.zip` modified on 2026-05-30, and `new_taxdump/` modified on 2026-05-30. Record the file timestamp and checksum from your download, not just today's date.
 
 ### GTDB (Genome Taxonomy Database) (genome-based prokaryote taxonomy)
 - GTDB portal:
   https://gtdb.ecogenomic.org/
 - Latest release stats (confirm current release ID and date):
   https://gtdb.ecogenomic.org/stats/
+- Release 232 stats page checked 2026-05-30:
+  https://gtdb.ecogenomic.org/stats/r232
 - Downloads index (confirm release folders):
   https://data.gtdb.ecogenomic.org/releases/
+- Latest downloads index checked 2026-05-30:
+  https://data.gtdb.ecogenomic.org/releases/latest/
 
 What to extract:
 - release ID + date (e.g., “Rxx-RSyyy”)
@@ -56,6 +71,8 @@ What to extract:
   https://ictv.global/taxonomy
 - Master Species List (MSL) downloads (treat as the current “ratified species list”):
   https://ictv.global/msl
+- MSL41 news page checked 2026-05-30:
+  https://ictv.global/news/MSL41
 
 What to extract:
 - current MSL version identifier + date
@@ -65,6 +82,10 @@ What to extract:
 ### NCBI taxonomy (virus alignment with ICTV)
 - NCBI Insights taxonomy posts:
   https://ncbiinsights.ncbi.nlm.nih.gov/tag/ncbi-taxonomy/
+
+Current ICTV snapshot checked 2026-05-30:
+- ICTV current MSL page lists `ICTV_Master_Species_List_2025_MSL41.v1.xlsx`.
+- ICTV MSL41 news identifies MSL41 as the 2025-2026 ICTV taxonomy release, posted 2026-03-20, with Zenodo DOI `10.5281/zenodo.19154110`.
 
 What to extract:
 - implementation dates for virus taxonomy updates in NCBI

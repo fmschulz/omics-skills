@@ -1,10 +1,15 @@
 # Phytozome
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** Phytozome public site release v14; JGI Lakehouse Phytozome sources are live/not versioned; Dremio docs current [26.x].
+**Official docs/manual:** https://phytozome-next.jgi.doe.gov/ ; https://docs.dremio.com/current/sonar/query-manage/querying-data/external-queries/
+**Release/source:** Phytozome v14 public release; `"plant-db-7 postgresql"` PostgreSQL source; `"plant-db-4"` MongoDB source.
+
 Phytozome is the JGI's plant genomics resource. This guide explains how to find plant gene, protein, family, expression, synteny, and homolog information through the lakehouse — even if you've never used Phytozome before.
 
 ## What's here, in one paragraph
 
-Phytozome covers hundreds of fully-sequenced plant species. For each species (called a **proteome**), there are protein-coding genes, transcripts, proteins, functional annotations (PFAM, PANTHER, InterPro, GO), protein families and pairwise homology, gene expression measurements across tissues/conditions, and pre-computed co-expression. The lakehouse holds the metadata and annotations; the actual DNA/protein sequence text isn't here.
+Phytozome v14 publicly reports 459 assembled and annotated genomes from 192 Archaeplastida species. For each species or annotation release (called a **proteome** here), there are protein-coding genes, transcripts, proteins, functional annotations (PFAM, PANTHER, InterPro, GO), protein families and pairwise homology, gene expression measurements across tissues/conditions, and pre-computed co-expression. The lakehouse holds the metadata and annotations; the actual DNA/protein sequence text isn't here.
 
 ## Sources
 

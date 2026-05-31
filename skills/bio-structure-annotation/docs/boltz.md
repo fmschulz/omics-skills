@@ -2,11 +2,10 @@
 
 Biomolecular interaction model for structure prediction and binding affinity estimation.
 
-## Official Documentation
-
-- GitHub: https://github.com/jwohlwend/boltz
-- Paper: https://www.biorxiv.org/content/10.1101/2024.11.19.624167v1
-- Website: https://boltz.ai
+Last verified: 2026-05-30
+Tool version/release checked: Boltz v2.2.1
+Official docs/manual: https://github.com/jwohlwend/boltz
+Release/source: https://github.com/jwohlwend/boltz/releases/tag/v2.2.1; https://boltz.ai
 
 ## Installation
 

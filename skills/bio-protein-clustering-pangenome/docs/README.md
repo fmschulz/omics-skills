@@ -1,6 +1,9 @@
 # Tool Documentation
 
-Updated: 2026-02-01
+Last verified: 2026-05-30
+Tool version/release checked: OrthoFinder v3.1.5; MMseqs2 official static build checked 2026-05-30; ProteinOrtho v6.3.6
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 This directory contains practical usage guides for protein clustering and pangenome analysis tools.
 
@@ -10,15 +13,15 @@ This directory contains practical usage guides for protein clustering and pangen
 
 | Tool | Best for | Speed | Documentation |
 |------|----------|-------|---------------|
-| **OrthoFinder v3** | Default orthology inference, gene + species trees | Medium | [orthofinder.md](orthofinder.md) |
-| **MMseqs2 (CPU or GPU)** | Sequence clustering and search backbones; very large datasets | Very fast | [mmseqs2.md](mmseqs2.md) |
-| **ProteinOrtho v6+** | Large pangenomes where OrthoFinder is RAM-limited | Fast | [proteinortho.md](proteinortho.md) |
+| **OrthoFinder v3.1.5** | Default orthology inference, gene + species trees | Medium | [orthofinder.md](orthofinder.md) |
+| **MMseqs2 latest static build** | Sequence clustering and search backbones; very large datasets | Very fast | [mmseqs2.md](mmseqs2.md) |
+| **ProteinOrtho v6.3.6** | Large pangenomes where OrthoFinder is RAM-limited | Fast | [proteinortho.md](proteinortho.md) |
 
 ### Quick selection guide
 
-- Default orthology inference up to a few hundred genomes → **OrthoFinder v3** (7% accuracy gain over v2, lower RAM at scale).
-- Very large pangenomes where OrthoFinder is too RAM-heavy → **ProteinOrtho v6** (graph-based RBH; PoFF extension adds synteny support).
-- Sequence clustering at any scale → **MMseqs2** v15-6f452+ (`easy-cluster` or `easy-linclust`). Add `--gpu` on CUDA Turing+ for ~20× speedup at near-identical sensitivity.
+- Default orthology inference up to a few hundred genomes -> **OrthoFinder v3.1.5** (v3 accuracy/scaling improvements; current source: https://github.com/OrthoFinder/OrthoFinder/releases/tag/v3.1.5).
+- Very large pangenomes where OrthoFinder is too RAM-heavy -> **ProteinOrtho v6.3.6** (graph-based RBH; PoFF extension adds synteny support; source: https://gitlab.com/paulklemm_PHD/proteinortho/-/releases/v6.3.6).
+- Sequence clustering at any scale -> **MMseqs2** latest official static build checked 2026-05-30 (`easy-cluster` or `easy-linclust`; docs: https://github.com/soedinglab/MMseqs2/wiki and https://mmseqs.com/latest/userguide.pdf). Add `--gpu` only after verifying the current CUDA build on the target node.
 - Synteny across many genomes → run alongside `ntSynt` or MCScanX (see SKILL.md).
 
 > **Retired:** OrthoMCL has been dropped from this workflow. Existing pipelines should migrate to OrthoFinder v3.
@@ -45,7 +48,7 @@ This directory contains practical usage guides for protein clustering and pangen
 |------|---------------------|
 | MMseqs2 (easy-linclust) | 10–30 minutes |
 | MMseqs2 (easy-cluster) | 1–3 hours |
-| MMseqs2 (easy-cluster, GPU) | ~5–10 minutes (CUDA Turing+) |
+| MMseqs2 (easy-cluster, GPU) | ~5–10 minutes on compatible CUDA nodes |
 | ProteinOrtho (DIAMOND) | 2–6 hours |
 | OrthoFinder v3 (DIAMOND) | 3–10 hours |
 | OrthoFinder v3 (MSA mode) | 10–40 hours |

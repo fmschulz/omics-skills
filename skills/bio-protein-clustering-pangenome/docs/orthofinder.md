@@ -1,9 +1,14 @@
 # OrthoFinder Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: OrthoFinder v3.1.5
+Official docs/manual: https://orthofinder.github.io/OrthoFinder/
+Release/source: https://github.com/OrthoFinder/OrthoFinder/releases/tag/v3.1.5
+
 ## Official Documentation
-- GitHub: https://github.com/davidemms/OrthoFinder
-- Manual: https://github.com/davidemms/OrthoFinder/blob/master/OrthoFinder-manual.pdf
-- Tutorials: https://davidemms.github.io/orthofinder_tutorials/
+- GitHub: https://github.com/OrthoFinder/OrthoFinder
+- Documentation: https://orthofinder.github.io/OrthoFinder/
+- Releases: https://github.com/OrthoFinder/OrthoFinder/releases
 - Paper: https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1832-y
 
 ## Installation
@@ -13,20 +18,16 @@
 conda install -c bioconda orthofinder
 ```
 
-### Docker
-```bash
-docker pull davidemms/orthofinder
-docker run -it --rm davidemms/orthofinder orthofinder -h
-```
-
 ### Manual Installation
 ```bash
 # Download latest release
-wget https://github.com/davidemms/OrthoFinder/releases/latest/download/OrthoFinder.tar.gz
-tar xzf OrthoFinder.tar.gz
+mkdir OrthoFinder
+wget -qO- https://github.com/OrthoFinder/OrthoFinder/releases/download/v3.1.5/orthofinder-linux-intel-3.1.5.tar.gz | \
+  tar -xz --strip-components=1 -C OrthoFinder
 
 # Test installation
-python OrthoFinder/orthofinder.py -h
+orthofinder -h
+orthofinder --version
 ```
 
 ### Dependencies
@@ -196,8 +197,7 @@ Results_MMM_DD/
 │   └── Orthogroups_SingleCopyOrthologues.txt
 │
 ├── Phylogenetic_Hierarchical_Orthogroups/
-│   ├── N0.tsv                        # Hierarchical orthogroups (root)
-│   ├── N1.tsv, N2.tsv, ...          # Internal nodes
+│   ├── N1.tsv, N2.tsv, ...          # Internal-node HOG tables
 │   └── HOG_Sequences/
 │
 ├── Orthologues/
@@ -238,8 +238,11 @@ Tab-separated orthogroup assignments:
 - Empty cells = No gene from that species
 - Comma-separated = Multiple genes (paralogs)
 
-#### N0.tsv (Hierarchical Orthogroups)
-Root-level orthogroups representing deepest evolutionary splits:
+#### Hierarchical Orthogroups
+OrthoFinder v3 writes phylogenetic hierarchical orthogroup tables for labelled
+species-tree nodes. In v3.1.5, the release notes clarify that the root `N0.tsv`
+is no longer written as `Phylogenetic_Hierarchical_Orthogroups/N0.tsv`; the
+equivalent root-level orthogroups are in `Orthogroups/Orthogroups.tsv`.
 
 | HOG | OG | Gene Tree Parent Clade | species1 | species2 | species3 |
 |-----|----|-----------------------|----------|----------|----------|
@@ -495,3 +498,7 @@ orthofinder -f CoreMAGs/ -n Core -S mmseqs -t 64
 # Assign remaining MAGs
 orthofinder --core Results_Core/ --assign AllMAGs/ -t 64
 ```
+
+## Version Information
+
+This guide was verified against OrthoFinder v3.1.5, the current OrthoFinder documentation site, and the official GitHub source/release pages on 2026-05-30.

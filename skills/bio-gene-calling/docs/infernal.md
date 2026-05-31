@@ -1,16 +1,22 @@
 # Infernal `cmsearch` for rRNA and ncRNA detection
 
+Last verified: 2026-05-30
+Tool version/release checked: Infernal v1.1.5
+Official docs/manual: http://eddylab.org/infernal/Userguide.pdf ; http://eddylab.org/infernal/
+Release/source: http://eddylab.org/infernal/ ; https://github.com/EddyRivasLab/infernal
+
 Infernal applies covariance models (CMs) to search nucleotide sequences for RNA homologs. In this workflow it replaces `barrnap` as the default rRNA caller because Rfam covariance models cover all three domains of life plus organellar variants, and are kept current.
 
 - **Project page:** http://eddylab.org/infernal/
 - **Rfam database:** https://rfam.org/
-- **Recommended version:** Infernal v1.1.5+
+- **Recommended version:** Infernal v1.1.5
 - **Citation:** Nawrocki & Eddy (2013) *Bioinformatics* 29:2933.
 
 ## Installation
 
 ```bash
 conda install -c bioconda infernal
+
 # Rfam.cm covariance model library
 wget https://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.cm.gz
 gunzip Rfam.cm.gz
@@ -32,6 +38,7 @@ Select the model set by the inferred domain of life. Run `cmsearch` once per mod
 
 ```bash
 cmsearch --rfam --cut_ga --nohmmonly \
+  --cpu 8 \
   --tblout output.tbl \
   Rfam.cm assembly.fna > output.cmsearch
 ```

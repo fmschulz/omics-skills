@@ -1,5 +1,10 @@
 # Prefect on HPC (Slurm): two common patterns
 
+Last verified: 2026-05-30
+Tool version/release checked: Prefect 3.7.2; Dask/distributed 2026.3.0; prefect-dask package release v0.2.6 (archived repository; install through `prefect[dask]` per Prefect docs)
+Official docs/manual: https://docs.prefect.io/latest/concepts/work-pools; https://docs.prefect.io/latest/integrations/prefect-dask/task_runners/; https://jobqueue.dask.org/
+Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2; https://github.com/dask/dask/releases/tag/2026.3.0; https://github.com/prefect-archive/prefect-dask/releases/tag/v0.2.6
+
 ## Pattern A: Prefect → Slurm worker (one Slurm job per flow run)
 Best when:
 - Each flow run is a substantial HPC workload.
@@ -32,7 +37,7 @@ Best when:
 from dask_jobqueue import SLURMCluster
 from dask.distributed import Client
 from prefect import flow, task
-from prefect_dask.task_runners import DaskTaskRunner
+from prefect_dask import DaskTaskRunner
 
 def build_cluster() -> Client:
     cluster = SLURMCluster(
@@ -67,4 +72,3 @@ It can be correct, but increases startup latency and debugging complexity.
 ## Recommendation for CLI-heavy bioinformatics on HPC
 If most steps are external CLI tools (bwa, samtools, gatk, etc.), prefer **Nextflow** for the compute plane.
 See: [nextflow-hpc.md](nextflow-hpc.md)
-

@@ -1,9 +1,15 @@
 # MMseqs2 Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: official latest static AVX2 build, commit `11933403321b1a062d5d82fecd5a1d823d0d3bf6` (manual generated 2026-05-29)
+Official docs/manual: https://github.com/soedinglab/MMseqs2/wiki; https://mmseqs.com/latest/userguide.pdf
+Release/source: https://github.com/soedinglab/MMseqs2; https://mmseqs.com/latest/
+
 ## Official Documentation
 - GitHub: https://github.com/soedinglab/MMseqs2
 - Website: https://mmseqs.com
 - Wiki: https://github.com/soedinglab/MMseqs2/wiki
+- User guide PDF: https://mmseqs.com/latest/userguide.pdf
 
 ## Installation
 
@@ -25,7 +31,13 @@ docker pull ghcr.io/soedinglab/mmseqs2
 ### Static Binaries
 Download from https://mmseqs.com/latest
 - Choose variant based on CPU: AVX2, SSE4.1, SSE2
-- GPU support available for NVIDIA GPUs (Turing generation or newer)
+- GPU-enabled static builds are published separately; verify CUDA/GPU compatibility on the target node before production runs
+
+```bash
+wget https://mmseqs.com/latest/mmseqs-linux-avx2.tar.gz
+tar xzf mmseqs-linux-avx2.tar.gz
+./mmseqs/bin/mmseqs version
+```
 
 ## Key Command-Line Flags
 
@@ -248,3 +260,7 @@ mmseqs easy-cluster proteins.faa orthogroups tmp \
 - **Performance**: ~10,000x faster than BLAST
 - **Scalability**: Tested on datasets with 100M+ sequences
 - **Accuracy**: Comparable sensitivity to PSI-BLAST at high sensitivity settings
+
+## Version Information
+
+This guide was verified against the official MMseqs2 latest static binary feed, user guide PDF, and GitHub source on 2026-05-30. The checked `mmseqs-linux-avx2` binary reported commit `11933403321b1a062d5d82fecd5a1d823d0d3bf6`.

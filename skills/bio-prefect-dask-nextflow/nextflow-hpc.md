@@ -1,5 +1,10 @@
 # Nextflow on HPC (Slurm/PBS) playbook
 
+Last verified: 2026-05-30
+Tool version/release checked: Nextflow v26.04.3
+Official docs/manual: https://www.nextflow.io/docs/latest/; https://www.nextflow.io/docs/latest/executor.html
+Release/source: https://github.com/nextflow-io/nextflow/releases/tag/v26.04.3
+
 ## Why Nextflow for HPC bioinformatics
 - Nextflow’s executor layer lets you keep pipeline logic independent of the execution platform (local vs Slurm vs PBS).
 - Each process is executed as a scheduler job under HPC executors.
@@ -103,4 +108,3 @@ Run:
 - Too many tiny processes → scheduler overhead + filesystem pressure.
 - Mis-specified resources → jobs killed by scheduler; start conservative and tune with trace reports.
 - Container policy mismatches (Docker blocked on HPC) → plan for Singularity/Apptainer or Conda.
-

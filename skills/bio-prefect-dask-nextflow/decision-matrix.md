@@ -1,5 +1,10 @@
 # Decision matrix: Prefect + Dask vs Nextflow (HPC bioinformatics)
 
+Last verified: 2026-05-30
+Tool version/release checked: Prefect 3.7.2; Dask/distributed 2026.3.0; prefect-dask package release v0.2.6 (archived repository; install through `prefect[dask]`); Nextflow v26.04.3
+Official docs/manual: https://docs.prefect.io/latest/ ; https://docs.dask.org/en/stable/ ; https://www.nextflow.io/docs/latest/
+Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2 ; https://github.com/dask/dask/releases/tag/2026.3.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.3
+
 ## One-sentence summary
 - **Prefect + Dask**: Python-first orchestration + distributed Python task execution (excellent for dynamic, Python-heavy pipelines).
 - **Nextflow**: DSL + scheduler-native execution for file-based scientific workflows (excellent on HPC with Slurm/PBS).
@@ -48,4 +53,3 @@ while Nextflow runs the **compute plane** (HPC-heavy, file-based steps).
 ## Practical rule of thumb
 - If your step is “**run a tool over files**” → Nextflow process.
 - If your step is “**Python decides what to do next**” → Prefect task/flow.
-

@@ -1,5 +1,10 @@
 # Metagenome Metadata: Ecosystem & Habitat Information
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse live service (not versioned); GOLD v.10 public docs checked.
+**Official docs/manual:** https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms ; https://gold.jgi.doe.gov/resources/project_help_doc.pdf ; https://gold.jgi.doe.gov/index
+**Release/source:** `"img-db-2 postgresql".img_core_v400.taxon`; `"gold-db-2 postgresql".gold.analysis_project`; `"gold-db-2 postgresql".gold.project`.
+
 ## Overview
 
 Metagenomes are analyzed samples from specific ecosystems and habitats. Understanding the environmental origin is critical for:
@@ -47,7 +52,7 @@ LIMIT 100
 - **GOLD Analysis Project**: One-to-one with IMG metagenome
   - Each analysis project = one analyzed sample = one ecosystem classification
   - Sample-specific, precise ecosystem metadata
-  - 99.8% coverage for IMG metagenomes
+  - 99.8% coverage in the local checked Lakehouse snapshot
 
 **Therefore: Use GOLD Analysis Project ecosystem fields for accurate, sample-specific metadata**
 
@@ -77,7 +82,7 @@ Ecosystem metadata fields available
 | With ecosystem data | 73,848 | 99.8% |
 | With ecosystem_category | 73,844 | 99.8% |
 
-All public IMG metagenomes link to GOLD analysis projects with ecosystem information.
+In the checked snapshot, nearly all public IMG metagenomes linked to GOLD analysis projects with ecosystem information. Re-run the data-availability query before treating the percentage as current.
 
 ---
 
@@ -352,7 +357,7 @@ Beyond ecosystem classification, analysis projects contain:
 ### Q: Why doesn't my query return results?
 
 **Check:**
-1. Use `ap.ecosystem IS NOT NULL` - not all projects have ecosystem data (but 99.8% do)
+1. Use `ap.ecosystem IS NOT NULL` - not all projects have ecosystem data (99.8% did in the checked snapshot)
 2. Verify ecosystem value spelling (case-sensitive in GOLD)
 3. Confirm `analysis_project_id` is not NULL in IMG
 4. Use exact string match or `LIKE '%...%'` for partial matches

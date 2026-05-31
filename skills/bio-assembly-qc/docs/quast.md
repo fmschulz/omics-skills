@@ -1,9 +1,15 @@
 # QUAST v5.3.0 Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: QUAST v5.3.0 (GitHub release, 2024-11-10)
+Official docs/manual: http://quast.sourceforge.net/docs/manual.html
+Release/source: https://github.com/ablab/quast/releases/tag/quast_5.3.0
+
 ## Official Documentation
 - Website: http://quast.sourceforge.net/
 - Manual: http://quast.sourceforge.net/docs/manual.html
 - GitHub: https://github.com/ablab/quast
+- Releases: https://github.com/ablab/quast/releases
 
 ## Installation
 

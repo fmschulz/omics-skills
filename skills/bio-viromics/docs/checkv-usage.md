@@ -1,8 +1,14 @@
 # CheckV Usage Guide
 
+Last verified: 2026-05-30
+Tool version/release checked: CheckV v1.1.1; CheckV database archive README latest listed database v1.5
+Official docs/manual: https://bitbucket.org/berkeleylab/checkv
+Release/source: https://pypi.org/project/checkv/ ; https://bitbucket.org/berkeleylab/checkv
+
 ## Official Documentation
 - PyPI: https://pypi.org/project/checkv/
 - Bitbucket: https://bitbucket.org/berkeleylab/checkv
+- Database archive/changelog: https://portal.nersc.gov/CheckV/
 - Publication: Nayfach, S., et al. (2020). "CheckV assesses the quality and completeness of metagenome-assembled viral genomes." Nature Biotechnology
 
 ## Overview
@@ -10,24 +16,26 @@ CheckV is a fully automated tool for assessing the quality of single-contig vira
 
 ## Installation
 
-### Conda (Recommended)
+### Pixi/Conda (Recommended)
 ```bash
+pixi global install -c conda-forge -c bioconda checkv
 conda install -c conda-forge -c bioconda checkv
 ```
 
-### Pip
+### Pip/uv
 ```bash
+uv pip install checkv
 pip install checkv
 ```
 
-Note: When using pip, you must separately install:
-- DIAMOND v2.1.8 (avoid v2.1.9 - known issues)
+Note: when using pip or uv, install the external dependencies tested by upstream separately:
+- DIAMOND v2.2.0 (upstream still flags DIAMOND v2.1.9 as a known core-dump risk)
 - HMMER v3.3
-- Prodigal-gv v2.6.3
 
 ### Docker
 ```bash
 docker pull antoniopcamargo/checkv
+docker run -ti --rm -v "$(pwd):/app" antoniopcamargo/checkv end_to_end input_file.fna output_directory -t 16
 ```
 
 ## Database Setup
@@ -36,6 +44,11 @@ Download and configure database:
 ```bash
 checkv download_database ./
 export CHECKVDB=/path/to/checkv-db
+```
+
+To update a local database with user-provided complete viral genomes:
+```bash
+checkv update_database /path/to/checkv-db /path/to/updated-checkv-db genomes.fna
 ```
 
 ## Key Commands & Flags
@@ -140,4 +153,4 @@ CheckV is the quality control step after viral detection:
 - **Low completeness estimates**: May indicate truly fragmentary genomes or novel viral groups
 - **High contamination**: Check provirus predictions; may need manual curation
 - **No quality tier assigned**: Sequence may be too divergent from reference database
-- **DIAMOND errors**: Verify DIAMOND version (use v2.1.8, not v2.1.9)
+- **DIAMOND errors**: Verify DIAMOND version; upstream tested v2.2.0 and still documents v2.1.9 as problematic

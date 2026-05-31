@@ -1,4 +1,9 @@
-# Porechop_ABI - Legacy/Fallback Nanopore Adapter Trimming
+# Porechop_ABI 0.5.1 source / v0.5.0 tag - Legacy/Fallback Nanopore Adapter Trimming
+
+Last verified: 2026-05-30
+Tool version/release checked: source `__version__ = '0.5.1'` on master; latest GitHub tag v0.5.0
+Official docs/manual: https://github.com/bonsai-team/Porechop_ABI
+Release/source: https://github.com/bonsai-team/Porechop_ABI/tags and https://github.com/bonsai-team/Porechop_ABI/blob/master/porechop_abi/version.py
 
 ## Overview
 
@@ -9,6 +14,7 @@ Porechop_ABI is a targeted fallback for finding and removing Oxford Nanopore ada
 ## Official Documentation
 
 - [Porechop_ABI](https://github.com/bonsai-team/Porechop_ABI)
+- [Porechop_ABI tags](https://github.com/bonsai-team/Porechop_ABI/tags)
 - [Original Porechop](https://github.com/rrwick/Porechop) (unsupported legacy reference)
 - [Dorado](https://github.com/nanoporetech/dorado)
 - [Chopper](https://github.com/wdecoster/chopper)

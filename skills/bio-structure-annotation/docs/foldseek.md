@@ -2,11 +2,10 @@
 
 Fast protein structure search and clustering using 3Di structural alphabet and alignment.
 
-## Official Documentation
-
-- GitHub: https://github.com/steineggerlab/foldseek
-- Paper: https://www.nature.com/articles/s41587-023-01773-0
-- Webserver: https://search.foldseek.com
+Last verified: 2026-05-30
+Tool version/release checked: Foldseek 10-941cd33
+Official docs/manual: https://github.com/steineggerlab/foldseek
+Release/source: https://github.com/steineggerlab/foldseek/releases/tag/10-941cd33; https://search.foldseek.com
 
 ## Installation
 

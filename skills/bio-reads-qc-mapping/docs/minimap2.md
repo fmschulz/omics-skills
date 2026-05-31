@@ -1,4 +1,9 @@
-# minimap2 - Versatile Sequence Aligner
+# minimap2 v2.31 - Versatile Sequence Aligner
+
+Last verified: 2026-05-30
+Tool version/release checked: minimap2 v2.31 (GitHub release page)
+Official docs/manual: https://lh3.github.io/minimap2/minimap2.html
+Release/source: https://github.com/lh3/minimap2/releases/tag/v2.31
 
 ## Overview
 
@@ -9,6 +14,7 @@ Minimap2 is a versatile pairwise aligner for genomic and spliced nucleotide sequ
 - [minimap2 GitHub Repository](https://github.com/lh3/minimap2)
 - [minimap2 Manual Page](https://lh3.github.io/minimap2/minimap2.html)
 - [minimap2 Cookbook](https://github.com/lh3/minimap2/blob/master/cookbook.md)
+- [minimap2 v2.31 Release](https://github.com/lh3/minimap2/releases/tag/v2.31)
 
 ## Installation
 
@@ -21,7 +27,9 @@ pixi add minimap2
 
 # From source
 git clone https://github.com/lh3/minimap2
-cd minimap2 && make
+cd minimap2
+git checkout v2.31
+make
 ```
 
 ## Key Command-Line Flags

@@ -1,10 +1,17 @@
 # Large Metagenome Queries: Patterns and Pitfalls
 
+**Last verified:** 2026-05-30
+**Tool version/release checked:** `dremio_flight` wheel v1.1.0; Dremio REST/Arrow Flight docs current [26.x]; NUMG Lakehouse sources are live/not versioned.
+**Official docs/manual:** https://docs.dremio.com/current/developer/python/ ; https://docs.dremio.com/current/reference/api/job/job-results/ ; https://docs.dremio.com/current/reference/sql/
+**Release/source:** https://github.com/dremio-hub/arrow-flight-client-examples/releases/download/dremio-flight-python-v1.1.0/dremio_flight-1.1.0-py3-none-any.whl ; `"numg read only".numg.*` local Lakehouse source.
+
 ## Overview
 
-Querying NUMG tables across all ~86,800 metagenomes requires a different approach than
+Querying NUMG tables across a large historical snapshot (~86,800 metagenomes) requires a different approach than
 standard Lakehouse queries. This document captures lessons learned from a real query:
 **retrieve all genes with a Pfam domain hit (PF04896) and their product names**.
+
+Performance and row counts are observations from that local PF04896 run, not general Dremio benchmarks. Re-run the query in the target Lakehouse environment before promising current throughput.
 
 Scale of that query:
 - 487,390 gene hits across 27,378 metagenomes

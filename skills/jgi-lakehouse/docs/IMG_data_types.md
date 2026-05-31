@@ -1,6 +1,11 @@
 # IMG Genome & Metagenome Data Types
 
-Note: numbers are as of February 13, 2026, but will change in the future with new data addition
+**Last verified:** 2026-05-30
+**Tool version/release checked:** JGI Lakehouse live service (not versioned); IMG data-type counts are retained from the 2026-02-13 local Lakehouse query snapshot.
+**Official docs/manual:** https://img.jgi.doe.gov/ ; https://sites.google.com/lbl.gov/imghelp/home/img-and-gold-terms ; https://gold.jgi.doe.gov/resources/project_help_doc.pdf
+**Release/source:** `"img-db-2 postgresql".img_core_v400.taxon`; JGI Genome Portal/Data Portal for downloadable files.
+
+Count note: numeric counts in this guide are historical query results from 2026-02-13. JGI Lakehouse is a live service, so re-run the shown `COUNT(*)` queries before using counts in a final analysis.
 
 ## Overview
 
@@ -256,7 +261,7 @@ LIMIT 100
 
 ---
 
-## Data Type Statistics (as of Feb 2026)
+## Data Type Statistics (2026-02-13 Lakehouse Query Snapshot)
 
 ```
 Total genomes in IMG: 286,759

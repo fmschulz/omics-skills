@@ -1,8 +1,9 @@
 # LinkML Usage Guide
 
-## Official Documentation
-- URL: https://linkml.io/linkml/
-- Version covered: v1.9.6+
+Last verified: 2026-05-30
+Tool version/release checked: LinkML v1.11.1
+Official docs/manual: https://linkml.io/linkml/
+Release/source: https://github.com/linkml/linkml/releases/tag/v1.11.1
 
 ## Installation
 

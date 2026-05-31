@@ -1,6 +1,9 @@
 # Tool Documentation
 
-Last updated: 2026-02-01
+Last verified: 2026-05-30
+Tool version/release checked: geNomad v1.12.0 / DB v1.9; CheckV v1.1.1 / DB v1.5; vConTACT3 3.2.4; GVClass v1.6.0 / resources v1.5.0
+Official docs/manual: See linked per-tool guides in this directory.
+Release/source: See linked per-tool guides in this directory.
 
 ## Overview
 
@@ -9,38 +12,42 @@ This directory contains practical usage guides for the core tools in the bio-vir
 ## Available Tools
 
 ### [geNomad](genomad-usage.md)
-Version: 1.11.2
+Version: 1.12.0
 
 Identifies virus and plasmid genomes from nucleotide sequences with state-of-the-art classification performance. Provides taxonomic assignment using ICTV taxonomy and functional annotation.
 
 - **Official docs**: https://portal.nersc.gov/genomad/
-- **GitHub**: https://github.com/apcamargo/genomad
+- **Release/source**: https://github.com/apcamargo/genomad/releases/tag/v1.12.0
+- **Source**: https://github.com/apcamargo/genomad
 - **Use case**: Initial viral detection from assemblies
 
 ### [CheckV](checkv-usage.md)
-Version: 1.0.3
+Version: 1.1.1
 
 Automated quality assessment tool for viral genomes. Identifies closed genomes, estimates completeness, and removes host contamination from proviruses.
 
 - **Official docs**: https://bitbucket.org/berkeleylab/checkv
 - **PyPI**: https://pypi.org/project/checkv/
+- **Database archive**: https://portal.nersc.gov/CheckV/
 - **Use case**: Quality control and completeness estimation
 
 ### [vConTACT3](vcontact3-usage.md)
-Version: 3.0.1
+Version: 3.2.4 source tag checked; ReadTheDocs release notes currently list changes through v3.2.0
 
 Viral genome clustering and taxonomic assignment using gene-sharing networks. Improved speed and scalability over previous versions.
 
 - **Official docs**: https://vcontact3.readthedocs.io/
-- **Bitbucket**: https://bitbucket.org/MAVERICLab/vcontact3
+- **Release/source**: https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4
+- **Source**: https://bitbucket.org/MAVERICLab/vcontact3
 - **Use case**: Hierarchical classification and genome clustering
 
 ### [GVClass](gvclass-usage.md)
-Version: 1.2.0 (internal build tag)
+Version: v1.6.0 software; v1.5.0 compatible runtime resource bundle
 
-Specialized tool for giant virus (Nucleocytoviricota) identification and taxonomy. Uses phylogenetic analysis with >90% genus-level accuracy.
+Specialized tool for giant virus (Nucleocytoviricota) identification and taxonomy. Uses GVOG-marker phylogenies and reports taxonomy plus completeness/contamination metrics.
 
 - **Official docs**: https://github.com/NeLLi-team/gvclass
+- **Release/source**: https://github.com/NeLLi-team/gvclass/tree/v1.6.0
 - **Publication**: npj Viruses (2024), DOI: 10.1038/s44298-024-00069-7
 - **Use case**: Focused NCLDV detection and classification
 
@@ -72,22 +79,22 @@ Specialized tool for giant virus (Nucleocytoviricota) identification and taxonom
 |------|------------------|------------|-----------------|
 | geNomad | Viral detection | viral_contigs.fasta | Minutes-hours |
 | CheckV | Quality assessment | quality_summary.tsv | Minutes |
-| vConTACT3 | Clustering/taxonomy | genome_clusters.tsv | Hours |
+| vConTACT3 | Clustering/taxonomy | final_assignments.csv | Hours |
 | GVClass | NCLDV classification | gvclass_summary.tsv | Minutes-hours |
 
 ## Installation Overview
 
-All tools can be installed via conda/mamba:
+Most tools can be installed via pixi/conda/mamba; GVClass is normally run from its pixi checkout or Apptainer wrapper:
 
 ```bash
 # geNomad
 pixi global install -c conda-forge -c bioconda genomad
 
 # CheckV
-conda install -c conda-forge -c bioconda checkv
+pixi global install -c conda-forge -c bioconda checkv
 
 # vConTACT3
-mamba create -n vcontact3 python=3.10
+mamba create -n vcontact3 python=3.11
 mamba activate vcontact3
 mamba install -c bioconda vcontact3
 

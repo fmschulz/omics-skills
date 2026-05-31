@@ -1,10 +1,9 @@
 # Crossref API Usage Guide
 
-**Official Documentation:** https://github.com/fabiobatalha/crossrefapi
-
-**Version:** 1.7.0
-
-**Crossref REST API:** https://www.crossref.org/documentation/
+Last verified: 2026-05-30
+Tool version/release checked: crossrefapi 1.7.0; Crossref REST API documentation checked
+Official docs/manual: https://github.com/fabiobatalha/crossrefapi; https://www.crossref.org/documentation/
+Release/source: https://github.com/fabiobatalha/crossrefapi/releases/tag/1.7.0
 
 ## Installation
 

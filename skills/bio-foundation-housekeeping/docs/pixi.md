@@ -1,8 +1,9 @@
 # Pixi Usage Guide
 
-## Official Documentation
-- URL: https://pixi.sh/latest/
-- Version covered: v0.43.0+
+Last verified: 2026-05-30
+Tool version/release checked: Pixi v0.69.0
+Official docs/manual: https://pixi.sh/latest/
+Release/source: https://github.com/prefix-dev/pixi/releases/tag/v0.69.0
 
 ## Installation
 

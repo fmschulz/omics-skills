@@ -1,6 +1,11 @@
 # Arrow Flight (Python)
 
-This guide documents the JGI Lakehouse Arrow Flight Python setup described by Georg Rath (Nov 26, 2025), and a validated local test run.
+**Last verified:** 2026-05-30
+**Tool version/release checked:** `dremio_flight` wheel v1.1.0; Dremio documentation current [26.x].
+**Official docs/manual:** https://docs.dremio.com/current/developer/python/ ; https://docs.dremio.com/current/developer/arrow-flight/
+**Release/source:** https://github.com/dremio-hub/arrow-flight-client-examples ; https://github.com/dremio-hub/arrow-flight-client-examples/releases/download/dremio-flight-python-v1.1.0/dremio_flight-1.1.0-py3-none-any.whl
+
+This guide documents the JGI Lakehouse Arrow Flight Python setup described by Georg Rath (Nov 26, 2025), and a local connectivity pattern. Re-run the `SELECT 1` check in the target network environment before production use.
 
 ## Purpose
 
