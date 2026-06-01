@@ -11,14 +11,16 @@ Search PubMed Central Open Access and bioRxiv parquet corpora with `polars-dovme
 Use the bundled helper, `skills/polars-dovmed/scripts/query_literature.py`, for hosted API or local parquet-backed searches. The helper auto-loads `~/.config/polars-dovmed/.env`.
 
 Current hosted API defaults:
-- Treat API keys as secrets. Do not put a key in command lines, saved artifacts, memory records, summaries, or final answers. If the user pasted a real key into chat, tell them it should be rotated.
+- Treat API keys as secrets in artifacts. Do not save keys in run directories, memory records, summaries, or final answers.
 - Save generated run artifacts under `tasks/polars-dovmed-runs/<slug>/` by default, not under `skills/polars-dovmed/`.
 - Prefer structured async search through `/api/jobs` targeting `scan_literature_advanced(mode="discovery")`.
 - Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.
 - Do not start with `--corpus both`. Run `--corpus biorxiv` and `--corpus pmc` as separate calls, then merge results.
-- Do not start with hosted `--year-bands recent_split` or `--year-bands clean_split`. Some deployments do not expose those materialized database names and return `Database not found`.
-- For recent or emerging taxa, run bioRxiv anchor-only discovery first with a hard timeout. Run PMC separately only when the user needs PMC/peer-reviewed coverage.
-- For interactive work, pass `--poll-timeout` and, when available, wrap long searches in `/usr/bin/timeout` or `timeout`. Do not let broad PMC scans run unbounded.
+- For OpenPMC/PMC, do not run a broad unbanded scan. Use the materialized clean year bands in parallel: `--year-bands clean_split --year-band-workers 4`.
+- If the user names a specific publication year or narrow range, map it to the matching clean band(s) and search only those bands. Use all clean bands only when no year constraint is given.
+- For recent or emerging taxa, run bioRxiv anchor-only discovery and OpenPMC clean-band discovery as separate searches. bioRxiv is small and often returns first; OpenPMC should still use parallel clean bands.
+- If OpenPMC clean-band search returns `Database not found`, stop and report that the deployment is not exposing the indexed OpenPMC bands. Do not fall back to a monolithic unbanded OpenPMC scan.
+- For interactive work, pass `--poll-timeout` and, when available, wrap searches in `timeout`. Do not rerun OpenPMC with longer waits after one bounded clean-band failure.
 
 Public access note:
 - `omics-skills` does not provide a hosted API key or the PMC/bioRxiv parquet corpora.
@@ -45,9 +47,10 @@ Public access note:
    - Check spelling, taxonomy aliases, regex escaping, and noisy terms.
    - Keep support terms soft in discovery; avoid generic anchors such as `host` alone.
 5. Run discovery first.
-   - API path: `--queries-file ... --mode discovery --corpus biorxiv|pmc`.
+   - bioRxiv API path: `--queries-file ... --mode discovery --corpus biorxiv`.
+   - OpenPMC API path: `--queries-file ... --mode discovery --corpus pmc --year-bands clean_split --year-band-workers 4`, unless the prompt has a year constraint that maps to fewer bands.
    - Use `--extract-matches none --add-group-counts primary`.
-   - Use bounded polling, for example `--poll-timeout 75` for bioRxiv and `--poll-timeout 110` for PMC.
+   - Use bounded polling, for example `--poll-timeout 75` for bioRxiv and `--poll-timeout 120` for OpenPMC clean bands.
    - Keep `--details-rerank-limit` modest, usually 8-12.
 6. Inspect the first 5-10 hits.
    - If results are noisy, refine `query.json` and rerun.
@@ -144,24 +147,32 @@ timeout 90s uv run --no-project python skills/polars-dovmed/scripts/query_litera
   > "$RUN/summary_biorxiv.json" 2> "$RUN/time_biorxiv.txt"
 ```
 
-Optional PMC pass with a bounded wait:
+OpenPMC pass with parallel clean year bands:
 
 ```bash
 timeout 120s uv run --no-project python skills/polars-dovmed/scripts/query_literature.py \
   --queries-file "$RUN/query.json" \
   --corpus pmc \
   --mode discovery \
+  --year-bands clean_split \
+  --year-band-workers 4 \
   --extract-matches none \
   --add-group-counts primary \
   --max-results 25 \
   --details-rerank-limit 8 \
-  --poll-timeout 110 \
+  --poll-timeout 120 \
   --save-payload "$RUN/payload_pmc.json" \
   --save-response "$RUN/results_pmc.json" \
   > "$RUN/summary_pmc.json" 2> "$RUN/time_pmc.txt"
 ```
 
-Use `--year-band 2024_plus` only for an explicitly era-limited PMC query. Use `--year-bands ...` only after a smoke check confirms the current hosted deployment exposes those band names.
+If the prompt gives a year constraint, map it before searching:
+- `<=2009` -> `pre_2010`
+- `2010-2020` -> `2010_2020`
+- `2021-2023` -> `2021_2023`
+- `>=2024` -> `2024_plus`
+
+For a range crossing bands, pass an explicit comma list to `--year-bands`, for example `--year-bands 2021_2023,2024_plus`. Use a single `--year-band` only when the whole requested range is inside one band.
 
 Fetch details directly when you already know identifiers:
 
@@ -218,8 +229,9 @@ Ranking priority:
 | Preferred query | Authored `query.json`, inspected before search |
 | Preferred hosted path | async `scan_literature_advanced(mode="discovery")` via helper |
 | Emerging taxon first pass | `--corpus biorxiv`, anchor-only query, bounded timeout |
-| PMC pass | separate `--corpus pmc` call with `--poll-timeout` and outer timeout |
-| Avoid by default | flat `/api/search_literature`, `--corpus both`, hosted `--year-bands` |
+| OpenPMC pass | separate `--corpus pmc --year-bands clean_split --year-band-workers 4` call |
+| Year-constrained OpenPMC | map requested years to one or more clean bands before searching |
+| Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |
 | Details endpoint | `--details ... --corpus pmc|biorxiv` |
 | Local fallback | `--execution-mode local --local-parquet-pattern ...` |
 | Quick verification | `uv run --no-project python skills/polars-dovmed/scripts/smoke_test.py --run-dir tasks/polars-dovmed-runs/smoke-test` |
@@ -243,7 +255,8 @@ Ranking priority:
 - [ ] Run directory is outside `skills/polars-dovmed/`.
 - [ ] Query JSON authored and inspected before search.
 - [ ] Hosted API root or helper smoke checked before declaring outage.
-- [ ] Flat endpoint, `--corpus both`, and hosted `--year-bands` avoided unless explicitly justified.
+- [ ] Flat endpoint, `--corpus both`, and broad unbanded OpenPMC avoided unless explicitly justified.
+- [ ] OpenPMC broad searches use parallel clean year bands; year-constrained searches use only matching bands.
 - [ ] Discovery mode used before advanced refinement.
 - [ ] First 5-10 hits reviewed and noisy terms refined.
 - [ ] Long PMC scans have bounded poll and wall-clock timeout.
@@ -262,7 +275,7 @@ Ranking priority:
 
 2. Run the bioRxiv hosted command from Step 2.
 3. Inspect `results_biorxiv.json` and any companion details response.
-4. Run the bounded PMC command only if PMC coverage is needed.
+4. Run the parallel OpenPMC clean-band command when PMC coverage is needed.
 5. Summarize direct host evidence separately from background mentions.
 
 ### Local PMC Search
@@ -280,20 +293,17 @@ uv run --no-project python skills/polars-dovmed/scripts/query_literature.py \
 
 ## Troubleshooting
 
-**Issue**: User pasted an API key into chat
-**Solution**: Do not repeat or save it. Tell the user to rotate the key if it is real, then use an environment file or shell environment.
-
 **Issue**: Flat `/api/search_literature` times out
 **Solution**: Do not use it for smoke tests. Use the root endpoint plus structured helper smoke.
 
 **Issue**: `--corpus both` returns 502
 **Solution**: Run separate `--corpus biorxiv` and `--corpus pmc` calls and merge results manually.
 
-**Issue**: `--year-bands recent_split` or `clean_split` returns `Database not found`
-**Solution**: Drop `--year-bands`. Use a single corpus search, or a single verified `--year-band`.
+**Issue**: OpenPMC `--year-bands clean_split` returns `Database not found`
+**Solution**: Stop and report that the hosted deployment is not exposing the indexed OpenPMC bands. Do not retry as an unbanded full-corpus OpenPMC scan.
 
-**Issue**: PMC scan is still running after a practical interactive wait
-**Solution**: Stop at the configured timeout, report the measured timeout, and try a narrower anchor-only or era-limited PMC query.
+**Issue**: OpenPMC clean-band search times out
+**Solution**: Report the measured timeout and keep the bioRxiv result. Do not retry the same OpenPMC query with a longer unbanded scan; narrow by user-specified year band or refine the anchor query.
 
 **Issue**: `/usr/bin/time` is missing
 **Solution**: Use shell `time -p` or record start/end timestamps; do not assume `/usr/bin/time` exists.

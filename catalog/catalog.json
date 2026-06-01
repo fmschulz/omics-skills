@@ -1118,28 +1118,19 @@
       ],
       "internal_references": [
         "api",
-        "dev",
-        "path"
+        "usr"
       ],
       "reference_contexts": {
-        "dev": [
-          "- Repo/pixi setup for this helper's local mode: clone the upstream repo to `~/dev/polars-dovmed` or pass `--local-repo-dir`; the helper runs `pixi run dovmed scan` from that repo.",
-          "Public setup path: install or clone <https://github.com/UriNeri/polars-dovmed>, then follow its `dovmed download` and `dovmed build-parquet` workflow to create local PMC OA parquet files. The upstream README notes that the PMC OA data are not redistributed and must be downloaded from the official NCBI FTP source. For the bundled helper, clone the repo to `~/dev/polars-dovmed` or pass `--local-repo-dir /path/to/polars-dovmed`."
-        ],
         "api": [
-          "3. run `POST /api/scan_literature_advanced` with `mode=\"discovery\"`",
-          "5. run `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` plus `dois` for bioRxiv",
-          "6. if needed, run `POST /api/scan_literature_advanced` with `mode=\"advanced\"` for final structured refinement",
-          "- The helper submits hosted search work through `/api/jobs` and polls for completion, instead of holding one long edge request open.",
-          "| Preferred candidate endpoint | `POST /api/scan_literature_advanced` with `mode=\"discovery\"` |",
-          "| Structured API endpoint | `POST /api/scan_literature_advanced` |",
-          "| Flat exploratory endpoint | `POST /api/search_literature` only with explicit opt-in |",
-          "| Paper details endpoint | `POST /api/get_paper_details` with `pmc_ids` for PMC or `corpus=\"biorxiv\"` with `dois` |",
-          "- Search endpoint: `POST /api/scan_literature_advanced`",
-          "- Details endpoint: `POST /api/get_paper_details`"
+          "- Prefer structured async search through `/api/jobs` targeting `scan_literature_advanced(mode=\"discovery\")`.",
+          "- Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.",
+          "| Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |",
+          "**Issue**: Flat `/api/search_literature` times out"
         ],
-        "path": [
-          "Public setup path: install or clone <https://github.com/UriNeri/polars-dovmed>, then follow its `dovmed download` and `dovmed build-parquet` workflow to create local PMC OA parquet files. The upstream README notes that the PMC OA data are not redistributed and must be downloaded from the official NCBI FTP source. For the bundled helper, clone the repo to `~/dev/polars-dovmed` or pass `--local-repo-dir /path/to/polars-dovmed`."
+        "usr": [
+          "If `timeout` is unavailable, still pass `--poll-timeout` and record that no outer wall-clock guard was available. Avoid `/usr/bin/time`; use shell `time -p` unless you have confirmed the path exists.",
+          "**Issue**: `/usr/bin/time` is missing",
+          "**Solution**: Use shell `time -p` or record start/end timestamps; do not assume `/usr/bin/time` exists."
         ]
       }
     },
