@@ -483,10 +483,10 @@ def maybe_save_json(path, payload):
 
 def local_output_dir(args):
     if args.local_output_dir:
-        return Path(args.local_output_dir).expanduser()
+        return Path(args.local_output_dir).expanduser().resolve()
     if args.save_response:
-        response_path = Path(args.save_response)
-        return response_path.with_suffix("")
+        response_path = Path(args.save_response).expanduser()
+        return response_path.with_suffix("").resolve()
     return Path(tempfile.mkdtemp(prefix="dovmed_local_scan_"))
 
 
@@ -525,9 +525,9 @@ def execute_local_scan(args):
         query_file.write_text(json.dumps(queries, indent=2) + "\n", encoding="utf-8")
     else:
         queries = load_queries_file(args.queries_file)
-        query_file = Path(args.queries_file)
+        query_file = Path(args.queries_file).expanduser().resolve()
 
-    repo_dir = Path(args.local_repo_dir).expanduser()
+    repo_dir = Path(args.local_repo_dir).expanduser().resolve()
     output_dir = local_output_dir(args)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     parquet_pattern = local_parquet_pattern(args)

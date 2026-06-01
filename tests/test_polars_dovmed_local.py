@@ -62,6 +62,27 @@ class PolarsDovmedLocalTests(unittest.TestCase):
         self.assertNotIn("--corpus", command)
         self.assertEqual(response["parquet_pattern"], "/data/pmc/*.parquet")
 
+    def test_local_scan_resolves_paths_before_changing_cwd(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            args = _args(
+                Path(tmp_name),
+                queries_file="tasks/example-query.json",
+                local_output_dir="tasks/local-output",
+            )
+            with patch.object(
+                query_literature,
+                "load_queries_file",
+                return_value={"anchor": [["mirusvirus"]]},
+            ):
+                with patch.object(query_literature.subprocess, "run") as run:
+                    run.return_value = SimpleNamespace(returncode=0, stdout="", stderr="")
+                    query_literature.execute_local_scan(args)
+
+        command = run.call_args.args[0]
+        self.assertIn(str((REPO_ROOT / "tasks/example-query.json").resolve()), command)
+        self.assertIn(str((REPO_ROOT / "tasks/local-output").resolve()), command)
+        self.assertEqual(run.call_args.kwargs["cwd"], Path(args.local_repo_dir).resolve())
+
     def test_local_scan_can_use_corpus_env_var(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_name:
             args = _args(
