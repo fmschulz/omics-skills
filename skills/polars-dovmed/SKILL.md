@@ -16,9 +16,11 @@ Current hosted API defaults:
 - Prefer structured async search through `/api/jobs` targeting `scan_literature_advanced(mode="discovery")`.
 - Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.
 - Do not start with `--corpus both`. Run `--corpus biorxiv` and `--corpus pmc` as separate calls, then merge results.
-- For OpenPMC/PMC, do not run a broad unbanded scan. Use the materialized clean year bands in parallel: `--year-bands clean_split --year-band-workers 4`.
+- For OpenPMC/PMC, do not run a broad unbanded scan. Use the materialized clean year bands in parallel with direct FTS-backed calls: `--sync --year-bands clean_split --year-band-workers 4`.
 - If the user names a specific publication year or narrow range, map it to the matching clean band(s) and search only those bands. Use all clean bands only when no year constraint is given.
 - For recent or emerging taxa, run bioRxiv anchor-only discovery and OpenPMC clean-band discovery as separate searches. bioRxiv is small and often returns first; OpenPMC should still use parallel clean bands.
+- Do not invent aliases by splitting compact taxon, gene, or clade names into common words unless the prompt or literature supports that synonym. Keep aliases evidence-based; when a real synonym is multi-word, keep it as one phrase in a single JSON term.
+- For OpenPMC clean-band discovery, skip automatic details rerank: pass `--skip-details-rerank`. The FTS index searches title, abstract, and full text, but PMC details lookups still read parquet and can dominate wall time. Fetch details only for selected PMCID values after discovery.
 - If OpenPMC clean-band search returns `Database not found`, stop and report that the deployment is not exposing the indexed OpenPMC bands. Do not fall back to a monolithic unbanded OpenPMC scan.
 - For interactive work, pass `--poll-timeout` and, when available, wrap searches in `timeout`. Do not rerun OpenPMC with longer waits after one bounded clean-band failure.
 
@@ -48,10 +50,10 @@ Public access note:
    - Keep support terms soft in discovery; avoid generic anchors such as `host` alone.
 5. Run discovery first.
    - bioRxiv API path: `--queries-file ... --mode discovery --corpus biorxiv`.
-   - OpenPMC API path: `--queries-file ... --mode discovery --corpus pmc --year-bands clean_split --year-band-workers 4`, unless the prompt has a year constraint that maps to fewer bands.
+   - OpenPMC API path: `--queries-file ... --mode discovery --corpus pmc --sync --year-bands clean_split --year-band-workers 4 --skip-details-rerank`, unless the prompt has a year constraint that maps to fewer bands.
    - Use `--extract-matches none --add-group-counts primary`.
    - Use bounded polling, for example `--poll-timeout 75` for bioRxiv and `--poll-timeout 120` for OpenPMC clean bands.
-   - Keep `--details-rerank-limit` modest, usually 8-12.
+   - Keep `--details-rerank-limit` modest, usually 8-12, and use it automatically only for bioRxiv or non-year-band searches. For OpenPMC, fetch details by PMCID after inspecting top hits.
 6. Inspect the first 5-10 hits.
    - If results are noisy, refine `query.json` and rerun.
    - For citation-quality answers, verify final metadata in PubMed/PMC, Crossref, DOI landing pages, or journal pages.
@@ -154,12 +156,13 @@ timeout 120s uv run --no-project python skills/polars-dovmed/scripts/query_liter
   --queries-file "$RUN/query.json" \
   --corpus pmc \
   --mode discovery \
+  --sync \
   --year-bands clean_split \
   --year-band-workers 4 \
   --extract-matches none \
   --add-group-counts primary \
   --max-results 25 \
-  --details-rerank-limit 8 \
+  --skip-details-rerank \
   --poll-timeout 120 \
   --save-payload "$RUN/payload_pmc.json" \
   --save-response "$RUN/results_pmc.json" \
@@ -227,9 +230,9 @@ Ranking priority:
 |------|--------|
 | Run directory | `tasks/polars-dovmed-runs/<date-topic>/` |
 | Preferred query | Authored `query.json`, inspected before search |
-| Preferred hosted path | async `scan_literature_advanced(mode="discovery")` via helper |
+| Preferred hosted path | helper `scan_literature_advanced(mode="discovery")`; async except FTS-backed OpenPMC clean bands |
 | Emerging taxon first pass | `--corpus biorxiv`, anchor-only query, bounded timeout |
-| OpenPMC pass | separate `--corpus pmc --year-bands clean_split --year-band-workers 4` call |
+| OpenPMC pass | separate `--corpus pmc --sync --year-bands clean_split --year-band-workers 4 --skip-details-rerank` call |
 | Year-constrained OpenPMC | map requested years to one or more clean bands before searching |
 | Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |
 | Details endpoint | `--details ... --corpus pmc|biorxiv` |
@@ -256,7 +259,7 @@ Ranking priority:
 - [ ] Query JSON authored and inspected before search.
 - [ ] Hosted API root or helper smoke checked before declaring outage.
 - [ ] Flat endpoint, `--corpus both`, and broad unbanded OpenPMC avoided unless explicitly justified.
-- [ ] OpenPMC broad searches use parallel clean year bands; year-constrained searches use only matching bands.
+- [ ] OpenPMC broad searches use direct parallel clean year bands with `--sync` and `--skip-details-rerank`; year-constrained searches use only matching bands.
 - [ ] Discovery mode used before advanced refinement.
 - [ ] First 5-10 hits reviewed and noisy terms refined.
 - [ ] Long PMC scans have bounded poll and wall-clock timeout.
@@ -275,7 +278,7 @@ Ranking priority:
 
 2. Run the bioRxiv hosted command from Step 2.
 3. Inspect `results_biorxiv.json` and any companion details response.
-4. Run the parallel OpenPMC clean-band command when PMC coverage is needed.
+4. Run the direct parallel OpenPMC clean-band command when PMC coverage is needed.
 5. Summarize direct host evidence separately from background mentions.
 
 ### Local PMC Search

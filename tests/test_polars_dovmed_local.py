@@ -43,6 +43,11 @@ def _args(tmp: Path, **overrides):
         "max_results": 25,
         "corpus": "pmc",
         "local_corpus": "pmc",
+        "mode": "discovery",
+        "sync": False,
+        "year_bands": None,
+        "skip_details_rerank": False,
+        "force_details_rerank": False,
     }
     values.update(overrides)
     return SimpleNamespace(**values)
@@ -107,6 +112,60 @@ class PolarsDovmedLocalTests(unittest.TestCase):
             with patch.dict(query_literature.os.environ, {}, clear=True):
                 with self.assertRaisesRegex(SystemExit, "DOVMED_PMC_PARQUET"):
                     query_literature.execute_local_scan(args)
+
+    def test_pmc_year_band_discovery_uses_sync_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            args = _args(Path(tmp_name), year_bands=["2024_plus"])
+            payload = {"corpus": "pmc", "mode": "discovery"}
+
+        self.assertFalse(
+            query_literature.should_use_async_jobs(
+                args,
+                "/api/scan_literature_advanced",
+                payload,
+            )
+        )
+
+    def test_non_pmc_discovery_keeps_async_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            args = _args(Path(tmp_name), corpus="biorxiv", year_bands=None)
+            payload = {"corpus": "biorxiv", "mode": "discovery"}
+
+        self.assertTrue(
+            query_literature.should_use_async_jobs(
+                args,
+                "/api/scan_literature_advanced",
+                payload,
+            )
+        )
+
+    def test_pmc_year_band_discovery_skips_details_unless_forced(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            args = _args(Path(tmp_name), year_bands=["2024_plus"])
+            payload = {
+                "corpus": "pmc",
+                "mode": "discovery",
+                "primary_queries": {"anchor": [["mirusvirus"]]},
+            }
+            result = {"papers": [{"pmc_id": "PMC10827195"}]}
+
+        self.assertFalse(
+            query_literature.should_run_details_rerank(
+                args,
+                "/api/scan_literature_advanced",
+                payload,
+                result,
+            )
+        )
+        args.force_details_rerank = True
+        self.assertTrue(
+            query_literature.should_run_details_rerank(
+                args,
+                "/api/scan_literature_advanced",
+                payload,
+                result,
+            )
+        )
 
 
 if __name__ == "__main__":

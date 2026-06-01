@@ -259,6 +259,14 @@ def parse_args():
         help="Skip the automatic discovery -> details -> rerank second pass",
     )
     parser.add_argument(
+        "--force-details-rerank",
+        action="store_true",
+        help=(
+            "Run automatic discovery -> details reranking even for PMC year-band "
+            "searches where details lookups can dominate wall time"
+        ),
+    )
+    parser.add_argument(
         "--auto-advanced-refinement",
         action="store_true",
         help="Run an additional advanced structured scan after discovery when the first pass is still too loose",
@@ -770,6 +778,36 @@ def execute_request(
         ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"request failed: {exc.reason}") from exc
+
+
+def should_use_async_jobs(args, endpoint, payload):
+    if args.sync or endpoint not in ASYNC_ENDPOINTS:
+        return False
+    if (
+        args.year_bands
+        and payload.get("corpus") == "pmc"
+        and payload.get("mode") == "discovery"
+    ):
+        return False
+    return True
+
+
+def should_run_details_rerank(args, endpoint, payload, result):
+    if (
+        args.skip_details_rerank
+        or not endpoint.endswith("advanced")
+        or payload.get("mode") != "discovery"
+        or not payload.get("primary_queries")
+        or not result.get("papers")
+    ):
+        return False
+    if (
+        args.year_bands
+        and payload.get("corpus") == "pmc"
+        and not args.force_details_rerank
+    ):
+        return False
+    return True
 
 
 def paper_identity(paper):
@@ -1333,7 +1371,7 @@ def main():
     api_key = load_api_key(args.api_key)
     endpoint, payload = build_request(args)
     timeout = args.timeout or (600 if endpoint.endswith("advanced") else 120)
-    use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
+    use_async_jobs = should_use_async_jobs(args, endpoint, payload)
     if args.year_bands:
         submitted_payload_info = build_parallel_submitted_request(
             endpoint,
@@ -1380,7 +1418,7 @@ def main():
     except RuntimeError as exc:
         if args.discovery_fallback and endpoint.endswith("advanced"):
             endpoint, payload = build_discovery_request(args)
-            use_async_jobs = not args.sync and endpoint in ASYNC_ENDPOINTS
+            use_async_jobs = should_use_async_jobs(args, endpoint, payload)
             if args.year_bands:
                 submitted_payload_info = build_parallel_submitted_request(
                     endpoint,
@@ -1431,13 +1469,7 @@ def main():
                 )
         else:
             raise SystemExit(str(exc)) from None
-    if (
-        not args.skip_details_rerank
-        and endpoint.endswith("advanced")
-        and payload.get("mode") == "discovery"
-        and payload.get("primary_queries")
-        and result.get("papers")
-    ):
+    if should_run_details_rerank(args, endpoint, payload, result):
         corpus = payload.get("corpus") or "pmc"
         candidate_id_field = "pmc_id"
         candidate_ids = []
