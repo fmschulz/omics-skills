@@ -8,14 +8,15 @@ import sys
 from pathlib import Path
 
 
-def parse_args():
+def parse_args(argv=None):
     skill_dir = Path(__file__).resolve().parents[1]
+    repo_root = skill_dir.parents[1]
     parser = argparse.ArgumentParser(
         description="Run a quick end-to-end smoke test for the polars-dovmed skill"
     )
     parser.add_argument(
         "--run-dir",
-        default=str(skill_dir / "runs" / "smoke-test"),
+        default=str(repo_root / "tasks" / "polars-dovmed-runs" / "smoke-test"),
         help="Directory where prompt, query, payloads, responses, and summary will be saved",
     )
     parser.add_argument(
@@ -39,6 +40,12 @@ def parse_args():
         help="API base URL to test",
     )
     parser.add_argument(
+        "--corpus",
+        choices=["pmc", "biorxiv"],
+        default="biorxiv",
+        help="Corpus for the bounded discovery smoke check",
+    )
+    parser.add_argument(
         "--max-results",
         type=int,
         default=3,
@@ -50,7 +57,13 @@ def parse_args():
         default=1,
         help="Minimum number of discovery papers expected for success",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--poll-timeout",
+        type=int,
+        default=75,
+        help="Maximum seconds to wait for the async discovery job",
+    )
+    return parser.parse_args(argv)
 
 
 def run_cli(args):
@@ -107,8 +120,13 @@ def main():
             "discovery",
             "--max-results",
             str(args.max_results),
+            "--corpus",
+            args.corpus,
             "--base-url",
             args.base_url,
+            "--skip-details-rerank",
+            "--poll-timeout",
+            str(args.poll_timeout),
             "--save-payload",
             str(run_dir / "payload_discovery.json"),
             "--save-response",
@@ -125,6 +143,8 @@ def main():
             str(query_script),
             "--details",
             args.details_pmc_id,
+            "--corpus",
+            "pmc",
             "--base-url",
             args.base_url,
             "--save-payload",
@@ -155,6 +175,7 @@ def main():
     summary = {
         "success": success,
         "base_url": args.base_url,
+        "corpus": args.corpus,
         "run_dir": str(run_dir),
         "prompt_path": str(prompt_dst),
         "query_path": str(query_dst),
