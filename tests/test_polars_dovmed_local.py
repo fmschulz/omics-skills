@@ -167,6 +167,63 @@ class PolarsDovmedLocalTests(unittest.TestCase):
             )
         )
 
+    def test_crossref_metadata_enrichment_fills_missing_fields(self) -> None:
+        papers = [
+            {
+                "title": "Example environmental genomics paper",
+                "doi": None,
+                "year": None,
+                "journal": None,
+            }
+        ]
+        item = {
+            "DOI": "10.1234/example",
+            "title": ["Example environmental genomics paper"],
+            "container-title": ["Journal of Examples"],
+            "issued": {"date-parts": [[2025, 1, 2]]},
+        }
+
+        with patch.object(
+            query_literature,
+            "best_crossref_match",
+            return_value=(item, 0.99),
+        ) as lookup:
+            enriched, metadata = query_literature.enrich_compact_with_crossref(
+                papers,
+                limit=1,
+                email="test@example.org",
+            )
+
+        self.assertEqual(enriched[0]["doi"], "10.1234/example")
+        self.assertEqual(enriched[0]["doi_source"], "crossref")
+        self.assertEqual(enriched[0]["year"], 2025)
+        self.assertEqual(enriched[0]["journal"], "Journal of Examples")
+        self.assertEqual(metadata["lookups"], 1)
+        self.assertEqual(metadata["matches"], 1)
+        lookup.assert_called_once_with(
+            "Example environmental genomics paper",
+            email="test@example.org",
+        )
+
+    def test_crossref_metadata_enrichment_respects_limit(self) -> None:
+        papers = [
+            {"title": "Paper one", "doi": None, "year": None, "journal": None},
+            {"title": "Paper two", "doi": None, "year": None, "journal": None},
+        ]
+
+        with patch.object(
+            query_literature,
+            "best_crossref_match",
+            return_value=(None, 0.0),
+        ) as lookup:
+            _enriched, metadata = query_literature.enrich_compact_with_crossref(
+                papers,
+                limit=1,
+            )
+
+        self.assertEqual(metadata["lookups"], 1)
+        lookup.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,7 @@
 import argparse
 import copy
 import concurrent.futures
+import difflib
 import json
 import os
 import re
@@ -11,6 +12,7 @@ import subprocess
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -267,6 +269,25 @@ def parse_args():
         ),
     )
     parser.add_argument(
+        "--crossref-metadata",
+        action="store_true",
+        help=(
+            "Use bounded Crossref title lookups to fill missing DOI/year/journal "
+            "metadata in the compact summary"
+        ),
+    )
+    parser.add_argument(
+        "--crossref-limit",
+        type=int,
+        default=10,
+        help="Maximum number of incomplete compact records to query in Crossref",
+    )
+    parser.add_argument(
+        "--crossref-email",
+        default=os.environ.get("CROSSREF_EMAIL", ""),
+        help="Optional email for the Crossref polite-pool User-Agent",
+    )
+    parser.add_argument(
         "--auto-advanced-refinement",
         action="store_true",
         help="Run an additional advanced structured scan after discovery when the first pass is still too loose",
@@ -432,6 +453,125 @@ def compact_paper(paper):
         "best_local_context_source": triage.get("best_local_context_source"),
         "best_local_context_snippet": triage.get("best_local_context_snippet"),
         "matched_concepts": triage.get("matched_concepts"),
+    }
+
+
+def crossref_user_agent(email):
+    contact = f" mailto:{email}" if email else ""
+    return f"omics-skills-polars-dovmed/1.0{contact}"
+
+
+def normalize_title_for_match(title):
+    title = re.sub(r"<[^>]+>", " ", title or "")
+    title = re.sub(r"[^a-z0-9]+", " ", title.lower())
+    return re.sub(r"\s+", " ", title).strip()
+
+
+def title_similarity(left, right):
+    left_norm = normalize_title_for_match(left)
+    right_norm = normalize_title_for_match(right)
+    if not left_norm or not right_norm:
+        return 0.0
+    return difflib.SequenceMatcher(None, left_norm, right_norm).ratio()
+
+
+def first_crossref_value(value):
+    if isinstance(value, list):
+        return str(value[0]) if value else None
+    if value is None:
+        return None
+    return str(value)
+
+
+def crossref_year(item):
+    for field in ("published-print", "published-online", "published", "issued"):
+        parts = item.get(field, {}).get("date-parts", [[]])
+        if parts and parts[0]:
+            try:
+                return int(parts[0][0])
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def crossref_title_lookup(title, *, email="", rows=3, timeout=10):
+    params = urllib.parse.urlencode({"query.title": title, "rows": rows})
+    request = urllib.request.Request(
+        f"https://api.crossref.org/works?{params}",
+        headers={"User-Agent": crossref_user_agent(email)},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    if payload.get("status") != "ok":
+        return []
+    return payload.get("message", {}).get("items", [])
+
+
+def best_crossref_match(title, *, email="", min_similarity=0.86):
+    candidates = crossref_title_lookup(title, email=email)
+    best = None
+    best_score = 0.0
+    for item in candidates:
+        candidate_title = first_crossref_value(item.get("title")) or ""
+        score = title_similarity(title, candidate_title)
+        if score > best_score:
+            best = item
+            best_score = score
+    if not best or best_score < min_similarity:
+        return None, best_score
+    return best, best_score
+
+
+def apply_crossref_metadata(paper, item, score):
+    enriched = dict(paper)
+    enriched["crossref_match_score"] = round(score, 3)
+    enriched["crossref_title"] = first_crossref_value(item.get("title"))
+    if not enriched.get("doi") and item.get("DOI"):
+        enriched["doi"] = item.get("DOI")
+        enriched["doi_source"] = "crossref"
+    if enriched.get("year") is None:
+        year = crossref_year(item)
+        if year is not None:
+            enriched["year"] = year
+            enriched["year_source"] = "crossref"
+    if not enriched.get("journal"):
+        journal = first_crossref_value(item.get("container-title"))
+        if journal:
+            enriched["journal"] = journal
+            enriched["journal_source"] = "crossref"
+    return enriched
+
+
+def enrich_compact_with_crossref(papers, *, limit=10, email=""):
+    enriched = []
+    lookups = 0
+    matches = 0
+    errors = []
+    for paper in papers:
+        current = dict(paper)
+        needs_lookup = (
+            current.get("title")
+            and (not current.get("doi") or current.get("year") is None or not current.get("journal"))
+        )
+        if needs_lookup and lookups < max(0, limit):
+            lookups += 1
+            try:
+                item, score = best_crossref_match(current["title"], email=email)
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+                errors.append({"title": current["title"], "error": str(exc)})
+            else:
+                if item:
+                    matches += 1
+                    current = apply_crossref_metadata(current, item, score)
+                else:
+                    current["crossref_match_score"] = round(score, 3)
+                    current["crossref_status"] = "no_confident_match"
+        enriched.append(current)
+    return enriched, {
+        "enabled": True,
+        "lookups": lookups,
+        "matches": matches,
+        "errors": errors,
     }
 
 
@@ -1609,6 +1749,13 @@ def main():
         or []
     )
     compact, missing_year, filtered_year = summarize_papers(papers, args.year)
+    crossref_metadata = {"enabled": False}
+    if args.crossref_metadata:
+        compact, crossref_metadata = enrich_compact_with_crossref(
+            compact,
+            limit=args.crossref_limit,
+            email=args.crossref_email,
+        )
     summary = {
         "endpoint": endpoint,
         "mode": args.mode if args.queries_file or args.group else None,
@@ -1639,6 +1786,7 @@ def main():
             if result.get("advanced_refinement") is not None
             else None
         ),
+        "crossref_metadata": crossref_metadata,
         "recommended_next_step": result.get("recommended_next_step"),
         "year_filter": args.year,
         "excluded_missing_year": missing_year,

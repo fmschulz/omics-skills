@@ -2,7 +2,7 @@
   "metadata": {
     "skill_count": 36,
     "agent_count": 4,
-    "edge_count": 140
+    "edge_count": 141
   },
   "skills": [
     {
@@ -1118,6 +1118,7 @@
       ],
       "internal_references": [
         "api",
+        "crossref-lookup",
         "usr"
       ],
       "reference_contexts": {
@@ -1126,6 +1127,9 @@
           "- Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.",
           "| Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |",
           "**Issue**: Flat `/api/search_literature` times out"
+        ],
+        "crossref-lookup": [
+          "- For citation-quality answers, first use PMCID/DOI details from polars-dovmed, then `--crossref-metadata` or `/crossref-lookup` for missing DOI/year/journal. Use DOI landing pages or journal pages only when Crossref and corpus metadata disagree or remain ambiguous."
         ],
         "usr": [
           "If `timeout` is unavailable, still pass `--poll-timeout` and record that no outer wall-clock guard was available. Avoid `/usr/bin/time`; use shell `time -p` unless you have confirmed the path exists.",
@@ -3699,6 +3703,20 @@
       ],
       "evidence": [
         "- Pairs with `/handoff` which writes filesystem handoffs."
+      ]
+    },
+    {
+      "source": "polars-dovmed",
+      "target": "crossref-lookup",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- For citation-quality answers, first use PMCID/DOI details from polars-dovmed, then `--crossref-metadata` or `/crossref-lookup` for missing DOI/year/journal. Use DOI landing pages or journal pages only when Crossref and corpus metadata disagree or remain ambiguous."
       ]
     },
     {

@@ -19,8 +19,10 @@ Current hosted API defaults:
 - For OpenPMC/PMC, do not run a broad unbanded scan. Use the materialized clean year bands in parallel with direct FTS-backed calls: `--sync --year-bands clean_split --year-band-workers 4`.
 - If the user names a specific publication year or narrow range, map it to the matching clean band(s) and search only those bands. Use all clean bands only when no year constraint is given.
 - For recent or emerging taxa, run bioRxiv anchor-only discovery and OpenPMC clean-band discovery as separate searches. bioRxiv is small and often returns first; OpenPMC should still use parallel clean bands.
+- For any entity-centric prompt with topic modifiers, such as "distribution and genomics of X", first search the exact entity/aliases only. Treat topic words as triage labels or a second-pass refinement after confirming anchor hits; do not build a large first-pass query of generic topic terms.
 - Do not invent aliases by splitting compact taxon, gene, or clade names into common words unless the prompt or literature supports that synonym. Keep aliases evidence-based; when a real synonym is multi-word, keep it as one phrase in a single JSON term.
 - For OpenPMC clean-band discovery, skip automatic details rerank: pass `--skip-details-rerank`. The FTS index searches title, abstract, and full text, but PMC details lookups still read parquet and can dominate wall time. Fetch details only for selected PMCID values after discovery.
+- Citation metadata should come from the corpus response/details endpoint first. If DOI/year/journal are missing, use bounded Crossref lookup through `--crossref-metadata` or the `crossref-lookup` skill. Do not use generic web search for DOI repair except as a final publisher-page check for unresolved/ambiguous records.
 - If OpenPMC clean-band search returns `Database not found`, stop and report that the deployment is not exposing the indexed OpenPMC bands. Do not fall back to a monolithic unbanded OpenPMC scan.
 - For interactive work, pass `--poll-timeout` and, when available, wrap searches in `timeout`. Do not rerun OpenPMC with longer waits after one bounded clean-band failure.
 
@@ -45,6 +47,7 @@ Public access note:
    - Add relation groups only when they improve precision.
    - Use `disqualifying_terms` for acronym collisions and wrong systems.
    - For "hosts of X" or other recent-taxonomy prompts, first run an anchor-only query for X and aliases; use host terms during triage or a second pass.
+   - For "topic of X" prompts, such as environmental distribution, genomics, metabolism, or ecology of an entity, keep the first query anchor-only. Do not add broad words like distribution, genome, environment, host, or taxonomy as peer OR concepts.
 4. Inspect the query JSON before searching.
    - Check spelling, taxonomy aliases, regex escaping, and noisy terms.
    - Keep support terms soft in discovery; avoid generic anchors such as `host` alone.
@@ -56,7 +59,7 @@ Public access note:
    - Keep `--details-rerank-limit` modest, usually 8-12, and use it automatically only for bioRxiv or non-year-band searches. For OpenPMC, fetch details by PMCID after inspecting top hits.
 6. Inspect the first 5-10 hits.
    - If results are noisy, refine `query.json` and rerun.
-   - For citation-quality answers, verify final metadata in PubMed/PMC, Crossref, DOI landing pages, or journal pages.
+   - For citation-quality answers, first use PMCID/DOI details from polars-dovmed, then `--crossref-metadata` or `/crossref-lookup` for missing DOI/year/journal. Use DOI landing pages or journal pages only when Crossref and corpus metadata disagree or remain ambiguous.
 7. Record timings when the user asks about speed.
    - Capture wall time with shell `time -p` or `timeout ...`.
    - Also report helper/API `elapsed_ms` when present.
@@ -169,6 +172,19 @@ timeout 120s uv run --no-project python skills/polars-dovmed/scripts/query_liter
   > "$RUN/summary_pmc.json" 2> "$RUN/time_pmc.txt"
 ```
 
+For citation metadata enrichment after a shortlist, prefer bounded Crossref
+fallback over web search:
+
+```bash
+uv run --no-project python skills/polars-dovmed/scripts/query_literature.py \
+  --details PMC6362216 PMC10132079 \
+  --corpus pmc \
+  --crossref-metadata \
+  --crossref-limit 10 \
+  --save-payload "$RUN/payload_details.json" \
+  --save-response "$RUN/results_details.json"
+```
+
 If the prompt gives a year constraint, map it before searching:
 - `<=2009` -> `pre_2010`
 - `2010-2020` -> `2010_2020`
@@ -236,6 +252,7 @@ Ranking priority:
 | Year-constrained OpenPMC | map requested years to one or more clean bands before searching |
 | Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |
 | Details endpoint | `--details ... --corpus pmc|biorxiv` |
+| Missing DOI/year | `--crossref-metadata` or `skills/crossref-lookup/scripts/lookup --title ...` |
 | Local fallback | `--execution-mode local --local-parquet-pattern ...` |
 | Quick verification | `uv run --no-project python skills/polars-dovmed/scripts/smoke_test.py --run-dir tasks/polars-dovmed-runs/smoke-test` |
 | Timing | shell `time -p`, helper `elapsed_ms`, and timeout status |
@@ -264,7 +281,7 @@ Ranking priority:
 - [ ] First 5-10 hits reviewed and noisy terms refined.
 - [ ] Long PMC scans have bounded poll and wall-clock timeout.
 - [ ] Timings and failure modes reported when speed is part of the request.
-- [ ] Citation metadata verified externally when final citation quality matters.
+- [ ] Citation metadata uses DB/details first, then bounded Crossref fallback; generic web search is not used for routine DOI repair.
 
 ## Examples
 
@@ -307,6 +324,12 @@ uv run --no-project python skills/polars-dovmed/scripts/query_literature.py \
 
 **Issue**: OpenPMC clean-band search times out
 **Solution**: Report the measured timeout and keep the bioRxiv result. Do not retry the same OpenPMC query with a longer unbanded scan; narrow by user-specified year band or refine the anchor query.
+
+**Issue**: A query about "topic of X" retrieves generic topic papers
+**Solution**: Replace the first-pass query with exact entity aliases only. Use topic terms during manual triage or a focused second pass after confirming anchor hits.
+
+**Issue**: DOI, year, or journal metadata is missing
+**Solution**: Fetch details by PMCID/DOI first. If still incomplete, use `--crossref-metadata` or the `crossref-lookup` skill. Avoid generic web search unless both corpus metadata and Crossref are unresolved or conflicting.
 
 **Issue**: `/usr/bin/time` is missing
 **Solution**: Use shell `time -p` or record start/end timestamps; do not assume `/usr/bin/time` exists.
