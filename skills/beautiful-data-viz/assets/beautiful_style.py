@@ -30,7 +30,7 @@ class VizConfig:
 
 
 TUFTE_COLORS = {
-    "light_bg": "#fffff8",
+    "light_bg": "#ffffff",
     "dark_bg": "#151515",
     "light_text": "#111111",
     "dark_text": "#dddddd",
@@ -104,8 +104,8 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "axes.facecolor": face,
 
         # Typography
-        "font.family": "serif",
-        "font.serif": ["Palatino", "Palatino Linotype", "Georgia", "DejaVu Serif"],
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans", "Liberation Sans"],
         "text.color": fg,
         "axes.labelcolor": secondary,
         "axes.titlecolor": fg,

@@ -200,3 +200,15 @@ uv run marimo export ipynb notebooks/legacy.py -o notebooks/legacy.executed.ipyn
 
 **Issue:** Converted notebook fails `marimo check`.
 **Solution:** Remove leftover `display(...)` calls, drop `%magic` lines that have no marimo equivalent, and rewrite ipywidget usage using `mo.ui.*` per `references/widgets.md`.
+
+**Issue:** Every matplotlib figure appears twice in the executed Jupyter notebook.
+**Solution:** The inline backend's `flush_figures` post-execute hook auto-displays every open figure (`display_data`), and the cell's `fig` return value produces a second copy (`execute_result`). Unregister the hook in the preamble cell:
+```python
+plt.ioff()
+try:
+    from matplotlib_inline.backend_inline import flush_figures
+    get_ipython().events.unregister("post_execute", flush_figures)
+except Exception:
+    pass
+```
+With this fix, only the cell's final `fig` expression renders. For figures inside `if/else` blocks (where `fig` is not a top-level expression and therefore not captured as `execute_result`), use `display(fig)` explicitly instead of bare `fig`. Do not use `mpl.use("agg")` as a workaround — it disables `_repr_png_()` entirely and produces zero images.
