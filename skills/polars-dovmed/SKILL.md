@@ -122,6 +122,14 @@ Use compact concept groups:
 }
 ```
 
+**Group logic** (enforced consistently on both the FTS fast path and the parquet
+scan): terms inside one inner group are AND'd (all must co-occur); inner groups
+within a concept are OR'd; concepts are OR'd, with ranking favoring items that
+match more groups. A multi-word term is matched as an exact phrase. So list
+synonyms/aliases as **separate single-term groups** (each `["alias"]` on its own
+line) — never pack them into one group, which would require them all to co-occur.
+Use a multi-term group only to require co-occurrence (e.g. `["entity", "relation"]`).
+
 For recent taxa or sparse terms, begin with anchor-only JSON:
 
 ```json
@@ -228,7 +236,7 @@ Local corpus aliases:
 
 - Prefer structured JSON over ad hoc natural-language search strings.
 - Build searches around anchor concepts first.
-- Put alternate names and spelling variants inside the same concept group.
+- List alternate names and spelling variants as separate single-term groups within a concept (groups are OR'd); keep a multi-word synonym as one phrase term. Multiple terms in one group are AND'd (all must co-occur) — now enforced on the FTS fast path too, so never pack synonyms into a single group.
 - Treat support concepts as refiners, not anchors.
 - For "X of Y" prompts, combine X and relation terms inside an OR-of-AND group only after an anchor-only discovery pass if recall is poor.
 - Down-rank papers matching only generic support terms or full-text-only background mentions.
