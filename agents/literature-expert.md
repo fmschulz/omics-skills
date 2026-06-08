@@ -61,21 +61,10 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **Use for structured extraction from papers after source retrieval:**
 - `/csag-extraction` - Convert a manuscript into a schema-valid Conditional Scientific Argumentation Graph with grounded claims, evidence, inferences, and Q&A items
 
-### Web Retrieval
-
-**Use for sources that require browser access:**
-- `/agent-browser` - Web navigation, scraping, screenshots, and supplementary-material retrieval
-
 ### API and SDK Documentation
 
 **Use for current software documentation:**
 - `/get-api-docs` - Fetch current API and SDK documentation with the `chub` CLI before coding against fast-moving interfaces
-
-### Session Continuity
-
-**Use when pausing or resuming work:**
-- `/handoff` - Write a concise session handoff under `docs/handoffs/`
-- `/pickup` - Read memd/project handoff context and resume from the latest state
 
 ## Workflow Decision Tree
 
@@ -110,15 +99,6 @@ START
   ├─ Need Claim/Evidence Graph?
   │   └─> /csag-extraction
   │
-  ├─ Resume Session?
-  │   └─> /pickup
-  │
-  ├─ Handoff Session?
-  │   └─> /handoff
-  │
-  ├─ Need Web-Only Retrieval?
-  │   └─> /agent-browser
-  │
   └─ Need Current API / SDK Docs?
       └─> /get-api-docs
 ```
@@ -134,10 +114,7 @@ START
 - **"review evidence", "evidence quality", "bias", "methodology"** → `/bio-logic`
 - **"pdf to markdown", "pdf to md", "convert pdf", "convert manuscript to markdown", "paper to markdown", "parse pdf", "liteparse", "ocr pdf"** → `/pdf-to-md`
 - **"CSAG", "argument graph", "claim evidence graph", "conditional scientific argumentation", "extract claims and evidence"** → `/csag-extraction`
-- **"browser", "scrape", "supplementary materials", "web database"** → `/agent-browser`
 - **"API documentation", "SDK documentation", "latest API docs", "current docs", "fast-moving API", "chub"** → `/get-api-docs`
-- **"handoff", "session handoff", "write handoff"** → `/handoff`
-- **"pickup", "resume session", "read handoff", "continue previous work"** → `/pickup`
 
 ## Communication Style
 

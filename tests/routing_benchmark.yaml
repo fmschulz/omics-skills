@@ -204,10 +204,6 @@
   expected_agent: dataviz-artist
   expected_primary_skills: [notebooks]
 
-- task: "automate browsing a website to download supplementary data"
-  platform: codex
-  expected_primary_skills: [agent-browser]
-
 - task: "fetch up-to-date Anthropic SDK API documentation before writing client code"
   platform: codex
   expected_primary_skills: [get-api-docs]
@@ -231,10 +227,6 @@
   expected_agent: omics-scientist
   expected_primary_skills: [bio-logic]
   forbidden_skills: [ai-scientist-evaluator]
-
-- task: "log into a web portal to download supplementary data for a paper"
-  platform: codex
-  expected_primary_skills: [agent-browser]
 
 # ============================================================================
 # Hard negatives — off-domain queries must NOT surface a confident primary

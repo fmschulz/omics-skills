@@ -48,21 +48,13 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | `proposal-review` | Reviewing grant, project, or funding proposals. | A decision-ready critique of strengths, risks, missing evidence, and fundability. |
 | `ai-scientist-evaluator` | Evaluating finished outputs from one or more AI scientists. | A scored audit of rigor, reproducibility, novelty, task completion, and publication readiness. |
 
-## Visualization, Notebooks, and Browser Work
+## Visualization and Notebooks
 
 | Skill | Use when | Main result |
 |---|---|---|
 | `notebooks` | Building or converting reproducible marimo or Jupyter notebooks. | A fully executed notebook with embedded figures and clear analysis flow. |
 | `beautiful-data-viz` | Producing publication-quality matplotlib or seaborn figures. | High-data-ink static figures with readable axes, direct labels where feasible, tight layout, and appropriate palettes. |
 | `plotly-dashboard-skill` | Building interactive Plotly Dash dashboards. | A production-ready dashboard layout with themed components and performant callbacks. |
-| `agent-browser` | Automating browser navigation, scraping, form filling, screenshots, or UI checks. | Browser-driven evidence, screenshots, scraped content, or test observations. |
-
-## Session Continuity
-
-| Skill | Use when | Main result |
-|---|---|---|
-| `handoff` | Pausing a session and leaving enough context for another agent or future session to continue. | A dated Markdown handoff under `docs/handoffs/` with status, file map, decisions, blockers, and next steps. |
-| `pickup` | Resuming work from project memory and/or existing handoff files. | A concise session resume with recent tasks, decisions, failures, active handoffs, and archived current-repo handoff files. |
 
 ## Skill Source Links
 

@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 43,
-    "passed": 43,
+    "total": 41,
+    "passed": 41,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -419,7 +419,8 @@
         ],
         "supporting_skills": [
           "bio-annotation",
-          "bio-logic"
+          "bio-logic",
+          "crossref-lookup"
         ],
         "ordered_skills": [
           "bio-annotation",
@@ -652,20 +653,6 @@
       }
     },
     {
-      "task": "automate browsing a website to download supplementary data",
-      "passed": true,
-      "actual": {
-        "agent": "dataviz-artist",
-        "primary_skills": [
-          "agent-browser"
-        ],
-        "supporting_skills": [],
-        "ordered_skills": [
-          "agent-browser"
-        ]
-      }
-    },
-    {
       "task": "fetch up-to-date Anthropic SDK API documentation before writing client code",
       "passed": true,
       "actual": {
@@ -728,20 +715,6 @@
           "bio-protein-clustering-pangenome",
           "polars-dovmed",
           "bio-logic"
-        ]
-      }
-    },
-    {
-      "task": "log into a web portal to download supplementary data for a paper",
-      "passed": true,
-      "actual": {
-        "agent": "dataviz-artist",
-        "primary_skills": [
-          "agent-browser"
-        ],
-        "supporting_skills": [],
-        "ordered_skills": [
-          "agent-browser"
         ]
       }
     },

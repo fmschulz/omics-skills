@@ -43,17 +43,6 @@ Use the returned order as the default path, then open only the referenced `SKILL
 **For interactive dashboards, use:**
 - `/plotly-dashboard-skill` - Dash apps with consistent theming and performant callbacks
 
-### Web Data & Browser Automation
-
-**For web data collection or screenshots, use:**
-- `/agent-browser` - Browser automation and scraping
-
-### Session Continuity
-
-**Use when pausing or resuming work:**
-- `/handoff` - Write a concise session handoff under `docs/handoffs/`
-- `/pickup` - Read memd/project handoff context and resume from the latest state
-
 ## Workflow Decision Tree
 
 ```
@@ -65,13 +54,7 @@ START
   │
   ├─ Need Publication Figure? → /beautiful-data-viz
   │
-  ├─ Need Interactive Dashboard? → /plotly-dashboard-skill
-  │
-  ├─ Need Web Data/Screenshots? → /agent-browser
-  │
-  ├─ Resume Session? → /pickup
-  │
-  └─ Handoff Session? → /handoff
+  └─ Need Interactive Dashboard? → /plotly-dashboard-skill
 ```
 
 ## Task Recognition Patterns
@@ -80,9 +63,6 @@ START
 - **"notebook", "marimo", "jupyter", "ipynb", "convert notebook", "reactive notebook", "executed notebook", "pixi kernel"** → `/notebooks`
 - **"plot", "chart", "figure", "publication", "matplotlib", "seaborn"** → `/beautiful-data-viz`
 - **"dashboard", "interactive", "plotly", "dash", "data app"** → `/plotly-dashboard-skill`
-- **"scrape", "screenshot", "browser", "web data"** → `/agent-browser`
-- **"handoff", "session handoff", "write handoff"** → `/handoff`
-- **"pickup", "resume session", "read handoff", "continue previous work"** → `/pickup`
 
 ## Communication Style
 

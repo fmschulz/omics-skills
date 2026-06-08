@@ -1,41 +1,10 @@
 {
   "metadata": {
-    "skill_count": 36,
+    "skill_count": 33,
     "agent_count": 4,
-    "edge_count": 141
+    "edge_count": 128
   },
   "skills": [
-    {
-      "name": "agent-browser",
-      "title": "Agent Browser",
-      "description": "Browser automation via agent-browser CLI for web navigation, form filling, screenshots, scraping, login flows, and UI testing.",
-      "path": "skills/agent-browser/SKILL.md",
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "agents": [
-        "dataviz-artist",
-        "literature-expert",
-        "science-writer"
-      ],
-      "sections": [
-        "Supporting Retrieval",
-        "Web Data & Browser Automation",
-        "Web Retrieval"
-      ],
-      "task_patterns": [
-        "browser",
-        "download supplement",
-        "scrape",
-        "screenshot",
-        "supplementary materials",
-        "web data",
-        "web database"
-      ],
-      "internal_references": [],
-      "reference_contexts": {}
-    },
     {
       "name": "ai-scientist-evaluator",
       "title": "AI Scientist Evaluator",
@@ -807,38 +776,6 @@
       "reference_contexts": {}
     },
     {
-      "name": "handoff",
-      "title": "/handoff",
-      "description": "Create a session handoff document for context continuity. Captures work completed, decisions, knowledge, and next steps in docs/handoffs/.",
-      "path": "skills/handoff/SKILL.md",
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "agents": [
-        "dataviz-artist",
-        "literature-expert",
-        "omics-scientist",
-        "science-writer"
-      ],
-      "sections": [
-        "Session Continuity"
-      ],
-      "task_patterns": [
-        "handoff",
-        "session handoff",
-        "write handoff"
-      ],
-      "internal_references": [
-        "pickup"
-      ],
-      "reference_contexts": {
-        "pickup": [
-          "Pairs with `/pickup` skill which reads and resumes from handoff documents created by this skill."
-        ]
-      }
-    },
-    {
       "name": "jgi-lakehouse",
       "title": "JGI Lakehouse Skill",
       "description": "Queries JGI Lakehouse (Dremio) for genomics metadata from GOLD, IMG, Mycocosm, Phytozome. Downloads genome files from JGI filesystem using IMG taxon OIDs and links JGI taxon OIDs to read files through PMO/GOLD identifiers and JAMO. Use when working with JGI data, GOLD projects, IMG annotations, or downloading genomes.",
@@ -1016,39 +953,6 @@
           "uv run skills/pdf-to-md/scripts/liteparse_to_md.py report.pdf --output-dir /tmp/out --no-ocr",
           "# -> /tmp/out/report.md  (+ report.ocr.json, report.job.json)",
           "DIR=/tmp/paper"
-        ]
-      }
-    },
-    {
-      "name": "pickup",
-      "title": "/pickup",
-      "description": "Read and resume from the latest session handoff. Queries memd first when project memory is configured and available, then falls back to docs/handoffs/ for filesystem handoffs. Summarizes both and auto-archives filesystem handoffs.",
-      "path": "skills/pickup/SKILL.md",
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "agents": [
-        "dataviz-artist",
-        "literature-expert",
-        "omics-scientist",
-        "science-writer"
-      ],
-      "sections": [
-        "Session Continuity"
-      ],
-      "task_patterns": [
-        "continue previous work",
-        "pickup",
-        "read handoff",
-        "resume session"
-      ],
-      "internal_references": [
-        "handoff"
-      ],
-      "reference_contexts": {
-        "handoff": [
-          "- Pairs with `/handoff` which writes filesystem handoffs."
         ]
       }
     },
@@ -1317,15 +1221,8 @@
         "Scientific Data Inspection": [
           "exploratory-data-analysis"
         ],
-        "Session Continuity": [
-          "handoff",
-          "pickup"
-        ],
         "Static Publication-Quality Plots": [
           "beautiful-data-viz"
-        ],
-        "Web Data & Browser Automation": [
-          "agent-browser"
         ]
       },
       "workflow_edges": [],
@@ -1374,32 +1271,6 @@
             "dash",
             "data app"
           ]
-        },
-        {
-          "skill_name": "agent-browser",
-          "phrases": [
-            "scrape",
-            "screenshot",
-            "browser",
-            "web data"
-          ]
-        },
-        {
-          "skill_name": "handoff",
-          "phrases": [
-            "handoff",
-            "session handoff",
-            "write handoff"
-          ]
-        },
-        {
-          "skill_name": "pickup",
-          "phrases": [
-            "pickup",
-            "resume session",
-            "read handoff",
-            "continue previous work"
-          ]
         }
       ]
     },
@@ -1432,13 +1303,6 @@
         "Preprint Discovery": [
           "arxiv-search",
           "biorxiv-search"
-        ],
-        "Session Continuity": [
-          "handoff",
-          "pickup"
-        ],
-        "Web Retrieval": [
-          "agent-browser"
         ]
       },
       "workflow_edges": [
@@ -1544,15 +1408,6 @@
           ]
         },
         {
-          "skill_name": "agent-browser",
-          "phrases": [
-            "browser",
-            "scrape",
-            "supplementary materials",
-            "web database"
-          ]
-        },
-        {
           "skill_name": "get-api-docs",
           "phrases": [
             "API documentation",
@@ -1561,23 +1416,6 @@
             "current docs",
             "fast-moving API",
             "chub"
-          ]
-        },
-        {
-          "skill_name": "handoff",
-          "phrases": [
-            "handoff",
-            "session handoff",
-            "write handoff"
-          ]
-        },
-        {
-          "skill_name": "pickup",
-          "phrases": [
-            "pickup",
-            "resume session",
-            "read handoff",
-            "continue previous work"
           ]
         }
       ]
@@ -1633,10 +1471,6 @@
         ],
         "Scientific Reasoning & Hypothesis Formation": [
           "bio-logic"
-        ],
-        "Session Continuity": [
-          "handoff",
-          "pickup"
         ],
         "Statistical Analysis & Reporting": [
           "bio-stats-ml-reporting"
@@ -1970,23 +1804,6 @@
           ]
         },
         {
-          "skill_name": "handoff",
-          "phrases": [
-            "handoff",
-            "session handoff",
-            "write handoff"
-          ]
-        },
-        {
-          "skill_name": "pickup",
-          "phrases": [
-            "pickup",
-            "resume session",
-            "read handoff",
-            "continue previous work"
-          ]
-        },
-        {
           "skill_name": "bio-prefect-dask-nextflow",
           "phrases": [
             "Nextflow",
@@ -2041,13 +1858,6 @@
         ],
         "Scientific Reasoning & Evaluation": [
           "bio-logic"
-        ],
-        "Session Continuity": [
-          "handoff",
-          "pickup"
-        ],
-        "Supporting Retrieval": [
-          "agent-browser"
         ]
       },
       "workflow_edges": [
@@ -2101,15 +1911,6 @@
           ]
         },
         {
-          "skill_name": "agent-browser",
-          "phrases": [
-            "browser",
-            "scrape",
-            "web database",
-            "download supplement"
-          ]
-        },
-        {
           "skill_name": "scientific-writing",
           "phrases": [
             "write",
@@ -2150,23 +1951,6 @@
             "Nextflow",
             "Snakemake",
             "pipeline methods"
-          ]
-        },
-        {
-          "skill_name": "handoff",
-          "phrases": [
-            "handoff",
-            "session handoff",
-            "write handoff"
-          ]
-        },
-        {
-          "skill_name": "pickup",
-          "phrases": [
-            "pickup",
-            "resume session",
-            "read handoff",
-            "continue previous work"
           ]
         }
       ]
@@ -3047,20 +2831,6 @@
     },
     {
       "source": "dataviz-artist",
-      "target": "agent-browser",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/dataviz-artist.md"
-      ]
-    },
-    {
-      "source": "dataviz-artist",
       "target": "beautiful-data-viz",
       "type": "uses",
       "source_type": "agent",
@@ -3089,35 +2859,7 @@
     },
     {
       "source": "dataviz-artist",
-      "target": "handoff",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/dataviz-artist.md"
-      ]
-    },
-    {
-      "source": "dataviz-artist",
       "target": "notebooks",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/dataviz-artist.md"
-      ]
-    },
-    {
-      "source": "dataviz-artist",
-      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -3141,34 +2883,6 @@
       ],
       "evidence": [
         "agents/dataviz-artist.md"
-      ]
-    },
-    {
-      "source": "handoff",
-      "target": "pickup",
-      "type": "compose_with",
-      "source_type": "skill",
-      "target_type": "skill",
-      "confidence": 0.6,
-      "provenance": [
-        "skill_body_reference"
-      ],
-      "evidence": [
-        "Pairs with `/pickup` skill which reads and resumes from handoff documents created by this skill."
-      ]
-    },
-    {
-      "source": "literature-expert",
-      "target": "agent-browser",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/literature-expert.md"
       ]
     },
     {
@@ -3257,35 +2971,7 @@
     },
     {
       "source": "literature-expert",
-      "target": "handoff",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/literature-expert.md"
-      ]
-    },
-    {
-      "source": "literature-expert",
       "target": "pdf-to-md",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/literature-expert.md"
-      ]
-    },
-    {
-      "source": "literature-expert",
-      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -3609,35 +3295,7 @@
     },
     {
       "source": "omics-scientist",
-      "target": "handoff",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/omics-scientist.md"
-      ]
-    },
-    {
-      "source": "omics-scientist",
       "target": "jgi-lakehouse",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/omics-scientist.md"
-      ]
-    },
-    {
-      "source": "omics-scientist",
-      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
@@ -3689,20 +3347,6 @@
       ],
       "evidence": [
         "\u2502       \u2514\u2500> /csag-extraction"
-      ]
-    },
-    {
-      "source": "pickup",
-      "target": "handoff",
-      "type": "compose_with",
-      "source_type": "skill",
-      "target_type": "skill",
-      "confidence": 0.6,
-      "provenance": [
-        "skill_body_reference"
-      ],
-      "evidence": [
-        "- Pairs with `/handoff` which writes filesystem handoffs."
       ]
     },
     {
@@ -3847,20 +3491,6 @@
     },
     {
       "source": "science-writer",
-      "target": "agent-browser",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/science-writer.md"
-      ]
-    },
-    {
-      "source": "science-writer",
       "target": "ai-scientist-evaluator",
       "type": "uses",
       "source_type": "agent",
@@ -3917,20 +3547,6 @@
     },
     {
       "source": "science-writer",
-      "target": "handoff",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/science-writer.md"
-      ]
-    },
-    {
-      "source": "science-writer",
       "target": "manuscript-review-council",
       "type": "uses",
       "source_type": "agent",
@@ -3946,20 +3562,6 @@
     {
       "source": "science-writer",
       "target": "pdf-to-md",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/science-writer.md"
-      ]
-    },
-    {
-      "source": "science-writer",
-      "target": "pickup",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",

@@ -38,12 +38,6 @@ You MUST use the appropriate skills for bioinformatics tasks. Do NOT write custo
 **Use for first-pass inspection of unknown scientific files:**
 - `/exploratory-data-analysis` - Detect file type, inspect structure and quality, and recommend downstream analysis paths
 
-### Session Continuity
-
-**Use when pausing or resuming work:**
-- `/handoff` - Write a concise session handoff under `docs/handoffs/`
-- `/pickup` - Read memd/project handoff context and resume from the latest state
-
 ### Scientific Reasoning & Hypothesis Formation
 
 **Use for all scientific reasoning tasks:**
@@ -247,12 +241,6 @@ START
   ├─ Document Workflow?
   │   └─> /bio-workflow-methods-docwriter
   │
-  ├─ Resume Session?
-  │   └─> /pickup
-  │
-  ├─ Handoff Session?
-  │   └─> /handoff
-  │
   └─ Pipeline Design?
       └─> /bio-prefect-dask-nextflow
 ```
@@ -280,8 +268,6 @@ START
 - **"giant virus", "NCLDV", "Mimivirus", "large DNA virus", "viral genome"** → `/bio-viromics` → `/polars-dovmed` → group-appropriate analysis skills
 - **"statistics", "report", "machine learning"** → `/bio-stats-ml-reporting`
 - **"methods", "document workflow", "pipeline methods"** → `/bio-workflow-methods-docwriter`
-- **"handoff", "session handoff", "write handoff"** → `/handoff`
-- **"pickup", "resume session", "read handoff", "continue previous work"** → `/pickup`
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`
 - **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse"** → `/jgi-lakehouse`
 - **"taxonomy updates", "GTDB", "ICTV"** → `/tracking-taxonomy-updates`
