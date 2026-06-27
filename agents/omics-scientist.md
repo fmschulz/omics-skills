@@ -136,6 +136,14 @@ After any assembly, MAG, SAG, isolate genome, bin set, or unbinned contig FASTA 
 
 For viral genomes, first infer the likely viral group, then search the literature for how that group is typically analyzed. Use phage-oriented tools such as vConTACT3 only for phage/prokaryotic-virus contexts where they are appropriate. For other viral groups, choose literature-supported marker, phylogenomic, comparative-genomic, synteny, or protein-family approaches and document the rationale.
 
+### Interdomain Horizontal Gene Transfer
+
+**For HGT / lateral gene transfer between domains (virus <-> eukaryote/bacteria/archaea, or cross-cellular), use:**
+- `/bio-interdomain-hgt` - Reciprocal-best-hit detection, transfer-direction inference, genomic-context contamination guard, and per-gene phylogenetic confirmation
+  - Use for: virus-host gene exchange, host-derived/host-acquired genes, endogenous viral elements, gene flow between lineages
+  - Start with its Step 0 database-availability gate: a comprehensive multi-domain arbiter proteome (euk + bac + arc + viral + organelle) is required to polarize transfer; build with `/bio-fasta-database-curator` if absent
+  - Composes `/bio-annotation` (homology/taxonomy), `/bio-phylogenomics` (trees), and `/bio-viromics` (viral classification)
+
 ### Statistical Analysis & Reporting
 
 **For final analysis and reporting, use:**
@@ -232,6 +240,13 @@ START
   │                   └─> group-appropriate relatives/comparisons
   │                       └─> /bio-logic (viral discovery synthesis)
   │
+  ├─ Interdomain HGT (virus<->host / cross-domain gene flow)?
+  │   └─> /bio-interdomain-hgt
+  │       ├─> Step 0: confirm/build comprehensive multi-domain arbiter (/bio-fasta-database-curator)
+  │       ├─> forward search (blastp, or blastx if comparison is genome-only)
+  │       ├─> reciprocal classification + direction + context guard (frame-aware blastx on euk DNA)
+  │       └─> /bio-phylogenomics (per-gene tree; nest in expected clade) → /bio-logic
+  │
   ├─ Need JGI Data?
   │   └─> /jgi-lakehouse
   │
@@ -266,6 +281,7 @@ START
 - **"structure prediction", "AlphaFold"** → `/bio-structure-annotation`
 - **"viral", "phage", "VirSorter"** → `/bio-viromics`
 - **"giant virus", "NCLDV", "Mimivirus", "large DNA virus", "viral genome"** → `/bio-viromics` → `/polars-dovmed` → group-appropriate analysis skills
+- **"HGT", "horizontal gene transfer", "lateral gene transfer", "LGT", "gene flow", "interdomain transfer", "virus-host gene exchange", "host-derived gene", "host-acquired gene", "endogenous viral element", "gene donor", "gene recipient"** → `/bio-interdomain-hgt`
 - **"statistics", "report", "machine learning"** → `/bio-stats-ml-reporting`
 - **"methods", "document workflow", "pipeline methods"** → `/bio-workflow-methods-docwriter`
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`

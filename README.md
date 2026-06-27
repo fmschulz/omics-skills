@@ -20,7 +20,7 @@ Release notes are published on the [GitHub Releases page](https://github.com/fms
 
 ## Scope
 
-Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, statistics, manuscript drafting, and figure generation.
+Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, interdomain HGT, statistics, manuscript drafting, and figure generation.
 
 Agents are markdown system prompts; skills are markdown files with a defined input/output contract. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a given task and can be enabled as a hook so it runs on every user prompt.
 
@@ -120,7 +120,7 @@ Skills are also invocable individually as `/<skill-name>`. Agent files list the 
 
 | Agent | Focus | Skills |
 |---|---|---:|
-| `omics-scientist` | Sequencing reads, assembly, binning, annotation, phylogenomics, MAG recovery, JGI access | 21 |
+| `omics-scientist` | Sequencing reads, assembly, binning, annotation, phylogenomics, interdomain HGT, MAG recovery, JGI access | 22 |
 | `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, citation impact, API docs | 12 |
 | `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, AI-output evaluation | 11 |
 | `dataviz-artist` | marimo and Jupyter notebooks (executed end-to-end), scientific data inspection, matplotlib/seaborn figures, Plotly Dash dashboards | 7 |

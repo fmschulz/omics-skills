@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "skill_count": 33,
+    "skill_count": 34,
     "agent_count": 4,
-    "edge_count": 128
+    "edge_count": 142
   },
   "skills": [
     {
@@ -117,7 +117,8 @@
       ],
       "sections": [
         "Discovery-Based Genome Interpretation",
-        "Functional Annotation"
+        "Functional Annotation",
+        "Interdomain Horizontal Gene Transfer"
       ],
       "task_patterns": [
         "DIAMOND",
@@ -238,7 +239,8 @@
         "omics-scientist"
       ],
       "sections": [
-        "Functional Annotation"
+        "Functional Annotation",
+        "Interdomain Horizontal Gene Transfer"
       ],
       "task_patterns": [
         "FAA database",
@@ -302,6 +304,70 @@
       ],
       "internal_references": [],
       "reference_contexts": {}
+    },
+    {
+      "name": "bio-interdomain-hgt",
+      "title": "Bio Interdomain HGT",
+      "description": "Detect and polarize interdomain horizontal gene transfer (virus <-> eukaryote/bacteria/archaea, and cross-cellular HGT) using reciprocal best hits, transfer-direction inference, a genomic-context contamination guard, and per-gene phylogenetic confirmation. Use when asked about HGT, lateral gene transfer, gene flow between domains, virus-host gene exchange, endogenous viral elements, or host-derived / host-acquired genes.",
+      "path": "skills/bio-interdomain-hgt/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "omics-scientist"
+      ],
+      "sections": [
+        "Interdomain Horizontal Gene Transfer"
+      ],
+      "task_patterns": [
+        "HGT",
+        "LGT",
+        "endogenous viral element",
+        "gene donor",
+        "gene flow",
+        "gene recipient",
+        "horizontal gene transfer",
+        "host-acquired gene",
+        "host-derived gene",
+        "interdomain transfer",
+        "lateral gene transfer",
+        "virus-host gene exchange"
+      ],
+      "internal_references": [
+        "bio-annotation",
+        "bio-fasta-database-curator",
+        "bio-phylogenomics",
+        "bio-viromics",
+        "biorxiv-search",
+        "polars-dovmed",
+        "tracking-taxonomy-updates"
+      ],
+      "reference_contexts": {
+        "bio-annotation": [
+          "genome-only (proteins missing). Pairs with `/bio-annotation` (homology/taxonomy),"
+        ],
+        "bio-phylogenomics": [
+          "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and"
+        ],
+        "bio-viromics": [
+          "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and",
+          "`percontig`; `/bio-viromics` GVClass for giant viruses)."
+        ],
+        "bio-fasta-database-curator": [
+          "`/bio-fasta-database-curator` (building the arbiter database).",
+          "- If absent: build it with `/bio-fasta-database-curator` (prefix every header by"
+        ],
+        "tracking-taxonomy-updates": [
+          "- Infer the query's domain/lineage first (`/tracking-taxonomy-updates` QuickClade"
+        ],
+        "polars-dovmed": [
+          "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+        ],
+        "biorxiv-search": [
+          "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+        ]
+      }
     },
     {
       "name": "bio-logic",
@@ -383,6 +449,7 @@
       ],
       "sections": [
         "Discovery-Based Genome Interpretation",
+        "Interdomain Horizontal Gene Transfer",
         "Phylogenetic Analysis"
       ],
       "task_patterns": [
@@ -570,6 +637,7 @@
       ],
       "sections": [
         "Assembly",
+        "Interdomain Horizontal Gene Transfer",
         "Viral Analysis"
       ],
       "task_patterns": [
@@ -1450,6 +1518,13 @@
         "Gene Prediction": [
           "bio-gene-calling"
         ],
+        "Interdomain Horizontal Gene Transfer": [
+          "bio-annotation",
+          "bio-fasta-database-curator",
+          "bio-interdomain-hgt",
+          "bio-phylogenomics",
+          "bio-viromics"
+        ],
         "JGI Data Access & Metadata Discovery": [
           "jgi-lakehouse"
         ],
@@ -1588,6 +1663,21 @@
           "source": "bio-annotation",
           "target": "polars-dovmed",
           "evidence": "\u2502               \u2514\u2500> /polars-dovmed (viral-group analysis playbook)"
+        },
+        {
+          "source": "bio-interdomain-hgt",
+          "target": "bio-fasta-database-curator",
+          "evidence": "\u2502       \u251c\u2500> Step 0: confirm/build comprehensive multi-domain arbiter (/bio-fasta-database-curator)"
+        },
+        {
+          "source": "bio-interdomain-hgt",
+          "target": "bio-phylogenomics",
+          "evidence": "\u2502       \u2514\u2500> /bio-phylogenomics (per-gene tree; nest in expected clade) \u2192 /bio-logic"
+        },
+        {
+          "source": "bio-phylogenomics",
+          "target": "bio-logic",
+          "evidence": "\u2502       \u2514\u2500> /bio-phylogenomics (per-gene tree; nest in expected clade) \u2192 /bio-logic"
         }
       ],
       "task_patterns": [
@@ -1785,6 +1875,23 @@
             "Mimivirus",
             "large DNA virus",
             "viral genome"
+          ]
+        },
+        {
+          "skill_name": "bio-interdomain-hgt",
+          "phrases": [
+            "HGT",
+            "horizontal gene transfer",
+            "lateral gene transfer",
+            "LGT",
+            "gene flow",
+            "interdomain transfer",
+            "virus-host gene exchange",
+            "host-derived gene",
+            "host-acquired gene",
+            "endogenous viral element",
+            "gene donor",
+            "gene recipient"
           ]
         },
         {
@@ -2242,6 +2349,20 @@
       ]
     },
     {
+      "source": "bio-fasta-database-curator",
+      "target": "bio-interdomain-hgt",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u251c\u2500> Step 0: confirm/build comprehensive multi-domain arbiter (/bio-fasta-database-curator)"
+      ]
+    },
+    {
       "source": "bio-gene-calling",
       "target": "bio-viromics",
       "type": "depend_on",
@@ -2326,6 +2447,134 @@
       ]
     },
     {
+      "source": "bio-interdomain-hgt",
+      "target": "bio-annotation",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "genome-only (proteins missing). Pairs with `/bio-annotation` (homology/taxonomy),"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "bio-fasta-database-curator",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "`/bio-fasta-database-curator` (building the arbiter database).",
+        "- If absent: build it with `/bio-fasta-database-curator` (prefix every header by"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "bio-phylogenomics",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "bio-viromics",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and",
+        "`percontig`; `/bio-viromics` GVClass for giant viruses)."
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "biorxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "polars-dovmed",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "tracking-taxonomy-updates",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Infer the query's domain/lineage first (`/tracking-taxonomy-updates` QuickClade"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "bio-fasta-database-curator",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u251c\u2500> Step 0: confirm/build comprehensive multi-domain arbiter (/bio-fasta-database-curator)"
+      ]
+    },
+    {
+      "source": "bio-interdomain-hgt",
+      "target": "bio-phylogenomics",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2514\u2500> /bio-phylogenomics (per-gene tree; nest in expected clade) \u2192 /bio-logic"
+      ]
+    },
+    {
       "source": "bio-logic",
       "target": "ai-scientist-evaluator",
       "type": "compose_with",
@@ -2379,6 +2628,20 @@
       ],
       "evidence": [
         "- `/proposal-review` \u2014 structured critique of funding proposals"
+      ]
+    },
+    {
+      "source": "bio-logic",
+      "target": "bio-phylogenomics",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2514\u2500> /bio-phylogenomics (per-gene tree; nest in expected clade) \u2192 /bio-logic"
       ]
     },
     {
@@ -2481,6 +2744,20 @@
     },
     {
       "source": "bio-phylogenomics",
+      "target": "bio-interdomain-hgt",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2514\u2500> /bio-phylogenomics (per-gene tree; nest in expected clade) \u2192 /bio-logic"
+      ]
+    },
+    {
+      "source": "bio-phylogenomics",
       "target": "polars-dovmed",
       "type": "depend_on",
       "source_type": "skill",
@@ -2491,6 +2768,20 @@
       ],
       "evidence": [
         "\u2502       \u251c\u2500> /bio-phylogenomics (appropriate relatives/markers)"
+      ]
+    },
+    {
+      "source": "bio-phylogenomics",
+      "target": "bio-logic",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2502       \u2514\u2500> /bio-phylogenomics (per-gene tree; nest in expected clade) \u2192 /bio-logic"
       ]
     },
     {
@@ -3142,6 +3433,20 @@
     {
       "source": "omics-scientist",
       "target": "bio-gene-calling",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
+      "target": "bio-interdomain-hgt",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",
