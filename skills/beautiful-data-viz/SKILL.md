@@ -16,8 +16,9 @@ Create polished, publication-ready visualizations in Python/Jupyter with strong 
 4. Remove chart junk before styling: no 3D, pie charts only if explicitly requested, no decorative borders, no heavy grids, no gradient fills, no dual y-axes.
 5. Use direct labels instead of legends when series count and space allow. Keep legends only when direct labels would collide or obscure data.
 6. For manuscript/paper figures, do not add in-plot titles or subtitles; use axis labels, legends/direct labels, panel letters, and the manuscript caption instead.
-7. Apply the shared style helpers, then build the plot.
-8. Validate readability, accessibility, and export quality at the target size.
+7. Place the figure caption/legend text BELOW the figure, directly under it — never above. In a notebook this means the figure (code) cell comes first and the caption (markdown) cell immediately follows it; in a document the caption goes beneath the image. A reader sees the figure, then its legend. (Journal convention: legends sit below the figure.)
+8. Apply the shared style helpers, then build the plot.
+9. Validate readability, accessibility, and export quality at the target size.
 
 ## Quick Reference
 
@@ -45,6 +46,7 @@ Create polished, publication-ready visualizations in Python/Jupyter with strong 
 - [ ] Message is clear in 3 seconds at target size
 - [ ] Chart earns its space; a sentence or table would not communicate the pattern better
 - [ ] Manuscript/paper figures have no plot title; the caption carries the title/interpretation
+- [ ] The caption/legend is placed BELOW the figure (in a notebook: figure cell first, caption markdown cell directly after), never above it
 - [ ] Non-data ink is minimized: no top/right spines, no decorative borders, no 3D, no heavy grid
 - [ ] Direct labels replace legends when feasible
 - [ ] Comparison context is present when interpretation depends on it

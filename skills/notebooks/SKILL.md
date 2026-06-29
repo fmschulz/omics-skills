@@ -58,6 +58,7 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
    - Open the executed notebook (or exported HTML) and visually inspect every figure.
    - Check for: empty axes, mis-scaled axes (log when linear was intended or vice versa), missing labels/legends, overlapping ticks, illegible font sizes at target output size, ambiguous palettes, colorbars without units, NaN-driven gaps, axis ranges clipping data, broken layouts.
    - For manuscript/paper figures, remove all in-plot titles and subtitles. Use axis labels, legends, panel letters, and manuscript captions instead.
+   - Place each figure's caption/legend BELOW the figure: the figure (code) cell comes first and the caption (markdown) cell immediately follows it — never put the caption above the figure. A reader sees the figure, then its legend (journal convention).
    - If a figure is wrong or unclear, edit the source cell and re-run end-to-end. Repeat until each figure communicates what the surrounding markdown says it communicates.
    - Record what changed between revisions in a brief "Figure revision log" markdown cell or in the run log.
 
