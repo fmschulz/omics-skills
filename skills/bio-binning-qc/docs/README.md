@@ -38,10 +38,8 @@ This directory contains practical documentation for the tools used in the bio-bi
 ### Installation Commands
 
 ```bash
-# Install all tools via conda/mamba
-mamba create -n binning-qc python=3.10
-mamba install -c bioconda -c conda-forge \
-  coverm metabat2 semibin checkm2 gunc
+# Add all tools to the project Pixi environment
+pixi add "python=3.10" coverm metabat2 semibin checkm2 gunc
 
 # QuickBin is provided by Bryce Foster's official BBTools container
 docker pull bryce911/bbtools:39.85

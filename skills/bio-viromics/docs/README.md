@@ -94,9 +94,7 @@ pixi global install -c conda-forge -c bioconda genomad
 pixi global install -c conda-forge -c bioconda checkv
 
 # vConTACT3
-mamba create -n vcontact3 python=3.11
-mamba activate vcontact3
-mamba install -c bioconda vcontact3
+pixi add "python=3.11" vcontact3
 
 # GVClass
 wget https://raw.githubusercontent.com/NeLLi-team/gvclass/main/gvclass-a
@@ -105,5 +103,4 @@ chmod +x gvclass-a
 
 ## Additional Resources
 
-- Paper summaries with use cases: `../summaries/`
 - Skill specification: `../SKILL.md`

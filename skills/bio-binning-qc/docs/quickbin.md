@@ -31,7 +31,7 @@ As of 2026-05-30, Docker Hub reports `bryce911/bbtools:39.85` and `latest` at di
 apptainer exec docker://bryce911/bbtools:39.85 quickbin.sh --help
 ```
 
-Local BBTools or conda installs are acceptable only when the container runtime is unavailable; record the local BBTools version and install path.
+Local BBTools installs are acceptable only when the container runtime is unavailable; record the local BBTools version and install path.
 
 ## Key Command-Line Flags
 

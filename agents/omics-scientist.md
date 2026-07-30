@@ -271,7 +271,7 @@ START
 - **"why", "how", "interpret", "hypothesis", "formulate hypothesis", "design experiment", "experimental design", "reason", "causation", "causal reasoning", "observational dataset", "follow-up experiments"** → `/bio-logic`
 - **"literature", "papers", "prior work", "literature context", "prior literature", "previously reported"** → `/polars-dovmed`
 - **"unexpected", "surprising", "intermediate result", "QC result", "revise hypothesis"** → `/bio-logic` → `/polars-dovmed`
-- **"raw reads", "fastq", "QC", "trimming"** → `/bio-reads-qc-mapping`
+- **"raw reads", "fastq", "fastp", "QC", "trimming"** → `/bio-reads-qc-mapping`
 - **"assemble", "assembly", "contigs", "QUAST"** → `/bio-assembly-qc`
 - **"bin", "bins", "binning", "MAGs", "QuickBin", "CheckM"** → `/bio-binning-qc`
 - **"QuickClade", "domain triage", "domain-level taxonomy", "per-contig taxonomy", "percontig", "route assemblies", "route MAGs", "GTDB-Tk", "EukCC", "vConTACT3", "GVClass"** → `/tracking-taxonomy-updates` → domain-appropriate analysis skill

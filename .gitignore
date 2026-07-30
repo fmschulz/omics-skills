@@ -24,7 +24,7 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
-!skills/*/fixtures/*.ipynb
+!skills/**/fixtures/*.ipynb
 
 # IDE
 .vscode/

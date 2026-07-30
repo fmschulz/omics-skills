@@ -22,10 +22,7 @@ Porechop_ABI is a targeted fallback for finding and removing Oxford Nanopore ada
 ## Installation
 
 ```bash
-# Via conda/mamba
-conda install -c bioconda porechop_abi
-
-# Via pixi (recommended for this workflow)
+# Via Pixi
 pixi add porechop_abi
 ```
 

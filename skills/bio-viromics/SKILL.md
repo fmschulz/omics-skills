@@ -12,7 +12,7 @@ Detect, classify, and QC viral contigs.
 1. Validate the pinned resource manifest and assemble the complete comparative evidence and reasoning bundle:
 
    ```bash
-   uv run --no-project python skills/bio-viromics/scripts/build_viromics_evidence.py \
+   uv run --script skills/bio-viromics/scripts/build_viromics_evidence.py \
      viral_metrics.tsv --resources resources.json --hypotheses hypotheses.tsv \
      --reflections reflections.tsv --comparative-dir comparison/ \
      --out results/bio-viromics

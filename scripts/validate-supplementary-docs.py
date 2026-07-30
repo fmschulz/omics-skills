@@ -10,6 +10,11 @@ DATE_RE = re.compile(r"^(?:\*\*)?Last verified(?:\*\*)?:(?:\*\*)?\s+20\d\d-\d\d-
 VERSION_RE = re.compile(r"^(?:\*\*)?Tool version/release checked(?:\*\*)?:(?:\*\*)?\s+.+", re.MULTILINE)
 DOCS_RE = re.compile(r"^(?:\*\*)?Official docs/manual(?:\*\*)?:(?:\*\*)?\s+.+", re.MULTILINE)
 SOURCE_RE = re.compile(r"^(?:\*\*)?Release/source(?:\*\*)?:(?:\*\*)?\s+.+", re.MULTILINE)
+BANNED_ENV_COMMAND_RE = re.compile(
+    r"\b(?:conda\s+install|mamba\s+(?:install|create))\b",
+    re.IGNORECASE,
+)
+PINNED_PIXI_GATE_RE = re.compile(r"\b(?:pinned\s+pixi|pixi\.lock)\b", re.IGNORECASE)
 
 ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_SUPPLEMENTARY_DOCS = (
@@ -91,6 +96,32 @@ def validate_all(root: Path = ROOT) -> list[str]:
     for path in supplementary_doc_files(root):
         for err in validate_doc(path):
             errors.append(f"{path.relative_to(root)}: {err}")
+    skills_dir = root / "skills"
+    if skills_dir.is_dir():
+        for path in sorted(skills_dir.rglob("*")):
+            if not path.is_file() or path.suffix not in {".md", ".py", ".sh"}:
+                continue
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for match in BANNED_ENV_COMMAND_RE.finditer(text):
+                line = text[: match.start()].count("\n") + 1
+                errors.append(
+                    f"{path.relative_to(root)}:{line}: banned conda/mamba environment command"
+                )
+        for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+            text = skill_md.read_text(encoding="utf-8")
+            match = re.search(
+                r"^## Quality Gates\s*$\n(.*?)(?=^##\s|\Z)",
+                text,
+                re.MULTILINE | re.DOTALL,
+            )
+            if not match or not PINNED_PIXI_GATE_RE.search(match.group(1)):
+                continue
+            skill_dir = skill_md.parent
+            if not (skill_dir / "pixi.toml").is_file() or not (skill_dir / "pixi.lock").is_file():
+                errors.append(
+                    f"{skill_md.relative_to(root)}: pinned Pixi quality gate requires "
+                    "skill-local pixi.toml and pixi.lock"
+                )
     return errors
 
 

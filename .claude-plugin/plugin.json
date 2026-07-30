@@ -2,7 +2,7 @@
   "name": "omics-skills",
   "displayName": "Omics Skills",
   "description": "Bioinformatics, literature discovery, scientific writing, and data visualization agents and skills for Claude Code and Cowork.",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "author": {
     "name": "Frederik Schulz"
   },

@@ -59,6 +59,6 @@ Claims the repository can substantiate when announcing or submitting it:
 - Coverage from reads QC through assembly, annotation, comparative genomics, literature discovery, scientific writing, and visualization.
 - A generated routing catalog with a regression benchmark, skill validators, installer tests, and strict docs builds in CI.
 - Make, shell, and plugin-marketplace installation paths for Claude Code and the Codex CLI.
-- Literature-backed skill design (summaries with DOIs) and a reproducibility-first workflow contract.
+- Citation metadata checked by repository validation, and a reproducibility-first workflow contract.
 
 Keep this page current when the agent or skill counts change.

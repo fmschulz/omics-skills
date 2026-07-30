@@ -62,6 +62,21 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             check=True,
         )
 
+    def run_install_script(
+        self, home: Path, *args: str
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["HOME"] = str(home)
+        env["NO_COLOR"] = "1"
+        return subprocess.run(
+            [str(REPO_ROOT / "scripts" / "install.sh"), *args],
+            cwd=REPO_ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+
     def assert_selected_install_routes_only_selected_components(self, install_method: str) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
@@ -267,15 +282,95 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             archived = catalog_dir / "retired-skills" / "get-api-docs"
             self.assertTrue((archived / "SKILL.md").is_file())
 
+    def test_install_archives_replaced_skill_outside_active_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            skills_dir = home / ".agents" / "skills"
+            existing = skills_dir / "bio-logic"
+            existing.mkdir(parents=True)
+            (existing / "SKILL.md").write_text(
+                "---\nname: bio-logic\ndescription: old copy\n---\n",
+                encoding="utf-8",
+            )
+
+            self.run_make(
+                home,
+                "install-skills",
+                "INSTALL_METHOD=copy",
+                "SELECTED_SKILL_DIRS=bio-logic",
+            )
+
+            self.assertTrue((existing / "SKILL.md").is_file())
+            previous = home / ".agents" / "omics-skills" / "previous-skills"
+            backups = list(previous.glob("bio-logic.*"))
+            self.assertEqual(len(backups), 1)
+            self.assertIn("old copy", (backups[0] / "SKILL.md").read_text(encoding="utf-8"))
+            self.assertEqual(list(skills_dir.glob("bio-logic.bak*")), [])
+
+    def test_install_archives_recognized_legacy_backup_outside_active_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            skills_dir = home / ".agents" / "skills"
+            legacy = skills_dir / "bio-logic.bak"
+            legacy.mkdir(parents=True)
+            (legacy / "SKILL.md").write_text(
+                "---\nname: bio-logic\ndescription: legacy copy\n---\n",
+                encoding="utf-8",
+            )
+            unrelated = skills_dir / "unrelated.bak"
+            unrelated.mkdir()
+
+            self.run_make(
+                home,
+                "install-skills",
+                "SELECTED_SKILL_DIRS=bio-logic",
+            )
+
+            self.assertFalse(legacy.exists())
+            archived = (
+                home
+                / ".agents"
+                / "omics-skills"
+                / "previous-skills"
+                / "bio-logic.bak"
+                / "SKILL.md"
+            )
+            self.assertTrue(archived.is_file())
+            self.assertTrue(unrelated.is_dir())
+
+    def test_shell_installer_archives_replaced_skill_outside_active_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            existing = home / ".agents" / "skills" / "bio-logic"
+            existing.mkdir(parents=True)
+            (existing / "SKILL.md").write_text(
+                "---\nname: bio-logic\ndescription: old shell copy\n---\n",
+                encoding="utf-8",
+            )
+
+            self.run_install_script(home, "--copy")
+
+            previous = home / ".agents" / "omics-skills" / "previous-skills"
+            backups = list(previous.glob("bio-logic.*"))
+            self.assertEqual(len(backups), 1)
+            self.assertIn(
+                "old shell copy",
+                (backups[0] / "SKILL.md").read_text(encoding="utf-8"),
+            )
+            self.assertEqual(
+                list((home / ".agents" / "skills").glob("bio-logic.bak*")),
+                [],
+            )
+
     def test_install_leaves_foreign_retired_symlink_untouched(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             catalog_dir = home / ".agents" / "omics-skills"
             skills_dir = home / ".agents" / "skills"
-            foreign_dir = home / "foreign"
+            foreign_dir = home / "foreign" / "skills"
             catalog_dir.mkdir(parents=True)
             skills_dir.mkdir(parents=True)
-            foreign_dir.mkdir()
+            foreign_dir.mkdir(parents=True)
             (catalog_dir / "catalog.json").write_text(
                 json.dumps({"skills": [{"name": "bio-logic"}]}) + "\n",
                 encoding="utf-8",

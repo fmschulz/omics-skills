@@ -12,13 +12,13 @@ Assemble genomes/metagenomes and produce assembly QC artifacts.
 1. Validate the assembly manifest and inspect a restartable execution plan before starting expensive work:
 
    ```bash
-   uv run --no-project python skills/bio-assembly-qc/scripts/run_assembly_qc.py \
+   uv run --script skills/bio-assembly-qc/scripts/run_assembly_qc.py \
      assemblies.tsv --out results/bio-assembly-qc
-   uv run --no-project python skills/bio-assembly-qc/scripts/run_assembly_qc.py \
+   uv run --script skills/bio-assembly-qc/scripts/run_assembly_qc.py \
      assemblies.tsv --out results/bio-assembly-qc --execute
    ```
 
-   The driver rejects samples whose upstream `read_qc_status` is not `passed`, normalizes assembler-specific outputs to per-sample `contigs.fasta`, chooses QUAST versus MetaQUAST from the declared mode, and reuses only non-empty declared outputs.
+   The driver rejects samples whose upstream `read_qc_status` is not `passed`. It normalizes assembler outputs to per-sample `contigs.fasta` and chooses QUAST or MetaQUAST from the declared mode. It reuses a stage only when its declared outputs are non-empty and its `.done` marker exists.
 2. Select an assembler based on read type, genome/metagenome scope, and sample diversity:
    - Illumina short-read isolates and hybrid assemblies: SPAdes v4.0.0+ (final feature release; bug-fix-only series continues). Use `metaSPAdes` for short-read metagenomes.
    - Long-read bacterial isolates (PacBio CLR, ONT): Flye v2.9.5+ for the draft/baseline assembly. Use Autocycler v0.6+ when a complete, high-confidence bacterial consensus genome is needed from multiple independent long-read assembly attempts; do not use it for mixed-community metagenomes.
@@ -71,7 +71,7 @@ Inputs:
 - [ ] Verify reads are present and readable. If `gzip -t` fails on a `.gz`-named file, inspect magic bytes or file type before labeling it corrupt; it may be plain FASTQ with the wrong suffix.
 - [ ] Check available disk space before assembly.
 - [ ] For large ONT/metagenome inputs, raw file metadata and post-filter `seqkit stats` are recorded without redundant full-file raw preflight scans.
-- [ ] Long-running filter outputs use `.tmp` plus atomic rename, and resume guards distinguish valid completed outputs from partial/corrupt files.
+- [ ] Long-running filter outputs use `.tmp` plus atomic rename, and resume guards require a stage `.done` marker before reusing non-empty outputs.
 - [ ] Flye/metaFlye logs are inspected before deciding whether to resume, rerun, or clean a partial output directory.
 - [ ] For Autocycler isolate consensus, record each input assembler/run and confirm the sample is not a mixed community.
 - [ ] QuickClade `percontig` domain screen completed or the reason for skipping it is explicitly recorded.

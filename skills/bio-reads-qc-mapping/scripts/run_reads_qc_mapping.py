@@ -88,8 +88,23 @@ def build_steps(rows: list[dict[str, str]], out: Path) -> list[dict[str, object]
     return steps
 
 
-def complete(step: dict[str, object]) -> bool:
+def completion_marker(step: dict[str, object]) -> Path:
+    return Path(step["outputs"][0]).parent / f"{step['stage']}.done"
+
+
+def outputs_complete(step: dict[str, object]) -> bool:
     return all(Path(p).is_file() and Path(p).stat().st_size > 0 for p in step["outputs"])
+
+
+def complete(step: dict[str, object]) -> bool:
+    return completion_marker(step).is_file() and outputs_complete(step)
+
+
+def mark_complete(step: dict[str, object]) -> None:
+    marker = completion_marker(step)
+    partial = marker.with_suffix(marker.suffix + ".partial")
+    partial.write_text("complete\n", encoding="utf-8")
+    partial.replace(marker)
 
 
 def execute(steps: list[dict[str, object]]) -> None:
@@ -97,13 +112,15 @@ def execute(steps: list[dict[str, object]]) -> None:
         if complete(step):
             step["status"] = "reused"
             continue
+        completion_marker(step).unlink(missing_ok=True)
         for output in step["outputs"]:
             Path(output).parent.mkdir(parents=True, exist_ok=True)
         stdout_path = step.get("stdout")
         with Path(stdout_path).open("wb") if stdout_path else open("/dev/null", "wb") as stdout:
             result = subprocess.run(step["command"], stdout=stdout if stdout_path else None, check=False)
-        if result.returncode or not complete(step):
+        if result.returncode or not outputs_complete(step):
             raise RuntimeError(f"step failed or produced an empty output: {shlex.join(step['command'])}")
+        mark_complete(step)
         step["status"] = "completed"
 
 

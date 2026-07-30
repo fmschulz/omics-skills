@@ -179,7 +179,7 @@ t.write(outfile='output.nw')
 
 ### IQ-TREE
 ```bash
-conda install -c bioconda iqtree
+pixi add iqtree
 iqtree3 --version
 # or
 brew install brewsci/bio/iqtree3
@@ -187,7 +187,7 @@ brew install brewsci/bio/iqtree3
 
 ### VeryFastTree
 ```bash
-conda install veryfasttree
+pixi add veryfasttree
 # or
 brew install veryfasttree
 ```
@@ -196,7 +196,7 @@ brew install veryfasttree
 ```bash
 pip install ete4==4.4.0
 # or
-conda install conda-forge::ete4
+pixi add "ete4=4.4.0"
 ```
 
 ## Performance Comparison
@@ -238,5 +238,4 @@ conda install conda-forge::ete4
 
 ## Additional Resources
 
-- Project paper summaries: `../summaries/`
 - Main skill documentation: `../SKILL.md`

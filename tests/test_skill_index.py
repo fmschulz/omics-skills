@@ -143,6 +143,28 @@ class SkillIndexTests(unittest.TestCase):
         self.assertEqual(result["primary_skills"], [])
         self.assertEqual(result["ordered_skills"], [])
 
+    def test_pull_reads_from_data_repository_routes_to_read_qc(self) -> None:
+        result = skill_index.route_request(
+            task="pull raw sequencing reads from a public data repository and run quality control",
+            agent=None,
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertIn("bio-reads-qc-mapping", result["primary_skills"])
+
+    def test_figure_out_heatmap_routes_to_visualization(self) -> None:
+        result = skill_index.route_request(
+            task="help me figure out a heatmap",
+            agent=None,
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertIn("beautiful-data-viz", result["primary_skills"])
+
     def test_omics_skills_repo_audit_is_a_hard_negative(self) -> None:
         result = skill_index.route_request(
             task=(
@@ -181,6 +203,40 @@ class SkillIndexTests(unittest.TestCase):
             skill_index.task_pattern_overlap(query_tokens, skill_index.tokenize("code review")),
             0.0,
         )
+
+    def test_multi_token_pattern_requires_two_tokens_and_one_distinctive_token(self) -> None:
+        self.assertEqual(
+            skill_index.task_pattern_overlap(
+                skill_index.tokenize("help me write a paper"),
+                skill_index.tokenize("paper to markdown"),
+            ),
+            0.0,
+        )
+        self.assertEqual(
+            skill_index.task_pattern_overlap(
+                skill_index.tokenize("review this pull request"),
+                skill_index.tokenize("review this manuscript"),
+            ),
+            0.0,
+        )
+        self.assertGreater(
+            skill_index.task_pattern_overlap(
+                skill_index.tokenize("convert paper to markdown"),
+                skill_index.tokenize("paper to markdown"),
+            ),
+            0.0,
+        )
+
+    def test_task_phrases_match_word_boundaries_and_skip_figure_out(self) -> None:
+        self.assertFalse(skill_index.phrase_matches("I need a treemap", "tree"))
+        self.assertFalse(skill_index.phrase_matches("help me figure out a threshold", "figure"))
+        self.assertTrue(
+            skill_index.phrase_matches(
+                "figure out how to revise this figure",
+                "figure",
+            )
+        )
+        self.assertTrue(skill_index.phrase_matches("build a phylogenetic tree", "tree"))
 
     def test_generic_gene_does_not_activate_hgt_pattern(self) -> None:
         query_tokens = skill_index.tokenize("build a phylogenetic tree from marker gene alignments")

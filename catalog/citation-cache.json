@@ -1,0 +1,45 @@
+{
+  "records": {
+    "10.1038/nature12373": {
+      "registered": true,
+      "title": null
+    },
+    "10.1038/s41587-023-01983-6": {
+      "registered": true,
+      "title": null
+    },
+    "10.1038/s41592-025-02819-8": {
+      "registered": true,
+      "title": null
+    },
+    "10.1038/s41596-024-01060-5": {
+      "registered": true,
+      "title": null
+    },
+    "10.1101/682021": {
+      "registered": true,
+      "title": null
+    },
+    "10.1186/s12915-025-02455-w": {
+      "registered": true,
+      "title": null
+    },
+    "10.1371/journal.pcbi.1000424": {
+      "registered": true,
+      "title": null
+    },
+    "10.1371/journal.pcbi.1003285": {
+      "registered": true,
+      "title": null
+    },
+    "10.1371/journal.pcbi.1005510": {
+      "registered": true,
+      "title": null
+    },
+    "10.5281/zenodo.14897628": {
+      "registered": true,
+      "title": null
+    }
+  },
+  "version": 1
+}

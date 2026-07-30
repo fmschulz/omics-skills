@@ -15,6 +15,9 @@ SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # they no longer retain the previous release's skill list. Keep explicit
 # migrations for retired names that copy-mode installations must also remove.
 RETIRED_SKILLS = {"get-api-docs"}
+LEGACY_BACKUP = re.compile(
+    r"^(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.bak(?:\.\d+)?$"
+)
 
 
 def catalog_skill_names(path: Path) -> set[str]:
@@ -67,11 +70,26 @@ def prune_removed_skills(
     current = current_skill_names(skills_dir)
     retired = sorted((catalog_skill_names(installed_catalog) - current) | (RETIRED_SKILLS - current))
 
+    for target in sorted(installed_skills_dir.glob("*.bak*")):
+        match = LEGACY_BACKUP.fullmatch(target.name)
+        if not match or match.group("name") not in current or not target.is_dir():
+            warnings.append(f"left unrecognized legacy backup untouched: {target}")
+            continue
+        name = match.group("name")
+        if frontmatter_name(target) != name:
+            warnings.append(f"left unrecognized legacy backup untouched: {target}")
+            continue
+        previous_dir = backup_dir.parent / "previous-skills"
+        previous_dir.mkdir(parents=True, exist_ok=True)
+        destination = next_backup_path(previous_dir, target.name)
+        shutil.move(str(target), destination)
+        removed.append(f"archived legacy skill backup: {target.name} -> {destination}")
+
     for name in retired:
         target = installed_skills_dir / name
         if target.is_symlink():
             linked = target.resolve(strict=False)
-            if linked.name != name or linked.parent.name != "skills":
+            if linked.name != name or linked.parent.resolve() != skills_dir.resolve():
                 warnings.append(f"left unexpected symlink untouched: {target} -> {linked}")
                 continue
             target.unlink()

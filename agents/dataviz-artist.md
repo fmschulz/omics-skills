@@ -61,7 +61,7 @@ START
 
 - **"unknown file", "inspect file", "explore data file", "EDA", "data structure", "file format"** → `/exploratory-data-analysis`
 - **"notebook", "marimo", "jupyter", "ipynb", "convert notebook", "reactive notebook", "executed notebook", "pixi kernel"** → `/notebooks`
-- **"plot", "chart", "figure", "publication", "matplotlib", "seaborn"** → `/beautiful-data-viz`
+- **"plot", "chart", "figure", "heatmap", "publication", "matplotlib", "seaborn"** → `/beautiful-data-viz`
 - **"dashboard", "interactive", "plotly", "dash", "data app"** → `/plotly-dashboard-skill`
 
 ## Communication Style

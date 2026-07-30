@@ -12,9 +12,9 @@ Release/source: https://github.com/ablab/spades/releases/tag/v4.2.0
 
 ## Installation
 
-**Via Conda/Pixi:**
+**Via Pixi:**
 ```bash
-conda install -c bioconda spades=4.2.0
+pixi add "spades=4.2.0"
 ```
 
 **Binary Download:**

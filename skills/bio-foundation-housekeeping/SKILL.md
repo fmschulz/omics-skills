@@ -56,7 +56,7 @@ Inputs:
 - [ ] Generated model source contains no build-machine absolute paths.
 - [ ] Raw metadata validates against LinkML and Pydantic before DuckDB ingestion.
 - [ ] Duplicate identifiers and broken foreign keys fail before artifact publication.
-- [ ] The existing `pixi.lock` includes the schema/catalog dependencies.
+- [ ] The run manifest records exact schema/catalog dependency versions.
 - [ ] DuckDB catalog is readable and points at validated Parquet tables.
 - [ ] Invalid fixtures fail before Parquet or DuckDB ingestion.
 - [ ] On failure: record the field location and validation error without copying rejected values, then exit non-zero.

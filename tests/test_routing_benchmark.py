@@ -6,8 +6,10 @@ pass-rate — the benchmark itself is the regression signal via
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
@@ -115,6 +117,51 @@ class RoutingBenchmarkTests(unittest.TestCase):
         self.assertEqual(summary["agent_failures"], 1)
         self.assertEqual(summary["primary_skill_failures"], 1)
         self.assertEqual(summary["primary_skill_overflows"], 1)
+
+    def test_compare_treats_new_failing_row_as_regression(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            baseline = Path(tmp) / "baseline.json"
+            baseline.write_text(
+                '{"summary": {"passed": 1, "total": 1}, "rows": []}',
+                encoding="utf-8",
+            )
+            failure = routing_benchmark.RowResult(
+                task="new failing row",
+                passed=False,
+                failures=["expected no confident primary skill"],
+                actual={
+                    "agent": "omics-scientist",
+                    "primary_skills": ["bio-logic"],
+                    "supporting_skills": [],
+                    "ordered_skills": ["bio-logic"],
+                },
+            )
+            with (
+                patch.object(routing_benchmark, "load_yaml", return_value=[{"task": failure.task}]),
+                patch.object(routing_benchmark, "evaluate_row", return_value=failure),
+            ):
+                self.assertEqual(routing_benchmark.compare(baseline), 1)
+
+    def test_write_baseline_refuses_failures_without_force(self) -> None:
+        failure = routing_benchmark.RowResult(
+            task="failing row",
+            passed=False,
+            failures=["failure"],
+            actual={},
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            baseline = Path(tmp) / "baseline.json"
+            with (
+                patch.object(routing_benchmark, "load_yaml", return_value=[{"task": failure.task}]),
+                patch.object(routing_benchmark, "evaluate_row", return_value=failure),
+            ):
+                self.assertEqual(routing_benchmark.write_baseline(baseline), 1)
+                self.assertFalse(baseline.exists())
+                self.assertEqual(
+                    routing_benchmark.write_baseline(baseline, force=True),
+                    0,
+                )
+                self.assertTrue(baseline.exists())
 
 
 if __name__ == "__main__":

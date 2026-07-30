@@ -12,13 +12,13 @@ Build marker gene alignments and phylogenetic trees.
 1. Validate marker/reference manifests and create a checksum-gated, fixed-seed execution plan:
 
    ```bash
-   uv run --no-project python skills/bio-phylogenomics/scripts/run_phylogenomics.py \
+   uv run --script skills/bio-phylogenomics/scripts/run_phylogenomics.py \
      markers.tsv --references references.tsv --seed 1729 \
      --out results/bio-phylogenomics
    # Inspect run_manifest.json, then add --execute.
    ```
 
-   The driver restarts only from non-empty stage outputs and normalizes internal support values from either 0–1 or 0–100 notation to `support.tsv` on a 0–1 scale. IQ-TREE `SH-aLRT/UFBoot` labels are emitted as separate `sh_alrt` and `ufboot` rows; mixed scales within one support type fail validation.
+   The driver restarts only from non-empty stage outputs paired with a stage `.done` marker. It normalizes internal support values from either 0–1 or 0–100 notation to `support.tsv` on a 0–1 scale. IQ-TREE `SH-aLRT/UFBoot` labels are emitted as separate `sh_alrt` and `ufboot` rows; mixed scales within one support type fail validation.
 2. Extract marker genes or SSU rRNA sequences.
 3. Align with MAFFT v7.5+ and trim with trimAl v1.4 (or ClipKIT when phylogenetically-informed trimming is preferred).
 4. Build ML trees with support values. Choose by objective first, then leaf count:
@@ -70,6 +70,7 @@ Inputs:
 
 - [ ] Alignment length and missingness meet project thresholds.
 - [ ] Every reference checksum matches before alignment, and the run manifest records a positive fixed seed.
+- [ ] A stage is reused only when its declared outputs are non-empty and its `.done` marker exists.
 - [ ] Internal supports are exported on a documented 0–1 scale without mixing raw IQ-TREE and VeryFastTree conventions.
 - [ ] Bootstrap support summary meets project thresholds.
 - [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.

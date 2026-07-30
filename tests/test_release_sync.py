@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -15,12 +16,17 @@ assert SPEC.loader is not None
 sys.modules[SPEC.name] = check_release_sync
 SPEC.loader.exec_module(check_release_sync)
 
+CURRENT_VERSION = json.loads(
+    (REPO_ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+)["version"]
+CURRENT_TAG = f"v{CURRENT_VERSION}"
+
 
 class ReleaseSyncTests(unittest.TestCase):
     def test_release_candidate_matches_manifest_notes_and_head(self) -> None:
         errors = check_release_sync.release_errors(
             REPO_ROOT,
-            "v1.5.0",
+            CURRENT_TAG,
             "HEAD",
         )
         self.assertEqual(errors, [])
@@ -38,8 +44,8 @@ class ReleaseSyncTests(unittest.TestCase):
 
         def missing_tag_git_output(repo: Path, *args: str) -> str | None:
             if args in {
-                ("cat-file", "-t", "v1.5.0"),
-                ("rev-parse", "v1.5.0^{commit}"),
+                ("cat-file", "-t", CURRENT_TAG),
+                ("rev-parse", f"{CURRENT_TAG}^{{commit}}"),
             }:
                 return None
             return original(repo, *args)
@@ -51,7 +57,7 @@ class ReleaseSyncTests(unittest.TestCase):
         ):
             errors = check_release_sync.release_errors(
                 REPO_ROOT,
-                "v1.5.0",
+                CURRENT_TAG,
                 "HEAD",
                 require_annotated_tag=True,
             )
@@ -60,7 +66,7 @@ class ReleaseSyncTests(unittest.TestCase):
     def test_unknown_main_ref_is_rejected(self) -> None:
         errors = check_release_sync.release_errors(
             REPO_ROOT,
-            "v1.5.0",
+            CURRENT_TAG,
             "refs/remotes/origin/not-a-real-branch",
         )
         self.assertTrue(any("cannot resolve main ref" in error for error in errors))
@@ -78,7 +84,7 @@ class ReleaseSyncTests(unittest.TestCase):
         with patch.object(check_release_sync, "git_output", side_effect=mismatched_git_output):
             errors = check_release_sync.release_errors(
                 REPO_ROOT,
-                "v1.5.0",
+                CURRENT_TAG,
                 "main",
             )
 

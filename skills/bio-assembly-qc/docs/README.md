@@ -90,4 +90,3 @@ quast.py spades_out/contigs.fasta -r reference.fasta -o qc_results -t 8
 ## Additional Resources
 
 - All tools available via pixi (see `pixi.toml` in skill root)
-- Paper summaries with use cases: `../summaries/`

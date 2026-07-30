@@ -26,9 +26,9 @@ tar xzf diamond-linux64.tar.gz
 ./diamond version
 ```
 
-### Conda/Bioconda
+### Pixi
 ```bash
-conda install -c bioconda -c conda-forge diamond=2.2.1
+pixi add "diamond=2.2.1"
 ```
 
 ### Other Methods

@@ -12,14 +12,14 @@ Ingest, QC, and map reads with reproducible outputs. Use for raw read processing
 1. Parse and validate `sample_sheet.tsv` against `schemas/sample-sheet.schema.json`. Use the executable driver for both planning and restartable execution:
 
    ```bash
-   uv run --no-project python skills/bio-reads-qc-mapping/scripts/run_reads_qc_mapping.py \
+   uv run --script skills/bio-reads-qc-mapping/scripts/run_reads_qc_mapping.py \
      sample_sheet.tsv --out results/bio-reads-qc-mapping
    # Inspect run_manifest.json, then execute the same plan:
-   uv run --no-project python skills/bio-reads-qc-mapping/scripts/run_reads_qc_mapping.py \
+   uv run --script skills/bio-reads-qc-mapping/scripts/run_reads_qc_mapping.py \
      sample_sheet.tsv --out results/bio-reads-qc-mapping --execute
    ```
 
-   `read_type` must be `paired_short`, `single_short`, or `long`. Mapping is scheduled only for rows with a non-empty `reference`; a missing reference is not a mapping failure.
+   `read_type` must be `paired_short`, `single_short`, or `long`. Mapping runs only for rows with a non-empty `reference`; a missing reference is not a mapping failure. The driver reuses a stage only when its declared outputs are non-empty and the stage's `.done` marker exists.
 2. For short reads: run QC and adapter/quality trimming with `bbduk` or `fastp` v1.3.3+.
 3. For long reads: use current basecaller-aware QC first. For ONT, prefer Dorado summaries/trimming during basecalling or demultiplexing when starting from signal/BAM; for FASTQ-only filtering use `chopper` for quality/length/end trimming or `filtlong` v0.2.1 when selecting reads for assembly. Use `Pychopper` for full-length cDNA. Treat `Porechop_ABI` as a targeted legacy/fallback adapter-discovery tool, and record why it is needed.
    - For very large ONT FASTQ inputs, do not burn the first full read pass on raw `gzip -t` or raw `seqkit stats` preflight unless the user explicitly asks for it. Record raw `stat` metadata and, if needed, a small sampled sanity check; let the first full pass be the actual filtering/orientation step, then run `seqkit stats` on produced outputs.
@@ -67,7 +67,7 @@ Inputs:
 - [ ] For long-read QC, record whether trimming happened in the basecaller/demultiplexer, `chopper`, `filtlong`, `Pychopper`, or a documented Porechop_ABI fallback.
 - [ ] For huge ONT inputs, avoid redundant full-file raw preflights; document raw file size/mtime and make the first full pass productive.
 - [ ] For `Pychopper` outputs, verify actual file type by content, not suffix. Plain FASTQ with a `.gz` suffix must be renamed or explicitly compressed before downstream tools that expect gzip.
-- [ ] Resume guards should skip expensive completed steps only after confirming the expected output exists, is non-empty, and passes a lightweight content sanity check (`seqkit stats`, FASTQ header sniff, or gzip magic as appropriate).
+- [ ] Resume guards skip a stage only when its expected outputs are non-empty and its `.done` marker exists. Run a lightweight content check (`seqkit stats`, FASTQ header sniff, or gzip magic as appropriate) before accepting downstream data.
 
 ## Examples
 

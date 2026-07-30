@@ -16,11 +16,9 @@ Release/source: https://github.com/grp-bork/gunc/releases/tag/v1.1.1
 
 ## Installation
 
-**Conda/Bioconda (recommended):**
+**Pixi:**
 ```bash
-conda install -c bioconda gunc
-# or
-mamba install -c bioconda gunc
+pixi add gunc
 ```
 
 **PyPI:**

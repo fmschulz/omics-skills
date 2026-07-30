@@ -104,7 +104,7 @@ START
 - **"AI scientist", "AI-generated notebook", "AI-generated Jupyter notebook", "audit AI-generated Jupyter notebook", "AI-generated analysis", "AI-generated analysis notebook", "evaluate agent output", "score AI output", "rank AI scientists"** → `/ai-scientist-evaluator`
 - **"draft manuscript", "rewrite scientific prose", "manuscript", "Abstract", "Methods", "author rebuttal", "response letter", "reviewer comments"** → `/scientific-writing`
 - **"pdf to markdown", "pdf to md", "convert pdf", "convert manuscript to markdown", "paper to markdown", "parse pdf", "liteparse", "ocr pdf"** → `/pdf-to-md`
-- **"CSAG", "argument graph", "claim evidence graph", "conditional scientific argumentation", "extract claims and evidence"** → `/csag-extraction`
+- **"extract a CSAG", "CSAG", "argument graph", "claim evidence graph", "conditional scientific argumentation", "extract claims and evidence"** → `/csag-extraction`
 - **"document workflow", "Nextflow", "Snakemake", "pipeline methods"** → `/bio-workflow-methods-docwriter`
 
 ## Communication Style

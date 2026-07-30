@@ -99,7 +99,7 @@ START
 
 - **"literature search", "find papers", "PMC", "publication trends", "polars-dovmed", "dovmed scan", "local bioRxiv parquet", "full-text bioRxiv screening", "--corpus biorxiv", "--corpus both"** → `/polars-dovmed`
 - **"screen bioRxiv with polars-dovmed", "bioRxiv screening", "PMC plus bioRxiv"** → `/polars-dovmed`
-- **"arxiv", "arxiv ID", "arxiv preprint", "physics preprint", "computer science preprint", "math preprint", "latest ML papers", "latest AI papers"** → `/arxiv-search`
+- **"arxiv", "arxiv ID", "arxiv preprint", "physics preprint", "physics preprints", "computer science preprint", "math preprint", "latest ML papers", "latest AI papers"** → `/arxiv-search`
 - **"biorxiv", "bioRxiv", "biology preprint", "recent biology preprints", "life-science preprint"** → `/biorxiv-search`
 - **"crossref", "doi lookup", "citation metadata", "reference metadata", "bibliography audit", "missing DOI", "bibtex"** → `/crossref-lookup`
 - **"citation count", "altmetric", "impact factor", "journal impact", "scientific impact"** → `/scientific-impact-assessment`

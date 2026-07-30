@@ -35,7 +35,13 @@ jobs:
         run: find scripts skills -type f -name '*.sh' -print0 | xargs -0 -r bash -n
 
       - name: Validate skills
-        run: python3 scripts/validate-skills.py
+        run: uv run --script scripts/validate-skills.py
+
+      - name: Validate supplementary docs
+        run: python3 scripts/validate-supplementary-docs.py
+
+      - name: Validate citations
+        run: python3 scripts/validate-citations.py
 
       - name: Check catalog is up to date with sources
         run: |
@@ -44,7 +50,7 @@ jobs:
             || { echo "::error::catalog/catalog.json is stale. Run 'make build-catalog' and commit."; exit 1; }
 
       - name: Run unit tests
-        run: uv run --no-project --with pytest --with requests pytest -q
+        run: uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
 
       - name: Run routing benchmark
         run: make benchmark

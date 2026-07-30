@@ -14,40 +14,16 @@ vConTACT3 is a viral genome clustering and taxonomic assignment tool that improv
 
 ## Installation
 
-### Bioconda/Mamba (New Environment - Recommended)
+### Pixi
 ```bash
-mamba create --name vcontact3 python=3.11
-mamba activate vcontact3
-mamba install -c bioconda vcontact3
-```
-
-### Bioconda/Mamba (Base Environment)
-```bash
-mamba install -c bioconda vcontact3
+pixi add "python>=3.10,<3.12" vcontact3
 ```
 
 Requires Python >=3.10 and <3.12.
 
-### Pip Installation (Latest Version)
-```bash
-git clone https://bitbucket.org/MAVERICLab/vcontact3.git
-cd vcontact3
-python -m pip install .
-```
-
-Note: MMSeqs2 must be separately installed when using pip
-
-### Requirements File Method
-```bash
-git clone https://bitbucket.org/MAVERICLab/vcontact3.git
-cd vcontact3
-mamba install -c bioconda --file requirements.txt
-pip install .
-```
-
 ### Optional: ANI Export Support
 ```bash
-pip install vclust
+pixi add --pypi vclust
 ```
 
 ## Key Commands & Flags

@@ -59,12 +59,15 @@ def scientific_review() -> dict:
 
 
 class AIScientistEvaluatorTests(unittest.TestCase):
-    def run_aggregator(self, review: dict) -> subprocess.CompletedProcess[str]:
+    def run_aggregator(self, *reviews: dict) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "review.json"
-            path.write_text(json.dumps(review), encoding="utf-8")
+            paths = []
+            for index, review in enumerate(reviews):
+                path = Path(tmp) / f"review-{index}.json"
+                path.write_text(json.dumps(review), encoding="utf-8")
+                paths.append(path)
             return subprocess.run(
-                ["uv", "run", "--script", str(SCRIPT), str(path)],
+                ["uv", "run", "--script", str(SCRIPT), *map(str, paths)],
                 cwd=REPO_ROOT,
                 text=True,
                 capture_output=True,
@@ -82,6 +85,40 @@ class AIScientistEvaluatorTests(unittest.TestCase):
         result = self.run_aggregator(review)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("failed evaluation_schema.json", result.stderr)
+
+    def test_aggregator_preserves_downward_penalty_adjustment(self) -> None:
+        review = scientific_review()
+        review["overall"]["total_score_100"] = 50
+        result = self.run_aggregator(review)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("| 50.0 |", result.stdout)
+
+    def test_integrity_flags_win_before_task_completion_tiebreak(self) -> None:
+        clean = scientific_review()
+        clean["submission_id"] = "clean"
+        dirty = scientific_review()
+        dirty["submission_id"] = "fabricated"
+        for item in dirty["scores"]:
+            if item["category"] == "task_completion":
+                item["score_0_to_5"] = 4
+            elif item["category"] == "data_provenance":
+                item["score_0_to_5"] = 1.5
+        dirty["red_flags"] = [
+            {
+                "flag": "fabricated accession",
+                "severity": "critical",
+                "notes": "The accession does not exist.",
+            }
+        ]
+
+        result = self.run_aggregator(dirty, clean)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        first_data_row = next(
+            line
+            for line in result.stdout.splitlines()
+            if line.startswith("| 1 |")
+        )
+        self.assertIn("| clean |", first_data_row)
 
     def test_weight_profiles_are_present_for_regression_context(self) -> None:
         self.assertTrue(PROFILES.is_file())

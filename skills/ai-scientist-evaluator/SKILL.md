@@ -53,11 +53,12 @@ than a research generator. Evaluate completed outputs, not just plans.
    [`references/category_definitions.md`](references/category_definitions.md) if
    category meaning is unclear. A score of 5 earns the full category weight.
 10. Convert the category scores to a weighted total out of 100. Do not trust
-    submitted `weight`, `weighted_points`, or `overall.total_score_100` values:
-    the bundled aggregator validates the review against
-    `evaluation_schema.json`, loads the selected weight profile, and recomputes
-    every weighted value before ranking. Apply explicit penalties sparingly and
-    explain them when they are not already captured by category scores.
+    submitted `weight` or `weighted_points` values. The bundled aggregator
+    validates the review against `evaluation_schema.json`, loads the selected
+    weight profile, and recomputes each weighted value. It accepts
+    `overall.total_score_100` only as a downward penalty. It ignores any score
+    above the recomputed total. Apply penalties sparingly and explain them when
+    category scores do not already capture the issue.
 11. For multiple submissions, score each one independently before ranking. Use
     tie-breaks in this order:
     - fewer integrity or reproducibility problems

@@ -19,9 +19,9 @@ Release/source: https://github.com/etetoolkit/ete/releases/tag/4.4.0
 pip install ete4==4.4.0
 ```
 
-### Conda Installation
+### Pixi Installation
 ```bash
-conda install conda-forge::ete4
+pixi add ete4
 ```
 
 ### Development Installation

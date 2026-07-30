@@ -173,7 +173,7 @@ Makefile                    install, catalog, hook, benchmark, uninstall targets
 ## Development
 
 ```bash
-uv run --no-project --with pytest --with requests pytest -q
+uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
 make benchmark                                  # routing regression vs baseline
 python3 scripts/skill_index.py build            # rebuild catalog artifacts
 ```

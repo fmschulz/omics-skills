@@ -24,9 +24,9 @@ docker pull quay.io/microbiome-informatics/eukcc
 singularity pull docker://quay.io/microbiome-informatics/eukcc
 ```
 
-**Conda/Bioconda:**
+**Pixi:**
 ```bash
-conda install -c bioconda eukcc
+pixi add eukcc
 ```
 
 **Manual dependencies:**

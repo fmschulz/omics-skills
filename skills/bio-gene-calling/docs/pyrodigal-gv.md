@@ -19,8 +19,8 @@ Pyrodigal extension for viral gene calling, including giant viruses and viruses 
 uv pip install pyrodigal-gv
 pip install pyrodigal-gv
 
-# Conda/Bioconda, when using a conda-style environment
-conda install -c bioconda pyrodigal-gv
+# Pixi
+pixi add pyrodigal-gv
 ```
 
 ## Key Features

@@ -26,10 +26,10 @@ Search bioRxiv through its official API for recent-preprint discovery, date-rang
 7. Use `--author` for author-specific requests.
    - By default, consider both the supplied full-name form and an abbreviated-first-name form, for example `--author "Peter Nugent"` and `--author "P. Nugent"`.
    - Do not silently merge these in the final answer. Report full-name matches and abbreviated-first-name matches in separate groups because initials can be ambiguous.
-   - The CLI also expands obvious first-initial variants from the supplied author string, so prefer separate passes or a local partition of returned records by the literal `authors` text when you need clean buckets.
+   - The CLI normalizes both given-name-first and API-style `Surname, F. M.` forms. Prefer separate passes or a local partition of returned records by the literal `authors` text when you need clean buckets.
 8. The API currently returns up to 30 records per page.
-   - Let the CLI follow the response `cursor`, `count`, and `total` fields; do not assume a fixed page size when deciding whether the interval is exhausted.
-   - Increase `--scan-limit` when the query is broad and the first pages do not contain enough matches.
+   - The API orders an interval from oldest to newest. The CLI reads `count` and `total`, starts at the newest page, and scans backward.
+   - Increase `--scan-limit` when a broad query needs more of the interval inspected.
 9. By default, the CLI collapses multiple versions of the same preprint and keeps the latest version for each DOI.
    - Use `--all-versions` only when version-by-version output matters.
 10. Treat the API output as discovery metadata.
@@ -76,6 +76,7 @@ Search bioRxiv through its official API for recent-preprint discovery, date-rang
 - The API does not support a general server-side keyword query for title or abstract.
   - The CLI performs local filtering after fetching metadata.
 - For predictable paging, the CLI implements `--days N` as an explicit UTC date range instead of relying on the API's relative-date shorthand.
+- Interval searches start from the newest cursor and scan backward, so a bounded `--scan-limit` covers recent records first.
 - Plain multi-word queries are local `AND` queries.
   - `single cell atlas` means all three terms must appear somewhere in the selected search fields.
 - `OR` must be written explicitly to broaden synonyms or alternate phrasings.

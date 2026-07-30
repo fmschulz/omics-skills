@@ -337,3 +337,28 @@
 - task: "explain quantum entanglement to a child"
   platform: codex
   expect_no_primary: true
+
+- task: "the shower is broken"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0
+
+- task: "I need a treemap of storage usage"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0
+
+- task: "help me figure out the right contamination threshold"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0
+
+- task: "help me write a paper"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0
+
+- task: "review this pull request and give me a decision"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0

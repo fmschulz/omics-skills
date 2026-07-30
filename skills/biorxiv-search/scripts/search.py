@@ -28,6 +28,10 @@ def normalize_term(text: str) -> str:
     return compact_whitespace(text).strip().lower()
 
 
+def normalize_author_term(text: str) -> str:
+    return compact_whitespace(re.sub(r"[^\w]+", " ", text, flags=re.UNICODE)).lower()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Search bioRxiv via the official API and locally filter title/abstract/author metadata."
@@ -183,22 +187,29 @@ def expand_author_variants(author_filters: list[str]) -> list[str]:
         text = compact_whitespace(author)
         if not text:
             continue
-        variants.add(normalize_term(text))
+        variants.add(normalize_author_term(text))
 
-        tokens = [token.rstrip(".") for token in text.split()]
-        if len(tokens) < 2:
+        if "," in text:
+            surname, given_text = text.split(",", 1)
+            surname = normalize_author_term(surname)
+            given = normalize_author_term(given_text).split()
+        else:
+            tokens = normalize_author_term(text).split()
+            if len(tokens) < 2:
+                continue
+            surname, given = tokens[-1], tokens[:-1]
+        if not surname or not given:
             continue
-
-        first = tokens[0]
-        last = tokens[-1]
-        variants.add(normalize_term(f"{first} {last}"))
-        variants.add(normalize_term(f"{first[0]}. {last}"))
-
-        if len(tokens) >= 3:
-            middle = tokens[1]
-            middle_initial = middle[0]
-            variants.add(normalize_term(f"{first} {middle_initial}. {last}"))
-            variants.add(normalize_term(f"{first[0]}. {middle_initial}. {last}"))
+        initials = [name[0] for name in given if name]
+        first = given[0]
+        variants.add(normalize_author_term(" ".join([*given, surname])))
+        variants.add(normalize_author_term(" ".join([*initials, surname])))
+        variants.add(normalize_author_term(" ".join([surname, *given])))
+        variants.add(normalize_author_term(" ".join([surname, *initials])))
+        variants.add(normalize_author_term(" ".join([first, surname])))
+        variants.add(normalize_author_term(" ".join([first[0], surname])))
+        variants.add(normalize_author_term(" ".join([surname, first])))
+        variants.add(normalize_author_term(" ".join([surname, first[0]])))
 
     return sorted(variants)
 
@@ -311,10 +322,11 @@ def matches_groups(text: str, groups: list[list[str]]) -> bool:
 def matches_author_filters(authors_text: str, author_variants: list[str]) -> bool:
     if not author_variants:
         return True
-    haystack = normalize_term(authors_text)
+    haystack = normalize_author_term(authors_text)
     if not haystack:
         return False
-    return any(variant in haystack for variant in author_variants)
+    padded = f" {haystack} "
+    return any(f" {variant} " in padded for variant in author_variants)
 
 
 def matched_fields(
@@ -390,6 +402,27 @@ def sort_records(records: list[dict[str, object]]) -> list[dict[str, object]]:
     return sorted(records, key=sort_key, reverse=True)
 
 
+def page_metadata(
+    data: dict[str, object],
+) -> tuple[list[dict[str, object]], int | None, int | None, int | None]:
+    collection = data.get("collection", [])
+    if not isinstance(collection, list):
+        raise RuntimeError("unexpected bioRxiv API response: missing collection list")
+    if not all(isinstance(record, dict) for record in collection):
+        raise RuntimeError("unexpected bioRxiv API response: collection contains a non-record")
+
+    page_count = None
+    response_cursor = None
+    reported_total = None
+    messages = data.get("messages", [])
+    if isinstance(messages, list) and messages and isinstance(messages[0], dict):
+        message = messages[0]
+        page_count = to_int(message.get("count"))
+        response_cursor = to_int(message.get("cursor"))
+        reported_total = to_int(message.get("total"))
+    return collection, page_count, response_cursor, reported_total
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -436,53 +469,92 @@ def main() -> int:
                     record["matched_in"] = where
                     matched.append(record)
         else:
-            cursor = 0
-            while records_scanned < args.scan_limit:
-                url = build_url(args, interval, cursor)
-                request_urls.append(url)
-                data = fetch_json(url, args.timeout, args.retries, args.retry_backoff)
-                pages_fetched += 1
+            first_url = build_url(args, interval, 0)
+            request_urls.append(first_url)
+            first_data = fetch_json(first_url, args.timeout, args.retries, args.retry_backoff)
+            pages_fetched = 1
+            first_collection, first_count, _, total_available = page_metadata(first_data)
+            page_size = first_count if first_count is not None and first_count > 0 else len(first_collection)
 
-                messages = data.get("messages", [])
-                page_count = None
-                response_cursor = None
-                if isinstance(messages, list) and messages and isinstance(messages[0], dict):
-                    message = messages[0]
-                    page_count = to_int(message.get("count"))
-                    response_cursor = to_int(message.get("cursor"))
-                    reported_total = to_int(message.get("total"))
+            if total_available is not None and page_size > 0:
+                cursor = ((max(total_available, 1) - 1) // page_size) * page_size
+                while records_scanned < args.scan_limit:
+                    if cursor == 0:
+                        data = first_data
+                    else:
+                        url = build_url(args, interval, cursor)
+                        request_urls.append(url)
+                        data = fetch_json(url, args.timeout, args.retries, args.retry_backoff)
+                        pages_fetched += 1
+
+                    collection, _, _, reported_total = page_metadata(data)
                     if reported_total is not None:
                         total_available = reported_total
-
-                collection = data.get("collection", [])
-                if not isinstance(collection, list):
-                    raise RuntimeError("unexpected bioRxiv API response: missing collection list")
-                if not collection:
-                    break
-
-                for raw in collection:
-                    records_scanned += 1
-                    record = normalize_record(raw)
-                    is_match, where = record_matches(record, fields, query_groups, author_variants)
-                    if is_match:
-                        record["matched_in"] = where
-                        matched.append(record)
-                    if records_scanned >= args.scan_limit:
-                        reached_scan_limit = total_available is None or records_scanned < total_available
+                    if not collection:
                         break
 
-                if reached_scan_limit:
-                    break
-                if total_available is not None and records_scanned >= total_available:
-                    break
+                    for raw in reversed(collection):
+                        records_scanned += 1
+                        record = normalize_record(raw)
+                        is_match, where = record_matches(record, fields, query_groups, author_variants)
+                        if is_match:
+                            record["matched_in"] = where
+                            matched.append(record)
+                        if records_scanned >= args.scan_limit:
+                            reached_scan_limit = records_scanned < total_available
+                            break
 
-                page_advance = page_count if page_count is not None and page_count > 0 else len(collection)
-                if page_advance <= 0:
-                    break
-                next_cursor = (response_cursor if response_cursor is not None else cursor) + page_advance
-                if next_cursor <= cursor:
-                    raise RuntimeError("bioRxiv API pagination did not advance the cursor")
-                cursor = next_cursor
+                    if reached_scan_limit or cursor == 0:
+                        break
+                    cursor = max(0, cursor - page_size)
+            else:
+                warnings.append(
+                    "bioRxiv API omitted pagination totals; scanned forward because the newest cursor was unavailable"
+                )
+                cursor = 0
+                data = first_data
+                while records_scanned < args.scan_limit:
+                    collection, page_count, response_cursor, reported_total = page_metadata(data)
+                    if reported_total is not None:
+                        total_available = reported_total
+                    if not collection:
+                        break
+
+                    for raw in collection:
+                        records_scanned += 1
+                        record = normalize_record(raw)
+                        is_match, where = record_matches(record, fields, query_groups, author_variants)
+                        if is_match:
+                            record["matched_in"] = where
+                            matched.append(record)
+                        if records_scanned >= args.scan_limit:
+                            reached_scan_limit = (
+                                total_available is None or records_scanned < total_available
+                            )
+                            break
+
+                    if reached_scan_limit:
+                        break
+                    if total_available is not None and records_scanned >= total_available:
+                        break
+
+                    page_advance = (
+                        page_count
+                        if page_count is not None and page_count > 0
+                        else len(collection)
+                    )
+                    if page_advance <= 0:
+                        break
+                    next_cursor = (
+                        response_cursor if response_cursor is not None else cursor
+                    ) + page_advance
+                    if next_cursor <= cursor:
+                        raise RuntimeError("bioRxiv API pagination did not advance the cursor")
+                    cursor = next_cursor
+                    url = build_url(args, interval, cursor)
+                    request_urls.append(url)
+                    data = fetch_json(url, args.timeout, args.retries, args.retry_backoff)
+                    pages_fetched += 1
 
         deduped = matched
         versions_collapsed = 0

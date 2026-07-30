@@ -42,7 +42,7 @@ Aggregate results, train ML models, and produce reports with validated reference
 | Validate inputs | Confirm required inputs and reference data exist. |
 | Review outputs | Inspect reports and QC gates before proceeding. |
 | Tool docs | See `docs/README.md`. |
-| Validate predictions | `uv run --no-project python scripts/validate_predictions.py predictions.tsv --report validation.json --require-beats-null` |
+| Validate predictions | `uv run --script scripts/validate_predictions.py predictions.tsv --report validation.json --require-beats-null` |
 
 ## Input Requirements
 

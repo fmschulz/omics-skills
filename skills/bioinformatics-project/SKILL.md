@@ -218,13 +218,13 @@ Every project carries a `README.md` (study description, setup, how to reproduce)
 Use the bundled templates instead of recreating them:
 
 ```bash
-uv run --no-project python ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
+uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
   ./coastal-metagenomes \
   --name "Coastal metagenomes" \
   --objective "Recover and compare metagenome-assembled genomes."
 
 pixi install --manifest-path ./coastal-metagenomes/pixi.toml
-uv run --no-project python ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
+uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
   ./coastal-metagenomes \
   --name "Coastal metagenomes" \
   --objective "Recover and compare metagenome-assembled genomes." \
@@ -234,7 +234,7 @@ uv run --no-project python ~/.agents/skills/bioinformatics-project/scripts/scaff
 For a multi-track project with an initial experiment:
 
 ```bash
-uv run --no-project python ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
+uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
   ./coastal-metagenomes \
   --name "Coastal metagenomes" \
   --objective "Recover and compare metagenome-assembled genomes." \

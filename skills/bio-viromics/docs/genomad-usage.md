@@ -20,10 +20,9 @@ geNomad identifies virus and plasmid genomes from nucleotide sequences with stat
 pixi global install -c conda-forge -c bioconda genomad
 ```
 
-### Mamba (Isolated Environment)
+### Pixi
 ```bash
-mamba create -n genomad -c conda-forge -c bioconda genomad
-mamba activate genomad
+pixi add genomad
 ```
 
 ### Docker

@@ -13,15 +13,10 @@ Release/source: https://gitlab.com/paulklemm_PHD/proteinortho/-/releases/v6.3.6
 
 ## Installation
 
-### Conda/Bioconda (Recommended)
+### Pixi
 ```bash
-# Add Bioconda channels
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-
-# Install ProteinOrtho
-conda install proteinortho
+# Add ProteinOrtho to the project Pixi environment
+pixi add proteinortho
 ```
 
 ### Homebrew

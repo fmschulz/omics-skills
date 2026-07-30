@@ -62,7 +62,7 @@ class BioRxivPaginationTests(unittest.TestCase):
 
         payload = json.loads(stdout.getvalue())
         self.assertEqual(exit_code, 0)
-        self.assertEqual(requested_cursors, [0, 30, 60])
+        self.assertEqual(requested_cursors, [0, 60, 30])
         self.assertEqual(payload["api"]["pages_fetched"], 3)
         self.assertEqual(payload["api"]["records_scanned"], 65)
         self.assertEqual(payload["api"]["total_available"], 65)
@@ -96,6 +96,60 @@ class BioRxivPaginationTests(unittest.TestCase):
         self.assertEqual([group["requested_form"] for group in groups], ["Peter Nugent", "P. Nugent"])
         self.assertFalse(groups[0]["ambiguous_initial_form"])
         self.assertTrue(groups[1]["ambiguous_initial_form"])
+
+    def test_recent_search_scans_newest_records_first(self):
+        module = load_search_module()
+        records = [
+            {
+                "doi": f"10.1101/{index:06d}",
+                "title": f"Preprint {index}",
+                "abstract": "",
+                "authors": "A. Author",
+                "date": f"2026-07-{index + 1:02d}",
+                "version": "1",
+            }
+            for index in range(20)
+        ]
+        requested_cursors = []
+
+        def fake_fetch(url, _timeout, *_retry):
+            cursor = int(url.rsplit("/", 2)[-2])
+            requested_cursors.append(cursor)
+            page = records[cursor : cursor + 10]
+            return {
+                "messages": [
+                    {
+                        "status": "ok",
+                        "cursor": cursor,
+                        "count": len(page),
+                        "total": len(records),
+                    }
+                ],
+                "collection": page,
+            }
+
+        stdout = io.StringIO()
+        argv = [str(SCRIPT), "Preprint", "3", "--days", "30", "--scan-limit", "5"]
+        with mock.patch.object(module, "fetch_json", side_effect=fake_fetch), mock.patch.object(
+            sys, "argv", argv
+        ), contextlib.redirect_stdout(stdout):
+            exit_code = module.main()
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(requested_cursors, [0, 10])
+        self.assertEqual(
+            [record["doi"] for record in payload["results"]],
+            ["10.1101/000019", "10.1101/000018", "10.1101/000017"],
+        )
+
+    def test_author_filter_matches_api_surname_initials_form(self):
+        module = load_search_module()
+        variants = module.expand_author_variants(["Frederik M. Schulz"])
+        self.assertTrue(
+            module.matches_author_filters("Schulz, F. M.; Other, A.", variants)
+        )
+        self.assertTrue(module.matches_author_filters("Frederik Schulz", variants))
 
 
 if __name__ == "__main__":

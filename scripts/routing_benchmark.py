@@ -249,10 +249,17 @@ def run(emit_json: bool) -> int:
     return 0 if summary["failed"] == 0 else 1
 
 
-def write_baseline(path: Path) -> int:
+def write_baseline(path: Path, force: bool = False) -> int:
     rows = load_yaml(BENCHMARK_PATH)
     results = [evaluate_row(row) for row in rows]
     summary = aggregate(results)
+    if summary["failed"] and not force:
+        print(
+            f"Refusing to write a failing baseline ({summary['failed']} failed row(s)); "
+            "fix the benchmark or pass --force.",
+            file=sys.stderr,
+        )
+        return 1
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(
@@ -291,6 +298,8 @@ def compare(baseline_path: Path) -> int:
     for r in results:
         previous = baseline_by_task.get(r.task)
         if previous is None:
+            if not r.passed:
+                regressions.append(r.task)
             continue
         if previous["passed"] and not r.passed:
             regressions.append(r.task)
@@ -329,14 +338,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--baseline", action="store_true", help="Write baseline JSON.")
     parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Allow --baseline to record failing rows.",
+    )
+    parser.add_argument(
         "--baseline-path",
         default=str(REPO_ROOT / "docs" / "routing_baseline.json"),
     )
     parser.add_argument("--compare", metavar="PATH", help="Compare vs saved baseline.")
     args = parser.parse_args(argv)
 
+    if args.force and not args.baseline:
+        parser.error("--force requires --baseline")
     if args.baseline:
-        return write_baseline(Path(args.baseline_path))
+        return write_baseline(Path(args.baseline_path), force=args.force)
     if args.compare:
         return compare(Path(args.compare))
     return run(emit_json=args.json)

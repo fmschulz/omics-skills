@@ -16,10 +16,9 @@ CheckV is a fully automated tool for assessing the quality of single-contig vira
 
 ## Installation
 
-### Pixi/Conda (Recommended)
+### Pixi
 ```bash
 pixi global install -c conda-forge -c bioconda checkv
-conda install -c conda-forge -c bioconda checkv
 ```
 
 ### Pip/uv

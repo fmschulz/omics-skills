@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -40,7 +41,39 @@ def test_execute_reuses_complete_outputs_without_calling_tools(tmp_path):
             path = Path(output)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("fixture output\n")
+        (Path(step["outputs"][0]).parent / f"{step['stage']}.done").write_text("complete\n")
     second = subprocess.run(command(SKILL / "fixtures" / "sample_sheet.tsv", "--out", out, "--execute"), text=True, capture_output=True)
     assert second.returncode == 0, second.stderr
     rerun = json.loads((out / "run_manifest.json").read_text())
     assert {step["status"] for step in rerun["steps"]} == {"reused"}
+
+
+def test_execute_does_not_reuse_unmarked_partial_outputs(tmp_path):
+    out = tmp_path / "out"
+    first = subprocess.run(
+        command(SKILL / "fixtures" / "sample_sheet.tsv", "--out", out),
+        text=True,
+        capture_output=True,
+    )
+    assert first.returncode == 0, first.stderr
+    manifest = json.loads((out / "run_manifest.json").read_text())
+    for step in manifest["steps"]:
+        for output in step["outputs"]:
+            path = Path(output)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("partial output\n")
+
+    tool_dir = tmp_path / "bin"
+    tool_dir.mkdir()
+    fastp = tool_dir / "fastp"
+    fastp.write_text("#!/bin/sh\nexit 42\n")
+    fastp.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tool_dir}:{os.environ['PATH']}"}
+    rerun = subprocess.run(
+        command(SKILL / "fixtures" / "sample_sheet.tsv", "--out", out, "--execute"),
+        text=True,
+        capture_output=True,
+        env=env,
+    )
+    assert rerun.returncode != 0
+    assert "step failed" in rerun.stderr

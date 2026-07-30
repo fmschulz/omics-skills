@@ -27,9 +27,9 @@ Commands:
 
 ```bash
 python3 scripts/skill_index.py build
-python3 scripts/validate-skills.py
+uv run --script scripts/validate-skills.py
 python3 scripts/validate-supplementary-docs.py
-uv run --no-project --with pytest --with requests pytest -q
+uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
 make benchmark
 ```
 
@@ -42,7 +42,7 @@ Keep documentation concrete:
 - Prefer short examples over abstract descriptions.
 - Record exact tool versions, database names, URLs, and commands when a result needs to be reproducible.
 - For supplementary tool/source guides, include `Last verified`, `Tool version/release checked`, `Official docs/manual`, and `Release/source` lines near the top.
-- Keep `SKILL.md` focused; move detailed tool notes into `docs/`, `references/`, `examples/`, or `summaries/` inside the skill directory.
+- Keep `SKILL.md` focused; move detailed tool notes into `docs/`, `references/`, or `examples/` inside the skill directory.
 
 ## Work on the MkDocs Site
 
@@ -65,9 +65,9 @@ The GitHub Pages workflow runs the same strict build before deployment.
 Before opening a pull request:
 
 ```bash
-python3 scripts/validate-skills.py
+uv run --script scripts/validate-skills.py
 python3 scripts/validate-supplementary-docs.py
-uv run --no-project --with pytest --with requests pytest -q
+uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
 make benchmark
 uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict
 ```

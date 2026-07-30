@@ -43,7 +43,7 @@ METHODS_SKILL="${METHODS_SKILL:-$HOME/.agents/skills/bio-workflow-methods-docwri
 
 ## Output
 
-- `METHODS.md` (workflow summary + detailed steps)
+- `METHODS.md` (agent-authored; workflow summary + detailed steps)
 - `run_manifest.yaml` (machine-readable run manifest)
 
 ## Quality Gates

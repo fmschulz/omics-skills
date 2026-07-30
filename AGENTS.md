@@ -95,7 +95,6 @@ skills/
   {skill-name}/           # kebab-case directory name
     SKILL.md              # Required: skill definition with YAML frontmatter
     docs/                 # Optional: tool documentation
-    summaries/            # Optional: literature summaries (bio-* skills), named YYYY-title.md
     examples/             # Optional: usage examples
     references/           # Optional: reference materials
     scripts/              # Optional: helper scripts
@@ -131,7 +130,7 @@ Skills are loaded on demand. To minimize context usage:
 
 - **Keep SKILL.md under 500 lines** — put detailed docs in subdirectories
 - **Write specific descriptions** — the router scores them for skill activation
-- **Use progressive disclosure** — reference `docs/`, `summaries/`, `references/` files
+- **Use progressive disclosure** — reference `docs/`, `references/`, and `examples/` files
 - **Link explicitly** — include full relative paths (e.g., `[Tool Docs](docs/tool-name.md)`); the validator flags broken links, and unlinked files are invisible to agents
 - For supplementary tool/source guides, include the `Last verified`, `Tool version/release checked`, `Official docs/manual`, and `Release/source` provenance lines near the top; `scripts/validate-supplementary-docs.py` enforces them.
 

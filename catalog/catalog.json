@@ -71,7 +71,8 @@
         "latest AI papers",
         "latest ML papers",
         "math preprint",
-        "physics preprint"
+        "physics preprint",
+        "physics preprints"
       ],
       "internal_references": [
         "crossref-lookup",
@@ -105,6 +106,7 @@
       "task_patterns": [
         "chart",
         "figure",
+        "heatmap",
         "matplotlib",
         "plot",
         "publication",
@@ -393,10 +395,10 @@
           "- Infer the query's domain/lineage first (`/tracking-taxonomy-updates` QuickClade"
         ],
         "polars-dovmed": [
-          "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+          "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group."
         ],
         "biorxiv-search": [
-          "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+          "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group."
         ]
       }
     },
@@ -595,6 +597,7 @@
       ],
       "task_patterns": [
         "QC",
+        "fastp",
         "fastq",
         "raw reads",
         "trimming"
@@ -856,6 +859,7 @@
         "argument graph",
         "claim evidence graph",
         "conditional scientific argumentation",
+        "extract a CSAG",
         "extract claims and evidence"
       ],
       "internal_references": [],
@@ -1371,6 +1375,7 @@
             "plot",
             "chart",
             "figure",
+            "heatmap",
             "publication",
             "matplotlib",
             "seaborn"
@@ -1454,6 +1459,7 @@
             "arxiv ID",
             "arxiv preprint",
             "physics preprint",
+            "physics preprints",
             "computer science preprint",
             "math preprint",
             "latest ML papers",
@@ -1758,6 +1764,7 @@
           "phrases": [
             "raw reads",
             "fastq",
+            "fastp",
             "QC",
             "trimming"
           ]
@@ -2113,6 +2120,7 @@
         {
           "skill_name": "csag-extraction",
           "phrases": [
+            "extract a CSAG",
             "CSAG",
             "argument graph",
             "claim evidence graph",
@@ -2613,7 +2621,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+        "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group."
       ]
     },
     {
@@ -2627,7 +2635,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;"
+        "- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group."
       ]
     },
     {

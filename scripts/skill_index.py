@@ -354,17 +354,39 @@ def text_overlap(left: set[str], right: set[str]) -> float:
 def task_pattern_overlap(query_tokens: set[str], pattern_tokens: set[str]) -> float:
     """Token overlap for task-recognition phrases.
 
-    Multi-token phrases may match on one distinctive token, but a lone generic
-    word such as "review" must not activate "peer review" or "review council".
+    Multi-token phrases require at least two matching tokens, including one
+    distinctive token. This keeps generic fragments such as "review this" from
+    activating "review this manuscript".
     """
     if not query_tokens or not pattern_tokens:
         return 0.0
     common = query_tokens & pattern_tokens
     if not common:
         return 0.0
-    if len(pattern_tokens) > 1 and len(common) < 2 and common <= WEAK_PATTERN_TOKENS:
-        return 0.0
+    if len(pattern_tokens) > 1:
+        if len(common) < 2 or not (common - WEAK_PATTERN_TOKENS):
+            return 0.0
     return len(common) / len(pattern_tokens)
+
+
+def task_pattern_query_tokens(query: str, query_tokens: set[str]) -> set[str]:
+    """Remove tokens used in a common non-domain phrasal verb."""
+    if re.search(r"(?<!\w)figure\s+out(?!\w)", query):
+        return query_tokens - {"figure"}
+    return query_tokens
+
+
+def phrase_matches(query: str, pattern: str) -> bool:
+    """Match a task phrase on word boundaries, not inside another word."""
+    query = query.lower()
+    normalized = pattern.lower()
+    matches = re.finditer(rf"(?<!\w){re.escape(normalized)}(?!\w)", query)
+    if normalized != "figure":
+        return next(matches, None) is not None
+    return any(
+        re.match(r"\s+out(?!\w)", query[match.end() :]) is None
+        for match in matches
+    )
 
 
 def is_software_repo_review(query_tokens: set[str]) -> bool:
@@ -877,6 +899,7 @@ def _score_skills(
     its task-pattern phrases. Records match explanations in ``reasons`` (mutated
     in place). Skills that fail the agent/platform filter or score 0 are dropped."""
     scores: dict[str, float] = {}
+    pattern_query_tokens = task_pattern_query_tokens(query, query_tokens)
     for skill in skills.values():
         if allowed_skills is not None and skill["name"] not in allowed_skills:
             continue
@@ -889,11 +912,11 @@ def _score_skills(
             score += overlap * SKILL_DESCRIPTION_WEIGHT
             reasons[skill["name"]].append("name/description overlap")
         for pattern in skill["task_patterns"]:
-            if pattern.lower() in query:
+            if phrase_matches(query, pattern):
                 score += TASK_PATTERN_DIRECT_BONUS
                 reasons[skill["name"]].append(f'task pattern "{pattern}" matched directly')
                 continue
-            pattern_overlap = task_pattern_overlap(query_tokens, tokenize(pattern))
+            pattern_overlap = task_pattern_overlap(pattern_query_tokens, tokenize(pattern))
             if pattern_overlap >= PARTIAL_OVERLAP_MIN:
                 score += pattern_overlap * TASK_PATTERN_OVERLAP_WEIGHT
                 reasons[skill["name"]].append(f'task pattern "{pattern}" overlapped')
@@ -930,6 +953,7 @@ def _score_agents(
     science-writer ("...Evaluation"); a "hypothesis" query thus prefers
     omics-scientist. Mutates ``reasons`` with tiebreak explanations."""
     agent_scores: dict[str, float] = defaultdict(float)
+    pattern_query_tokens = task_pattern_query_tokens(query, query_tokens)
     for skill_name in primary_skills:
         for owner in skills[skill_name]["agents"]:
             agent_scores[owner] += skill_scores[skill_name]
@@ -948,11 +972,12 @@ def _score_agents(
                     continue
                 for phrase in pattern_entry.get("phrases", []):
                     phrase_tokens = tokenize(phrase)
-                    if phrase.lower() in query:
-                        agent_scores[owner] += AGENT_PATTERN_DIRECT_BONUS
+                    if phrase_matches(query, phrase):
+                        specificity = min(2, max(1, len(phrase_tokens)))
+                        agent_scores[owner] += AGENT_PATTERN_DIRECT_BONUS * specificity
                         reasons[skill_name].append(f'agent {owner} pattern "{phrase}" direct match')
                         break
-                    phrase_overlap = task_pattern_overlap(query_tokens, phrase_tokens)
+                    phrase_overlap = task_pattern_overlap(pattern_query_tokens, phrase_tokens)
                     if phrase_overlap >= PARTIAL_OVERLAP_MIN:
                         agent_scores[owner] += phrase_overlap * AGENT_PATTERN_OVERLAP_WEIGHT
                         reasons[skill_name].append(f'agent {owner} pattern "{phrase}" overlap')

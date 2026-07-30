@@ -20,11 +20,11 @@ Python bindings and a command-line interface around Prodigal for fast prokaryoti
 uv pip install pyrodigal
 pip install pyrodigal
 
-# Conda/Bioconda, when using a conda-style environment
-conda install -c bioconda pyrodigal
+# Pixi
+pixi add pyrodigal
 ```
 
-Pre-built wheels are published on PyPI. Use the version bundled by the active pixi or conda environment when reproducibility matters.
+Pre-built wheels are published on PyPI. Use the version locked by the active Pixi environment when reproducibility matters.
 
 ## Key Features
 

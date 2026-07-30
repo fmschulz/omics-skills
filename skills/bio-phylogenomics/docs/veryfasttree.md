@@ -14,8 +14,8 @@ Release/source: https://github.com/citiususc/veryfasttree/releases/tag/v4.0.5
 
 ### Package Managers
 ```bash
-# Bioconda
-conda install veryfasttree
+# Pixi
+pixi add veryfasttree
 
 # Homebrew (macOS)
 brew install veryfasttree

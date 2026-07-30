@@ -63,7 +63,7 @@ conda activate tmvec
 pip install tm-vec
 
 # foldseek
-conda install -c conda-forge -c bioconda foldseek
+pixi add foldseek
 
 # colabfold
 # See LocalColabFold: https://github.com/YoshitakaMo/localcolabfold

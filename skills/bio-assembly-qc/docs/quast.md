@@ -13,9 +13,9 @@ Release/source: https://github.com/ablab/quast/releases/tag/quast_5.3.0
 
 ## Installation
 
-**Via Conda/Pixi:**
+**Via Pixi:**
 ```bash
-conda install -c bioconda quast=5.3.0
+pixi add "quast=5.3.0"
 ```
 
 **Via pip:**

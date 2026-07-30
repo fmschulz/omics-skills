@@ -26,9 +26,9 @@ wget https://github.com/shenwei356/taxonkit/releases/download/v0.20.0/taxonkit_l
 tar -zxvf taxonkit_linux_amd64.tar.gz
 ```
 
-### Conda/Bioconda
+### Pixi
 ```bash
-conda install -c bioconda taxonkit
+pixi add taxonkit
 ```
 
 ### Go Install

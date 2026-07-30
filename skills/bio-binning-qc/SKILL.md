@@ -33,7 +33,7 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 | Validate inputs | Confirm required inputs and reference data exist. |
 | Review outputs | Inspect reports and QC gates before proceeding. |
 | Tool docs | See `docs/README.md`. |
-| Build normalized tables | `uv run --no-project python scripts/build_bin_qc_tables.py --routing domain_routing.tsv --checkm2 checkm2.tsv --gunc gunc.tsv --eukcc eukcc.tsv --gtdbtk gtdbtk.tsv --out-dir results/bio-binning-qc` |
+| Build normalized tables | `uv run --script scripts/build_bin_qc_tables.py --routing domain_routing.tsv --checkm2 checkm2.tsv --gunc gunc.tsv --eukcc eukcc.tsv --gtdbtk gtdbtk.tsv --out-dir results/bio-binning-qc` |
 
 ## Input Requirements
 

@@ -72,7 +72,7 @@ new: ">seq1|Virus|protein"
 | Standardize headers | Define deterministic transformation rules and preserve original-to-new ID mapping. |
 | Merge or deduplicate | Decide whether duplicates are removed by ID, sequence, or both, then report what changed. |
 | Validate output | Re-count records, verify FASTA syntax, and write database statistics. |
-| Run the bundled curator | `uv run --no-project python scripts/curate_fasta.py input.fasta --output curated.fasta --prefix REF --deduplicate both` |
+| Run the bundled curator | `uv run --script scripts/curate_fasta.py input.fasta --output curated.fasta --prefix REF --deduplicate both` |
 
 ## Instructions
 
@@ -208,7 +208,7 @@ def extract_cds_proteins(input_gb: str, output_faa: str):
 ## Examples
 
 ```bash
-uv run --no-project python scripts/curate_fasta.py \
+uv run --script scripts/curate_fasta.py \
   fixtures/mixed-headers.fasta \
   --output curated.fasta \
   --prefix REF \

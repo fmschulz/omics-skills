@@ -85,7 +85,6 @@ Install non-BBTools dependencies via conda/mamba or pixi:
 docker pull bryce911/bbtools:39.85
 
 # Other tools
-conda install -c bioconda minimap2 chopper filtlong porechop_abi
 pixi add minimap2 chopper filtlong porechop_abi
 ```
 

@@ -15,7 +15,7 @@ Infernal applies covariance models (CMs) to search nucleotide sequences for RNA 
 ## Installation
 
 ```bash
-conda install -c bioconda infernal
+pixi add infernal
 
 # Rfam.cm covariance model library
 wget https://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.cm.gz

@@ -284,10 +284,9 @@ install-skills: prune-removed-skills ## Install skills to ~/.agents/skills
 			if [ -L $$target ]; then \
 				rm $$target; \
 			elif [ -e $$target ]; then \
-				backup=$$target.bak; \
-				if [ -e $$backup ]; then \
-					backup=$$target.bak.$$(date +%s); \
-				fi; \
+				backup_dir=$(AGENTS_CATALOG_DIR)/previous-skills; \
+				mkdir -p $$backup_dir; \
+				backup=$$backup_dir/$$basename.$$(date +%s%N); \
 				mv $$target $$backup; \
 			fi; \
 			if [ "$(INSTALL_METHOD)" = "symlink" ]; then \
@@ -616,7 +615,7 @@ status: ## Show installation status
 
 test: ## Test repository structure and installation
 	@$(SCRIPTS_DIR)/test-install.sh
-	@uv run --no-project --with pytest --with requests pytest -q
+	@uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
 
 ##@ Maintenance
 

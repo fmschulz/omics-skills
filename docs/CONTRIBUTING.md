@@ -15,7 +15,7 @@ make install        # symlink install, so edits apply immediately
 
 ## Adding a Skill
 
-1. Create `skills/your-skill-name/SKILL.md` following the format and naming rules in AGENTS.md. Put long tool notes, examples, and literature summaries in `docs/`, `examples/`, `references/`, or `summaries/` subdirectories and link them from `SKILL.md` with relative paths.
+1. Create `skills/your-skill-name/SKILL.md` following the format and naming rules in AGENTS.md. Put long tool notes, examples, and reference material in `docs/`, `examples/`, or `references/` subdirectories and link them from `SKILL.md` with relative paths.
 2. Register the skill in the owning agent file under `Mandatory Skill Usage`, the `Workflow Decision Tree`, and `Task Recognition Patterns`.
 3. Rebuild the catalog: `python3 scripts/skill_index.py build`. Commit the regenerated `catalog/catalog.json` — CI rejects a stale catalog.
 4. Add a routing case to `tests/routing_benchmark.yaml` when the skill should be discoverable from natural language, then refresh `docs/routing_baseline.json` only after reviewing the benchmark delta.

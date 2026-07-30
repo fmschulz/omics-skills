@@ -50,10 +50,10 @@ cd interproscan-5.77-108.0
 python3 setup.py -f interproscan.properties
 ```
 
-### Conda/Bioconda
+### Pixi
 
 ```bash
-conda install -c bioconda interproscan
+pixi add interproscan
 ```
 
 ### One-time initialization after install

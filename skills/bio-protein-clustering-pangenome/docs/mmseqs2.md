@@ -13,9 +13,9 @@ Release/source: https://github.com/soedinglab/MMseqs2; https://mmseqs.com/latest
 
 ## Installation
 
-### Conda (Recommended)
+### Pixi
 ```bash
-conda install -c conda-forge -c bioconda mmseqs2
+pixi add mmseqs2
 ```
 
 ### Homebrew

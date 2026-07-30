@@ -21,7 +21,7 @@ most often skipped and most often responsible for wrong conclusions.
 Use the versioned evidence driver after the homology, context, and tree tools have produced their normalized TSVs:
 
 ```bash
-uv run --no-project python skills/bio-interdomain-hgt/scripts/run_hgt_evidence.py \
+uv run --script skills/bio-interdomain-hgt/scripts/run_hgt_evidence.py \
   forward_hits.tsv --arbiter-hits arbiter_hits.tsv --reciprocal reciprocal.tsv \
   --context context.tsv --trees trees.tsv --sampling-depth sampling_depth.tsv \
   --databases databases.json --hypotheses hypotheses.tsv --reflections reflections.tsv \
@@ -136,8 +136,7 @@ explicitly — do not silently substitute a non-comprehensive database.
 - Lineage x function matrix; transfer-direction tallies; **normalize per-lineage
   counts by collection sampling depth** (control for reference bias before claiming a
   lineage is enriched).
-- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group;
-  see `summaries/` for entry-point references.
+- Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group.
 - Produce an interesting-findings table: evidence, confidence, comparison baseline,
   follow-up test.
 

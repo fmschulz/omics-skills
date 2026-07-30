@@ -75,6 +75,7 @@ def load_review(path: Path) -> Dict[str, Any]:
             f"duplicates={duplicate_categories}, missing={missing_categories}, extra={extra_categories}"
         )
 
+    submitted_total = float(data["overall"]["total_score_100"])
     total = 0.0
     for item in score_items:
         weight = expected_weights[item["category"]]
@@ -82,7 +83,10 @@ def load_review(path: Path) -> Dict[str, Any]:
         item["weight"] = weight
         item["weighted_points"] = round(points, 10)
         total += points
-    data["overall"]["total_score_100"] = round(total, 10)
+    raw_total = round(total, 10)
+    data["overall"]["raw_weighted_score_100"] = raw_total
+    data["overall"]["penalty_points"] = round(max(0.0, raw_total - submitted_total), 10)
+    data["overall"]["total_score_100"] = min(raw_total, submitted_total)
     return data
 
 
@@ -104,13 +108,15 @@ def red_flag_count(data: Dict[str, Any]) -> int:
     return len(data.get("red_flags", []))
 
 
-def sort_key(data: Dict[str, Any]) -> Tuple[float, float, float, float, float]:
+def sort_key(data: Dict[str, Any]) -> Tuple[float, float, float, float, float, float, float]:
     total = float(data["overall"].get("total_score_100", 0))
     task = category_score(data, ("task_completion",))
     repro = category_score(data, ("reproducibility",))
     validation = category_score(data, ("validation_robustness", "benchmarking"))
+    limitations = category_score(data, ("limitations_and_uncertainty",))
+    writing = category_score(data, ("communication", "prose_quality"))
     penalties = gate_fail_count(data) + red_flag_count(data)
-    return (total, task, repro, validation, -penalties)
+    return (total, -penalties, repro, task, validation, limitations, writing)
 
 
 def format_markdown(reviews: List[Tuple[Path, Dict[str, Any]]]) -> str:

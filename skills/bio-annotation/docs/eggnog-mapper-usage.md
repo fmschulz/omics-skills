@@ -21,11 +21,8 @@ eggNOG-mapper is a tool for fast genome-wide functional annotation through ortho
 ### Conda/Mamba (Recommended)
 
 ```bash
-# Using mamba (faster)
-mamba install -c bioconda eggnog-mapper
-
-# Using conda
-conda install -c bioconda eggnog-mapper
+# Add to the project Pixi environment
+pixi add eggnog-mapper
 ```
 
 ### Pip Installation

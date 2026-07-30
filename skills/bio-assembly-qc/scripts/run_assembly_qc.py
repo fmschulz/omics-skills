@@ -75,8 +75,23 @@ def plan(rows: list[dict[str, str]], out: Path) -> list[dict[str, object]]:
     return steps
 
 
-def complete(step: dict[str, object]) -> bool:
+def completion_marker(step: dict[str, object]) -> Path:
+    return Path(step["outputs"][0]).parent / f"{step['stage']}.done"
+
+
+def outputs_complete(step: dict[str, object]) -> bool:
     return all(Path(item).is_file() and Path(item).stat().st_size > 0 for item in step["outputs"])
+
+
+def complete(step: dict[str, object]) -> bool:
+    return completion_marker(step).is_file() and outputs_complete(step)
+
+
+def mark_complete(step: dict[str, object]) -> None:
+    marker = completion_marker(step)
+    partial = marker.with_suffix(marker.suffix + ".partial")
+    partial.write_text("complete\n", encoding="utf-8")
+    partial.replace(marker)
 
 
 def execute(steps: list[dict[str, object]]) -> None:
@@ -84,6 +99,7 @@ def execute(steps: list[dict[str, object]]) -> None:
         if complete(step):
             step["status"] = "reused"
             continue
+        completion_marker(step).unlink(missing_ok=True)
         for output in step["outputs"]:
             Path(output).parent.mkdir(parents=True, exist_ok=True)
         if step["stage"] == "normalize":
@@ -102,8 +118,9 @@ def execute(steps: list[dict[str, object]]) -> None:
             result = subprocess.run(step["command"], check=False)
             if result.returncode:
                 raise RuntimeError(f"{step['stage']} command failed with exit {result.returncode}")
-        if not complete(step):
+        if not outputs_complete(step):
             raise RuntimeError(f"{step['stage']} did not produce all declared outputs")
+        mark_complete(step)
         step["status"] = "completed"
 
 

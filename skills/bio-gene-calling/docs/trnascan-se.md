@@ -28,8 +28,8 @@ cd infernal-1.1.5
 make
 make install
 
-# Install tRNAscan-SE via conda (recommended)
-conda install -c bioconda trnascan-se
+# Install tRNAscan-SE in the project Pixi environment
+pixi add trnascan-se
 
 # From source
 git clone https://github.com/UCSC-LoweLab/tRNAscan-SE.git

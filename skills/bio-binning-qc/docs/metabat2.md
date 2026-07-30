@@ -14,11 +14,9 @@ Release/source: https://bitbucket.org/berkeleylab/metabat/src/v2.18/
 
 ## Installation
 
-**Conda (recommended):**
+**Pixi:**
 ```bash
-conda install -c bioconda metabat2
-# or
-mamba install -c bioconda metabat2
+pixi add metabat2
 ```
 
 **From source:**

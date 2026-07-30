@@ -15,10 +15,9 @@ Release/source: https://github.com/chklovski/CheckM2/releases/tag/1.1.0
 
 ## Installation
 
-**Conda/Mamba (recommended):**
+**Pixi:**
 ```bash
-mamba create -n checkm2 -c bioconda -c conda-forge checkm2
-conda activate checkm2
+pixi add checkm2
 ```
 
 **From source:**

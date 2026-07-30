@@ -12,9 +12,9 @@ Release/source: https://github.com/mikolmogorov/Flye/releases/tag/2.9.6
 
 ## Installation
 
-**Via Conda/Pixi:**
+**Via Pixi:**
 ```bash
-conda install -c bioconda flye=2.9.6
+pixi add "flye=2.9.6"
 ```
 
 **Via pip:**

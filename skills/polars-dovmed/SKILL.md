@@ -264,7 +264,7 @@ Ranking priority:
 | Details endpoint | `--details ... --corpus pmc|biorxiv` |
 | Missing DOI/year | `--crossref-metadata` or `skills/crossref-lookup/scripts/lookup --title ...` |
 | Local fallback | `--execution-mode local --local-parquet-pattern ...` |
-| Quick verification | `uv run --no-project python skills/polars-dovmed/scripts/smoke_test.py --run-dir tasks/polars-dovmed-runs/smoke-test` |
+| Quick verification | `uv run --script skills/polars-dovmed/scripts/smoke_test.py --run-dir tasks/polars-dovmed-runs/smoke-test` |
 | Timing | shell `time -p`, helper `elapsed_ms`, and timeout status |
 
 ## Input Requirements

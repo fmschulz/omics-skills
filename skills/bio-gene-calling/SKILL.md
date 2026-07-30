@@ -12,7 +12,7 @@ Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.
 1. Validate the assembly and tool manifests, then generate a per-assembly execution plan:
 
    ```bash
-   uv run --no-project python skills/bio-gene-calling/scripts/run_gene_calling.py \
+   uv run --script skills/bio-gene-calling/scripts/run_gene_calling.py \
      assemblies.tsv --tool-manifest tool-manifest.json \
      --out results/bio-gene-calling
    # Inspect run_manifest.json, then execute or resume the same plan:

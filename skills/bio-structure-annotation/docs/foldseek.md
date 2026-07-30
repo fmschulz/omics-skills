@@ -24,9 +24,9 @@ wget https://mmseqs.com/foldseek/foldseek-osx-universal.tar.gz
 tar xvzf foldseek-osx-universal.tar.gz
 ```
 
-### Conda
+### Pixi
 ```bash
-conda install -c conda-forge -c bioconda foldseek
+pixi add foldseek
 ```
 
 ## Key Commands

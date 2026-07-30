@@ -1,6 +1,6 @@
 # Skills
 
-Each skill is a directory under `skills/` with a required `SKILL.md`. The frontmatter gives the name and short description; the body gives instructions, inputs, outputs, quality gates, and references. Optional subdirectories hold examples, scripts, tool notes, literature summaries, and reusable assets.
+Each directory under `skills/` requires a `SKILL.md`. Its frontmatter gives the name and short description. Its body gives instructions, inputs, outputs, quality gates, and references. Optional subdirectories hold examples, scripts, tool notes, reference material, and reusable assets.
 
 The table below is a reader-facing map. The source `SKILL.md` files are still canonical.
 

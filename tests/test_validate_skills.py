@@ -98,6 +98,84 @@ class ValidateSkillTests(unittest.TestCase):
             errors = validate_skills.validate_skill(skill_dir)
             self.assertTrue(any("broken local Markdown link" in error for error in errors))
 
+    def test_broken_link_in_supplementary_markdown_is_flagged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = _write_skill(Path(tmp), "linked-skill")
+            docs = skill_dir / "docs"
+            docs.mkdir()
+            (docs / "guide.md").write_text(
+                "[Missing](missing-reference.md)\n",
+                encoding="utf-8",
+            )
+            errors = validate_skills.validate_skill(skill_dir)
+            self.assertTrue(any("docs/guide.md" in error for error in errors))
+
+    def test_folded_yaml_description_cannot_bypass_length_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = _write_skill(Path(tmp), "folded-skill")
+            skill_md = skill_dir / "SKILL.md"
+            text = skill_md.read_text(encoding="utf-8")
+            long_description = "Use when testing. " + ("long description " * 30)
+            text = text.replace(
+                "description: Test behavior. Use when testing a skill.",
+                "description: >-\n  " + long_description,
+            )
+            skill_md.write_text(text, encoding="utf-8")
+            errors = validate_skills.validate_skill(skill_dir)
+            self.assertTrue(any("description over" in error for error in errors))
+
+    def test_documented_command_requires_existing_script(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = _write_skill(Path(tmp), "command-skill")
+            skill_md = skill_dir / "SKILL.md"
+            skill_md.write_text(
+                skill_md.read_text(encoding="utf-8")
+                + "\n```bash\nuv run --script scripts/missing.py\n```\n",
+                encoding="utf-8",
+            )
+            errors = validate_skills.validate_skill(skill_dir)
+            self.assertTrue(any("command script is missing" in error for error in errors))
+
+    def test_documented_command_must_load_pep723_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = _write_skill(Path(tmp), "command-skill")
+            scripts = skill_dir / "scripts"
+            scripts.mkdir()
+            (scripts / "driver.py").write_text(
+                "# /// script\n"
+                "# dependencies = [\n"
+                '#   "jsonschema==4.26.0",\n'
+                "# ]\n"
+                "# ///\n",
+                encoding="utf-8",
+            )
+            skill_md = skill_dir / "SKILL.md"
+            skill_md.write_text(
+                skill_md.read_text(encoding="utf-8")
+                + "\n```bash\nuv run --no-project python scripts/driver.py\n```\n",
+                encoding="utf-8",
+            )
+            errors = validate_skills.validate_skill(skill_dir)
+            self.assertTrue(any("bypasses PEP 723" in error for error in errors))
+
+    def test_output_contract_requires_script_literal_or_annotation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = _write_skill(Path(tmp), "output-skill")
+            (skill_dir / "scripts").mkdir()
+            (skill_dir / "scripts" / "driver.py").write_text(
+                'OUTPUT = "real.tsv"\n',
+                encoding="utf-8",
+            )
+            skill_md = skill_dir / "SKILL.md"
+            text = skill_md.read_text(encoding="utf-8").replace(
+                "## Output\n\ncontent",
+                "## Output\n\n- `real.tsv`\n- `phantom.json`",
+            )
+            skill_md.write_text(text, encoding="utf-8")
+            errors = validate_skills.validate_skill(skill_dir)
+            self.assertTrue(any("phantom.json" in error for error in errors))
+            self.assertFalse(any("real.tsv" in error for error in errors))
+
     def test_validate_all_aggregates_across_dirs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -173,6 +251,37 @@ class ValidateSupplementaryDocsTests(unittest.TestCase):
             errors = validate_supplementary_docs.validate_all(root)
             self.assertTrue(any("reference/sources.md" in error for error in errors))
             self.assertTrue(any("reference/tools.md" in error for error in errors))
+
+    def test_banned_conda_command_is_flagged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            docs = root / "skills" / "demo-skill" / "docs"
+            docs.mkdir(parents=True)
+            (docs / "install.md").write_text(
+                "conda install -c bioconda demo\n",
+                encoding="utf-8",
+            )
+            errors = validate_supplementary_docs.validate_all(root)
+            self.assertTrue(any("banned conda/mamba" in error for error in errors))
+
+    def test_pinned_pixi_gate_requires_manifest_and_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill = root / "skills" / "demo-skill"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text(
+                "# Demo\n\n## Quality Gates\n\n- [ ] The existing `pixi.lock` is current.\n",
+                encoding="utf-8",
+            )
+            errors = validate_supplementary_docs.validate_all(root)
+            self.assertTrue(any("pixi.toml and pixi.lock" in error for error in errors))
+            (skill / "pixi.toml").write_text("[workspace]\nname='demo'\n", encoding="utf-8")
+            (skill / "pixi.lock").write_text("version: 6\n", encoding="utf-8")
+            self.assertEqual(validate_supplementary_docs.validate_all(root), [])
+
+    def test_real_repo_supplementary_docs_pass(self) -> None:
+        errors = validate_supplementary_docs.validate_all(REPO_ROOT)
+        self.assertEqual(errors, [], f"shipped supplementary docs failed validation: {errors}")
 
 
 if __name__ == "__main__":

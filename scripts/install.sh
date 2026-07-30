@@ -158,7 +158,9 @@ install_skills() {
                 rm "$target"
             elif [ -d "$target" ]; then
                 echo -e "  ${YELLOW}Warning: $basename exists (backing up)${NC}"
-                mv "$target" "$target.bak"
+                backup_dir="$AGENTS_CATALOG_DIR/previous-skills"
+                mkdir -p "$backup_dir"
+                mv "$target" "$backup_dir/$basename.$(date +%s%N)"
             fi
 
             if [ "$INSTALL_METHOD" = "symlink" ]; then

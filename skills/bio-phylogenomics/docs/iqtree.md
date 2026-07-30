@@ -16,8 +16,8 @@ Release/source: https://github.com/iqtree/iqtree3/releases/tag/v3.1.2
 
 ### Package Managers
 ```bash
-# Conda
-conda install -c bioconda iqtree
+# Pixi
+pixi add iqtree
 iqtree3 --version
 
 # macOS Homebrew
