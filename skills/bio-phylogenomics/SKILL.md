@@ -9,6 +9,8 @@ Build marker gene alignments and phylogenetic trees.
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Validate marker/reference manifests and create a checksum-gated, fixed-seed execution plan:
 
    ```bash
@@ -38,15 +40,6 @@ Build marker gene alignments and phylogenetic trees.
 9. **Fetch and persist the close-relative genomes and proteomes** that downstream comparative analyses will use. Save under `results/bio-phylogenomics/relatives/{accession}/genome.fna` and `proteins.faa`, plus `relatives_manifest.tsv` recording accession, source DB, taxonomy, genome size, gene count, and the reason for inclusion. If a relative cannot be downloaded, record the failure explicitly. Without this artifact, the comparative axes downstream cannot run.
 10. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`.
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
-
 ## Input Requirements
 
 Prerequisites:
@@ -65,6 +58,7 @@ Inputs:
 - results/bio-phylogenomics/relatives_manifest.tsv
 - results/bio-phylogenomics/phylo_report.md
 - results/bio-phylogenomics/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
 
 ## Quality Gates
 
@@ -79,19 +73,3 @@ Inputs:
 - [ ] Closest relatives are reported with support/distance metrics or uncertainty is stated.
 - [ ] Tree interpretation distinguishes well-supported nearest relatives from weakly supported placements.
 - [ ] `relatives_manifest.tsv` is populated and the matching genome/proteome files are present on disk (or each failure is recorded with a reason).
-
-## Examples
-
-### Example 1: Expected input layout
-
-```text
-markers.faa (marker genes) or alignments.fasta
-```
-
-## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.

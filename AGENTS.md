@@ -114,15 +114,14 @@ description: One sentence describing what this skill does. Include when to use i
 Brief overview of what the skill does.
 
 ## Instructions
-## Quick Reference
 ## Input Requirements
 ## Output
 ## Quality Gates
-## Examples
-## Troubleshooting
 ```
 
-`scripts/validate-skills.py` enforces: the frontmatter `name` matches the directory name and is a valid kebab-case slug (≤64 chars); the description exists, stays ≤400 characters, contains an explicit "use when" / "use for" / "trigger when" phrase, and fits the 6500-character repository-wide description budget; the seven `##` sections above are present; the file stays ≤500 lines; and every relative Markdown link resolves on disk.
+Those four `##` sections are required and each must carry content. `## Quick Reference`, `## Examples`, `## Troubleshooting`, and `## Non-Goals` are optional: add one when it says something the required sections do not.
+
+`scripts/validate-skills.py` enforces: the frontmatter `name` matches the directory name and is a valid kebab-case slug (≤64 chars); the description exists, stays ≤400 characters, contains an explicit "use when" / "use for" / "trigger when" phrase, and fits the 6500-character repository-wide description budget; the four required `##` sections are present and none is empty; the file stays ≤500 lines; and every relative Markdown link resolves on disk.
 
 ### Context efficiency
 
@@ -133,6 +132,14 @@ Skills are loaded on demand. To minimize context usage:
 - **Use progressive disclosure** — reference `docs/`, `references/`, and `examples/` files
 - **Link explicitly** — include full relative paths (e.g., `[Tool Docs](docs/tool-name.md)`); the validator flags broken links, and unlinked files are invisible to agents
 - For supplementary tool/source guides, include the `Last verified`, `Tool version/release checked`, `Official docs/manual`, and `Release/source` provenance lines near the top; `scripts/validate-supplementary-docs.py` enforces them.
+
+### Driver stdout contract
+
+Workflow driver scripts (the `run_*.py` / `build_*_artifacts.py` entry points documented in the bio-* skills) print one JSON envelope as the last line of stdout when they finish. Tools launched under `--execute` may write to stdout first, so read the last line.
+
+- Success: `{"ok": true, "skill": "<skill>", "out": "<abs dir>", "manifest": "<abs run_manifest.json>", "warnings": []}`. Drop `manifest` when the driver writes none (the pangenome driver and `--normalize-only` runs).
+- Driver-detected failure: `{"ok": false, "skill": "<skill>", "error": {"code": "<exception class>", "message": "..."}}`, the same message on stderr, exit code 2.
+- argparse usage errors keep their existing behavior.
 
 ---
 

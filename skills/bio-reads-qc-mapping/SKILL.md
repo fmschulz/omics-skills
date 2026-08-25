@@ -9,6 +9,8 @@ Ingest, QC, and map reads with reproducible outputs. Use for raw read processing
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Parse and validate `sample_sheet.tsv` against `schemas/sample-sheet.schema.json`. Use the executable driver for both planning and restartable execution:
 
    ```bash
@@ -30,15 +32,6 @@ Ingest, QC, and map reads with reproducible outputs. Use for raw read processing
    - Long reads, CPU: `minimap2` v2.30+. AVX-512 hardware: `mm2-fast` as a drop-in replacement (~1.8× speedup). GPU node available: `mm2-gb` or `mm2-ax` for CUDA-accelerated long-read alignment.
 5. Record the tool, version, and any GPU device used in the run log.
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
-
 ## Input Requirements
 
 Prerequisites:
@@ -56,6 +49,8 @@ Inputs:
 - results/bio-reads-qc-mapping/mapping_stats.tsv
 - results/bio-reads-qc-mapping/coverage.tsv
 - results/bio-reads-qc-mapping/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
+- Sample sheet contract: [schemas/sample-sheet.schema.json](schemas/sample-sheet.schema.json)
 
 ## Quality Gates
 
@@ -71,23 +66,9 @@ Inputs:
 
 ## Examples
 
-### Example 1: Expected input layout
-
-```text
-sample_sheet.tsv
-reads/*.fastq.gz
-reference.fasta (optional)
-```
-
 The runnable fixture at `fixtures/sample_sheet.tsv` covers paired-end, single-end, and long reads.
 
 ## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.
 
 **Issue**: `Pychopper` failed during report/stat plotting but output FASTQs exist
 **Solution**: Treat this as a recoverable post-processing failure. Confirm the classified FASTQ is non-empty and readable, fix any misleading `.gz` suffix, run `seqkit stats`, and resume downstream steps from the existing `Pychopper` outputs.

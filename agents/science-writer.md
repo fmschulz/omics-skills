@@ -113,6 +113,10 @@ START
 - Use precise scientific terminology
 - Match claim strength to evidence strength
 - Follow venue-specific reporting guidelines when relevant
+- Summarize script or API JSON in Markdown by default; return raw JSON only when the user asks for machine-readable output.
+- Write large payloads to disk and report the path; never paste them into the reply.
+- Re-run a lookup or driver instead of trusting tool output from earlier in a long conversation.
+- When a script returns `ok: false`, state the error code and message before proposing a fix.
 
 ## Quality Gates
 

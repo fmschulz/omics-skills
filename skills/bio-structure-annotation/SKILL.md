@@ -9,6 +9,8 @@ Structure prediction and structure-based annotation.
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Run a fast embedding screen with TM-Vec to triage candidate proteins by remote homology before incurring structure-prediction cost.
 2. Predict structures on a GPU node. AlphaFold3 is intentionally not part of this stack (non-commercial license, large VRAM footprint, no clear quality gap for the workflows in this repo). Use:
    - **Boltz-2** (MIT license; CUDA; NVIDIA cuEquivariance kernels) as the default predictor — joint structure-and-affinity, ~1000× faster than FEP for binding-affinity estimation, comparable accuracy to AF3 on benchmarked complexes.
@@ -25,10 +27,6 @@ Structure prediction and structure-based annotation.
 
 | Task | Action |
 |------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
 | Validate and plan | `uv run --script scripts/run_structure_annotation.py ...` |
 
 ## Input Requirements
@@ -56,19 +54,3 @@ Inputs:
 - [ ] Verify Foldseek databases exist under the reference root.
 - [ ] GPU Foldseek searches use a database produced by `makepaddedseqdb`.
 - [ ] Public MSA upload has explicit user approval recorded before `--use_msa_server` is used.
-
-## Examples
-
-### Example 1: Expected input layout
-
-```text
-proteins.faa (FASTA protein sequences)
-```
-
-## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.

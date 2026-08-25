@@ -137,8 +137,10 @@ explicitly — do not silently substitute a non-comprehensive database.
   counts by collection sampling depth** (control for reference bias before claiming a
   lineage is enriched).
 - Literature context (`/polars-dovmed`, `/biorxiv-search`) for the inferred group.
-- Produce an interesting-findings table: evidence, confidence, comparison baseline,
-  follow-up test.
+- Produce an interesting-findings table (evidence, confidence, comparison baseline,
+  follow-up test) ordered deterministically from `hgt_candidates.tsv`: `status` first
+  (`confirmed`, then `candidate`, then `rejected`), then `bitscore` descending with
+  blank or non-numeric values last, then `query_protein` and `recipient_locus` ascending.
 
 ## Quick Reference
 
@@ -164,6 +166,8 @@ explicitly — do not silently substitute a non-comprehensive database.
 - results/bio-interdomain-hgt/lineage_function_matrix.tsv
 - results/bio-interdomain-hgt/phylogeny/<gene>/          (alignment, tree, nesting call)
 - results/bio-interdomain-hgt/hgt_report.md + logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
+- Artifact contract: [schemas/hgt-evidence.schema.json](schemas/hgt-evidence.schema.json)
 
 ## Examples
 
@@ -196,6 +200,13 @@ best-matches archaea (donor) can be polarized against eukaryotic and viral alter
 - [ ] Phylogeny includes all-domain homologs; the virus<->virus alternative is explicitly tested, not assumed away.
 - [ ] Per-lineage counts normalized for reference sampling depth before enrichment claims.
 - [ ] Contamination-prone hits (recipient genome with high assembly contamination, or donor-dominated contig) flagged, not silently kept.
+
+## Non-Goals
+
+- No transfer direction without both a reciprocal best hit and phylogenetic nesting in the expected clade. Tied and deep-homology cases stay `ambiguous`.
+- No HGT call from single-domain hits. An arbiter that does not span every candidate donor domain cannot polarize anything.
+- No dating of transfer events. Identity separates recent from ancient; it does not give an age.
+- No lineage-enrichment claim before per-lineage counts are normalized by collection sampling depth.
 
 ## Performance gotchas (hard-won)
 - `diamond blastx --sensitive` vs a 100M+ protein arbiter is far too slow at scale

@@ -12,6 +12,7 @@ import csv
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
 
 from jsonschema import ValidationError, validate
@@ -142,8 +143,12 @@ def main() -> int:
         manifest = {"schema_version": "1.0", "resources": resources["resources"], "hypothesis_count": len(hypotheses), "reflection_stages": stages, "comparative_artifacts": list(COMPARATIVE)}
         validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
         (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-viromics", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, json.JSONDecodeError, ValidationError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-viromics", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

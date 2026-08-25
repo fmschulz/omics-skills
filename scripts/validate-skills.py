@@ -21,12 +21,9 @@ import yaml
 
 REQUIRED_SECTIONS = [
     "## Instructions",
-    "## Quick Reference",
     "## Input Requirements",
     "## Output",
     "## Quality Gates",
-    "## Examples",
-    "## Troubleshooting",
 ]
 MAX_LINES = 500
 MAX_NAME_LENGTH = 64
@@ -274,9 +271,12 @@ def validate_skill(skill_dir: Path) -> list[str]:
         )
     elif not TRIGGER_PATTERN.search(description):
         errors.append(f"{name}: frontmatter description must say when to use the skill")
-    missing = [section for section in REQUIRED_SECTIONS if section not in text]
+    missing = [heading for heading in REQUIRED_SECTIONS if heading not in text]
     if missing:
         errors.append(f"{name}: missing sections {missing}")
+    for heading in REQUIRED_SECTIONS:
+        if heading in text and not section(text, heading).strip():
+            errors.append(f"{name}: empty section {heading}")
     line_count = len(text.splitlines())
     if line_count > MAX_LINES:
         errors.append(f"{name}: SKILL.md over {MAX_LINES} lines ({line_count})")

@@ -12,6 +12,7 @@ import csv
 import json
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 from jsonschema import ValidationError, validate
@@ -142,8 +143,12 @@ def main() -> int:
             handle.write("sample_id\tmapping_status\treference\n")
             for row in rows:
                 handle.write(f"{row['sample_id']}\t{'planned' if row['reference'] else 'not_requested'}\t{row['reference']}\n")
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-reads-qc-mapping", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError, ValidationError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-reads-qc-mapping", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

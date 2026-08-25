@@ -192,3 +192,8 @@ For tool-specific issues, consult:
 - Official documentation websites
 - Bioconda package pages
 - User communities (Biostars, Stack Overflow)
+
+## Sequence search backends
+
+- Default CPU path: DIAMOND v2.1.20+. For any search against NCBI **nr**, prefer a clustered nr database (e.g., a `clusterednr` build under `$BIO_DB_ROOT`) — it is dramatically faster than full nr at comparable sensitivity for most annotation tasks. Check whether a clusterednr build is available under the reference root; if not, build one with `diamond makedb` from a clustered FASTA (MMseqs2/CD-HIT-reduced nr) or fall back to full nr and record the choice in the run log.
+- GPU node available (CUDA Turing or newer): MMseqs2-GPU as an alternative to DIAMOND. Published benchmark: 20× faster and ~71× cheaper per query versus 128-core CPU MMseqs2, and 177–199× faster than JackHMMER iterative search for profile-equivalent workflows (Kallenborn et al., *Nature Methods* 2025, DOI: 10.1038/s41592-025-02819-8). Use `mmseqs easy-search` or `easy-taxonomy` with the `--gpu` flag.

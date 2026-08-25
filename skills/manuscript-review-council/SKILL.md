@@ -106,6 +106,7 @@ The council definition lives in local files:
 - A prioritized major and minor revision list
 - Specific questions for the authors
 - Optional decision letter, rebuttal assessment, or version-delta summary
+- Artifact contract: [schemas/review-bundle.schema.json](schemas/review-bundle.schema.json)
 
 ## Quality Gates
 

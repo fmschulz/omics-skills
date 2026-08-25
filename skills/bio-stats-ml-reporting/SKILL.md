@@ -9,6 +9,8 @@ Aggregate results, train ML models, and produce reports with validated reference
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Join outputs in DuckDB v1.1+ and build feature tables. Arrow / DuckLake integration is the recommended bridge into ML pipelines for large datasets.
 2. Train baseline models and evaluate with cross-validation.
    - CPU baseline: scikit-learn v1.5+ for linear/tree/clustering baselines; XGBoost v2.1.4+ for gradient boosting.
@@ -38,10 +40,6 @@ Aggregate results, train ML models, and produce reports with validated reference
 
 | Task | Action |
 |------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
 | Validate predictions | `uv run --script scripts/validate_predictions.py predictions.tsv --report validation.json --require-beats-null` |
 
 ## Input Requirements
@@ -75,20 +73,3 @@ Inputs:
 - [ ] Grouped splits have no sample or group overlap, calibration is reported,
       confounding and imbalance are quantified, and the model is compared with
       a declared null baseline.
-
-## Examples
-
-### Example 1: Expected input layout
-
-```text
-results/*.parquet or results/*.tsv
-metadata.tsv
-```
-
-## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.

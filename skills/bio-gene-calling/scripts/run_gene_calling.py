@@ -11,6 +11,7 @@ import json
 import re
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 FIELDS = ("assembly_id", "domain", "mode", "fasta")
@@ -221,8 +222,12 @@ def main() -> int:
         payload = {"schema_version": "1.0", "tools": tools, "assemblies": rows, "steps": plan}
         (args.out / "run_manifest.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         write_census(args.out / "ncRNA_census.tsv", rows, plan, args.execute)
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-gene-calling", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-gene-calling", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

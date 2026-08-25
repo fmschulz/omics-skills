@@ -37,6 +37,7 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | `arxiv-search` | Searching recent or specific arXiv preprints. | Local Markdown summaries from arXiv metadata and IDs. |
 | `biorxiv-search` | Searching bioRxiv preprints by keyword, date range, DOI, or author. | Filtered preprint shortlists with bioRxiv-native metadata. |
 | `crossref-lookup` | Validating DOIs or matching titles to citation metadata. | Crossref records, DOI matches, and bibliography cleanup evidence. |
+| `public-db-lookup` | Fetching a record from UniProt, NCBI Entrez or Datasets, MGnify, InterPro, AlphaFold DB, STRING, or ENA. | A compact JSON envelope with bounded records, counts, and an optional raw-response file. |
 | `scientific-impact-assessment` | Comparing papers, journals, or literature shortlists by influence. | OpenAlex citation counts, optional Altmetric context, and impact summaries. |
 | `pdf-to-md` | Converting papers, PDFs, or office documents into analysis-ready Markdown. | Clean Markdown and, for papers, structured article and section-audit artifacts. |
 

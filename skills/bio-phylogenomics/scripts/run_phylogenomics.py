@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 MARKER_FIELDS = ("marker_id", "fasta", "sequence_type")
@@ -158,6 +159,7 @@ def main() -> int:
     try:
         if args.normalize_only:
             normalize_tree(args.normalize_only, args.out)
+            print(json.dumps({"ok": True, "skill": "bio-phylogenomics", "out": str(args.out.resolve()), "warnings": []}))
             return 0
         if not args.markers or not args.references or args.seed <= 0:
             raise ValueError("markers, --references, and a positive --seed are required")
@@ -177,8 +179,12 @@ def main() -> int:
         if args.execute:
             execute(plan)
         (args.out / "run_manifest.json").write_text(json.dumps({"schema_version": "1.0", "seed": args.seed, "tree_tool": args.tree_tool, "markers": markers, "references": references, "steps": plan}, indent=2) + "\n")
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-phylogenomics", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-phylogenomics", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

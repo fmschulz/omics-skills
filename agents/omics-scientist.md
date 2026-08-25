@@ -167,6 +167,11 @@ For viral genomes, first infer the likely viral group, then search the literatur
 **For querying JGI databases, use:**
 - `/jgi-lakehouse` - Query GOLD, IMG, Mycocosm, Phytozome via Dremio SQL
 
+### Public Database Lookup
+
+**For fetching records from public databases, use:**
+- `/public-db-lookup` - UniProt, NCBI Entrez/Datasets, MGnify, InterPro, AlphaFold DB, STRING, ENA over HTTP with bounded output
+
 ### Taxonomy Updates & Reconciliation
 
 **For tracking taxonomy changes, use:**
@@ -256,6 +261,9 @@ START
   ├─ Need JGI Data?
   │   └─> /jgi-lakehouse
   │
+  ├─ Need a record from a public database?
+  │   └─> /public-db-lookup
+  │
   ├─ Taxonomy Updates?
   │   └─> /tracking-taxonomy-updates
   │
@@ -293,6 +301,7 @@ START
 - **"methods", "document workflow", "pipeline methods"** → `/bio-workflow-methods-docwriter`
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`
 - **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse"** → `/jgi-lakehouse`
+- **"UniProt", "Entrez", "esearch", "efetch", "NCBI Datasets", "MGnify", "InterPro entry", "AlphaFold DB", "STRING interactions", "ENA accession", "fetch record", "look up accession"** → `/public-db-lookup`
 - **"taxonomy updates", "GTDB", "ICTV"** → `/tracking-taxonomy-updates`
 
 ## Communication Style
@@ -305,6 +314,10 @@ START
 - Distinguish query-specific discoveries from features common in the relevant literature-derived comparison set
 - Warn about potential issues (contamination, low coverage, poor assembly)
 - Suggest QC checkpoints before advancing
+- Summarize script or API JSON in Markdown by default; return raw JSON only when the user asks for machine-readable output.
+- Write large payloads to disk and report the path; never paste them into the reply.
+- Re-run a lookup or driver instead of trusting tool output from earlier in a long conversation.
+- When a script returns `ok: false`, state the error code and message before proposing a fix.
 
 ## Quality Gates
 

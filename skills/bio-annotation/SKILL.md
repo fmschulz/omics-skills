@@ -24,8 +24,7 @@ Functional annotation and taxonomy inference from sequence homology.
 5. Run InterProScan for domain/family annotation.
 6. Run eggNOG-mapper v2.1.13+ for orthology-based annotation.
 7. Run sequence-vs-database search and resolve taxonomy with TaxonKit v0.20.0+ (required for the March 2025 NCBI rank update that replaces "superkingdom" with "domain" and adds "realm" for viruses).
-   - Default CPU path: DIAMOND v2.1.20+. For any search against NCBI **nr**, prefer a clustered nr database (e.g., a `clusterednr` build under `$BIO_DB_ROOT`) — it is dramatically faster than full nr at comparable sensitivity for most annotation tasks. Check whether a clusterednr build is available under the reference root; if not, build one with `diamond makedb` from a clustered FASTA (MMseqs2/CD-HIT-reduced nr) or fall back to full nr and record the choice in the run log.
-   - GPU node available (CUDA Turing or newer): MMseqs2-GPU as an alternative to DIAMOND. Published benchmark: 20× faster and ~71× cheaper per query versus 128-core CPU MMseqs2, and 177–199× faster than JackHMMER iterative search for profile-equivalent workflows (Kallenborn et al., *Nature Methods* 2025, DOI: 10.1038/s41592-025-02819-8). Use `mmseqs easy-search` or `easy-taxonomy` with the `--gpu` flag.
+   Backend choice (DIAMOND, clustered nr, MMseqs2-GPU): see [docs/README.md](docs/README.md#sequence-search-backends).
 8. For domain-specific taxonomy after QuickClade:
    - Bacteria/Archaea -> run GTDB-Tk when genome/MAG-level sequence is available and cross-check NCBI/DIAMOND lineage assignments.
    - Viral/phage -> route to `/bio-viromics`; use PHROG/NCVOG markers and vConTACT3 only for phage/prokaryotic-virus contexts.
@@ -38,16 +37,7 @@ Functional annotation and taxonomy inference from sequence homology.
 13. For exploratory work, read the literature-derived analysis playbook for the inferred organism or virus group before deciding what to flag.
 14. Mine the inventory for discovery candidates relative to that playbook: expected features, missing expected features, rare or expanded families, unusual combinations, annotation/taxonomy conflicts, and high-value unknowns.
 15. For specialized inputs such as viruses, organelles, symbionts, pathogens, or poorly characterized lineages, use the feature classes and outlier dimensions reported in the relevant literature rather than a fixed global checklist.
-16. Rank discovery candidates by evidence strength, novelty relative to the comparison baseline, confidence, and follow-up value.
-
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
+16. Order `discovery_candidates.tsv` deterministically before reporting. Sort by `status` in the order `query_specific`, `missing_expected`, `expanded`, `contracted`; then by `fold_change` descending, with `inf` first and blank or non-numeric values last; then by `genome` and `family_id` ascending. Report the top rows in that order and keep the full table.
 
 ## Input Requirements
 
@@ -71,6 +61,8 @@ Inputs:
 - results/bio-annotation/discovery_candidates.tsv
 - results/bio-annotation/annotation_report.md
 - results/bio-annotation/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
+- Artifact contract: [schemas/artifacts.schema.json](schemas/artifacts.schema.json)
 
 ## Quality Gates
 
@@ -92,22 +84,14 @@ Inputs:
 - [ ] Discovery candidates include evidence fields: gene/protein ID, annotation source, confidence, why notable, and recommended validation.
 - [ ] Discovery candidates are justified against the literature-derived playbook and comparison baseline, not only by generic keyword matches.
 
-## Examples
+## Non-Goals
 
-### Example 1: Expected input layout
-
-```text
-proteins.faa (FASTA protein sequences).
-reference_db/ (eggNOG, InterPro, DIAMOND databases + taxdump).
-```
+- No causal or phenotype claims from homology alone. An annotation transfer is a hypothesis about function, not a demonstration of it.
+- No taxonomy for nucleotide assemblies, MAGs, or contigs outside the QuickClade route and its domain-specific follow-up (GTDB-Tk, EukCC, `/bio-viromics`).
+- No reference database downloads or builds. The databases under `$BIO_DB_ROOT` are an input; report a missing database instead of fetching it.
+- No structure-based inference. High-value unknowns go to `/bio-structure-annotation`.
 
 ## Troubleshooting
 
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
 **Issue**: InterProScan fails immediately with CLI or runtime setup errors
 **Solution**: Check `docs/interproscan-usage.md` for mutually exclusive output flags, `*` stripping, one-time `setup.py` initialization, and ProSite `PATH` requirements.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.

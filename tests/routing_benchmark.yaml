@@ -90,6 +90,17 @@
   expected_agent: omics-scientist
   expected_primary_skills: [jgi-lakehouse]
 
+- task: "fetch the UniProt record for accession P04637 and summarize it"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [public-db-lookup]
+  forbidden_skills: [jgi-lakehouse]
+
+- task: "look up MGnify biomes and studies for a soil metagenome accession"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_skills: [public-db-lookup]
+
 - task: "reconcile NCBI and GTDB taxonomy for a list of MAGs"
   platform: codex
   expected_agent: omics-scientist

@@ -45,6 +45,17 @@ class ValidateSkillTests(unittest.TestCase):
             skill_dir = _write_skill(Path(tmp), "good-skill")
             self.assertEqual(validate_skills.validate_skill(skill_dir), [])
 
+    def test_empty_required_section_is_flagged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = _write_skill(Path(tmp), "hollow-skill")
+            md = skill_dir / "SKILL.md"
+            md.write_text(
+                md.read_text(encoding="utf-8").replace("## Output\n\ncontent\n", "## Output\n"),
+                encoding="utf-8",
+            )
+            errors = validate_skills.validate_skill(skill_dir)
+            self.assertTrue(any("empty section ## Output" in error for error in errors))
+
     def test_missing_skill_md_is_flagged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             empty = Path(tmp) / "no-skill-md"

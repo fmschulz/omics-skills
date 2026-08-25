@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 62,
-    "passed": 62,
+    "total": 64,
+    "passed": 64,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -106,6 +106,7 @@
         "supporting_skills": [
           "bio-gene-calling",
           "polars-dovmed",
+          "bio-structure-annotation",
           "bio-viromics",
           "tracking-taxonomy-updates"
         ],
@@ -127,6 +128,7 @@
         "supporting_skills": [
           "bio-gene-calling",
           "polars-dovmed",
+          "bio-structure-annotation",
           "bio-viromics",
           "tracking-taxonomy-updates"
         ],
@@ -231,18 +233,21 @@
         "agent": "omics-scientist",
         "primary_skills": [
           "bio-structure-annotation",
-          "bio-annotation"
+          "bio-annotation",
+          "public-db-lookup"
         ],
         "supporting_skills": [
           "bio-gene-calling",
           "polars-dovmed",
           "bio-viromics",
           "tracking-taxonomy-updates",
-          "bio-protein-clustering-pangenome"
+          "bio-protein-clustering-pangenome",
+          "jgi-lakehouse"
         ],
         "ordered_skills": [
           "bio-gene-calling",
           "bio-structure-annotation",
+          "public-db-lookup",
           "polars-dovmed",
           "bio-annotation"
         ]
@@ -263,6 +268,40 @@
       }
     },
     {
+      "task": "fetch the UniProt record for accession P04637 and summarize it",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "public-db-lookup"
+        ],
+        "supporting_skills": [
+          "jgi-lakehouse",
+          "polars-dovmed"
+        ],
+        "ordered_skills": [
+          "public-db-lookup"
+        ]
+      }
+    },
+    {
+      "task": "look up MGnify biomes and studies for a soil metagenome accession",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "public-db-lookup"
+        ],
+        "supporting_skills": [
+          "jgi-lakehouse",
+          "polars-dovmed"
+        ],
+        "ordered_skills": [
+          "public-db-lookup"
+        ]
+      }
+    },
+    {
       "task": "reconcile NCBI and GTDB taxonomy for a list of MAGs",
       "passed": true,
       "actual": {
@@ -276,6 +315,7 @@
           "bio-assembly-qc",
           "bio-gene-calling",
           "polars-dovmed",
+          "bio-structure-annotation",
           "bio-viromics"
         ],
         "ordered_skills": [

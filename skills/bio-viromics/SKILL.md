@@ -9,6 +9,8 @@ Detect, classify, and QC viral contigs.
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Validate the pinned resource manifest and assemble the complete comparative evidence and reasoning bundle:
 
    ```bash
@@ -32,16 +34,7 @@ Detect, classify, and QC viral contigs.
 9. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed, then inspect the annotation set according to the playbook rather than a fixed global feature list.
 10. Compare each query viral genome to the literature-supported reference set. Report what matches expectations, what is missing, what is expanded, what is query-specific, and which patterns are likely artifacts.
 11. **Genome-size frontier** — for each query, compute where the genome size and gene count sit within the distribution of close relatives AND the literature-reported extremes for the inferred viral group. State percentile, distance from the group median, and whether the query approaches or exceeds known record-class sizes (cite the paper that defines that record). This applies even when the query is mid-distribution — the placement itself is the finding.
-12. Produce an interesting-findings table. If no strong discovery candidates are found, state that explicitly and list the literature-derived checks performed.
-
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
+12. Produce an interesting-findings table and order it deterministically from `genome_size_frontier.tsv`. Sort by `record_class` in the order `above_literature_max`, `within_known_range`; then by `distance_from_median` descending, with blank or non-numeric values last; then by `genome` ascending. If no strong discovery candidates are found, state that explicitly and list the literature-derived checks performed.
 
 ## Input Requirements
 
@@ -68,6 +61,8 @@ Inputs:
 - results/bio-viromics/genome_size_frontier.tsv
 - results/bio-viromics/viromics_report.md
 - results/bio-viromics/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
+- Artifact contract: [schemas/evidence-bundle.schema.json](schemas/evidence-bundle.schema.json)
 
 ## Quality Gates
 
@@ -86,18 +81,9 @@ Inputs:
 - [ ] `genome_size_frontier.tsv` places each query in the size/gene-count distribution of close relatives and the literature-defined group extremes, with cited references.
 - [ ] Report includes candidate discoveries with evidence, confidence, relative comparison, and follow-up checks, or a credible negative finding.
 
-## Examples
+## Non-Goals
 
-### Example 1: Expected input layout
-
-```text
-contigs.fasta
-```
-
-## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.
+- No host assignment beyond the evidence the run produced. Without host-linked signal from the chosen tools, the host stays unassigned.
+- No completeness or contamination claims without CheckV; detector output alone does not grade a viral genome.
+- No lifecycle calls (lytic, lysogenic, chronic) from sequence alone.
+- No phage-oriented taxonomy for groups the literature playbook does not support, and no classification while database checksums are unverified.

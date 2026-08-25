@@ -9,6 +9,8 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Compute per-sample depth/coverage with CoverM v0.7.0+ (or BBMap for short reads, minimap2 for long reads).
 2. Bin contigs with **QuickBin** through Bryce Foster's official BBTools container (`bryce911/bbtools:39.85`; record digest when pulled). QuickBin is high-fidelity, CheckM2-agnostic, and scales well on both short-read and long-read assemblies. On a GPU node, run **SemiBin2 v2.3.0+** instead — self-supervised contrastive learning with CUDA-backed PyTorch. MetaBAT2 v2.18+ is kept only as a legacy fallback for reproducing prior pipelines.
 3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible.
@@ -29,10 +31,6 @@ Perform metagenomic binning, refinement, and QC with completeness/contamination 
 
 | Task | Action |
 |------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
 | Build normalized tables | `uv run --script scripts/build_bin_qc_tables.py --routing domain_routing.tsv --checkm2 checkm2.tsv --gunc gunc.tsv --eukcc eukcc.tsv --gtdbtk gtdbtk.tsv --out-dir results/bio-binning-qc` |
 
 ## Input Requirements
@@ -68,20 +66,3 @@ Inputs:
 - [ ] Viral/virus-like bins are routed to `/bio-viromics` instead of reported as MAGs.
 - [ ] Mixed-domain bins are flagged as possible contamination/chimeras with per-contig evidence.
 - [ ] Normalized `bin_metrics.tsv` and `gtdbtk_taxonomy.tsv` cover every routed bin, including explicit viral/manual-review rows.
-
-## Examples
-
-### Example 1: Expected input layout
-
-```text
-contigs.fasta
-coverage.tsv (per-sample depth table)
-```
-
-## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.

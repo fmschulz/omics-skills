@@ -8,6 +8,7 @@ import csv
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 FIELDS = ("sample_id", "mode", "read1", "read2", "read_qc_status")
@@ -137,8 +138,12 @@ def main() -> int:
         if args.execute:
             execute(steps)
         (args.out / "run_manifest.json").write_text(json.dumps({"schema_version": "1.0", "assemblies": rows, "steps": steps}, indent=2) + "\n")
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-assembly-qc", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-assembly-qc", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

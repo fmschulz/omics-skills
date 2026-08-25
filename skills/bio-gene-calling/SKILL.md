@@ -9,6 +9,8 @@ Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Validate the assembly and tool manifests, then generate a per-assembly execution plan:
 
    ```bash
@@ -45,15 +47,6 @@ Call genes and annotate basic features for prokaryotes, viruses, and eukaryotes.
 8. Flag gene-calling anomalies relative to the inferred group and data type, including patterns that could hide interesting biology or indicate artifacts.
 9. Produce a `ncRNA_census.tsv` with columns: assembly, class (tRNA/rRNA/tmRNA/other), tool, model (Rfam accession when applicable), threshold (default/relaxed), count, notes. This file is required even when all counts are zero.
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
-
 ## Input Requirements
 
 Prerequisites:
@@ -73,6 +66,7 @@ Inputs:
 - results/bio-gene-calling/ncRNA_census.tsv
 - results/bio-gene-calling/gene_calling_evidence.tsv (when transcript evidence is used)
 - results/bio-gene-calling/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
 
 ## Quality Gates
 
@@ -89,21 +83,7 @@ Inputs:
 - [ ] For eukaryotic/protist transcript evidence, mapping summaries show which draft genome is supported and whether competing drafts have negligible, ambiguous, or substantial mapping.
 - [ ] Transcript evidence paths are recorded in a bundle with enough detail for BRAKER4 or another caller to consume them reproducibly.
 
-## Examples
-
-### Example 1: Expected input layout
-
-```text
-contigs.fasta or bins/*.fasta
-```
-
 ## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.
 
 **Issue**: ONT cDNA evidence workflow failed after `Pychopper` but classified reads exist
 **Solution**: Follow `/bio-reads-qc-mapping` recovery guidance: verify/rename plain FASTQ outputs, run lightweight stats, resume mapping/StringTie/RNA-Bloom, and keep the failure plus resume command in the methods record.

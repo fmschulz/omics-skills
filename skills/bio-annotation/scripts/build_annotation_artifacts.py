@@ -11,6 +11,7 @@ import argparse
 import csv
 import json
 import statistics
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -139,8 +140,12 @@ def main() -> int:
         }
         validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
         (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-annotation", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, ValidationError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-annotation", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

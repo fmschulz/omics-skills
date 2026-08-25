@@ -45,6 +45,9 @@ METHODS_SKILL="${METHODS_SKILL:-$HOME/.agents/skills/bio-workflow-methods-docwri
 
 - `METHODS.md` (agent-authored; workflow summary + detailed steps)
 - `run_manifest.yaml` (machine-readable run manifest)
+- Artifact contract: [schemas/run-manifest.schema.json](schemas/run-manifest.schema.json)
+- LinkML source: [schemas/workflow-run-schema.yaml](schemas/workflow-run-schema.yaml)
+- Paper-summary schema: [schemas/bio-paper-schema.yaml](schemas/bio-paper-schema.yaml)
 
 ## Quality Gates
 

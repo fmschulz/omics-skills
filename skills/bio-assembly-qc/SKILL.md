@@ -9,6 +9,8 @@ Assemble genomes/metagenomes and produce assembly QC artifacts.
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. Validate the assembly manifest and inspect a restartable execution plan before starting expensive work:
 
    ```bash
@@ -37,15 +39,6 @@ Assemble genomes/metagenomes and produce assembly QC artifacts.
    - Eukaryota -> eukaryote-aware gene/QC workflows and EukCC where bins or genomes are present.
    - Mixed/low-confidence -> split or flag contigs before domain-specific analysis.
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
-
 ## Input Requirements
 
 Prerequisites:
@@ -62,6 +55,7 @@ Inputs:
 - results/bio-assembly-qc/domain_routing.tsv
 - results/bio-assembly-qc/qc_report.html
 - results/bio-assembly-qc/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
 
 ## Quality Gates
 
@@ -79,22 +73,9 @@ Inputs:
 
 ## Examples
 
-### Example 1: Expected input layout
-
-```text
-reads/*.fastq.gz (raw reads).
-assembler choice (spades | flye).
-```
-
 Use `fixtures/assemblies.tsv` as the executable short-read, long-read, and metagenome planning fixture.
 
 ## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.
 
 **Issue**: Large ONT assembly workflow appears stalled before assembly
 **Solution**: Check whether the script is doing a raw full-file preflight (`gzip -t`, raw `seqkit stats`) instead of productive filtering. For urgent routing/assembly, replace raw full scans with metadata plus sampled checks, then run filtering and post-filter stats.

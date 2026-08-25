@@ -9,6 +9,8 @@ Cluster proteins into orthogroups and derive pangenome matrices.
 
 ## Instructions
 
+Tool guides and versions: [docs/README.md](docs/README.md).
+
 1. After clustering, build and validate the complete small-to-large comparison bundle with:
 
    ```bash
@@ -43,10 +45,6 @@ Cluster proteins into orthogroups and derive pangenome matrices.
 
 | Task | Action |
 |------|--------|
-| Run workflow | Follow the steps in this skill and capture outputs. |
-| Validate inputs | Confirm required inputs and reference data exist. |
-| Review outputs | Inspect reports and QC gates before proceeding. |
-| Tool docs | See `docs/README.md`. |
 | References | See `references.md`. |
 
 ## Input Requirements
@@ -71,6 +69,7 @@ Inputs:
 - results/bio-protein-clustering-pangenome/query_specific_candidates.tsv
 - results/bio-protein-clustering-pangenome/pangenome_report.md
 - results/bio-protein-clustering-pangenome/logs/
+- stdout: the last line is one JSON envelope `{ok, skill, out, warnings}` (driver stdout contract in AGENTS.md)
 
 ## Quality Gates
 
@@ -86,23 +85,3 @@ Inputs:
 - [ ] `relative_genome_metrics.tsv` places each query in the distribution of relatives and notes the literature-defined extreme of the inferred group.
 - [ ] `family_copy_number_comparison.tsv` reports per-family fold change vs the relative median for the full annotated family set, not only top candidates.
 - [ ] `conserved_neighborhoods.tsv` is produced and includes intergenic spacing for both query and relative sides; broken synteny, unusual spacing, and expansions are flagged.
-
-## Examples
-
-### Example 1: Expected input layout
-
-```text
-protein_fastas/
-├── genome_A.faa
-├── genome_B.faa
-└── genome_C.faa
-genomes.tsv
-```
-
-## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
-
-**Issue**: Low-quality results or failed QC gates
-**Solution**: Review reports, adjust parameters, and re-run the affected step.

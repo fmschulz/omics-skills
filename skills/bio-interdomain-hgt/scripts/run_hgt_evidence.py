@@ -11,6 +11,7 @@ import argparse
 import csv
 import hashlib
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -155,8 +156,12 @@ def main() -> int:
         manifest = {"schema_version": "1.0", "query_domain": args.query_domain, "databases": databases, "candidate_count": len(candidates), "confirmed_count": sum(row["status"] == "confirmed" for row in candidates), "gates": required_gates}
         validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
         (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        out = args.out.resolve()
+        print(json.dumps({"ok": True, "skill": "bio-interdomain-hgt", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, json.JSONDecodeError, ValidationError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-interdomain-hgt", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import statistics
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -124,8 +126,11 @@ def main() -> int:
         write(args.out / "conserved_neighborhoods.tsv", ("query_block_id", "relative", "relative_block_id", "members", "intergenic_spacing_query", "intergenic_spacing_relative", "spacing_ratio", "notes"), neighborhoods)
         metrics = [{**row, "relative_distribution": "query" if row["role"] == "query" else "baseline", "literature_range_reference": "required before biological interpretation"} for row in genomes]
         write(args.out / "relative_genome_metrics.tsv", (*GENOME_FIELDS, "relative_distribution", "literature_range_reference"), metrics)
+        print(json.dumps({"ok": True, "skill": "bio-protein-clustering-pangenome", "out": str(args.out.resolve()), "warnings": []}))
     except (OSError, ValueError) as error:
-        parser.error(str(error))
+        print(json.dumps({"ok": False, "skill": "bio-protein-clustering-pangenome", "error": {"code": type(error).__name__, "message": str(error)}}))
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

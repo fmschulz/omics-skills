@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "skill_count": 34,
+    "skill_count": 35,
     "agent_count": 4,
-    "edge_count": 142
+    "edge_count": 146
   },
   "skills": [
     {
@@ -149,6 +149,7 @@
         "unusual"
       ],
       "internal_references": [
+        "bio-structure-annotation",
         "bio-viromics",
         "tracking-taxonomy-updates"
       ],
@@ -159,7 +160,11 @@
         "bio-viromics": [
           "- Viral/phage -> route to `/bio-viromics`; use PHROG/NCVOG markers and vConTACT3 only for phage/prokaryotic-virus contexts.",
           "- Giant-virus/Nucleocytoviricota -> route to `/bio-viromics` with GVClass and NCLDV marker-gene phylogeny.",
-          "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota."
+          "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota.",
+          "- No taxonomy for nucleotide assemblies, MAGs, or contigs outside the QuickClade route and its domain-specific follow-up (GTDB-Tk, EukCC, `/bio-viromics`)."
+        ],
+        "bio-structure-annotation": [
+          "- No structure-based inference. High-value unknowns go to `/bio-structure-annotation`."
         ]
       }
     },
@@ -1195,6 +1200,50 @@
       }
     },
     {
+      "name": "public-db-lookup",
+      "title": "Public Database Lookup",
+      "description": "Fetch bounded JSON records from UniProt, NCBI Entrez, NCBI Datasets, MGnify, InterPro, AlphaFold DB, STRING, or ENA over HTTP GET. Use when looking up an accession, taxon, entry, or structure record from a public database.",
+      "path": "skills/public-db-lookup/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "omics-scientist"
+      ],
+      "sections": [
+        "Public Database Lookup"
+      ],
+      "task_patterns": [
+        "AlphaFold DB",
+        "ENA accession",
+        "Entrez",
+        "InterPro entry",
+        "MGnify",
+        "NCBI Datasets",
+        "STRING interactions",
+        "UniProt",
+        "efetch",
+        "esearch",
+        "fetch record",
+        "look up accession"
+      ],
+      "internal_references": [
+        "jgi-lakehouse",
+        "polars-dovmed"
+      ],
+      "reference_contexts": {
+        "polars-dovmed": [
+          "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
+          "- No literature search; use `/polars-dovmed`"
+        ],
+        "jgi-lakehouse": [
+          "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
+          "- No JGI data access; use `/jgi-lakehouse`"
+        ]
+      }
+    },
+    {
       "name": "scientific-impact-assessment",
       "title": "Scientific Impact Assessment",
       "description": "Assess research reach with OpenAlex citations, optional Altmetric data, and journal context. Use when comparing papers, journals, or literature shortlists by influence.",
@@ -1585,6 +1634,9 @@
           "bio-foundation-housekeeping",
           "bioinformatics-project",
           "exploratory-data-analysis"
+        ],
+        "Public Database Lookup": [
+          "public-db-lookup"
         ],
         "Read Processing & Mapping": [
           "bio-reads-qc-mapping"
@@ -1997,6 +2049,23 @@
           ]
         },
         {
+          "skill_name": "public-db-lookup",
+          "phrases": [
+            "UniProt",
+            "Entrez",
+            "esearch",
+            "efetch",
+            "NCBI Datasets",
+            "MGnify",
+            "InterPro entry",
+            "AlphaFold DB",
+            "STRING interactions",
+            "ENA accession",
+            "fetch record",
+            "look up accession"
+          ]
+        },
+        {
           "skill_name": "tracking-taxonomy-updates",
           "phrases": [
             "taxonomy updates",
@@ -2214,6 +2283,20 @@
     },
     {
       "source": "bio-annotation",
+      "target": "bio-structure-annotation",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- No structure-based inference. High-value unknowns go to `/bio-structure-annotation`."
+      ]
+    },
+    {
+      "source": "bio-annotation",
       "target": "bio-viromics",
       "type": "compose_with",
       "source_type": "skill",
@@ -2225,7 +2308,8 @@
       "evidence": [
         "- Viral/phage -> route to `/bio-viromics`; use PHROG/NCVOG markers and vConTACT3 only for phage/prokaryotic-virus contexts.",
         "- Giant-virus/Nucleocytoviricota -> route to `/bio-viromics` with GVClass and NCLDV marker-gene phylogeny.",
-        "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota."
+        "- [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota.",
+        "- No taxonomy for nucleotide assemblies, MAGs, or contigs outside the QuickClade route and its domain-specific follow-up (GTDB-Tk, EukCC, `/bio-viromics`)."
       ]
     },
     {
@@ -3707,6 +3791,20 @@
     },
     {
       "source": "omics-scientist",
+      "target": "public-db-lookup",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
       "target": "tracking-taxonomy-updates",
       "type": "uses",
       "source_type": "agent",
@@ -3871,6 +3969,36 @@
       ],
       "evidence": [
         "- `/scientific-writing` \u2014 draft or revise the proposal narrative"
+      ]
+    },
+    {
+      "source": "public-db-lookup",
+      "target": "jgi-lakehouse",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
+        "- No JGI data access; use `/jgi-lakehouse`"
+      ]
+    },
+    {
+      "source": "public-db-lookup",
+      "target": "polars-dovmed",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
+        "- No literature search; use `/polars-dovmed`"
       ]
     },
     {
