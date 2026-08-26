@@ -17,6 +17,7 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | `bio-binning-qc` | Recovering and refining metagenomic bins. | MAG/bin sets with completeness, contamination, and chimerism checks. |
 | `bio-gene-calling` | Calling genes and basic features in prokaryotic, viral, or eukaryotic sequence sets. | Predicted CDS, protein FASTA files, GFF annotations, and feature summaries. |
 | `bio-annotation` | Assigning function and taxonomy from sequence homology. | Functional annotations, taxonomy calls, and evidence-ranked hit tables. |
+| `bio-public-variant-evidence` | Reviewing one supported public GRCh38 germline SNV or simple indel. | Source-linked evidence, explicit resolution outcomes, and variant-linked literature with ambiguity and professional-review boundaries. |
 | `bio-fasta-database-curator` | Preparing sequence databases for BLAST, DIAMOND, MMseqs2, HMMER, pyhmmer, or custom reference searches. | Curated FASTA/FAA files, stable headers, deduplicated records, mapping tables, and database statistics. |
 | `bio-phylogenomics` | Building marker-gene or protein alignments and trees. | Alignments, phylogenetic trees, topology checks, and interpretation. |
 | `bio-interdomain-hgt` | Testing interdomain horizontal gene transfer and donor direction. | Homology, context, contamination, and per-gene phylogenetic evidence for candidate transfers. |

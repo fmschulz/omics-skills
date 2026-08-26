@@ -101,6 +101,24 @@
   expected_agent: omics-scientist
   expected_primary_skills: [public-db-lookup]
 
+- task: "review public variant evidence for GRCh38 germline variant rs80357914 and stop if the rsID is ambiguous"
+  platform: codex
+  expected_agent: omics-scientist
+  expected_primary_exact: [bio-public-variant-evidence]
+  forbidden_skills: [bio-annotation, public-db-lookup]
+  max_supporting_skills: 3
+
+- task: "retrieve source-linked publications for the resolved public variant NM_007294.4:c.5266dupC"
+  platform: claude
+  expected_agent: omics-scientist
+  expected_primary_exact: [bio-public-variant-evidence]
+  forbidden_skills: [bio-annotation, public-db-lookup]
+  max_supporting_skills: 3
+
+- task: "annotate this VCF with VEP and ClinVar"
+  platform: codex
+  forbidden_skills: [bio-public-variant-evidence]
+
 - task: "reconcile NCBI and GTDB taxonomy for a list of MAGs"
   platform: codex
   expected_agent: omics-scientist

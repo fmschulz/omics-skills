@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "skill_count": 35,
+    "skill_count": 36,
     "agent_count": 4,
-    "edge_count": 146
+    "edge_count": 150
   },
   "skills": [
     {
@@ -582,6 +582,45 @@
         ],
         "bio-structure-annotation": [
           "12. Annotate candidate orthogroups with `/bio-annotation`; for high-value unknowns, route representatives to `/bio-structure-annotation` when structure-based inference is appropriate."
+        ]
+      }
+    },
+    {
+      "name": "bio-public-variant-evidence",
+      "title": "Bio Public Variant Evidence",
+      "description": "Review public evidence for one GRCh38 germline SNV or simple indel. Use when evidence lookup must exclude patient or private case data.",
+      "path": "skills/bio-public-variant-evidence/SKILL.md",
+      "platforms": [
+        "claude",
+        "codex"
+      ],
+      "agents": [
+        "omics-scientist"
+      ],
+      "sections": [
+        "Public Variant Evidence"
+      ],
+      "task_patterns": [
+        "Folklore Clinical Variant Interpretation MCP",
+        "GRCh38 germline variant",
+        "ambiguous rsID",
+        "public variant evidence",
+        "variant-linked literature"
+      ],
+      "internal_references": [
+        "bio-annotation",
+        "polars-dovmed",
+        "public-db-lookup"
+      ],
+      "reference_contexts": {
+        "polars-dovmed": [
+          "`/polars-dovmed`. For general sequence annotation or arbitrary public database"
+        ],
+        "bio-annotation": [
+          "records, use `/bio-annotation` or `/public-db-lookup` instead of this skill."
+        ],
+        "public-db-lookup": [
+          "records, use `/bio-annotation` or `/public-db-lookup` instead of this skill."
         ]
       }
     },
@@ -1638,6 +1677,9 @@
         "Public Database Lookup": [
           "public-db-lookup"
         ],
+        "Public Variant Evidence": [
+          "bio-public-variant-evidence"
+        ],
         "Read Processing & Mapping": [
           "bio-reads-qc-mapping"
         ],
@@ -2063,6 +2105,16 @@
             "ENA accession",
             "fetch record",
             "look up accession"
+          ]
+        },
+        {
+          "skill_name": "bio-public-variant-evidence",
+          "phrases": [
+            "public variant evidence",
+            "variant-linked literature",
+            "GRCh38 germline variant",
+            "ambiguous rsID",
+            "Folklore Clinical Variant Interpretation MCP"
           ]
         },
         {
@@ -3059,6 +3111,48 @@
       ]
     },
     {
+      "source": "bio-public-variant-evidence",
+      "target": "polars-dovmed",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "`/polars-dovmed`. For general sequence annotation or arbitrary public database"
+      ]
+    },
+    {
+      "source": "bio-public-variant-evidence",
+      "target": "bio-annotation",
+      "type": "similar_to",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.8,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "records, use `/bio-annotation` or `/public-db-lookup` instead of this skill."
+      ]
+    },
+    {
+      "source": "bio-public-variant-evidence",
+      "target": "public-db-lookup",
+      "type": "similar_to",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.8,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "records, use `/bio-annotation` or `/public-db-lookup` instead of this skill."
+      ]
+    },
+    {
       "source": "bio-reads-qc-mapping",
       "target": "bio-assembly-qc",
       "type": "workflow_next",
@@ -3652,6 +3746,20 @@
     {
       "source": "omics-scientist",
       "target": "bio-protein-clustering-pangenome",
+      "type": "uses",
+      "source_type": "agent",
+      "target_type": "skill",
+      "confidence": 1.0,
+      "provenance": [
+        "mandatory_skill_usage"
+      ],
+      "evidence": [
+        "agents/omics-scientist.md"
+      ]
+    },
+    {
+      "source": "omics-scientist",
+      "target": "bio-public-variant-evidence",
       "type": "uses",
       "source_type": "agent",
       "target_type": "skill",

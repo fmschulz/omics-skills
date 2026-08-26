@@ -172,6 +172,11 @@ For viral genomes, first infer the likely viral group, then search the literatur
 **For fetching records from public databases, use:**
 - `/public-db-lookup` - UniProt, NCBI Entrez/Datasets, MGnify, InterPro, AlphaFold DB, STRING, ENA over HTTP with bounded output
 
+### Public Variant Evidence
+
+**For one public GRCh38 germline SNV or simple indel, use:**
+- `/bio-public-variant-evidence` - Source-linked variant evidence and literature with explicit resolution outcomes, ambiguity refusal, and no patient or private case data
+
 ### Taxonomy Updates & Reconciliation
 
 **For tracking taxonomy changes, use:**
@@ -264,6 +269,9 @@ START
   ├─ Need a record from a public database?
   │   └─> /public-db-lookup
   │
+  ├─ Need public evidence for one GRCh38 germline SNV or simple indel?
+  │   └─> /bio-public-variant-evidence
+  │
   ├─ Taxonomy Updates?
   │   └─> /tracking-taxonomy-updates
   │
@@ -302,6 +310,7 @@ START
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`
 - **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse"** → `/jgi-lakehouse`
 - **"UniProt", "Entrez", "esearch", "efetch", "NCBI Datasets", "MGnify", "InterPro entry", "AlphaFold DB", "STRING interactions", "ENA accession", "fetch record", "look up accession"** → `/public-db-lookup`
+- **"public variant evidence", "variant-linked literature", "GRCh38 germline variant", "ambiguous rsID", "Folklore Clinical Variant Interpretation MCP"** → `/bio-public-variant-evidence`
 - **"taxonomy updates", "GTDB", "ICTV"** → `/tracking-taxonomy-updates`
 
 ## Communication Style

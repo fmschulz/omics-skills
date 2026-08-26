@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 64,
-    "passed": 64,
+    "total": 67,
+    "passed": 67,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -299,6 +299,48 @@
         "ordered_skills": [
           "public-db-lookup"
         ]
+      }
+    },
+    {
+      "task": "review public variant evidence for GRCh38 germline variant rs80357914 and stop if the rsID is ambiguous",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-public-variant-evidence"
+        ],
+        "supporting_skills": [
+          "polars-dovmed"
+        ],
+        "ordered_skills": [
+          "bio-public-variant-evidence"
+        ]
+      }
+    },
+    {
+      "task": "retrieve source-linked publications for the resolved public variant NM_007294.4:c.5266dupC",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "bio-public-variant-evidence"
+        ],
+        "supporting_skills": [
+          "polars-dovmed"
+        ],
+        "ordered_skills": [
+          "bio-public-variant-evidence"
+        ]
+      }
+    },
+    {
+      "task": "annotate this VCF with VEP and ClinVar",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
       }
     },
     {

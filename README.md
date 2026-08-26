@@ -20,7 +20,7 @@ Release notes are published on the [GitHub Releases page](https://github.com/fms
 
 ## Scope
 
-Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, interdomain HGT, statistics, manuscript drafting, and figure generation.
+Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, public single-variant evidence, phylogenomics, comparative genomics, structure prediction, viromics, interdomain HGT, statistics, manuscript drafting, and figure generation.
 
 The canonical agent sources are Markdown prompts. Installation keeps those files for Claude Code and renders native TOML agent definitions for Codex. Skills are Markdown directories with defined input/output contracts. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a task.
 
@@ -133,7 +133,7 @@ Skills are also invocable individually as `/<skill-name>` in Claude Code or `$<s
 
 | Agent | Focus | Skills |
 |---|---|---:|
-| `omics-scientist` | Project reproducibility, sequencing reads, assembly, binning, annotation, phylogenomics, interdomain HGT, MAG recovery, JGI access | 22 |
+| `omics-scientist` | Project reproducibility, sequencing reads, assembly, binning, annotation, public variant evidence, phylogenomics, interdomain HGT, MAG recovery, JGI access | 23 |
 | `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, and citation impact | 8 |
 | `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, and AI-output evaluation | 8 |
 | `dataviz-artist` | marimo and Jupyter notebooks, scientific data inspection, matplotlib/seaborn figures, and Plotly Dash dashboards | 4 |
