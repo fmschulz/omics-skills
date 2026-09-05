@@ -132,6 +132,7 @@ Skills are loaded on demand. To minimize context usage:
 - **Use progressive disclosure** — reference `docs/`, `references/`, and `examples/` files
 - **Link explicitly** — include full relative paths (e.g., `[Tool Docs](docs/tool-name.md)`); the validator flags broken links, and unlinked files are invisible to agents
 - For supplementary tool/source guides, include the `Last verified`, `Tool version/release checked`, `Official docs/manual`, and `Release/source` provenance lines near the top; `scripts/validate-supplementary-docs.py` enforces them.
+- Write citations so the DOI can be checked against what the prose claims: `- Tool: Surname et al. (YEAR) *Venue* https://doi.org/...`, or the multi-line `Surname A, Other B. (YEAR)` form. `scripts/validate-citations.py` compares the stated year and author surnames against the registered record, so a DOI swapped for another registered DOI fails. It cannot tell whether the paper supports the claim it is cited for; that still needs a human.
 
 ### Driver stdout contract
 

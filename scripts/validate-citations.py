@@ -36,12 +36,102 @@ PREPRINT_HOST = re.compile(r"(?:^|[/.])(?:bio|med)rxiv\.org/content/?$", re.IGNO
 PREPRINT_VERSION_SUFFIX = re.compile(r"(?<=\d)v\d+(?:\.[a-z]+)?(?:[?#].*)?$", re.IGNORECASE)
 
 
+# A citation in prose already states who wrote the paper and when:
+#   - MetaBAT2: Kang et al. (2019) *PeerJ* https://doi.org/10.7717/peerj.7359
+#   Saary P, Mitchell AL, Finn RD. (2020)
+#   ... *Genome Biology* 21:244. https://doi.org/10.1186/s13059-020-02155-4
+# Discarding that and checking only that the DOI resolves means a DOI swapped
+# for any other registered DOI still passes. These patterns recover the claim.
+CLAIMED_YEAR = re.compile(r"\((\d{4})[a-z]?\)|\b(19|20)(\d{2})\b")
+# Only the constructions that actually name an author. A bare `Word (2024)` is
+# just as often a venue -- "npj Viruses (2024)", "(Journal of Genetics and
+# Genomics 2021)" -- so it counts only as the first token of the citation body.
+CLAIMED_SURNAME = re.compile(
+    r"\b([A-Z][a-zA-Z\u00C0-\u024F'\u2019-]{2,})\b"
+    r"(?=\s*(?:\bet\s+al\b"
+    # "Shen & Ren (2021)" is an author pair; "Genetics and Genomics 2021)" is a
+    # venue. The parenthesised year is what separates them.
+    r"|(?:&|and)\s+[A-Z][a-zA-Z\u00C0-\u024F'\u2019-]+\s*\(\d{4}"
+    r"|[A-Z]{1,3}[,.]|[A-Z]{1,3}\s+\d{4}))"
+)
+LEADING_SURNAME = re.compile(r"^([A-Z][a-zA-Z\u00C0-\u024F'\u2019-]{2,})\s*\(\d{4}")
+# `- MetaBAT2: Kang et al. (2019) ...` - the label before the colon is the tool,
+# not an author.
+LIST_LABEL = re.compile(r"^\s*[-*+]\s+[^:\n]{1,40}:\s*")
+# Words that look like surnames but are tool names, venues, or sentence starts.
+SURNAME_STOPWORDS = frozenset(
+    {
+        "The", "This", "See", "Citation", "Cite", "Preprint", "Paper", "Reference",
+        "Published", "Available", "Nature", "Science", "Genome", "Biology", "Methods",
+        "Bioinformatics", "Microbiome", "Communications", "Biotechnology", "Journal",
+        "Proceedings", "Research", "Reports", "Letters", "Systems", "Frontiers",
+        "Molecular", "Nucleic", "Acids", "Cell", "PLoS", "PeerJ", "eLife", "GigaScience",
+        "Use", "Used", "Using", "From", "For", "With", "And", "Version", "Release",
+    }
+)
+
+
 @dataclass(frozen=True)
 class Citation:
     doi: str
     path: Path
     line: int
     title: str | None = None
+    claimed_year: int | None = None
+    claimed_surnames: tuple[str, ...] = ()
+
+
+def citation_context(lines: list[str], index: int) -> str:
+    """The reference block around a DOI.
+
+    A one-line reference is self-contained; walking back would pick up the
+    neighbouring list item's author and year. Only a line that states neither a
+    year nor an author continues a multi-line reference such as:
+
+        Saary P, Mitchell AL, Finn RD. (2020)
+        Estimating the quality of eukaryotic genomes ...
+        *Genome Biology* 21:244. https://doi.org/10.1186/s13059-020-02155-4
+    """
+    own = lines[index]
+    if CLAIMED_YEAR.search(LIST_LABEL.sub("", own)):
+        return own
+    start = index
+    while start > 0 and index - start < 3:
+        previous = lines[start - 1].strip()
+        if not previous or previous.startswith(("#", "|", "```", "-", "*", "+")):
+            break
+        start -= 1
+        if CLAIMED_YEAR.search(previous):
+            break
+    return " ".join(lines[start : index + 1])
+
+
+def parse_claim(context: str, doi: str | None = None) -> tuple[int | None, tuple[str, ...]]:
+    """Return the (year, surnames) the prose asserts for a citation."""
+    context = LIST_LABEL.sub("", context)
+    # One line can carry several references separated by semicolons; keep only
+    # the segment that actually contains this DOI.
+    if doi and ";" in context:
+        for segment in context.split(";"):
+            if doi in segment:
+                context = segment.strip()
+                break
+    year_match = CLAIMED_YEAR.search(context)
+    year = None
+    if year_match:
+        year = int(year_match.group(1) or f"{year_match.group(2)}{year_match.group(3)}")
+    names = CLAIMED_SURNAME.findall(context)
+    leading = LEADING_SURNAME.match(context.strip())
+    if leading:
+        names.append(leading.group(1))
+    surnames = tuple(
+        dict.fromkeys(
+            name
+            for name in names
+            if name not in SURNAME_STOPWORDS and not name.isupper()
+        )
+    )
+    return year, surnames
 
 
 def normalize_doi(raw: str) -> str | None:
@@ -103,13 +193,31 @@ def collect_citations(paths: list[Path]) -> list[Citation]:
             if doi:
                 citations.append(Citation(doi, path, text[: match.start()].count("\n") + 2, title))
         header_dois = {citation.doi for citation in citations if citation.path == path}
+        lines = text.splitlines()
         for match in DOI_PATTERN.finditer(text):
             doi = normalize_doi(match.group(0))
             if doi and PREPRINT_HOST.search(text[max(0, match.start() - 60) : match.start()]):
                 doi = PREPRINT_VERSION_SUFFIX.sub("", doi)
             if doi and doi not in header_dois:
-                citations.append(Citation(doi, path, text[: match.start()].count("\n") + 1))
+                index = text[: match.start()].count("\n")
+                year, surnames = parse_claim(citation_context(lines, index), doi)
+                citations.append(
+                    Citation(doi, path, index + 1, None, year, surnames)
+                )
     return citations
+
+
+def crossref_year(message: dict) -> int | None:
+    """Crossref reports several dates; take the earliest real publication year."""
+    years = []
+    for field in ("published-print", "published-online", "published", "issued"):
+        parts = (message.get(field) or {}).get("date-parts") or [[]]
+        if parts and parts[0]:
+            try:
+                years.append(int(parts[0][0]))
+            except (TypeError, ValueError):
+                continue
+    return min(years) if years else None
 
 
 def title_overlap(left: str, right: str) -> float:
@@ -147,19 +255,31 @@ def refresh_cache(
                 continue
 
             cached_title = None
+            families: list[str] = []
+            registered_year = None
             declared_title = next((source.title for source in sources if source.title), None)
-            if declared_title and not doi.startswith(TITLE_CHECK_SKIP_PREFIXES):
+            claims_identity = any(source.claimed_year or source.claimed_surnames for source in sources)
+            if (declared_title or claims_identity) and not doi.startswith(TITLE_CHECK_SKIP_PREFIXES):
                 crossref_url = f"https://api.crossref.org/works/{quote(doi, safe='')}"
                 payload = fetch_json(crossref_url, timeout)
-                message = payload.get("message")
-                titles = message.get("title", []) if isinstance(message, dict) else []
+                message = payload.get("message") if isinstance(payload, dict) else None
+                message = message if isinstance(message, dict) else {}
+                titles = message.get("title", [])
                 cached_title = str(titles[0]) if isinstance(titles, list) and titles else None
-                if not cached_title:
+                if declared_title and not cached_title:
                     errors.append(f"{doi}: Crossref returned no title")
                     continue
+                families = [
+                    str(author["family"])
+                    for author in message.get("author", []) or []
+                    if isinstance(author, dict) and author.get("family")
+                ]
+                registered_year = crossref_year(message)
             records[doi] = {
                 "registered": True,
                 "title": cached_title,
+                "authors": families,
+                "year": registered_year,
                 "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "source": "doi.org handle" + (" + Crossref title" if cached_title else ""),
             }
@@ -218,6 +338,27 @@ def validate_cache(citations: list[Citation], cache_path: Path) -> list[str]:
                 # way to refresh without live services.
                 if stamped < cutoff:
                     stale.add(f"{citation.doi} last checked {checked_at}")
+        # The claim the prose makes must match the registered record. Without
+        # this, one registered DOI substituted for another still passed.
+        if not citation.doi.startswith(TITLE_CHECK_SKIP_PREFIXES):
+            registered_year = record.get("year")
+            if citation.claimed_year and isinstance(registered_year, int):
+                # Online-vs-print can differ by a year; more than that is a swap.
+                if abs(citation.claimed_year - registered_year) > 1:
+                    errors.append(
+                        f"{location}: {citation.doi} is registered to {registered_year}, "
+                        f"but the citation says {citation.claimed_year}"
+                    )
+            registered_authors = record.get("authors")
+            if citation.claimed_surnames and isinstance(registered_authors, list) and registered_authors:
+                registered = {str(name).casefold() for name in registered_authors}
+                claimed = {name.casefold() for name in citation.claimed_surnames}
+                if not (claimed & registered):
+                    errors.append(
+                        f"{location}: {citation.doi} is registered to "
+                        f"{', '.join(sorted(registered_authors)[:3])}, but the citation names "
+                        f"{', '.join(citation.claimed_surnames)}"
+                    )
         if citation.title and not citation.doi.startswith(TITLE_CHECK_SKIP_PREFIXES):
             registered_title = record.get("title")
             if not isinstance(registered_title, str):

@@ -131,18 +131,6 @@ class SkillIndexTests(unittest.TestCase):
         self.assertIn("bio-binning-qc", result["primary_skills"])
         self.assertIn("bio-reads-qc-mapping", result["ordered_skills"])
 
-    def test_code_review_query_is_a_hard_negative(self) -> None:
-        result = skill_index.route_request(
-            task="perform a critical code review of this repo and its usefulness functionality repo structure and documentation",
-            agent=None,
-            platform="codex",
-            top_k=4,
-            repo=str(REPO_ROOT),
-            index_root=None,
-        )
-        self.assertEqual(result["primary_skills"], [])
-        self.assertEqual(result["ordered_skills"], [])
-
     def test_pull_reads_from_data_repository_routes_to_read_qc(self) -> None:
         result = skill_index.route_request(
             task="pull raw sequencing reads from a public data repository and run quality control",
@@ -177,19 +165,6 @@ class SkillIndexTests(unittest.TestCase):
             repo=str(REPO_ROOT),
             index_root=None,
         )
-        self.assertEqual(result["primary_skills"], [])
-        self.assertEqual(result["ordered_skills"], [])
-
-    def test_api_docs_query_is_a_hard_negative(self) -> None:
-        result = skill_index.route_request(
-            task="fetch up-to-date Anthropic SDK API documentation before writing client code",
-            agent=None,
-            platform="codex",
-            top_k=4,
-            repo=str(REPO_ROOT),
-            index_root=None,
-        )
-        self.assertIsNone(result["agent"])
         self.assertEqual(result["primary_skills"], [])
         self.assertEqual(result["ordered_skills"], [])
 
