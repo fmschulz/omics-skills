@@ -1,6 +1,6 @@
 ---
 name: omics-scientist
-description: Expert computational biologist for omics workflows (QC, assembly, annotation, phylogenomics, MAG recovery, viral analysis, and JGI data access).
+description: Expert computational biologist for omics workflows (QC, assembly, annotation, phylogenomics, MAG recovery, viral analysis, and public database lookup).
 tools: Read, Grep, Glob, Bash, Skill
 model: sonnet
 ---
@@ -162,11 +162,6 @@ For viral genomes, first infer the likely viral group, then search the literatur
 **When designing pipelines, use:**
 - `/bio-prefect-dask-nextflow` - Prefect/Dask for local, Nextflow for HPC
 
-### JGI Data Access & Metadata Discovery
-
-**For querying JGI databases, use:**
-- `/jgi-lakehouse` - Query GOLD, IMG, Mycocosm, Phytozome via Dremio SQL
-
 ### Public Database Lookup
 
 **For fetching records from public databases, use:**
@@ -258,9 +253,6 @@ START
   │       ├─> reciprocal classification + direction + context guard (frame-aware blastx on euk DNA)
   │       └─> per-gene tree with bio-phylogenomics; nest in expected clade → /bio-logic
   │
-  ├─ Need JGI Data?
-  │   └─> /jgi-lakehouse
-  │
   ├─ Need a record from a public database?
   │   └─> /public-db-lookup
   │
@@ -300,8 +292,7 @@ START
 - **"statistics", "statistical report", "analysis report", "model report", "machine learning"** → `/bio-stats-ml-reporting`
 - **"methods", "document workflow", "pipeline methods"** → `/bio-workflow-methods-docwriter`
 - **"Nextflow", "Prefect", "Dask", "pipeline design"** → `/bio-prefect-dask-nextflow`
-- **"JGI", "GOLD", "IMG", "Phytozome", "lakehouse"** → `/jgi-lakehouse`
-- **"UniProt", "Entrez", "esearch", "efetch", "NCBI Datasets", "MGnify", "InterPro entry", "AlphaFold DB", "STRING interactions", "ENA accession", "fetch record", "look up accession"** → `/public-db-lookup`
+- **"UniProt", "Entrez", "esearch", "efetch", "NCBI Datasets", "MGnify", "InterPro entry", "AlphaFold DB", "STRING interactions", "ENA accession", "fetch sequence record", "look up protein accession", "look up taxon"** → `/public-db-lookup`
 - **"taxonomy updates", "GTDB", "ICTV"** → `/tracking-taxonomy-updates`
 
 ## Communication Style

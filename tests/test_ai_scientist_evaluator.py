@@ -93,6 +93,31 @@ class AIScientistEvaluatorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("| 50.0 |", result.stdout)
 
+    def test_failed_hard_gate_removes_the_publication_ready_recommendation(self) -> None:
+        """SKILL.md says a submission is not publication-ready when a hard gate
+        fails. Recomputing only the score let a review keep "near
+        publication-ready" beside a failed gate."""
+        review = scientific_review()
+        review["overall"]["recommendation"] = "Outstanding / near publication-ready"
+        review["gate_checks"] = [
+            {"gate": "core method rerunnable", "status": "fail", "notes": "no runnable entry point"}
+        ]
+        result = self.run_aggregator(review)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("near publication-ready", result.stdout)
+        self.assertIn("Not publication-ready", result.stdout)
+        self.assertIn("core method rerunnable", result.stdout)
+
+    def test_passing_gates_leave_the_recommendation_alone(self) -> None:
+        review = scientific_review()
+        review["overall"]["recommendation"] = "Outstanding / near publication-ready"
+        review["gate_checks"] = [
+            {"gate": "core method rerunnable", "status": "pass", "notes": "entry point runs"}
+        ]
+        result = self.run_aggregator(review)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("near publication-ready", result.stdout)
+
     def test_integrity_flags_win_before_task_completion_tiebreak(self) -> None:
         clean = scientific_review()
         clean["submission_id"] = "clean"

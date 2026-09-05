@@ -23,12 +23,12 @@ Tool guides and versions: [docs/README.md](docs/README.md).
    The driver checksum-verifies geNomad, CheckV, GVClass, and vConTACT3 database resources; requires at least five hypotheses including a technical/null explanation; requires initial, intermediate, and final reflections; and persists marker, family-copy, synteny, ncRNA, and genome-frontier evidence under `schemas/evidence-bundle.schema.json`. Database resources may be files or directories. Set `kind` to `directory` and record the deterministic tree SHA-256 for installed database directories.
 2. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not already been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial/archaeal and eukaryotic rows stay on their domain-specific routes unless later evidence contradicts the triage.
 3. Run virus detection with geNomad v1.8+ (use as primary plasmid-and-virus classifier).
-4. Run CheckV v1.0.1 for completeness, contamination, and host-removal QC.
+4. Run CheckV v1.1.1 with database v1.5 for completeness, contamination, and host-removal QC.
 5. Infer the likely viral group from QuickClade, detection output, taxonomy hints, genome statistics, and marker/similarity evidence.
 6. Search the literature for that viral group and write a short analysis playbook: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by scientists studying that group.
 7. Choose taxonomy, clustering, phylogenetic, and comparative methods from the playbook:
-   - For bacteriophage and prokaryotic-virus gene-sharing taxonomy: vConTACT3 v3.0 (hierarchical genus-to-order assignment, >95% ICTV agreement; supersedes vConTACT2).
-   - For Nucleocytoviricota / giant viruses: gvclass v1.0 for genus-level classification combined with marker-gene phylogenies of NCLDV core genes.
+   - For bacteriophage and prokaryotic-virus gene-sharing taxonomy: vConTACT3 v3.2.4 (hierarchical genus-to-order assignment, >95% ICTV agreement; supersedes vConTACT2).
+   - For Nucleocytoviricota / giant viruses: gvclass v1.6.0 with resources v1.5.0 for genus-level classification combined with marker-gene phylogenies of NCLDV core genes.
    - For RNA viruses, ssDNA viruses, or other groups not well-served by vConTACT3: use group-specific markers, phylogenomics, and protein-family approaches from the literature playbook rather than forcing a phage-oriented workflow.
 8. For prokaryotic-virus discovery, VirSorter2 v2.2.4 is a complementary detector to geNomad; combine with CheckV QC to remove false positives.
 9. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed, then inspect the annotation set according to the playbook rather than a fixed global feature list.
@@ -70,7 +70,7 @@ Inputs:
 - [ ] Resource versions and database checksums are recorded and verified before classification.
 - [ ] Marker, family-copy, synteny, and ncRNA artifacts refer to the same query/reference set and are linked to explicit hypothesis revisions.
 - [ ] Contamination flags are below thresholds.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify contigs.fasta is non-empty.
 - [ ] QuickClade domain-routing evidence was reviewed for assembly/MAG/genome inputs, or the absence of a prior screen is corrected before final classification.
 - [ ] Verify viral reference DBs exist under the reference root.

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -87,6 +88,19 @@ def load_review(path: Path) -> Dict[str, Any]:
     data["overall"]["raw_weighted_score_100"] = raw_total
     data["overall"]["penalty_points"] = round(max(0.0, raw_total - submitted_total), 10)
     data["overall"]["total_score_100"] = min(raw_total, submitted_total)
+
+    # SKILL.md: a submission is not publication-ready when a hard gate fails.
+    # Recomputing the score but keeping the submitted recommendation let a
+    # review report 100.0 and "near publication-ready" with a failed gate.
+    failed = [item.get("gate", "unnamed gate") for item in data.get("gate_checks", []) if item.get("status") == "fail"]
+    data["overall"]["publication_ready"] = not failed
+    data["overall"]["failed_gates"] = failed
+    recommendation = str(data["overall"].get("recommendation", ""))
+    if failed and PUBLICATION_READY_RE.search(recommendation):
+        data["overall"]["submitted_recommendation"] = recommendation
+        data["overall"]["recommendation"] = (
+            f"Not publication-ready: {len(failed)} hard gate(s) failed ({', '.join(failed)})"
+        )
     return data
 
 
@@ -98,6 +112,13 @@ def category_score(data: Dict[str, Any], names: Tuple[str, ...]) -> float:
             except (TypeError, ValueError):
                 return 0.0
     return 0.0
+
+
+# Word-bounded and negation-aware: "accept" matched inside "Unacceptable",
+# which replaced a valid rejection with a gate message.
+PUBLICATION_READY_RE = re.compile(
+    r"(?<![a-z])(?:publication[- ]ready|accept(?:ed)?)(?![a-z])", re.IGNORECASE
+)
 
 
 def gate_fail_count(data: Dict[str, Any]) -> int:

@@ -85,16 +85,31 @@
   expected_agent: omics-scientist
   expected_primary_skills: [bio-structure-annotation]
 
+# jgi-lakehouse was removed; a JGI-specific query must stay an intentional
+# no-match rather than silently routing to a public-database skill.
 - task: "query JGI IMG for all cyanobacterial genomes and download FASTA files"
   platform: codex
-  expected_agent: omics-scientist
-  expected_primary_skills: [jgi-lakehouse]
+  expect_no_primary: true
 
 - task: "fetch the UniProt record for accession P04637 and summarize it"
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [public-db-lookup]
-  forbidden_skills: [jgi-lakehouse]
+
+# public-db-lookup is the newest retrieval skill and its generic patterns used to
+# steal "fetch record" queries from the three literature skills. These rows pin
+# the boundary.
+- task: "fetch arxiv record"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [arxiv-search]
+  forbidden_skills: [public-db-lookup]
+
+- task: "fetch bioRxiv record for DOI 10.1101/example"
+  platform: codex
+  expected_agent: literature-expert
+  expected_primary_skills: [biorxiv-search]
+  forbidden_skills: [public-db-lookup]
 
 - task: "look up MGnify biomes and studies for a soil metagenome accession"
   platform: codex

@@ -46,7 +46,7 @@ Prerequisites:
 - Sufficient disk and RAM for chosen assembler.
 Inputs:
 - reads/*.fastq.gz or reads/*.fastq (raw or filtered reads; verify actual compression by content when suffixes are suspect).
-- `assemblies.tsv` with `sample_id`, `mode`, `read1`, `read2`, and `read_qc_status`; supported core modes are `short_isolate`, `long_isolate`, `short_metagenome`, `long_metagenome`, and `hifi_metagenome`.
+- `assemblies.tsv` with `sample_id`, `mode`, `read1`, `read2`, `read_qc_status`, and `read_platform`; supported core modes are `short_isolate`, `long_isolate`, `short_metagenome`, `long_metagenome`, and `hifi_metagenome`. `read_platform` is required for `long_isolate` and `long_metagenome`, and selects the Flye error model: `ont` gives `--nano-hq`, `pacbio-clr` gives `--pacbio-raw`, `pacbio-hifi` gives `--pacbio-hifi`. Leave it empty for short-read modes; `hifi_metagenome` accepts only `pacbio-hifi` or an empty value.
 
 ## Output
 
@@ -61,7 +61,7 @@ Inputs:
 
 - [ ] Assembly size range and N50 distribution meet project thresholds.
 - [ ] Every assembler output is normalized to a non-empty per-sample `contigs.fasta` before QC or downstream routing.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify reads are present and readable. If `gzip -t` fails on a `.gz`-named file, inspect magic bytes or file type before labeling it corrupt; it may be plain FASTQ with the wrong suffix.
 - [ ] Check available disk space before assembly.
 - [ ] For large ONT/metagenome inputs, raw file metadata and post-filter `seqkit stats` are recorded without redundant full-file raw preflight scans.

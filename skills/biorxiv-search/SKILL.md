@@ -130,7 +130,7 @@ skills/biorxiv-search/scripts/search "single cell atlas" 10 --days 30
 ### Example 2: Broaden with `OR`
 
 ```bash
-skills/biorxiv-search/scripts/search '"organoid OR spheroid"' 15 \
+skills/biorxiv-search/scripts/search 'organoid OR spheroid' 15 \
   --days 90 \
   --category developmental_biology
 ```

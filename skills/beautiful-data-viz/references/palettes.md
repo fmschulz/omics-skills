@@ -19,7 +19,7 @@ LearnUI’s data color picker emphasizes building palettes where colors are *vis
 Reference: https://www.learnui.design/tools/data-color-picker.html
 
 ### Practical guidance
-- Prefer 3–8 categories. Above that, consider small multiples or grouping.
+- Prefer 3-8 categories, and three or four when one series carries the finding. Above eight, switch to grouping, small multiples, or a table.
 - If you generate a custom palette, pick endpoint hues that are far apart (warm vs cool) so the internal steps remain distinct.
 - If using a brand color, adjust saturation/brightness for better harmony; hue does most of the recognition work.
 

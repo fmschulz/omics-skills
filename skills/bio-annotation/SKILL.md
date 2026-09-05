@@ -37,7 +37,8 @@ Functional annotation and taxonomy inference from sequence homology.
 13. For exploratory work, read the literature-derived analysis playbook for the inferred organism or virus group before deciding what to flag.
 14. Mine the inventory for discovery candidates relative to that playbook: expected features, missing expected features, rare or expanded families, unusual combinations, annotation/taxonomy conflicts, and high-value unknowns.
 15. For specialized inputs such as viruses, organelles, symbionts, pathogens, or poorly characterized lineages, use the feature classes and outlier dimensions reported in the relevant literature rather than a fixed global checklist.
-16. Order `discovery_candidates.tsv` deterministically before reporting. Sort by `status` in the order `query_specific`, `missing_expected`, `expanded`, `contracted`; then by `fold_change` descending, with `inf` first and blank or non-numeric values last; then by `genome` and `family_id` ascending. Report the top rows in that order and keep the full table.
+16. `query_specific` requires the family to be absent from every reference. When the reference median is 0 but at least one reference carries the family, the status is `present_in_reference_minority` with an empty `fold_change`: report it as a signal, never as a discovery.
+17. Order `discovery_candidates.tsv` deterministically before reporting. Sort by `status` in the order `query_specific`, `missing_expected`, `expanded`, `contracted`, `present_in_reference_minority`; then by `fold_change` descending, with `inf` first and blank or non-numeric values last; then by `genome` and `family_id` ascending. Report the top rows in that order and keep the full table.
 
 ## Input Requirements
 
@@ -67,7 +68,7 @@ Inputs:
 ## Quality Gates
 
 - [ ] Annotation hit rate and taxonomy rank coverage meet project thresholds.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify proteins.faa is non-empty and amino acid encoded.
 - [ ] Verify proteins.faa does not contain `*` stop symbols before InterProScan, or strip them deliberately.
 - [ ] QuickClade domain routing was used when nucleotide assemblies/genomes were available, or the protein-only reason for skipping it is recorded.

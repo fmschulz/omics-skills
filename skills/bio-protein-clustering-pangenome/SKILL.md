@@ -63,7 +63,7 @@ Inputs:
 - results/bio-protein-clustering-pangenome/presence_absence.parquet
 - results/bio-protein-clustering-pangenome/copy_number_matrix.parquet
 - results/bio-protein-clustering-pangenome/relative_genome_metrics.tsv
-- results/bio-protein-clustering-pangenome/family_copy_number_comparison.tsv
+- results/bio-protein-clustering-pangenome/family_copy_number_comparison.tsv (`status` is one of `query_specific`, `missing_expected`, `expanded`, `contracted`, `conserved`, or `present_in_reference_minority`; the last means the reference median is 0 while at least one reference carries the family, so no fold change is reported and it is not a query-specific discovery)
 - results/bio-protein-clustering-pangenome/conserved_neighborhoods.tsv
 - results/bio-protein-clustering-pangenome/closest_relative_comparison.tsv
 - results/bio-protein-clustering-pangenome/query_specific_candidates.tsv
@@ -76,7 +76,7 @@ Inputs:
 - [ ] Cluster size distributions meet project thresholds.
 - [ ] Matrix completeness meets project thresholds.
 - [ ] The tested artifact bundle contains marker-gene and ncRNA censuses alongside copy-number and synteny matrices for the same genome set.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify every per-genome FASTA is non-empty, amino-acid encoded, and has protein IDs unique across the full dataset.
 - [ ] Verify the genome manifest covers every FASTA exactly once; if proteins were concatenated for MMseqs2, verify every clustered protein maps to exactly one genome.
 - [ ] Comparison baseline is justified from literature, phylogeny, taxonomy, or data availability.

@@ -152,5 +152,45 @@ class BioRxivPaginationTests(unittest.TestCase):
         self.assertTrue(module.matches_author_filters("Frederik Schulz", variants))
 
 
+
+
+class QueryParsingTests(unittest.TestCase):
+    def test_over_quoted_or_query_still_splits_into_alternatives(self):
+        """The documented example passed '"a OR b"' with inner quotes. Splitting
+        on OR first produced the terms '"a' and 'b"', which match nothing while
+        the search still reported success."""
+        module = load_search_module()
+        self.assertEqual(
+            module.parse_query_groups('"organoid OR spheroid"', False),
+            [["organoid"], ["spheroid"]],
+        )
+        self.assertEqual(
+            module.parse_query_groups("organoid OR spheroid", False),
+            [["organoid"], ["spheroid"]],
+        )
+        # A quoted phrase is not over-quoting: it must survive intact.
+        self.assertEqual(module.parse_query_groups('"single cell"', False), [["single cell"]])
+        self.assertEqual(
+            module.parse_query_groups('"single cell" "spatial atlas"', False),
+            [["single cell", "spatial atlas"]],
+        )
+
+    def test_api_error_status_is_not_reported_as_an_empty_result(self):
+        """bioRxiv signals failures as HTTP 200 with a non-ok status and an
+        empty collection, which used to read as a confident zero-result answer."""
+        module = load_search_module()
+        with self.assertRaisesRegex(RuntimeError, "malformed interval"):
+            module.page_metadata(
+                {"messages": [{"status": "malformed interval", "count": 0}], "collection": []}
+            )
+
+    def test_a_genuinely_empty_result_is_still_allowed(self):
+        module = load_search_module()
+        collection, count, _, _ = module.page_metadata(
+            {"messages": [{"status": "no posts found", "count": 0}], "collection": []}
+        )
+        self.assertEqual(collection, [])
+        self.assertEqual(count, 0)
+
 if __name__ == "__main__":
     unittest.main()

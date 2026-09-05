@@ -4,7 +4,7 @@ Omics Skills supports Claude Code and Codex through the same skill source tree, 
 
 ## Requirements
 
-Install Git, Bash, Python 3, and at least one supported runtime:
+Install Git, Bash, GNU Make, Python 3.11 or newer (Codex agent rendering uses `tomllib`), and at least one supported runtime:
 
 ```bash
 git --version
@@ -65,15 +65,6 @@ The default install links skills and Claude agents to the checkout. Use copies w
 make install INSTALL_METHOD=copy
 ```
 
-The shell installer provides the same non-interactive choices when Make is unavailable:
-
-```bash
-scripts/install.sh
-scripts/install.sh --claude
-scripts/install.sh --codex
-scripts/install.sh --copy
-```
-
 ## Installed Files
 
 The checkout installer writes only runtime configuration and omics-skills-owned entries:
@@ -87,9 +78,11 @@ The checkout installer writes only runtime configuration and omics-skills-owned 
 ~/.codex/skills                   compatibility link to ~/.agents/skills
 ```
 
-The canonical skill location for Codex is `~/.agents/skills`. The `~/.codex/skills` link is retained for compatibility. Because Codex agents are generated TOML rather than symlinks, rerun `make install-codex-agents` after editing a Markdown agent source.
+The canonical skill location for Codex is `~/.agents/skills`. The `~/.codex/skills` link is retained for compatibility. Because Codex agents are generated TOML rather than symlinks, rerun `make install-codex` after editing a Markdown agent source.
 
 Existing files with an omics-skills agent or skill name are moved to timestamped backups. Unrelated files and backups in the shared directories are left alone.
+
+`~/.claude/skills` and `~/.codex/skills` become symlinks to `~/.agents/skills`. If either is already a real directory holding your own skills, installation stops and tells you to move or merge it first, because replacing it with a symlink would hide everything inside.
 
 ## Manual Installation
 
@@ -172,13 +165,7 @@ Remove it with `make uninstall-hook`.
 
 ## Python Dependencies
 
-Skill helpers should declare their own environment through Pixi or PEP 723 metadata. For legacy `requirements.txt` files, the repository installer can create a local uv environment:
-
-```bash
-make install-python-deps
-```
-
-This writes `.venv/` inside the checkout and does not modify system Python.
+Skill helpers declare their own environment through Pixi or PEP 723 metadata, so `uv run --script <helper>` resolves them on demand. Nothing needs a shared Python environment.
 
 ## Update
 
@@ -193,7 +180,7 @@ For copied installs, the same command replaces only the selected omics-skills en
 
 ## Select Components
 
-Run `make install` in a terminal to use the interactive selector. For automation, pass explicit lists:
+Pass explicit lists to install a subset:
 
 ```bash
 make install-selected \
@@ -210,7 +197,7 @@ Missing selected names fail the installation instead of reporting partial succes
 Codex agents are generated TOML files. Regenerate them:
 
 ```bash
-make install-codex-agents
+make install-codex
 ```
 
 ### Skills disappeared after moving the checkout
@@ -247,15 +234,14 @@ Confirm that the marketplace resolves to the checkout and that both plugin manif
 Use the Makefile for a complete non-interactive uninstall:
 
 ```bash
-make uninstall-all
+make uninstall
 ```
 
-The shell uninstaller asks for confirmation:
+Remove one runtime only:
 
 ```bash
-scripts/uninstall.sh
-scripts/uninstall.sh --claude
-scripts/uninstall.sh --codex
+make uninstall-claude
+make uninstall-codex
 ```
 
 Both uninstallers remove only known omics-skills entries. They preserve unrelated agents, skills, and backups in shared runtime directories.

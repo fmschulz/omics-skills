@@ -31,7 +31,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
 | Task | Action |
 |------|--------|
-| Build normalized tables | `uv run --script scripts/build_bin_qc_tables.py --routing domain_routing.tsv --checkm2 checkm2.tsv --gunc gunc.tsv --eukcc eukcc.tsv --gtdbtk gtdbtk.tsv --out-dir results/bio-binning-qc` |
+| Build normalized tables | `uv run --script skills/bio-binning-qc/scripts/build_bin_qc_tables.py --routing domain_routing.tsv --checkm2 checkm2.tsv --gunc gunc.tsv --eukcc eukcc.tsv --gtdbtk gtdbtk.tsv --out-dir results/bio-binning-qc` |
 
 ## Input Requirements
 
@@ -58,7 +58,7 @@ Inputs:
 
 - [ ] Completeness and contamination meet project thresholds.
 - [ ] Chimera and contamination flags are below thresholds.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify contigs.fasta and coverage.tsv are non-empty.
 - [ ] Verify reference DBs for QC tools exist under the reference root.
 - [ ] QuickClade `percontig` screen exists for the source assembly and bin set before CheckM2/EukCC/GTDB-Tk decisions.

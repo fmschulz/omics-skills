@@ -6,7 +6,7 @@ Agents are Markdown system prompts. They define the role, the skill lookup polic
 
 | Agent | Use it for | Typical first skills |
 |---|---|---|
-| `omics-scientist` | Project reproducibility, reads, assemblies, MAGs, annotations, taxonomy, phylogenomics, viral discovery, JGI data, and final biological interpretation. | `bioinformatics-project`, `bio-reads-qc-mapping`, `bio-assembly-qc`, `tracking-taxonomy-updates`, `bio-annotation` |
+| `omics-scientist` | Project reproducibility, reads, assemblies, MAGs, annotations, taxonomy, phylogenomics, viral discovery, public database records, and final biological interpretation. | `bioinformatics-project`, `bio-reads-qc-mapping`, `bio-assembly-qc`, `tracking-taxonomy-updates`, `bio-annotation` |
 | `literature-expert` | Literature discovery, preprint scans, DOI lookup, citation metadata cleanup, impact checks, and structured claim/evidence extraction. | `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup`, `csag-extraction` |
 | `science-writer` | Manuscript drafting, section rewrites, rebuttals, proposal critique, methods documentation, multi-reviewer evaluation, and argument-graph extraction. | `scientific-writing`, `manuscript-review-council`, `proposal-review`, `bio-workflow-methods-docwriter`, `csag-extraction` |
 | `dataviz-artist` | Scientific data inspection, reproducible notebooks, exploratory plots, publication figures, and dashboards. | `exploratory-data-analysis`, `notebooks`, `beautiful-data-viz`, `plotly-dashboard-skill` |

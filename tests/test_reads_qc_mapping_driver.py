@@ -77,3 +77,29 @@ def test_execute_does_not_reuse_unmarked_partial_outputs(tmp_path):
     )
     assert rerun.returncode != 0
     assert "step failed" in rerun.stderr
+
+
+def test_mapping_status_reflects_execution_not_intent(tmp_path):
+    """mapping_stats.tsv used to report "planned" even after --execute, so the
+    table claimed work that had already run."""
+    out = tmp_path / "out"
+    sheet = SKILL / "fixtures" / "sample_sheet.tsv"
+
+    first = subprocess.run(command(sheet, "--out", out), text=True, capture_output=True)
+    assert first.returncode == 0, first.stderr
+    assert "\tplanned\t" in (out / "mapping_stats.tsv").read_text()
+
+    manifest = json.loads((out / "run_manifest.json").read_text())
+    for step in manifest["steps"]:
+        for output in step["outputs"]:
+            path = Path(output)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("fixture output\n")
+        (Path(step["outputs"][0]).parent / f"{step['stage']}.done").write_text("complete\n")
+
+    second = subprocess.run(command(sheet, "--out", out, "--execute"), text=True, capture_output=True)
+    assert second.returncode == 0, second.stderr
+    stats = (out / "mapping_stats.tsv").read_text()
+    assert "\tplanned\t" not in stats, stats
+    assert "\treused\t" in stats, stats
+    assert "\tnot_requested\t" in stats, stats

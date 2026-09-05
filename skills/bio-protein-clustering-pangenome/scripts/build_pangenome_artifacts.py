@@ -95,11 +95,19 @@ def main() -> int:
             raise ValueError("fixture/analysis requires at least one query and two references")
         comparisons = []
         for family in families:
-            baseline = statistics.median(counts[(family, genome)] for genome in refs)
+            reference_counts = [counts[(family, genome)] for genome in refs]
+            baseline = statistics.median(reference_counts)
+            # A zero MEDIAN does not mean absent from every reference: with counts
+            # [0, 0, 1] the family is present in a reference, so calling it
+            # query-specific with an infinite fold change invents a discovery.
+            absent_everywhere = max(reference_counts) == 0
             for query in queries:
                 count = counts[(family, query)]
-                fold = "inf" if baseline == 0 and count else (count / baseline if baseline else 0)
-                status = "query_specific" if baseline == 0 and count else "missing_expected" if count == 0 and baseline else "expanded" if baseline and count >= 2 * baseline else "contracted" if baseline and count * 2 <= baseline else "conserved"
+                if count and not absent_everywhere and baseline == 0:
+                    fold, status = "", "present_in_reference_minority"
+                else:
+                    fold = "inf" if absent_everywhere and count else (count / baseline if baseline else 0)
+                    status = "query_specific" if absent_everywhere and count else "missing_expected" if count == 0 and baseline else "expanded" if baseline and count >= 2 * baseline else "contracted" if baseline and count * 2 <= baseline else "conserved"
                 comparisons.append({"family_id": family, "query": query, "query_copy_number": count, "relative_median": f"{baseline:g}", "fold_change": f"{fold:g}" if isinstance(fold, float) else fold, "status": status})
         write(args.out / "family_copy_number_comparison.tsv", ("family_id", "query", "query_copy_number", "relative_median", "fold_change", "status"), comparisons)
 

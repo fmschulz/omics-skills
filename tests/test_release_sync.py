@@ -23,12 +23,20 @@ CURRENT_TAG = f"v{CURRENT_VERSION}"
 
 
 class ReleaseSyncTests(unittest.TestCase):
-    def test_release_candidate_matches_manifest_notes_and_head(self) -> None:
-        errors = check_release_sync.release_errors(
-            REPO_ROOT,
-            CURRENT_TAG,
-            "HEAD",
-        )
+    def test_release_candidate_matches_manifest_and_notes(self) -> None:
+        """Manifest versions, tag name, and release-notes heading must agree.
+
+        Commit identity (tag == origin/main) belongs to the release workflow,
+        which passes `--main-ref origin/main`. Asserting it here made this test
+        fail on every commit after a release, in every working checkout, which
+        only teaches people to ignore it. `test_release_commit_must_equal_main`
+        covers that branch with mocks instead."""
+        with patch.object(check_release_sync, "git_output", return_value="0" * 40):
+            errors = check_release_sync.release_errors(
+                REPO_ROOT,
+                CURRENT_TAG,
+                "HEAD",
+            )
         self.assertEqual(errors, [])
 
     def test_wrong_tag_is_rejected(self) -> None:

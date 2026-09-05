@@ -1,6 +1,6 @@
 ---
 name: bio-structure-annotation
-description: Predict protein structures and perform structure-based annotation. Use when sequence evidence is insufficient or structural similarity, confidence, domains, or complexes matter.
+description: Predict protein or complex structures and annotate proteins by structural similarity. Use when predicting a fold, judging prediction confidence, or finding structural homologs for proteins with weak sequence evidence.
 ---
 
 # Bio Structure Annotation
@@ -27,7 +27,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
 | Task | Action |
 |------|--------|
-| Validate and plan | `uv run --script scripts/run_structure_annotation.py ...` |
+| Validate and plan | `uv run --script skills/bio-structure-annotation/scripts/run_structure_annotation.py ...` |
 
 ## Input Requirements
 
@@ -49,7 +49,7 @@ Inputs:
 
 - [ ] Prediction success rate meets project thresholds.
 - [ ] Search hit thresholds meet project thresholds.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify proteins.faa is non-empty and amino acid encoded.
 - [ ] Verify Foldseek databases exist under the reference root.
 - [ ] GPU Foldseek searches use a database produced by `makepaddedseqdb`.

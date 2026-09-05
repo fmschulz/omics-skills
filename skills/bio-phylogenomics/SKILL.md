@@ -67,7 +67,7 @@ Inputs:
 - [ ] A stage is reused only when its declared outputs are non-empty and its `.done` marker exists.
 - [ ] Internal supports are exported on a documented 0–1 scale without mixing raw IQ-TREE and VeryFastTree conventions.
 - [ ] Bootstrap support summary meets project thresholds.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify markers.faa is non-empty and aligned sequences are consistent.
 - [ ] Marker and reference choices are justified against the literature-derived analysis playbook.
 - [ ] Closest relatives are reported with support/distance metrics or uncertainty is stated.

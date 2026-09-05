@@ -27,7 +27,6 @@ The table below is a reader-facing map. The source `SKILL.md` files are still ca
 | `bio-prefect-dask-nextflow` | Designing executable bioinformatics workflows. | Prefect+Dask or Nextflow scaffolds with clear execution boundaries. |
 | `bio-workflow-methods-docwriter` | Turning workflow artifacts into a Methods section. | Reproducible Methods text with commands, versions, parameters, QC gates, and outputs. |
 | `bio-logic` | Auditing scientific reasoning, study design, bias, or strength of evidence. | A structured critique with uncertainty, alternative explanations, and follow-up checks. |
-| `jgi-lakehouse` | Querying JGI Lakehouse, GOLD, IMG, Mycocosm, or Phytozome data. | SQL-backed metadata pulls and, when allowed, downloaded IMG genome files. |
 
 ## Literature, Metadata, and APIs
 

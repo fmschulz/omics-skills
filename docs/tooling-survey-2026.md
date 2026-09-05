@@ -4,22 +4,22 @@ This page records the default tool choices referenced by the agents and bioinfor
 
 | Step | CPU baseline | GPU or accelerated option |
 |---|---|---|
-| Long-read QC | Dorado summaries/trimming, Chopper, Filtlong, Pychopper for full-length cDNA; Porechop_ABI only as a documented fallback | None documented |
-| Short-read mapping | `bwa-mem2`, BBMap | NVIDIA Parabricks `fq2bam` |
-| Long-read mapping | `minimap2` v2.30 | `mm2-fast`, `mm2-gb`, `mm2-ax` when the hardware fits |
-| Assembly | SPAdes 4, Flye 2.9 for long-read isolate drafts, Autocycler 0.6+ for bacterial isolate consensus, Flye `--meta` / metaFlye for long-read metagenomes, metaMDBG 1.1, myloasm where appropriate | None documented |
-| Domain taxonomy triage | BBTools QuickClade via `bryce911/bbtools`, followed by GTDB-Tk, EukCC, vConTACT3, or GVClass by domain | None documented |
-| Binning | QuickBin via `bryce911/bbtools` | SemiBin2 with CUDA-backed PyTorch |
-| Bin QC | CheckM2, EukCC, GUNC | None documented |
-| Gene calling | pyrodigal, pyrodigal-gv, BRAKER4; BRAKER3 for legacy reproduction | None documented |
-| ncRNA screening | tRNAscan-SE, Infernal `cmsearch` against Rfam covariance models | None documented |
-| Annotation | DIAMOND, eggNOG-mapper, InterProScan, pyhmmer, TaxonKit | MMseqs2-GPU |
-| Phylogenomics | VeryFastTree, IQ-TREE, MAFFT, trimAl, ete4 | None documented |
-| Orthology and pangenomes | OrthoFinder, ProteinOrtho, MMseqs2 | MMseqs2-GPU |
-| Synteny | MCScanX, ntSynt, SibeliaZ | None documented |
-| Viromics | geNomad, CheckV, VirSorter2, vConTACT3, GVClass | None documented |
-| Structure annotation | TM-Vec, Boltz-2, ColabFold, ESMFold, Foldseek | Boltz-2, Foldseek GPU, ColabFold, ESMFold |
-| Statistics and ML | LinkML schemas, Pydantic validation/parsing, DuckDB, scikit-learn, XGBoost | XGBoost CUDA, RAPIDS cuML |
+| Read QC (long) | Dorado summaries/trimming, Chopper, Filtlong, Pychopper for full-length cDNA; Porechop_ABI only as a documented fallback | — |
+| Read mapping (short) | bwa-mem2, BBMap | NVIDIA Parabricks `fq2bam` |
+| Read mapping (long) | `minimap2` v2.31 | `mm2-fast` (AVX-512), `mm2-gb`, `mm2-ax` |
+| Assembly | SPAdes v4.2.0 (Illumina), Flye v2.9.6 (long-read isolate draft), Autocycler v0.6.2 (bacterial isolate consensus), Flye `--meta` / metaFlye (long-read metagenome), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
+| Domain taxonomy triage | BBTools QuickClade via `bryce911/bbtools:39.85` container (`percontig` for assemblies), then GTDB-Tk / EukCC / vConTACT3 / GVClass by domain | — |
+| Binning | QuickBin via `bryce911/bbtools:39.85` container | SemiBin2 v2.3.0 (CUDA-backed PyTorch) |
+| Bin QC | CheckM2 v1.1.0, EukCC2 v2.1.3, GUNC v1.1.1 | — |
+| Gene calling | Pyrodigal v3.7.1, pyrodigal-gv v0.3.2, BRAKER4 for current eukaryotic workflows; BRAKER3 v3.0.8 for legacy reproduction | — |
+| ncRNA | tRNAscan-SE v2.0.12, Infernal v1.1.5 (`cmsearch` against Rfam SSU/LSU CMs) | — |
+| Annotation | DIAMOND v2.2.1 (clusterednr preferred), eggNOG-mapper v2.1.15, InterProScan 5.77-108.0, pyhmmer, TaxonKit v0.20 | MMseqs2-GPU |
+| Phylogenetics | VeryFastTree v4 (exploratory/time-bounded trees and >2,000 taxa), IQ-TREE v3.1.2 (final ≤2,000 taxa), MAFFT, trimAl, ete4 | — |
+| Orthology / pangenome | OrthoFinder v3, ProteinOrtho v6 (large pangenomes), MMseqs2 | MMseqs2-GPU |
+| Synteny | MCScanX, ntSynt, SibeliaZ | — |
+| Viromics | geNomad v1.12.0, CheckV v1.1.1, VirSorter2, vConTACT3 v3.2.x (prokaryotic-virus taxonomy), GVClass v1.6.0 (Nucleocytoviricota) | — |
+| Structure | TM-Vec v1.0.2 (triage), Boltz v2.2.1 (default predictor), ColabFold v1.6.1 + MMseqs2-GPU MSA, ESMFold (pre-screen), Foldseek 10-941cd33 | Boltz, Foldseek `--gpu 1`, ColabFold, ESMFold |
+| Statistics / ML | LinkML v1.11.1 schemas, Pydantic v2.13.4 validation/parsing, DuckDB v1.5.3, scikit-learn 1.8.0, XGBoost v3.2.0 | XGBoost `device=cuda`, RAPIDS cuML |
 
 ## Maintenance Notes
 

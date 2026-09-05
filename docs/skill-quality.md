@@ -4,7 +4,7 @@ This page records the v1.5 quality pass across all 34 checked-in skills. It dist
 
 ## Executive Summary
 
-Version 1.5 closes every item carried forward from the v1.4 quality backlog except the explicitly deferred `jgi-lakehouse` work. The release adds restartable drivers and normalized artifacts to the core omics workflows, strengthens metadata and project scaffolding, expands literature-client resilience, adds real notebook and visualization smoke tests, and makes review outputs schema-validatable.
+Version 1.5 closed every item carried forward from the v1.4 quality backlog except the explicitly deferred `jgi-lakehouse` work; that skill was later removed from the pack rather than completed. The release adds restartable drivers and normalized artifacts to the core omics workflows, strengthens metadata and project scaffolding, expands literature-client resilience, adds real notebook and visualization smoke tests, and makes review outputs schema-validatable.
 
 The tests exercise small deterministic fixtures, command planning, normalization, restart behavior, schema validation, routing, and failure modes. They do not claim biological validation of every external program or reference database. Production runs must still pin the actual databases and containers, execute scheduler-backed tools, and apply the scientific QC gates documented by each skill.
 
@@ -36,7 +36,6 @@ The tests exercise small deterministic fixtures, command planning, normalization
 | `crossref-lookup` | Removes the hidden writing-skill dependency, normalizes BibTeX fields, distinguishes missing records from transient failures, and adds strict audit exits. |
 | `csag-extraction` | Validates against the authoritative LinkML-derived schema before semantic checks and makes missing text grounding fail strict mode. |
 | `exploratory-data-analysis` | Adds representative fixtures and analyzers across sequence, structure, array, and mass-spectrometry families, with streaming or memory mapping for large inputs. |
-| `jgi-lakehouse` | Unchanged in v1.5 by explicit release scope. Its mocked end-to-end token, pagination, and verified-download path remains a separate future item. |
 | `manuscript-review-council` | Separates critique from rebuttal drafting, defines deterministic review-bundle paths, and validates machine-readable issues against JSON Schema. |
 | `notebooks` | Pins template dependencies, uses an explicit project-kernel placeholder, and tests Jupyter-to-marimo and marimo-to-Jupyter conversion fixtures. |
 | `pdf-to-md` | Adds complete and missing-author paper bundles that test section audit, article validation, figure handling, and credible missing-field behavior. |
@@ -53,4 +52,4 @@ The [biological validation reference](biological-validation.md) defines candidat
 
 All registered datasets remain `candidate` until downloaded artifacts receive local SHA-256 values. The first scheduler pilot targets phylogenomics because it does not require a large reference database. Its job manifest remains `draft` until the low-memory cluster profile, remote paths, QfO subset, reference tree, and solved Pixi lock are fixed.
 
-Comparative-discovery thresholds still require separate prokaryote, eukaryote, phage, and Nucleocytoviricota campaigns. The deferred `jgi-lakehouse` mocked success path remains outside this validation program.
+Comparative-discovery thresholds still require separate prokaryote, eukaryote, phage, and Nucleocytoviricota campaigns. The `jgi-lakehouse` item that this program excluded is moot: the skill was removed.

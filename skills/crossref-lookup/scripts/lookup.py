@@ -157,7 +157,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--rows", type=int, default=5)
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--style", choices=("apa", "vancouver", "ama", "ieee", "chicago"), default="apa")
     return parser.parse_args(argv)
 
 

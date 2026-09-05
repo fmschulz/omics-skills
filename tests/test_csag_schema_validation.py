@@ -55,7 +55,7 @@ def minimal_extraction() -> dict:
 
 
 class CsagSchemaValidationTests(unittest.TestCase):
-    def run_validator(self, payload: dict, strict: bool = False) -> subprocess.CompletedProcess[str]:
+    def run_validator(self, payload: dict, strict: bool = False, source_markdown: str | None = None) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "paper.json"
@@ -72,6 +72,10 @@ class CsagSchemaValidationTests(unittest.TestCase):
             ]
             if strict:
                 command.append("--strict")
+            if source_markdown is not None:
+                markdown = root / "source.md"
+                markdown.write_text(source_markdown, encoding="utf-8")
+                command += ["--source-markdown", str(markdown)]
             return subprocess.run(
                 command,
                 cwd=REPO_ROOT,
@@ -91,6 +95,47 @@ class CsagSchemaValidationTests(unittest.TestCase):
         result = self.run_validator(minimal_extraction(), strict=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("missing strict text grounding", result.stdout + result.stderr)
+
+
+    def grounded_extraction(self, source: str, start: int, end: int, exact: str) -> dict:
+        payload = minimal_extraction()
+        payload["assertions"][0]["text_spans"] = [
+            {
+                "document_id": payload["id"],
+                "section_type": "results",
+                "start_char": start,
+                "end_char": end,
+                "exact_text": exact,
+            }
+        ]
+        return payload
+
+    def test_strict_mode_accepts_a_span_that_matches_the_source(self) -> None:
+        """A span whose offsets and quote agree with the source raises no
+        grounding complaint. (The shared fixture carries unrelated schema
+        errors, so this asserts on the grounding issues specifically.)"""
+        source = "# Paper\n\nThe bacterium grew faster at 37 degrees.\n"
+        start = source.index("grew faster")
+        payload = self.grounded_extraction(source, start, start + len("grew faster"), "grew faster")
+        output = self.run_validator(payload, strict=True, source_markdown=source)
+        combined = output.stdout + output.stderr
+        self.assertNotIn("impossible character offsets", combined)
+        self.assertNotIn("exact_text does not match the source slice", combined)
+        self.assertNotIn("is past the", combined)
+
+    def test_strict_mode_rejects_impossible_offsets(self) -> None:
+        source = "# Paper\n\nThe bacterium grew faster at 37 degrees.\n"
+        payload = self.grounded_extraction(source, 999, 2, "anything")
+        result = self.run_validator(payload, strict=True, source_markdown=source)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("impossible character offsets", result.stdout + result.stderr)
+
+    def test_strict_mode_rejects_a_quote_absent_from_the_source(self) -> None:
+        source = "# Paper\n\nThe bacterium grew faster at 37 degrees.\n"
+        payload = self.grounded_extraction(source, 0, 10, "a sentence the paper never contains")
+        result = self.run_validator(payload, strict=True, source_markdown=source)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("exact_text does not match the source slice", result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

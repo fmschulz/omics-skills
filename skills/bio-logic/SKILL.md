@@ -1,6 +1,6 @@
 ---
 name: bio-logic
-description: Evaluate scientific claims, methods, biases, and evidence strength. Use when stress-testing a study design, paper, analysis, or causal interpretation.
+description: Assess a scientific claim, study design, method, or interpretation against its evidence. Use when testing causal reasoning, finding methodological bias, weighing alternative explanations, or revising hypotheses.
 ---
 
 # Bio-Logic: Scientific Reasoning Evaluation
@@ -213,7 +213,7 @@ Suggestive but not conclusive due to differential attrition.
 
 **Input**: "This study proves that coffee prevents Alzheimer's"
 
-**Assessment**: If based on observational data, this is a correlation→causation error. Appropriate language: "Coffee consumption is associated with lower Alzheimer's risk."
+**Assessment**: If based only on an association with no identified causal design, this is a correlation→causation error. Appropriate language: "Coffee consumption is associated with lower Alzheimer's risk." Observational data with a justified quasi-experimental or natural-experiment strategy, its assumptions stated and tested, can support a causal claim; the design is what decides, not whether the data were observational.
 
 ## Troubleshooting
 

@@ -100,9 +100,9 @@ START
 
 - **"scientific critique", "methodological bias", "evidence quality", "review evidence", "observational study design", "study design supports causal conclusions", "causal conclusions"** → `/bio-logic`
 - **"peer review", "review this manuscript", "major revision", "decision letter", "assess whether the author response resolves", "multi-reviewer", "review council", "critique manuscript", "manuscript review"** → `/manuscript-review-council`
-- **"proposal", "grant", "funding proposal", "review this proposal"** → `/proposal-review`
+- **"grant", "funding proposal", "funding decision", "research proposal", "project proposal", "review this proposal", "evaluate this proposal", "score this proposal"** → `/proposal-review`
 - **"AI scientist", "AI-generated notebook", "AI-generated Jupyter notebook", "audit AI-generated Jupyter notebook", "AI-generated analysis", "AI-generated analysis notebook", "evaluate agent output", "score AI output", "rank AI scientists"** → `/ai-scientist-evaluator`
-- **"draft manuscript", "rewrite scientific prose", "manuscript", "Abstract", "Methods", "author rebuttal", "response letter", "reviewer comments"** → `/scientific-writing`
+- **"draft manuscript", "rewrite scientific prose", "manuscript", "Abstract", "Methods", "sentence-level clarity", "polish the prose", "author rebuttal", "response letter", "reviewer comments"** → `/scientific-writing`
 - **"pdf to markdown", "pdf to md", "convert pdf", "convert manuscript to markdown", "paper to markdown", "parse pdf", "liteparse", "ocr pdf"** → `/pdf-to-md`
 - **"extract a CSAG", "CSAG", "argument graph", "claim evidence graph", "conditional scientific argumentation", "extract claims and evidence"** → `/csag-extraction`
 - **"document workflow", "Nextflow", "Snakemake", "pipeline methods"** → `/bio-workflow-methods-docwriter`

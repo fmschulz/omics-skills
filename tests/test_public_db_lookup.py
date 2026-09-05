@@ -78,16 +78,92 @@ class PublicDbLookupTests(unittest.TestCase):
                 self.assertTrue(url.startswith(base + "/"), url)
                 self.assertEqual(headers["User-Agent"], public_db_lookup.USER_AGENT)
                 if service in public_db_lookup.NCBI_SERVICES:
-                    self.assertEqual(params["api_key"], "topsecretkey")
+                    self.assertIn(("api_key", "topsecretkey"), params)
                     session = Mock()
                     session.get = Mock(return_value=response(200, []))
                     _, envelope = run(["--service", service, "--path", "some/path"], session, env)
-                    self.assertEqual(session.get.call_args.kwargs["params"]["api_key"], "topsecretkey")
+                    self.assertIn(("api_key", "topsecretkey"), session.get.call_args.kwargs["params"])
                     self.assertNotIn("topsecretkey", envelope["url"])
                     self.assertNotIn("topsecretkey", json.dumps(envelope))
                 else:
                     self.assertNotIn("api_key", params)
 
+
+
+
+class CredentialHandlingTests(unittest.TestCase):
+    """A key embedded in --path bypassed the --param filter and rode straight
+    into the emitted `url` field; successful bodies were never redacted."""
+
+    def test_credentials_are_rejected_wherever_they_are_supplied(self) -> None:
+        import argparse
+
+        for path, param in (
+            ("esearch.fcgi?db=protein&api_key=SYNTHETIC", []),
+            ("esearch.fcgi?token=SYNTHETIC", []),
+            ("esearch.fcgi?access-token=SYNTHETIC", []),
+            ("esearch.fcgi", ["api_key=SYNTHETIC"]),
+        ):
+            with self.subTest(path=path, param=param):
+                args = argparse.Namespace(
+                    service="ncbi-entrez", path=path, param=list(param),
+                    max_items=5, max_depth=3, format="auto",
+                )
+                with self.assertRaisesRegex(ValueError, "through the environment"):
+                    public_db_lookup.build_request(args, {})
+
+    def test_ordinary_query_parameters_in_the_path_still_work(self) -> None:
+        import argparse
+
+        args = argparse.Namespace(
+            service="ncbi-entrez", path="esearch.fcgi?db=protein&term=p53", param=[],
+            max_items=5, max_depth=3, format="auto",
+        )
+        url, params, _ = public_db_lookup.build_request(args, {})
+        self.assertTrue(url.endswith("/esearch.fcgi"))
+        self.assertEqual(params, [("db", "protein"), ("term", "p53")])
+
+    def test_api_key_is_redacted_from_a_successful_response_body(self) -> None:
+        session = Mock()
+        session.get = Mock(return_value=response(200, {"results": [{"echo": "api_key=SYNTHETIC"}]}))
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            code = public_db_lookup.main(
+                ["--service", "ncbi-entrez", "--path", "esearch.fcgi"],
+                session=session,
+                env={"NCBI_API_KEY": "SYNTHETIC"},
+            )
+        self.assertEqual(code, 0)
+        self.assertNotIn("SYNTHETIC", stdout.getvalue())
+        self.assertIn("REDACTED", stdout.getvalue())
+
+    def test_http_200_error_envelope_is_not_a_successful_empty_result(self) -> None:
+        """Several services report failures as HTTP 200 with an error body;
+        reporting ok:true turned a rejected query into a confident answer."""
+        for body in ({"error": "Invalid db name"}, {"esearchresult": {"ERROR": "Invalid db name"}}):
+            with self.subTest(body=body):
+                session = Mock()
+                session.get = Mock(return_value=response(200, body))
+                code, envelope = run(["--service", "ncbi-entrez", "--path", "esearch.fcgi"], session)
+                self.assertEqual(code, 1)
+                self.assertFalse(envelope["ok"])
+                self.assertEqual(envelope["error"]["code"], "service_error")
+
+    def test_repeated_query_parameters_are_preserved(self) -> None:
+        """Entrez ELink takes several `id=` values and pairs them with its
+        outputs; collapsing them into a dict dropped all but the last."""
+        import argparse
+
+        args = argparse.Namespace(
+            service="ncbi-entrez",
+            path="elink.fcgi?dbfrom=protein&db=gene&id=15718680&id=157427902",
+            param=[], max_items=5, max_depth=3, format="auto",
+        )
+        _, params, _ = public_db_lookup.build_request(args, {})
+        self.assertEqual(
+            [value for key, value in params if key == "id"],
+            ["15718680", "157427902"],
+        )
 
 if __name__ == "__main__":
     unittest.main()

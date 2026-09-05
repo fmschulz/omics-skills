@@ -189,9 +189,10 @@ def collect_parameter_map(extraction: dict) -> dict[str, str]:
     return mapping
 
 
-def expect(condition: bool, message: str, errors: list[str]) -> None:
+def expect(condition: bool, message: str, errors: list[str]) -> bool:
     if not condition:
         errors.append(message)
+    return condition
 
 
 def issue(object_id: object, field_path: str, reason: str, suggested_fix: str) -> str:
@@ -454,20 +455,70 @@ def validate_optional_assertion_metadata(extraction: dict, errors: list[str]) ->
             )
 
 
-def validate_strict_grounding(extraction: dict, errors: list[str]) -> None:
+def validate_strict_grounding(extraction: dict, errors: list[str], source: str | None = None) -> None:
+    """Strict mode promises spans that "resolve to exact source text". Checking
+    only that `text_spans` is non-empty accepted impossible offsets and quotes
+    that appear nowhere in the paper, which is the one thing a grounded
+    argumentation graph must never do."""
     for collection in ("assertions", "evidence_items", "evidence_links"):
         for item in extraction.get(collection, []) or []:
-            if isinstance(item, dict):
-                expect(
-                    has_text_spans(item),
-                    issue(
-                        item.get("id"),
-                        f"{collection}[].text_spans",
-                        "missing strict text grounding",
-                        "Attach at least one TextSpan that resolves to exact source text.",
-                    ),
-                    errors,
-                )
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not expect(
+                has_text_spans(item),
+                issue(
+                    item_id,
+                    f"{collection}[].text_spans",
+                    "missing strict text grounding",
+                    "Attach at least one TextSpan that resolves to exact source text.",
+                ),
+                errors,
+            ):
+                continue
+            for index, span in enumerate(item["text_spans"]):
+                validate_text_span(f"{collection}[].text_spans[{index}]", item_id, span, source, errors)
+
+
+def validate_text_span(where: str, item_id: object, span: object, source: str | None, errors: list[str]) -> None:
+    if not isinstance(span, dict):
+        expect(False, issue(item_id, where, "text span is not an object", "Emit a TextSpan object."), errors)
+        return
+    start, end = span.get("start_char"), span.get("end_char")
+    if not isinstance(start, int) or not isinstance(end, int) or start < 0 or end <= start:
+        expect(
+            False,
+            issue(item_id, where, f"impossible character offsets {start}..{end}",
+                  "Emit integer offsets with 0 <= start_char < end_char."),
+            errors,
+        )
+        return
+    if source is None:
+        return
+    if not source:
+        expect(
+            False,
+            issue(item_id, where, "strict grounding needs the source document",
+                  "Pass --source-markdown so spans can be checked against the text."),
+            errors,
+        )
+        return
+    if end > len(source):
+        expect(
+            False,
+            issue(item_id, where, f"end_char {end} is past the {len(source)}-character source",
+                  "Offsets must index the document passed to --source-markdown."),
+            errors,
+        )
+        return
+    exact = span.get("exact_text")
+    if isinstance(exact, str) and exact != source[start:end]:
+        expect(
+            False,
+            issue(item_id, where, "exact_text does not match the source slice",
+                  "Quote the source verbatim, or correct the offsets to the quoted passage."),
+            errors,
+        )
 
 
 def validate_cross_references(extraction: dict, ids_by_key: dict[str, set[str]], errors: list[str]) -> None:
@@ -810,7 +861,7 @@ def main() -> int:
     validate_semantic_field_placement(extraction, errors)
     validate_cross_references(extraction, ids_by_key, errors)
     if args.strict:
-        validate_strict_grounding(extraction, errors)
+        validate_strict_grounding(extraction, errors, source_markdown if args.source_markdown else None)
     if profile == "promoted_claim":
         validate_promoted_claim_profile(extraction, ids_by_key, errors)
     if profile == "benchmark_key":

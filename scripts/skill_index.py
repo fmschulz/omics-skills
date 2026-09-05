@@ -394,11 +394,20 @@ def is_software_repo_review(query_tokens: set[str]) -> bool:
 
     The omics-skills router has no code-review skill. Explicit code/repo review
     prompts should stay silent instead of matching scientific review patterns.
+
+    A scientific subject word overrides the veto: "improve the manuscript in this
+    repository" is a writing request that merely names where the file lives, and
+    suppressing every skill for it is worse than routing it. It does NOT override
+    when the query also names software as the subject: "review the genome
+    annotation code in this repo" is still a code review.
     """
     has_repo_subject = bool(query_tokens & {"repo", "repository", "codebase"})
     has_software_subject = bool(query_tokens & SOFTWARE_REPO_TOKENS)
     has_review_action = bool(query_tokens & SOFTWARE_REVIEW_ACTION_TOKENS)
-    return has_repo_subject and (has_review_action or has_software_subject)
+    has_scientific_subject = bool(query_tokens & SCIENTIFIC_CONTEXT_TOKENS)
+    if has_software_subject:
+        return has_repo_subject
+    return has_repo_subject and has_review_action and not has_scientific_subject
 
 
 def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
@@ -1084,7 +1093,7 @@ def route_request(
         else None
     )
 
-    dep_skills = ordered_dependencies(primary_skills, edges)
+    dep_skills = ordered_dependencies(primary_skills, edges, allowed_skills=allowed_skills)
     primary_set = set(primary_skills)
     # Order only the primary + strict-dependency set through the workflow
     # topological sort — pulling compose_with neighbours through it produces
@@ -1137,6 +1146,7 @@ def ordered_dependencies(
     primary_skills: list[str],
     edges: list[dict[str, Any]],
     max_depth: int = DEPENDENCY_MAX_DEPTH,
+    allowed_skills: set[str] | None = None,
 ) -> list[str]:
     """Return the primary skills plus their prerequisites, dependency-first.
 
@@ -1144,7 +1154,9 @@ def ordered_dependencies(
     skill. Because depend_on is the reverse of the workflow_next chain, an
     unbounded walk pulls a whole pipeline (reads -> assembly -> binning -> ...)
     into the supporting list for any single-step query; the depth cap keeps it to
-    genuine immediate prerequisites."""
+    genuine immediate prerequisites. ``allowed_skills`` applies the same agent
+    ownership filter the scoring and compose paths already apply, so pinning an
+    agent cannot pull in a skill that agent does not own."""
     dependencies: dict[str, list[str]] = defaultdict(list)
     for edge in edges:
         if edge["type"] == "depend_on" and edge["source_type"] == "skill" and edge["target_type"] == "skill":
@@ -1160,6 +1172,8 @@ def ordered_dependencies(
         on_path.add(skill_name)
         if depth < max_depth:
             for dependency in dependencies.get(skill_name, []):
+                if allowed_skills is not None and dependency not in allowed_skills:
+                    continue
                 visit(dependency, depth + 1)
         on_path.discard(skill_name)
         seen.add(skill_name)

@@ -19,7 +19,7 @@ Create polished, publication-ready visualizations in Python/Jupyter with strong 
 7. Place the figure caption/legend text BELOW the figure, directly under it — never above. In a notebook this means the figure (code) cell comes first and the caption (markdown) cell immediately follows it; in a document the caption goes beneath the image. A reader sees the figure, then its legend. (Journal convention: legends sit below the figure.)
 8. Apply the shared style helpers, then build the plot.
 9. Validate readability, accessibility, and export quality at the target size.
-10. Use the pinned `pixi.toml` for project figures or the PEP 723 fixture exporter for a smoke test. Annotation helpers inherit the active light/dark text color unless an explicit color is supplied.
+10. Use `pixi.toml` for a project figure environment, or [scripts/export_fixture.py](scripts/export_fixture.py) — a PEP 723 script with exact version pins — for a reproducible smoke test. Annotation helpers inherit the active light/dark text color unless an explicit color is supplied.
 
 ## Quick Reference
 
@@ -55,7 +55,7 @@ Create polished, publication-ready visualizations in Python/Jupyter with strong 
 - [ ] Color choice is colorblind-safe and grayscale-tolerant
 - [ ] Color is not the only encoding for important categories
 - [ ] Layout is tight with minimal whitespace
-- [ ] The fixture exports non-empty PNG, SVG, and PDF files in the pinned plotting environment; dark-theme labels and annotations inherit readable theme colors.
+- [ ] `uv run --script skills/beautiful-data-viz/scripts/export_fixture.py fixtures/growth_curve.csv --out build/fixture` writes non-empty PNG, SVG, and PDF files; dark-theme labels and annotations inherit readable theme colors.
 
 ## Examples
 

@@ -17,7 +17,7 @@ One bounded GET against a public life-science REST API. The bundled script picks
 4. Keep `--max-items` small (default 5). Raise it only when the user needs more rows.
 5. When the full payload matters, add `--save-raw PATH` and work from the file; the envelope still carries the compacted view.
 6. For the two NCBI services, export `NCBI_API_KEY` and `NCBI_EMAIL` (and `NCBI_TOOL` if you have one). The script adds them as request parameters and redacts the key from its output.
-7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.
+7. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.
 
 ### Execution behavior
 
@@ -86,4 +86,4 @@ One JSON object on stdout.
 - No POST requests, ID-mapping jobs, or other asynchronous job APIs
 - No bulk downloads of sequence or structure files
 - No literature search; use `/polars-dovmed`
-- No JGI data access; use `/jgi-lakehouse`
+- No JGI-internal data access (GOLD, IMG, JAMO); this skill covers public endpoints only

@@ -23,6 +23,7 @@ import re
 import shlex
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -168,25 +169,64 @@ def uninstall_claude() -> str:
     return uninstall_common(CLAUDE_SETTINGS)
 
 
+FEATURES_HEADER = re.compile(r"^[ \t]*\[features\][ \t]*$", re.MULTILINE)
+CODEX_HOOKS_KEY = re.compile(r"^[ \t]*codex_hooks[ \t]*=.*$", re.MULTILINE)
+
+
+def codex_flag_enabled() -> bool:
+    """True only when `[features] codex_hooks` really is `true`."""
+    if not CODEX_CONFIG.exists():
+        return False
+    try:
+        config = tomllib.loads(CODEX_CONFIG.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError:
+        return False
+    return config.get("features", {}).get("codex_hooks") is True
+
+
+def set_codex_hooks_true(text: str) -> str:
+    """Return `text` with `[features] codex_hooks = true`. Replaces an existing
+    key in that table instead of appending a second one, which would make the
+    file unparseable."""
+    header = FEATURES_HEADER.search(text)
+    if header is None:
+        return text.rstrip() + ("\n\n" if text.strip() else "") + "[features]\ncodex_hooks = true\n"
+    next_table = re.compile(r"^[ \t]*\[", re.MULTILINE).search(text, header.end())
+    end = next_table.start() if next_table else len(text)
+    existing = CODEX_HOOKS_KEY.search(text, header.end(), end)
+    if existing:
+        # Replace the value, not the line: a trailing comment is the user's note.
+        line = existing.group(0)
+        comment = line[line.index("#"):] if "#" in line.split("=", 1)[1] else ""
+        replacement = "codex_hooks = true" + (f" {comment}" if comment else "")
+        return text[: existing.start()] + replacement + text[existing.end() :]
+    return text[: header.end()] + "\ncodex_hooks = true" + text[header.end() :]
+
+
 def enable_codex_feature_flag() -> str:
-    """Codex CLI gates the hook system behind `[features] codex_hooks =
-    true` in ~/.codex/config.toml. Insert it idempotently without a TOML
-    library dependency — the file is small enough to edit by regex."""
+    """Codex CLI gates the hook system behind `[features] codex_hooks = true`
+    in ~/.codex/config.toml. Never write a file tomllib cannot parse: this is
+    the user's own config, not ours."""
     CODEX_CONFIG.parent.mkdir(parents=True, exist_ok=True)
     text = CODEX_CONFIG.read_text(encoding="utf-8") if CODEX_CONFIG.exists() else ""
-    if re.search(r"^\s*codex_hooks\s*=\s*true\s*$", text, re.MULTILINE):
+    try:
+        current = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        return f"left {CODEX_CONFIG} alone: it is not valid TOML ({exc})"
+    if current.get("features", {}).get("codex_hooks") is True:
         return "feature flag already set"
-    if re.search(r"^\s*\[features\]\s*$", text, re.MULTILINE):
-        new_text = re.sub(
-            r"(^\s*\[features\]\s*$)",
-            r"\1\ncodex_hooks = true",
-            text,
-            count=1,
-            flags=re.MULTILINE,
+    new_text = set_codex_hooks_true(text)
+    try:
+        parsed = tomllib.loads(new_text)
+    except tomllib.TOMLDecodeError as exc:
+        return f"left {CODEX_CONFIG} alone: edit would break it ({exc})"
+    # Verify the flag, not just that the file still parses. A `[features]` header
+    # inside a multi-line string, for instance, is text we must not treat as a table.
+    if parsed.get("features", {}).get("codex_hooks") is not True:
+        return (
+            f"could not enable the flag in {CODEX_CONFIG}; "
+            "set [features] codex_hooks = true by hand"
         )
-    else:
-        block = "\n[features]\ncodex_hooks = true\n"
-        new_text = text.rstrip() + ("\n" if text and not text.endswith("\n") else "") + block
     CODEX_CONFIG.write_text(new_text, encoding="utf-8")
     return f"enabled in {CODEX_CONFIG}"
 
@@ -213,15 +253,9 @@ def status() -> None:
         user_prompt = hooks.get("UserPromptSubmit") if isinstance(hooks.get("UserPromptSubmit"), list) else []
         return any(marker_in_entry(entry) for entry in user_prompt if isinstance(entry, dict))
 
-    flag_enabled = False
-    if CODEX_CONFIG.exists():
-        flag_enabled = bool(
-            re.search(
-                r"^\s*codex_hooks\s*=\s*true\s*$",
-                CODEX_CONFIG.read_text(encoding="utf-8"),
-                re.MULTILINE,
-            )
-        )
+    # Parse the config rather than grepping it: a text search reports "on" for
+    # `[unrelated] codex_hooks = true` and "off" for a trailing comment.
+    flag_enabled = codex_flag_enabled()
     print(f"Claude Code ({CLAUDE_SETTINGS}): {'installed' if installed(CLAUDE_SETTINGS) else 'not installed'}")
     print(
         f"Codex CLI  ({CODEX_HOOKS}): {'installed' if installed(CODEX_HOOKS) else 'not installed'}"

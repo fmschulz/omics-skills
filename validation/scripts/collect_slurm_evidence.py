@@ -71,10 +71,15 @@ def read_sacct(path: Path, job_id: str) -> tuple[dict[str, str], list[dict[str, 
     return allocations[0], rows
 
 
-def fetch_sacct(path: Path, job_id: str) -> None:
+def fetch_sacct(path: Path, job_id: str, cluster: str) -> None:
+    """Always qualify by cluster. Job IDs collide between clusters, and an
+    unqualified `sacct -j` can return another cluster's accounting for the
+    same numeric ID."""
     result = subprocess.run(
         [
             "sacct",
+            "-M",
+            cluster,
             "-j",
             job_id,
             "--format=" + ",".join(SACCT_FIELDS),
@@ -118,7 +123,7 @@ def main() -> int:
         if args.fetch_sacct:
             sacct_path = args.output.with_suffix(".sacct.psv")
             sacct_path.parent.mkdir(parents=True, exist_ok=True)
-            fetch_sacct(sacct_path, args.job_id)
+            fetch_sacct(sacct_path, args.job_id, job["scheduler"]["cluster"])
         row, sacct_rows = read_sacct(sacct_path, args.job_id)
         workdir = Path(job["workdir"])
         outputs = []
@@ -147,12 +152,13 @@ def main() -> int:
         if peak_rss is None:
             failure_modes.append("missing_peak_rss")
         evidence = {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "validation_id": job["validation_id"],
             "driver": job["driver"],
             "truth_set_id": job["truth_set_id"],
             "job_id": args.job_id,
             "scheduler": {
+                "cluster": job["scheduler"]["cluster"],
                 "state": state,
                 "exit_code": row["ExitCode"],
                 "elapsed_seconds": int(row["ElapsedRaw"]),

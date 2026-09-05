@@ -36,28 +36,7 @@ Every skill can be used on its own. The bio-* skills also share a few habits tha
 
 ## Tooling baseline
 
-Skills target current stable releases as of 2026 and document GPU alternatives where they exist.
-
-| Step | CPU baseline | GPU alternative |
-|---|---|---|
-| Read QC (long) | Dorado summaries/trimming, Chopper, Filtlong, Pychopper for full-length cDNA; Porechop_ABI only as a documented fallback | — |
-| Read mapping (short) | bwa-mem2, BBMap | NVIDIA Parabricks `fq2bam` |
-| Read mapping (long) | minimap2 v2.31 | `mm2-fast` (AVX-512), `mm2-gb`, `mm2-ax` |
-| Assembly | SPAdes v4.2.0 (Illumina), Flye v2.9.6 (long-read isolate draft), Autocycler v0.6.2 (bacterial isolate consensus), Flye `--meta` / metaFlye (long-read metagenome), metaMDBG 1.1 (HiFi metagenome), myloasm (optional) | — |
-| Domain taxonomy triage | BBTools QuickClade via `bryce911/bbtools:39.85` container (`percontig` for assemblies), then GTDB-Tk / EukCC / vConTACT3 / GVClass by domain | — |
-| Binning | QuickBin via `bryce911/bbtools:39.85` container | SemiBin2 v2.3.0 (CUDA-backed PyTorch) |
-| Bin QC | CheckM2 v1.1.0, EukCC2 v2.1.3, GUNC v1.1.1 | — |
-| Gene calling | Pyrodigal v3.7.1, pyrodigal-gv v0.3.2, BRAKER4 for current eukaryotic workflows; BRAKER3 v3.0.8 for legacy reproduction | — |
-| ncRNA | tRNAscan-SE v2.0.12, Infernal v1.1.5 (`cmsearch` against Rfam SSU/LSU CMs) | — |
-| Annotation | DIAMOND v2.2.1 (clusterednr preferred), eggNOG-mapper v2.1.15, InterProScan 5.77-108.0, pyhmmer, TaxonKit v0.20 | MMseqs2-GPU |
-| Phylogenetics | VeryFastTree v4 (exploratory/time-bounded trees and >2,000 taxa), IQ-TREE v3.1.2 (final ≤2,000 taxa), MAFFT, trimAl, ete4 | — |
-| Orthology / pangenome | OrthoFinder v3, ProteinOrtho v6 (large pangenomes), MMseqs2 | MMseqs2-GPU |
-| Synteny | MCScanX, ntSynt, SibeliaZ | — |
-| Viromics | geNomad v1.12.0, CheckV v1.1.1, VirSorter2, vConTACT3 v3.2.x (prokaryotic-virus taxonomy), GVClass v1.6.0 (Nucleocytoviricota) | — |
-| Structure | TM-Vec v1.0.2 (triage), Boltz v2.2.1 (default predictor), ColabFold v1.6.1 + MMseqs2-GPU MSA, ESMFold (pre-screen), Foldseek 10-941cd33 | Boltz, Foldseek `--gpu 1`, ColabFold, ESMFold |
-| Statistics / ML | LinkML v1.11.1 schemas, Pydantic v2.13.4 validation/parsing, DuckDB v1.5.3, scikit-learn 1.8.0, XGBoost v3.2.0 | XGBoost `device=cuda`, RAPIDS cuML |
-
-The full survey of versions, alternatives, and benchmarks is in [`docs/tooling-survey-2026.md`](docs/tooling-survey-2026.md).
+Skills target current stable releases as of 2026 and document GPU alternatives where they exist. The per-step table of pinned versions lives in [`docs/tooling-survey-2026.md`](docs/tooling-survey-2026.md); each skill's `docs/` directory carries the provenance-checked release notes for its own tools.
 
 ## Installation
 
@@ -133,7 +112,7 @@ Skills are also invocable individually as `/<skill-name>` in Claude Code or `$<s
 
 | Agent | Focus | Skills |
 |---|---|---:|
-| `omics-scientist` | Project reproducibility, sequencing reads, assembly, binning, annotation, phylogenomics, interdomain HGT, MAG recovery, JGI access | 22 |
+| `omics-scientist` | Project reproducibility, sequencing reads, assembly, binning, annotation, phylogenomics, interdomain HGT, MAG recovery, public database records | 21 |
 | `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, and citation impact | 8 |
 | `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, and AI-output evaluation | 8 |
 | `dataviz-artist` | marimo and Jupyter notebooks, scientific data inspection, matplotlib/seaborn figures, and Plotly Dash dashboards | 4 |
@@ -143,20 +122,21 @@ Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a
 ## Repository layout
 
 ```
-agents/                     4 agent definitions
+agents/                     agent definitions
 skills/                     skill directories; each has a SKILL.md
 catalog/                    generated router artifact (catalog.json)
+Makefile                    the installer: install, uninstall, status, validate
 scripts/
   skill_index.py            router and catalog builder
   routing_benchmark.py      regression harness
   emit_routing_hint.py      hook payload generator
   install_hook.py           idempotent hook installer
-  install.sh                shell-script install (Makefile-free)
-  uninstall.sh, test-install.sh, validate-skills.py
+  render_codex_agent.py     Markdown agent -> Codex TOML
+  prune_removed_skills.py   retire skills dropped from the checkout
+  validate-skills.py, validate-supplementary-docs.py, validate-citations.py
 tests/
   test_skill_index.py       unit tests for catalog and router
   test_install_selected.py  selected-install and uninstall integration tests
-  test_jgi_lakehouse_helpers.py JGI helper safety tests
   test_routing_benchmark.py harness sanity tests
   test_emit_routing_hint.py hook-script tests
   routing_benchmark.yaml    routing regression suite

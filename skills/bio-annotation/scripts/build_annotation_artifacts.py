@@ -62,9 +62,21 @@ def main() -> int:
         unknown = {row["genome"] for row in annotations} - set(genome_ids)
         if unknown:
             raise ValueError(f"annotations contain genomes absent from manifest: {sorted(unknown)}")
-        proteins = [row["protein_id"] for row in annotations]
-        if len(proteins) != len(set(proteins)):
-            raise ValueError("protein_id values must be globally unique")
+        # One protein legitimately carries several family hits (multi-domain
+        # proteins are the normal case), so uniqueness is per protein AND family.
+        pairs = [(row["protein_id"], row["family_id"]) for row in annotations]
+        if len(pairs) != len(set(pairs)):
+            duplicated = sorted({pair for pair in pairs if pairs.count(pair) > 1})
+            raise ValueError(f"duplicate protein_id/family_id rows: {duplicated}")
+        # A protein identifier still belongs to exactly one genome; only the
+        # family dimension is allowed to repeat.
+        owners: dict[str, str] = {}
+        for row in annotations:
+            owner = owners.setdefault(row["protein_id"], row["genome"])
+            if owner != row["genome"]:
+                raise ValueError(
+                    f"protein_id {row['protein_id']!r} appears under both {owner!r} and {row['genome']!r}"
+                )
 
         normalized = []
         for row in annotations:
@@ -99,11 +111,18 @@ def main() -> int:
             raise ValueError("genome manifest requires at least one query and one reference")
         candidates: list[dict[str, object]] = []
         for family in family_ids:
-            baseline = statistics.median(counts[(family, genome)] for genome in references)
+            reference_counts = [counts[(family, genome)] for genome in references]
+            baseline = statistics.median(reference_counts)
+            # A zero MEDIAN does not mean absent from every reference: with counts
+            # [0, 0, 1] the family is present in a reference, so calling it
+            # query-specific with an infinite fold change invents a discovery.
+            absent_everywhere = max(reference_counts) == 0
             for query in queries:
                 count = counts[(family, query)]
-                if count and baseline == 0:
+                if count and absent_everywhere:
                     status, fold = "query_specific", "inf"
+                elif count and baseline == 0:
+                    status, fold = "present_in_reference_minority", ""
                 elif count == 0 and baseline > 0:
                     status, fold = "missing_expected", 0
                 elif baseline and count >= baseline * 2:
@@ -116,12 +135,26 @@ def main() -> int:
         write_tsv(args.out / "family_expansion_candidates.tsv", ("genome", "family_id", "query_copy_number", "relative_median", "fold_change", "status", "recommended_validation"), candidates)
         write_tsv(args.out / "discovery_candidates.tsv", ("genome", "family_id", "query_copy_number", "relative_median", "fold_change", "status", "recommended_validation"), candidates)
         write_tsv(args.out / "domain_routing.tsv", GENOME_FIELDS, genomes)
-        inventory = [{"genome": genome, "protein_count": sum(1 for row in normalized if row["genome"] == genome), "unannotated_count": sum(1 for row in normalized if row["genome"] == genome and not row["annotation"].strip())} for genome in genome_ids]
+        # Count proteins, not annotation rows: one protein with two family hits
+        # is still one protein, and is unannotated only if no hit annotates it.
+        by_protein: dict[str, dict[str, set[str]]] = {genome: {} for genome in genome_ids}
+        for row in normalized:
+            annotated = by_protein[row["genome"]].setdefault(row["protein_id"], set())
+            if row["annotation"].strip():
+                annotated.add(row["annotation"].strip())
+        inventory = [
+            {
+                "genome": genome,
+                "protein_count": len(by_protein[genome]),
+                "unannotated_count": sum(1 for hits in by_protein[genome].values() if not hits),
+            }
+            for genome in genome_ids
+        ]
         pl.DataFrame(inventory).write_parquet(args.out / "feature_inventory.parquet")
         artifacts = [
             {"path": name, "record_key": record_key}
             for name, record_key in (
-                ("annotations.parquet", "protein_id"),
+                ("annotations.parquet", "protein_id,family_id"),
                 ("taxonomy.parquet", "genome"),
                 ("feature_inventory.parquet", "genome"),
                 ("marker_census.tsv", "genome,family_id"),

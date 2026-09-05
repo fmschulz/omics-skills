@@ -48,35 +48,6 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
         )
         return json.loads(route.stdout)
 
-    def run_uninstall_script(self, home: Path) -> subprocess.CompletedProcess[str]:
-        env = os.environ.copy()
-        env["HOME"] = str(home)
-        env["NO_COLOR"] = "1"
-        return subprocess.run(
-            [str(REPO_ROOT / "scripts" / "uninstall.sh")],
-            cwd=REPO_ROOT,
-            env=env,
-            input="y\n",
-            text=True,
-            capture_output=True,
-            check=True,
-        )
-
-    def run_install_script(
-        self, home: Path, *args: str
-    ) -> subprocess.CompletedProcess[str]:
-        env = os.environ.copy()
-        env["HOME"] = str(home)
-        env["NO_COLOR"] = "1"
-        return subprocess.run(
-            [str(REPO_ROOT / "scripts" / "install.sh"), *args],
-            cwd=REPO_ROOT,
-            env=env,
-            text=True,
-            capture_output=True,
-            check=True,
-        )
-
     def assert_selected_install_routes_only_selected_components(self, install_method: str) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
@@ -86,7 +57,6 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
                 f"INSTALL_METHOD={install_method}",
                 "SELECTED_AGENT_FILES=science-writer.md",
                 "SELECTED_SKILL_DIRS=bio-logic scientific-writing",
-                "VERBOSE=1",
             )
 
             index_root = home / ".agents" / "omics-skills"
@@ -168,26 +138,7 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             self.assertTrue((home / ".claude" / "skills").is_symlink())
             self.assertTrue((home / ".codex" / "skills").is_symlink())
 
-            self.run_make(home, "uninstall-all")
-
-            self.assertFalse((home / ".claude" / "skills").is_symlink())
-            self.assertFalse((home / ".codex" / "skills").is_symlink())
-            self.assertFalse((home / ".agents" / "omics-skills").exists())
-
-    def test_uninstall_script_removes_runtime_skills_links(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            self.run_make(
-                home,
-                "install-selected",
-                "INSTALL_METHOD=symlink",
-                "SELECTED_AGENT_FILES=science-writer.md",
-                "SELECTED_SKILL_DIRS=scientific-writing",
-            )
-            self.assertTrue((home / ".claude" / "skills").is_symlink())
-            self.assertTrue((home / ".codex" / "skills").is_symlink())
-
-            self.run_uninstall_script(home)
+            self.run_make(home, "uninstall")
 
             self.assertFalse((home / ".claude" / "skills").is_symlink())
             self.assertFalse((home / ".codex" / "skills").is_symlink())
@@ -338,29 +289,28 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             self.assertTrue(archived.is_file())
             self.assertTrue(unrelated.is_dir())
 
-    def test_shell_installer_archives_replaced_skill_outside_active_skills(self) -> None:
+    def test_install_archives_a_retired_skills_legacy_backup(self) -> None:
+        """A backup of a skill that was just retired is ours too. Matching only
+        against skills still on disk stranded `jgi-lakehouse.bak` beside the
+        active skills forever."""
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
-            existing = home / ".agents" / "skills" / "bio-logic"
-            existing.mkdir(parents=True)
-            (existing / "SKILL.md").write_text(
-                "---\nname: bio-logic\ndescription: old shell copy\n---\n",
+            skills_dir = home / ".agents" / "skills"
+            retired_backup = skills_dir / "jgi-lakehouse.bak"
+            retired_backup.mkdir(parents=True)
+            (retired_backup / "SKILL.md").write_text(
+                "---\nname: jgi-lakehouse\ndescription: retired copy\n---\n",
                 encoding="utf-8",
             )
 
-            self.run_install_script(home, "--copy")
+            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
 
-            previous = home / ".agents" / "omics-skills" / "previous-skills"
-            backups = list(previous.glob("bio-logic.*"))
-            self.assertEqual(len(backups), 1)
-            self.assertIn(
-                "old shell copy",
-                (backups[0] / "SKILL.md").read_text(encoding="utf-8"),
+            self.assertFalse(retired_backup.exists())
+            archived = (
+                home / ".agents" / "omics-skills" / "previous-skills"
+                / "jgi-lakehouse.bak" / "SKILL.md"
             )
-            self.assertEqual(
-                list((home / ".agents" / "skills").glob("bio-logic.bak*")),
-                [],
-            )
+            self.assertTrue(archived.is_file())
 
     def test_install_leaves_foreign_retired_symlink_untouched(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -15,7 +15,8 @@ def test_runnable_app_starts_and_meets_callback_latency_budget():
     assert payload["callback_p95_ms"] <= payload["latency_budget_ms"]
 
 
-def test_skill_links_runnable_example_and_qa_checklist():
+def test_skill_links_runnable_example_and_both_references():
     text = (SKILL / "SKILL.md").read_text()
-    assert "[Runnable app](examples/app.py)" in text
-    assert "[QA checklist](QA_CHECKLIST.md)" in text
+    assert "[examples/app.py](examples/app.py)" in text
+    assert "[references/style.md](references/style.md)" in text
+    assert "[references/architecture.md](references/architecture.md)" in text

@@ -8,16 +8,16 @@ Related docs: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) (contributor workflow
 
 ## Repository overview
 
-4 agents and 34 skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI.
+Agents and skills covering bioinformatics, literature discovery, scientific writing, and data visualization. Runs under Claude Code and the Codex CLI. `catalog/catalog.json` is the countable source of truth for how many of each exist; do not restate the counts in prose.
 
 Layout:
-- `agents/` — 4 agent definitions (markdown)
+- `agents/` — agent definitions (markdown)
 - `skills/` — skill directories; each has a `SKILL.md`
-- `scripts/` — router, catalog builder, hook, installer, benchmark
+- `scripts/` — router, catalog builder, hook installer, validators, benchmark
 - `tests/` — unit tests + routing benchmark
 - `catalog/` — generated routing artifact (`catalog.json`)
 - `docs/` — MkDocs site sources, routing model, benchmark baseline
-- `Makefile` — install, catalog, hook, benchmark, uninstall targets
+- `Makefile` — the installer: install, catalog, hook, benchmark, uninstall, status, validate
 
 Install: `make install` symlinks agents and skills into `~/.claude/` and `~/.codex/`.
 

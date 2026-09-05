@@ -558,6 +558,64 @@ class AgentSectionHeadingScoringTests(unittest.TestCase):
         self.assertEqual(result["agent"], "omics-scientist")
 
 
+class AgentOwnershipFilterTests(unittest.TestCase):
+    """Pinning an agent must constrain every path that can add a skill:
+    scoring, compose neighbours, and dependency expansion. Dependency
+    expansion used to skip the filter, so `--agent literature-expert`
+    returned bio-annotation and put it first in the suggested order."""
+
+    def test_pinned_agent_never_recommends_a_skill_it_does_not_own(self) -> None:
+        payload = skill_index.build_outputs(REPO_ROOT)
+        agents = {item["name"]: item for item in payload["catalog"]["agents"]}
+        for agent_name in agents:
+            owned = skill_index._allowed_skills_for_agent(agent_name, agents)
+            for task in (
+                "literature search",
+                "assemble a metagenome and recover MAGs",
+                "draft the discussion section",
+            ):
+                result = skill_index.route_request(
+                    task=task,
+                    agent=agent_name,
+                    platform="codex",
+                    top_k=4,
+                    repo=str(REPO_ROOT),
+                    index_root=None,
+                )
+                recommended = set(result["primary_skills"]) | set(result["supporting_skills"])
+                recommended |= set(result["ordered_skills"])
+                self.assertEqual(
+                    recommended - owned,
+                    set(),
+                    f"{agent_name} recommended unowned skills for {task!r}",
+                )
+
+
+class SoftwareRepoVetoTests(unittest.TestCase):
+    """The repo-review veto silences the router for code-review prompts. A
+    scientific subject word must override it, or "improve the manuscript in
+    this repository" returns nothing at all."""
+
+    def test_code_review_prompts_stay_silent(self) -> None:
+        for task in (
+            "review this repository's code structure",
+            "audit the repo installer scripts",
+            "fix bugs in the codebase",
+        ):
+            self.assertTrue(
+                skill_index.is_software_repo_review(skill_index.tokenize(task)), task
+            )
+
+    def test_scientific_subject_overrides_the_veto(self) -> None:
+        for task in (
+            "improve the scientific manuscript in this repository",
+            "review the genome annotation in this repo",
+        ):
+            self.assertFalse(
+                skill_index.is_software_repo_review(skill_index.tokenize(task)), task
+            )
+
+
 class CatalogPathPortabilityTests(unittest.TestCase):
     """Catalog JSON on disk stores repo-relative paths; route_request resolves
     them back to absolute by detecting the repo root from the catalog's own

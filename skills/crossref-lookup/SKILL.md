@@ -36,7 +36,6 @@ Use this skill for citation metadata work backed by the Crossref REST API.
 | Search by title | `skills/crossref-lookup/scripts/lookup --title "CRISPR-Cas9 genome editing"` |
 | Validate a DOI list | `skills/crossref-lookup/scripts/lookup --validate-file dois.txt` |
 | Audit bibliography | `skills/crossref-lookup/scripts/lookup --audit-bibliography refs.bib` |
-| Citation style | `--style apa|vancouver|ama|ieee|chicago` |
 | Write to file | `--output crossref-report.txt` |
 | Polite-pool email | `--email you@example.org` |
 | Strict audit | `--strict` returns nonzero for unresolved records |
@@ -50,14 +49,13 @@ Use this skill for citation metadata work backed by the Crossref REST API.
   - a file path for `--validate-file`
   - a bibliography file path for `--audit-bibliography`
 - Optional:
-  - `--style` for formatted citation output
   - `--output` for saving the report
   - `--email` for the Crossref user agent
 
 ## Output
 
 - DOI validation status and normalized DOI when `--doi` is used
-- title, journal, year, and formatted citation when metadata is found
+- title, journal, year, authors, and DOI when metadata is found
 - ranked title-search candidates for `--title`
 - summary counts that distinguish invalid DOI syntax, Crossref 404 records,
   transient 429/5xx/network failures, and other HTTP errors
@@ -68,7 +66,7 @@ Use this skill for citation metadata work backed by the Crossref REST API.
 - [ ] The lookup mode matches the user request
 - [ ] DOI inputs are normalized before treating them as invalid
 - [ ] Ambiguous title matches are presented as candidates rather than a silent single answer
-- [ ] Citation formatting uses the requested style when style matters
+- [ ] Reference-list formatting is left to the citation manager or manuscript template; this skill returns metadata, not styled strings
 - [ ] The final answer distinguishes Crossref metadata from publisher full text
 
 ## Examples

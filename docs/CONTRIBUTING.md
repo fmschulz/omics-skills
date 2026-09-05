@@ -22,7 +22,7 @@ make install        # symlink install, so edits apply immediately
 
 ## Modifying Skills or Agents
 
-Edit the source file, keep the frontmatter and router-parsed sections intact, rebuild the catalog, and rerun the gates. Symlinked installs pick up edits immediately; Codex agent TOML must be re-rendered with `make install-codex-agents` after agent prompt changes.
+Edit the source file, keep the frontmatter and router-parsed sections intact, rebuild the catalog, and rerun the gates. Symlinked installs pick up edits immediately; Codex agent TOML must be re-rendered with `make install-codex` after agent prompt changes.
 
 ## Testing Your Changes
 

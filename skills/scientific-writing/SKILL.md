@@ -1,6 +1,6 @@
 ---
 name: scientific-writing
-description: Draft, review, and revise scientific manuscripts with grounded multi-agent checks. Use when writing sections, rebuttals, response letters, manuscript QA, or sentence-level reviews.
+description: Draft or edit scientific prose while preserving its claims and evidence. Use when writing manuscript sections, proposal narratives, rebuttals, or response letters, or when checking sentence-level clarity and style.
 ---
 
 # Scientific Writing

@@ -40,7 +40,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
 | Task | Action |
 |------|--------|
-| Validate predictions | `uv run --script scripts/validate_predictions.py predictions.tsv --report validation.json --require-beats-null` |
+| Validate predictions | `uv run --script skills/bio-stats-ml-reporting/scripts/validate_predictions.py predictions.tsv --report validation.json --require-beats-null` |
 
 ## Input Requirements
 
@@ -65,7 +65,7 @@ Inputs:
 
 - [ ] Model performance sanity checks pass.
 - [ ] Reference validation passes.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify input tables are readable and schema-consistent.
 - [ ] Discovery summary joins candidate genes/features to annotation evidence, comparison baseline, literature context, and confidence.
 - [ ] `comparative_axes_summary.tsv` covers all five mandatory axes (genome-property frontier, marker-gene census, family copy-number, synteny/neighborhoods, ncRNA census) for every query genome, with rows for axes that produced negative findings.

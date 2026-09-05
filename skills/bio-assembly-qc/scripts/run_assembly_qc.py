@@ -11,8 +11,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-FIELDS = ("sample_id", "mode", "read1", "read2", "read_qc_status")
+FIELDS = ("sample_id", "mode", "read1", "read2", "read_qc_status", "read_platform")
 MODES = {"short_isolate", "long_isolate", "short_metagenome", "long_metagenome", "hifi_metagenome"}
+# Flye needs the read chemistry, not just "long": running --nano-hq on PacBio CLR
+# reads assembles them under the wrong error model. See docs/flye.md.
+LONG_READ_FLAGS = {"ont": "--nano-hq", "pacbio-clr": "--pacbio-raw", "pacbio-hifi": "--pacbio-hifi"}
 
 
 def resolve_file(value: str, base: Path, label: str) -> Path:
@@ -47,6 +50,16 @@ def load(path: Path) -> list[dict[str, str]]:
             row["read2"] = str(resolve_file(row["read2"], path.parent, f"{sample} read2"))
         elif row["read2"].strip():
             raise ValueError(f"{sample}: read2 is not allowed for {mode}")
+        platform = (row["read_platform"] or "").strip()
+        if mode.startswith("long_"):
+            if platform not in LONG_READ_FLAGS:
+                raise ValueError(
+                    f"{sample}: {mode} requires read_platform, one of "
+                    f"{', '.join(sorted(LONG_READ_FLAGS))}"
+                )
+        elif mode == "hifi_metagenome" and platform not in ("", "pacbio-hifi"):
+            raise ValueError(f"{sample}: hifi_metagenome cannot use read_platform {platform!r}")
+        row["read_platform"] = platform or "ont"
     return rows
 
 
@@ -63,7 +76,7 @@ def plan(rows: list[dict[str, str]], out: Path) -> list[dict[str, object]]:
         elif mode == "hifi_metagenome":
             command, source = ["metaMDBG", "asm", "--in-hifi", row["read1"], "--out-dir", str(work)], work / "contigs.fasta.gz"
         else:
-            command = ["flye", "--nano-hq", row["read1"], "--out-dir", str(work)]
+            command = ["flye", LONG_READ_FLAGS[row["read_platform"]], row["read1"], "--out-dir", str(work)]
             if mode == "long_metagenome":
                 command.append("--meta")
             source = work / "assembly.fasta"

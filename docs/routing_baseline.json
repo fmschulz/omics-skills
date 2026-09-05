@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 64,
-    "passed": 64,
+    "total": 66,
+    "passed": 66,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -241,8 +241,7 @@
           "polars-dovmed",
           "bio-viromics",
           "tracking-taxonomy-updates",
-          "bio-protein-clustering-pangenome",
-          "jgi-lakehouse"
+          "bio-protein-clustering-pangenome"
         ],
         "ordered_skills": [
           "bio-gene-calling",
@@ -257,14 +256,10 @@
       "task": "query JGI IMG for all cyanobacterial genomes and download FASTA files",
       "passed": true,
       "actual": {
-        "agent": "omics-scientist",
-        "primary_skills": [
-          "jgi-lakehouse"
-        ],
+        "agent": null,
+        "primary_skills": [],
         "supporting_skills": [],
-        "ordered_skills": [
-          "jgi-lakehouse"
-        ]
+        "ordered_skills": []
       }
     },
     {
@@ -276,11 +271,42 @@
           "public-db-lookup"
         ],
         "supporting_skills": [
-          "jgi-lakehouse",
           "polars-dovmed"
         ],
         "ordered_skills": [
           "public-db-lookup"
+        ]
+      }
+    },
+    {
+      "task": "fetch arxiv record",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "arxiv-search"
+        ],
+        "supporting_skills": [
+          "crossref-lookup"
+        ],
+        "ordered_skills": [
+          "arxiv-search"
+        ]
+      }
+    },
+    {
+      "task": "fetch bioRxiv record for DOI 10.1101/example",
+      "passed": true,
+      "actual": {
+        "agent": "literature-expert",
+        "primary_skills": [
+          "biorxiv-search"
+        ],
+        "supporting_skills": [
+          "crossref-lookup"
+        ],
+        "ordered_skills": [
+          "biorxiv-search"
         ]
       }
     },
@@ -293,7 +319,6 @@
           "public-db-lookup"
         ],
         "supporting_skills": [
-          "jgi-lakehouse",
           "polars-dovmed"
         ],
         "ordered_skills": [
@@ -587,8 +612,8 @@
       "actual": {
         "agent": "science-writer",
         "primary_skills": [
-          "manuscript-review-council",
-          "scientific-writing"
+          "scientific-writing",
+          "manuscript-review-council"
         ],
         "supporting_skills": [
           "ai-scientist-evaluator",
@@ -806,7 +831,9 @@
         "primary_skills": [
           "plotly-dashboard-skill"
         ],
-        "supporting_skills": [],
+        "supporting_skills": [
+          "beautiful-data-viz"
+        ],
         "ordered_skills": [
           "plotly-dashboard-skill"
         ]

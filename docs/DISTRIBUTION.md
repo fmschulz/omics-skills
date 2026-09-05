@@ -58,7 +58,7 @@ Claims the repository can substantiate when announcing or submitting it:
 - Four agent definitions (omics-scientist, literature-expert, science-writer, dataviz-artist) mapping task patterns and workflow steps to 34 installed skills.
 - Coverage from reads QC through assembly, annotation, comparative genomics, literature discovery, scientific writing, and visualization.
 - A generated routing catalog with a regression benchmark, skill validators, installer tests, and strict docs builds in CI.
-- Make, shell, and plugin-marketplace installation paths for Claude Code and the Codex CLI.
+- Make and plugin-marketplace installation paths for Claude Code and the Codex CLI.
 - Citation metadata checked by repository validation, and a reproducibility-first workflow contract.
 
 Keep this page current when the agent or skill counts change.

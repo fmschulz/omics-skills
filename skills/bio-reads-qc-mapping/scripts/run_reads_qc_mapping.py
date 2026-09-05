@@ -139,10 +139,18 @@ def main() -> int:
             execute(steps)
         manifest = {"schema_version": "1.0", "mapping_required": any(r["reference"] for r in rows), "samples": rows, "steps": steps}
         (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        # Report what the mapping step actually did. Writing "planned" after an
+        # --execute run made the table claim work that had already happened.
+        mapping_status = {
+            step["sample_id"]: step.get("status", "planned")
+            for step in steps
+            if step["stage"] == "mapping"
+        }
         with (args.out / "mapping_stats.tsv").open("w", encoding="utf-8") as handle:
             handle.write("sample_id\tmapping_status\treference\n")
             for row in rows:
-                handle.write(f"{row['sample_id']}\t{'planned' if row['reference'] else 'not_requested'}\t{row['reference']}\n")
+                status = mapping_status.get(row["sample_id"], "not_requested")
+                handle.write(f"{row['sample_id']}\t{status}\t{row['reference']}\n")
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-reads-qc-mapping", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError, ValidationError) as error:

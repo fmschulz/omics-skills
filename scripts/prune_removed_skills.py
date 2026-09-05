@@ -14,7 +14,7 @@ SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # Catalog files are symlinked in the default installation, so after an update
 # they no longer retain the previous release's skill list. Keep explicit
 # migrations for retired names that copy-mode installations must also remove.
-RETIRED_SKILLS = {"get-api-docs"}
+RETIRED_SKILLS = {"get-api-docs", "jgi-lakehouse"}
 LEGACY_BACKUP = re.compile(
     r"^(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.bak(?:\.\d+)?$"
 )
@@ -70,9 +70,12 @@ def prune_removed_skills(
     current = current_skill_names(skills_dir)
     retired = sorted((catalog_skill_names(installed_catalog) - current) | (RETIRED_SKILLS - current))
 
+    # A backup of a skill we just retired is ours too: matching only against
+    # `current` stranded `jgi-lakehouse.bak` beside the active skills forever.
+    ours = current | set(retired)
     for target in sorted(installed_skills_dir.glob("*.bak*")):
         match = LEGACY_BACKUP.fullmatch(target.name)
-        if not match or match.group("name") not in current or not target.is_dir():
+        if not match or match.group("name") not in ours or not target.is_dir():
             warnings.append(f"left unrecognized legacy backup untouched: {target}")
             continue
         name = match.group("name")

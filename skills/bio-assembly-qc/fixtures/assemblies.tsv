@@ -1,4 +1,4 @@
-sample_id	mode	read1	read2	read_qc_status
-short	short_isolate	reads/short_R1.fastq	reads/short_R2.fastq	passed
-long	long_isolate	reads/long.fastq		passed
-meta	short_metagenome	reads/short_R1.fastq	reads/short_R2.fastq	passed
+sample_id	mode	read1	read2	read_qc_status	read_platform
+short	short_isolate	reads/short_R1.fastq	reads/short_R2.fastq	passed	
+long	long_isolate	reads/long.fastq		passed	ont
+meta	short_metagenome	reads/short_R1.fastq	reads/short_R2.fastq	passed	

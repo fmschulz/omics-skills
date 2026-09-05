@@ -22,7 +22,7 @@ tasks:
       1. Write the plotting script to `plot_growth.py`.
       2. Save the final figure as `growth_curve.png`.
       3. Use both `set_beautiful_style(...)` and `finalize_axes(...)` from `assets.beautiful_style`.
-      4. Include a clear title and axis labels with units.
+      4. Label both axes with units. Add an in-plot title only for a notebook or slide figure; a manuscript figure carries its title in the caption.
       5. Run the script so that `growth_curve.png` exists in the workspace when you are done.
 
     workspace:
@@ -74,7 +74,7 @@ tasks:
           - Did it choose a sensible line-chart implementation for the time series?
 
           Figure Quality (0.0-0.3):
-          - Are the title and axis labels clear and readable?
+          - Are the axis labels clear, readable, and carrying units?
           - Is the figure likely to be legible in a notebook or paper setting?
 
           Pragmatism (0.0-0.3):

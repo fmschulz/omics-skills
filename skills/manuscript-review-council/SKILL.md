@@ -1,6 +1,6 @@
 ---
 name: manuscript-review-council
-description: Run a multi-agent manuscript critique with specialist reports, disagreement checks, and editor synthesis. Use for scientific review, revision assessment, or judging whether an author response resolves prior concerns.
+description: Produce a journal-style peer review of a scientific manuscript with specialist reports and an editor decision. Use when assessing publication readiness, or whether a revision or author response resolves scientific objections.
 ---
 
 # Manuscript Review Council

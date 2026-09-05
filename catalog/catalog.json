@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "skill_count": 35,
+    "skill_count": 34,
     "agent_count": 4,
-    "edge_count": 146
+    "edge_count": 145
   },
   "skills": [
     {
       "name": "ai-scientist-evaluator",
       "title": "AI Scientist Evaluator",
-      "description": "Review, score, compare, and rank AI-generated biology or bioinformatics research artifacts. Use when auditing AI-scientist notebooks, code, figures, analyses, manuscripts, or reports for rigor, reproducibility, novelty, and task completion.",
+      "description": "Score completed AI-generated biology or bioinformatics work against its original task and required artifacts. Use when auditing or comparing AI scientist submissions for task completion, scientific validity, and reproducibility.",
       "path": "skills/ai-scientist-evaluator/SKILL.md",
       "platforms": [
         "claude",
@@ -309,7 +309,7 @@
     {
       "name": "bio-gene-calling",
       "title": "Bio Gene Calling",
-      "description": "Call genes and annotate basic sequence features. Use when predicting prokaryotic, viral, or eukaryotic coding sequences before downstream annotation.",
+      "description": "Predict coding sequences and screen assemblies for non-coding RNA features. Use when calling genes in prokaryotic, viral, or eukaryotic assemblies, or when a tRNA, rRNA, or other ncRNA census is needed before functional annotation.",
       "path": "skills/bio-gene-calling/SKILL.md",
       "platforms": [
         "claude",
@@ -410,7 +410,7 @@
     {
       "name": "bio-logic",
       "title": "Bio-Logic: Scientific Reasoning Evaluation",
-      "description": "Evaluate scientific claims, methods, biases, and evidence strength. Use when stress-testing a study design, paper, analysis, or causal interpretation.",
+      "description": "Assess a scientific claim, study design, method, or interpretation against its evidence. Use when testing causal reasoning, finding methodological bias, weighing alternative explanations, or revising hypotheses.",
       "path": "skills/bio-logic/SKILL.md",
       "platforms": [
         "claude",
@@ -638,7 +638,7 @@
     {
       "name": "bio-structure-annotation",
       "title": "Bio Structure Annotation",
-      "description": "Predict protein structures and perform structure-based annotation. Use when sequence evidence is insufficient or structural similarity, confidence, domains, or complexes matter.",
+      "description": "Predict protein or complex structures and annotate proteins by structural similarity. Use when predicting a fold, judging prediction confidence, or finding structural homologs for proteins with weak sequence evidence.",
       "path": "skills/bio-structure-annotation/SKILL.md",
       "platforms": [
         "claude",
@@ -899,56 +899,9 @@
       "reference_contexts": {}
     },
     {
-      "name": "jgi-lakehouse",
-      "title": "JGI Lakehouse Skill",
-      "description": "Query JGI Lakehouse metadata and retrieve JGI genome or read files. Use when linking GOLD, IMG, MycoCosm, Phytozome, PMO, or JAMO identifiers and datasets.",
-      "path": "skills/jgi-lakehouse/SKILL.md",
-      "platforms": [
-        "claude",
-        "codex"
-      ],
-      "agents": [
-        "omics-scientist"
-      ],
-      "sections": [
-        "JGI Data Access & Metadata Discovery"
-      ],
-      "task_patterns": [
-        "GOLD",
-        "IMG",
-        "JGI",
-        "Phytozome",
-        "lakehouse"
-      ],
-      "internal_references": [
-        "assembled",
-        "clusterfs",
-        "global"
-      ],
-      "reference_contexts": {
-        "clusterfs": [
-          "| Download IMG genome | Copy `{taxon_oid}.tar.gz` from `/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/` |",
-          "| **Genome sequences (FNA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |",
-          "| **Protein sequences (FAA)** | **JGI Filesystem** | Copy from `/clusterfs/jgi/img_merfs-ro/` |",
-          "/clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/{taxon_oid}.tar.gz",
-          "cp /clusterfs/jgi/img_merfs-ro/img_web/img_web_data/download/8136918376.tar.gz .",
-          "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/",
-          "/clusterfs/jgi/scratch/dsi/...",
-          "staged_file=/clusterfs/jgi/scratch/dsi/.../file.fastq.gz"
-        ],
-        "assembled": [
-          "/clusterfs/jgi/img_merfs-ro/img_web_data_merfs/{taxon_oid}/assembled/"
-        ],
-        "global": [
-          "from the JGI filesystem (`/global/dna/dm_archive/...`).",
-          "cp /global/dna/dm_archive/<path/from-filePath> ."
-        ]
-      }
-    },
-    {
       "name": "manuscript-review-council",
       "title": "Manuscript Review Council",
-      "description": "Run a multi-agent manuscript critique with specialist reports, disagreement checks, and editor synthesis. Use for scientific review, revision assessment, or judging whether an author response resolves prior concerns.",
+      "description": "Produce a journal-style peer review of a scientific manuscript with specialist reports and an editor decision. Use when assessing publication readiness, or whether a revision or author response resolves scientific objections.",
       "path": "skills/manuscript-review-council/SKILL.md",
       "platforms": [
         "claude",
@@ -1097,8 +1050,14 @@
         "interactive",
         "plotly"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "beautiful-data-viz"
+      ],
+      "reference_contexts": {
+        "beautiful-data-viz": [
+          "- Static publication figures. Use `/beautiful-data-viz` for matplotlib or seaborn output."
+        ]
+      }
     },
     {
       "name": "polars-dovmed",
@@ -1164,7 +1123,7 @@
     {
       "name": "proposal-review",
       "title": "Proposal Review",
-      "description": "Produce structured, decision-ready reviews of AI/ML, computational-biology, or bioscience proposals. Use when evaluating grants, projects, or funding applications.",
+      "description": "Evaluate a proposed AI/ML, computational-biology, or bioscience research project for a funding decision. Use when reviewing a grant, research proposal, or funding application against sponsor criteria, feasibility, budget, and risks.",
       "path": "skills/proposal-review/SKILL.md",
       "platforms": [
         "claude",
@@ -1177,10 +1136,14 @@
         "Proposal, AI-Generated Notebook & Output Review"
       ],
       "task_patterns": [
+        "evaluate this proposal",
+        "funding decision",
         "funding proposal",
         "grant",
-        "proposal",
-        "review this proposal"
+        "project proposal",
+        "research proposal",
+        "review this proposal",
+        "score this proposal"
       ],
       "internal_references": [
         "bio-logic",
@@ -1225,21 +1188,17 @@
         "UniProt",
         "efetch",
         "esearch",
-        "fetch record",
-        "look up accession"
+        "fetch sequence record",
+        "look up protein accession",
+        "look up taxon"
       ],
       "internal_references": [
-        "jgi-lakehouse",
         "polars-dovmed"
       ],
       "reference_contexts": {
         "polars-dovmed": [
-          "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
+          "7. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.",
           "- No literature search; use `/polars-dovmed`"
-        ],
-        "jgi-lakehouse": [
-          "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
-          "- No JGI data access; use `/jgi-lakehouse`"
         ]
       }
     },
@@ -1283,7 +1242,7 @@
     {
       "name": "scientific-writing",
       "title": "Scientific Writing",
-      "description": "Draft, review, and revise scientific manuscripts with grounded multi-agent checks. Use when writing sections, rebuttals, response letters, manuscript QA, or sentence-level reviews.",
+      "description": "Draft or edit scientific prose while preserving its claims and evidence. Use when writing manuscript sections, proposal narratives, rebuttals, or response letters, or when checking sentence-level clarity and style.",
       "path": "skills/scientific-writing/SKILL.md",
       "platforms": [
         "claude",
@@ -1301,9 +1260,11 @@
         "author rebuttal",
         "draft manuscript",
         "manuscript",
+        "polish the prose",
         "response letter",
         "reviewer comments",
-        "rewrite scientific prose"
+        "rewrite scientific prose",
+        "sentence-level clarity"
       ],
       "internal_references": [
         "bio-logic",
@@ -1583,7 +1544,7 @@
     },
     {
       "name": "omics-scientist",
-      "description": "Expert computational biologist for omics workflows (QC, assembly, annotation, phylogenomics, MAG recovery, viral analysis, and JGI data access).",
+      "description": "Expert computational biologist for omics workflows (QC, assembly, annotation, phylogenomics, MAG recovery, viral analysis, and public database lookup).",
       "path": "agents/omics-scientist.md",
       "skill_sections": {
         "Assembly": [
@@ -1617,9 +1578,6 @@
           "bio-interdomain-hgt",
           "bio-phylogenomics",
           "bio-viromics"
-        ],
-        "JGI Data Access & Metadata Discovery": [
-          "jgi-lakehouse"
         ],
         "Literature Context & Hypothesis Calibration": [
           "polars-dovmed"
@@ -2039,16 +1997,6 @@
           ]
         },
         {
-          "skill_name": "jgi-lakehouse",
-          "phrases": [
-            "JGI",
-            "GOLD",
-            "IMG",
-            "Phytozome",
-            "lakehouse"
-          ]
-        },
-        {
           "skill_name": "public-db-lookup",
           "phrases": [
             "UniProt",
@@ -2061,8 +2009,9 @@
             "AlphaFold DB",
             "STRING interactions",
             "ENA accession",
-            "fetch record",
-            "look up accession"
+            "fetch sequence record",
+            "look up protein accession",
+            "look up taxon"
           ]
         },
         {
@@ -2140,10 +2089,14 @@
         {
           "skill_name": "proposal-review",
           "phrases": [
-            "proposal",
             "grant",
             "funding proposal",
-            "review this proposal"
+            "funding decision",
+            "research proposal",
+            "project proposal",
+            "review this proposal",
+            "evaluate this proposal",
+            "score this proposal"
           ]
         },
         {
@@ -2168,6 +2121,8 @@
             "manuscript",
             "Abstract",
             "Methods",
+            "sentence-level clarity",
+            "polish the prose",
             "author rebuttal",
             "response letter",
             "reviewer comments"
@@ -3763,20 +3718,6 @@
     },
     {
       "source": "omics-scientist",
-      "target": "jgi-lakehouse",
-      "type": "uses",
-      "source_type": "agent",
-      "target_type": "skill",
-      "confidence": 1.0,
-      "provenance": [
-        "mandatory_skill_usage"
-      ],
-      "evidence": [
-        "agents/omics-scientist.md"
-      ]
-    },
-    {
-      "source": "omics-scientist",
       "target": "polars-dovmed",
       "type": "uses",
       "source_type": "agent",
@@ -3829,6 +3770,20 @@
       ],
       "evidence": [
         "\u2502       \u2514\u2500> /csag-extraction"
+      ]
+    },
+    {
+      "source": "plotly-dashboard-skill",
+      "target": "beautiful-data-viz",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Static publication figures. Use `/beautiful-data-viz` for matplotlib or seaborn output."
       ]
     },
     {
@@ -3973,21 +3928,6 @@
     },
     {
       "source": "public-db-lookup",
-      "target": "jgi-lakehouse",
-      "type": "compose_with",
-      "source_type": "skill",
-      "target_type": "skill",
-      "confidence": 0.75,
-      "provenance": [
-        "skill_body_reference"
-      ],
-      "evidence": [
-        "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
-        "- No JGI data access; use `/jgi-lakehouse`"
-      ]
-    },
-    {
-      "source": "public-db-lookup",
       "target": "polars-dovmed",
       "type": "compose_with",
       "source_type": "skill",
@@ -3997,7 +3937,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "7. Route PubMed and PMC literature searches to `/polars-dovmed` and JGI data to `/jgi-lakehouse`; this skill does not cover them.",
+        "7. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.",
         "- No literature search; use `/polars-dovmed`"
       ]
     },

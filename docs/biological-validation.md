@@ -88,9 +88,12 @@ The run record stores Slurm state, exit code, elapsed seconds, peak RSS, request
 
 [`validation/jobs/phylogenomics-qfo-pilot.draft.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/jobs/phylogenomics-qfo-pilot.draft.json) defines the first pilot. It remains `draft` until these values are known on a scheduler login node:
 
-- the low-memory Lawrencium-compatible account, partition, and QOS;
+- the cluster name plus a small-job account, partition, and QOS on it;
 - the remote checkout and data paths;
 - the QfO subset and reference-tree artifact SHA-256 values;
 - the solved Pixi lock SHA-256.
 
-The pilot must not run on a Dori high-memory node because its resource profile is small.
+Pick the small-job partition of the cluster that holds the data, never a different
+cluster. Job IDs collide across clusters, so `scheduler.cluster` in the job manifest
+is required and is passed to `sacct -M` when evidence is collected; the run record
+keeps it so a result can never be attributed to the wrong scheduler.

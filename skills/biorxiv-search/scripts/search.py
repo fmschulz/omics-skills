@@ -151,6 +151,18 @@ def parse_query_groups(query: str | None, phrase: bool) -> list[list[str]]:
     if not query:
         return []
     text = compact_whitespace(query)
+    # Over-quoting the whole query ('"a OR b"') used to split into the terms
+    # '"a' and 'b"', which match nothing while the search reports success.
+    # Only unwrap when the outer pair really does enclose everything: a query
+    # containing several quoted phrases keeps its quotes.
+    if (
+        len(text) >= 2
+        and text[0] == text[-1]
+        and text[0] in "\"'"
+        and text[0] not in text[1:-1]
+        and re.search(r"\s+OR\s+", text[1:-1], flags=re.IGNORECASE)
+    ):
+        text = compact_whitespace(text[1:-1])
     if not text:
         return []
     if phrase:
@@ -402,6 +414,9 @@ def sort_records(records: list[dict[str, object]]) -> list[dict[str, object]]:
     return sorted(records, key=sort_key, reverse=True)
 
 
+BENIGN_STATUSES = frozenset({"", "ok", "no posts found", "no results", "no papers found"})
+
+
 def page_metadata(
     data: dict[str, object],
 ) -> tuple[list[dict[str, object]], int | None, int | None, int | None]:
@@ -417,6 +432,13 @@ def page_metadata(
     messages = data.get("messages", [])
     if isinstance(messages, list) and messages and isinstance(messages[0], dict):
         message = messages[0]
+        # bioRxiv reports failures as HTTP 200 with a non-ok status and an empty
+        # collection. Treating that as "zero results" turned a broken query into
+        # a confident negative answer. "no posts found" is a real empty result,
+        # not a failure, so it stays allowed.
+        status = message.get("status")
+        if isinstance(status, str) and status.strip().lower() not in BENIGN_STATUSES:
+            raise RuntimeError(f"bioRxiv API reported status {status!r}: {message.get('text') or message}")
         page_count = to_int(message.get("count"))
         response_cursor = to_int(message.get("cursor"))
         reported_total = to_int(message.get("total"))

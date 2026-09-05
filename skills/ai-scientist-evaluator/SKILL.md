@@ -1,10 +1,10 @@
 ---
 name: ai-scientist-evaluator
 description: >-
-  Review, score, compare, and rank AI-generated biology or bioinformatics
-  research artifacts. Use when auditing AI-scientist notebooks, code, figures,
-  analyses, manuscripts, or reports for rigor, reproducibility, novelty, and
-  task completion.
+  Score completed AI-generated biology or bioinformatics work against its
+  original task and required artifacts. Use when auditing or comparing AI
+  scientist submissions for task completion, scientific validity, and
+  reproducibility.
 ---
 
 # AI Scientist Evaluator

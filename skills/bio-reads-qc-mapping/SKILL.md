@@ -23,7 +23,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
    `read_type` must be `paired_short`, `single_short`, or `long`. Mapping runs only for rows with a non-empty `reference`; a missing reference is not a mapping failure. The driver reuses a stage only when its declared outputs are non-empty and the stage's `.done` marker exists.
 2. For short reads: run QC and adapter/quality trimming with `bbduk` or `fastp` v1.3.3+.
-3. For long reads: use current basecaller-aware QC first. For ONT, prefer Dorado summaries/trimming during basecalling or demultiplexing when starting from signal/BAM; for FASTQ-only filtering use `chopper` for quality/length/end trimming or `filtlong` v0.2.1 when selecting reads for assembly. Use `Pychopper` for full-length cDNA. Treat `Porechop_ABI` as a targeted legacy/fallback adapter-discovery tool, and record why it is needed.
+3. For long reads: use current basecaller-aware QC first. For ONT, prefer Dorado summaries/trimming during basecalling or demultiplexing when starting from signal/BAM; for FASTQ-only filtering use `chopper` for quality/length/end trimming or `filtlong` v0.3.1 when selecting reads for assembly (v0.3.0 renamed the short-read options to `--short_1` / `--short_2`; see [docs/filtlong.md](docs/filtlong.md)). Use `Pychopper` for full-length cDNA. Treat `Porechop_ABI` as a targeted legacy/fallback adapter-discovery tool, and record why it is needed.
    - For very large ONT FASTQ inputs, do not burn the first full read pass on raw `gzip -t` or raw `seqkit stats` preflight unless the user explicitly asks for it. Record raw `stat` metadata and, if needed, a small sampled sanity check; let the first full pass be the actual filtering/orientation step, then run `seqkit stats` on produced outputs.
    - For ONT cDNA with `Pychopper`, write outputs with plain `.fastq` suffixes unless you explicitly pipe/compress them yourself. `Pychopper` can write plain FASTQ even when the output path ends in `.gz`; avoid `gzip -t` on `Pychopper` outputs unless magic bytes confirm gzip. If legacy outputs have `.fastq.gz` names but plain FASTQ content, rename them to `.fastq` before resuming.
    - `Pychopper` report plotting can fail after the reads are already processed, for example from a pandas/statistics type-conversion error. On that failure, inspect whether the classified/unclassified/rescued/read-stats outputs exist and are non-empty. If they do, resume downstream from those outputs rather than rerunning the full `Pychopper` pass.
@@ -46,8 +46,7 @@ Inputs:
 
 - results/bio-reads-qc-mapping/trimmed_reads/
 - results/bio-reads-qc-mapping/qc_reports/
-- results/bio-reads-qc-mapping/mapping_stats.tsv
-- results/bio-reads-qc-mapping/coverage.tsv
+- results/bio-reads-qc-mapping/mapping_stats.tsv (`mapping_status` is `planned` before `--execute`, then `completed` or `reused`, and `not_requested` for rows with no reference)
 - results/bio-reads-qc-mapping/logs/
 - stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
 - Sample sheet contract: [schemas/sample-sheet.schema.json](schemas/sample-sheet.schema.json)
@@ -56,7 +55,7 @@ Inputs:
 
 - [ ] Post-QC read count sanity checks pass.
 - [ ] Mapping rate meets project thresholds.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Validate sample sheet schema and FASTQ integrity.
 - [ ] The plan covers every sheet row exactly once, and mapping gates are applied only to rows that supplied a reference.
 - [ ] For long-read QC, record whether trimming happened in the basecaller/demultiplexer, `chopper`, `filtlong`, `Pychopper`, or a documented Porechop_ABI fallback.

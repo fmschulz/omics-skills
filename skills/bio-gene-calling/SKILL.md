@@ -1,6 +1,6 @@
 ---
 name: bio-gene-calling
-description: Call genes and annotate basic sequence features. Use when predicting prokaryotic, viral, or eukaryotic coding sequences before downstream annotation.
+description: Predict coding sequences and screen assemblies for non-coding RNA features. Use when calling genes in prokaryotic, viral, or eukaryotic assemblies, or when a tRNA, rRNA, or other ncRNA census is needed before functional annotation.
 ---
 
 # Bio Gene Calling
@@ -72,7 +72,7 @@ Inputs:
 
 - [ ] Gene count sanity checks pass.
 - [ ] Start/stop codon checks pass.
-- [ ] On failure: retry with alternative parameters; if still failing, record in report and exit non-zero.
+- [ ] On execution failure, preserve logs and report the failed command; retry only after diagnosing the cause and recording the changed parameters. Report unmet biological thresholds as results; never tune parameters solely to pass a gate.
 - [ ] Verify contigs are non-empty and DNA alphabet.
 - [ ] Verify outputs contain expected feature types.
 - [ ] Every assembly has its own output directory and input checksum in `run_manifest.json`; no caller output is silently shared across assemblies.
