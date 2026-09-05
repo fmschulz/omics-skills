@@ -8,11 +8,13 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import sys
 import time
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import parse_qsl
 
@@ -39,6 +41,9 @@ USER_AGENT = "omics-skills-public-db-lookup (+https://github.com/fmschulz/omics-
 MAX_STRING = 240
 TEXT_HEAD = 800
 RETRY_SLEEPS = (1, 2, 4)
+# Documented request spacing per service (references/services.md). NCBI allows
+# 3/s without a key; STRING asks for one second between calls.
+MIN_INTERVALS = {"ncbi-entrez": 0.34, "ncbi-datasets": 0.2, "string": 1.0, "ena": 0.02}
 EXIT_CODES = {"invalid_input": 2}
 
 
@@ -53,6 +58,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--format", choices=("auto", "json", "text"), default="auto")
     parser.add_argument("--save-raw", type=Path, help="write the full response body to this path")
     parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument(
+        "--state-dir",
+        type=Path,
+        default=Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
+        / "omics-skills"
+        / "public-db-lookup",
+        help="Where the cross-invocation rate-limit timestamps live.",
+    )
     return parser.parse_args(argv)
 
 
@@ -100,9 +113,47 @@ def retry_delay(retry_after: str | None, attempt: int) -> float:
         return RETRY_SLEEPS[attempt]
 
 
-def fetch(session: Any, url: str, params: list[tuple[str, str]], headers: dict[str, str], timeout: float) -> Any:
-    """GET with up to three retries on 429 and 5xx; return the last response."""
+def pace_across_processes(service: str, min_interval: float, state_dir: Path) -> None:
+    """Space requests to `service` across CLI invocations.
+
+    This script performs one lookup per run, so an in-process pacer would only
+    space retries while an agent calling it in a loop still hammers the service.
+    The last-request timestamp therefore lives on disk, under a lock, the same
+    way scientific-impact-assessment paces OpenAlex."""
+    if min_interval <= 0:
+        return
+    try:
+        state_dir.mkdir(parents=True, exist_ok=True)
+        state_path = state_dir / f"{service}.last-request"
+        with (state_dir / f"{service}.lock").open("a+", encoding="utf-8") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                last = float(state_path.read_text().strip())
+            except (OSError, ValueError):
+                last = None
+            if last is not None:
+                time.sleep(max(0.0, min_interval - (time.time() - last)))
+            state_path.write_text(f"{time.time():.6f}\n", encoding="utf-8")
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+    except OSError:
+        # A read-only or unavailable state directory must not block a lookup.
+        time.sleep(min_interval)
+
+
+def fetch(
+    session: Any,
+    url: str,
+    params: list[tuple[str, str]],
+    headers: dict[str, str],
+    timeout: float,
+    pace: Callable[[], None] = lambda: None,
+) -> Any:
+    """GET with up to three retries on 429 and 5xx; return the last response.
+
+    `pace` runs before EVERY request, retries included. Pacing only the first
+    one let a retry follow it immediately and break the documented rate."""
     for attempt in range(len(RETRY_SLEEPS) + 1):
+        pace()
         response = session.get(url, params=params, headers=headers, timeout=timeout)
         if response.status_code != 429 and response.status_code < 500:
             return response
@@ -196,7 +247,11 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
     display_url = str(requests.Request("GET", url, params=shown).prepare().url)
 
     try:
-        response = fetch(session or requests.Session(), url, params, headers, args.timeout)
+        min_interval = MIN_INTERVALS.get(args.service, 0.0)
+        response = fetch(
+            session or requests.Session(), url, params, headers, args.timeout,
+            pace=lambda: pace_across_processes(args.service, min_interval, args.state_dir),
+        )
     except requests.RequestException as error:
         return fail(args.service, "network_error", redact(str(error), secret))
     # Redact before anything is parsed or printed: a service that echoes the

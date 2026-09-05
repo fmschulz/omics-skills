@@ -17,7 +17,8 @@ One bounded GET against a public life-science REST API. The bundled script picks
 4. Keep `--max-items` small (default 5). Raise it only when the user needs more rows.
 5. When the full payload matters, add `--save-raw PATH` and work from the file; the envelope still carries the compacted view.
 6. For the two NCBI services, export `NCBI_API_KEY` and `NCBI_EMAIL` (and `NCBI_TOOL` if you have one). The script adds them as request parameters and redacts the key from its output.
-7. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.
+7. Requests are paced across invocations, not just within one, so calling the CLI in a loop stays inside each service's documented rate. The timestamps live under `$XDG_STATE_HOME/omics-skills/public-db-lookup`; override with `--state-dir`. Never pass a credential in `--path` or `--param`: the script refuses it, because it would be echoed back in the emitted URL and land in shell history.
+8. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.
 
 ### Execution behavior
 

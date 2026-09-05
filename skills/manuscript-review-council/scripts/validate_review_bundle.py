@@ -11,6 +11,8 @@ from pathlib import Path
 
 import jsonschema
 
+DEFAULT_ROLES = {"domain", "methods-statistics", "skeptic"}
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -37,6 +39,23 @@ def main() -> int:
     issue_ids = [issue["issue_id"] for issue in bundle["issues"]]
     if len(issue_ids) != len(set(issue_ids)):
         parser.error("issue_id values must be unique")
+    # An issue must be attributable to a reviewer who actually reported. Without
+    # this, a bundle can credit a finding to a reviewer that never ran.
+    known_roles = set(roles)
+    for issue in bundle["issues"]:
+        unknown = sorted(set(issue["source_roles"]) - known_roles)
+        if unknown:
+            parser.error(
+                f"{issue['issue_id']} cites reviewers absent from reviewer_reports: {', '.join(unknown)}"
+            )
+    # SKILL.md launches three default reviewers. A smaller council is allowed
+    # only when the bundle says why, so a silently truncated review is caught.
+    missing_defaults = sorted(DEFAULT_ROLES - known_roles)
+    if missing_defaults and not bundle.get("reduced_council_reason", "").strip():
+        parser.error(
+            f"council is missing default reviewer(s) {', '.join(missing_defaults)}; "
+            "record why in reduced_council_reason"
+        )
     print("Review bundle validation passed")
     return 0
 

@@ -84,7 +84,9 @@ class BioRxivPaginationTests(unittest.TestCase):
         with mock.patch.object(module.urllib.request, "urlopen", side_effect=[*errors, Response()]), mock.patch.object(module.time, "sleep") as sleep:
             payload = module.fetch_json("https://example", 5, retries=2, retry_backoff=0)
         self.assertEqual(payload, {"collection": []})
-        self.assertEqual(sleep.call_count, 2)
+        # Two backoff sleeps plus one pacing sleep before each of the three
+        # attempts: pacing runs before every request, retries included.
+        self.assertEqual(sleep.call_count, 4)
 
     def test_author_groups_and_latest_version_policy_are_explicit(self):
         module = load_search_module()

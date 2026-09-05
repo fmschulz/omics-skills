@@ -93,7 +93,7 @@ Add:
 
 ### Document id
 Prefer:
-- DOI: `doi:<doi_string>` (e.g., `doi:10.1038/s41586-020-2216-3`)
+- DOI: `doi:<doi_string>` (e.g., `doi:10.1038/nature12373`)
 - Else PMID: `pmid:<pmid_string>`
 - Else: `csag:doc/<slug>` where `<slug>` is deterministic from title (lowercase, alnum, dash)
 

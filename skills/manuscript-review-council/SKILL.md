@@ -59,7 +59,9 @@ The council definition lives in local files:
     - reviewer reports
     - disagreement or conflict notes
     - editor meta-review
-    - validate deterministic paths and machine-readable issues against `schemas/review-bundle.schema.json` with `scripts/validate_review_bundle.py`
+    - validate deterministic paths and machine-readable issues against `schemas/review-bundle.schema.json` with `skills/manuscript-review-council/scripts/validate_review_bundle.py`
+    - every `source_roles` entry must name a reviewer present in `reviewer_reports`: an issue is attributable or it is not an issue
+    - running fewer than the three default reviewers requires a `reduced_council_reason` on the bundle
 12. Write an editor meta-review that includes:
    - headline recommendation
    - rationale across novelty, rigor, evidence strength, clarity, reproducibility, and significance
@@ -86,7 +88,7 @@ The council definition lives in local files:
 | Computational manuscript | Add a reproducibility reviewer |
 | Human, animal, or clinical manuscript | Add an ethics or compliance reviewer |
 | Revision assessment | Compare prior critiques to the new draft and label each issue resolved, partial, or unresolved |
-| Fast triage | Use domain reviewer plus skeptic, then write a short editor recommendation |
+| Fast triage | Use `domain` plus `skeptic`, set `reduced_council_reason`, then write a short editor recommendation |
 | Rebuttal check | Judge whether the author response closes the decision-driving issues |
 | Reviewer definitions | Read `references/reviewer-roles.md` |
 | Stage flow and artifacts | Read `references/council-workflow.md` |
@@ -141,8 +143,8 @@ an editor recommendation.
 
 ```text
 Give me a fast desk-review style assessment of this preprint. Use only a domain
-reviewer and a skeptic, then summarize whether it is promising, immature, or
-fatally flawed.
+reviewer and a skeptic, record the reduced council on the bundle, then summarize
+whether it is promising, immature, or fatally flawed.
 ```
 
 ## Troubleshooting

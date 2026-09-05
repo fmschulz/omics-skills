@@ -2,9 +2,14 @@
 
 Use these role definitions as the default council roster.
 
+The `role` field of every reviewer report, and every `source_roles` entry, uses
+the slug in parentheses below. `scripts/validate_review_bundle.py` matches on
+those exact strings, and rejects an issue attributed to a reviewer that is not
+in `reviewer_reports`.
+
 ## Core Council
 
-### Domain Reviewer
+### Domain Reviewer (`domain`)
 
 Use on every manuscript.
 
@@ -19,7 +24,7 @@ Questions:
 - Are the headline claims matched by the evidence shown?
 - Does the discussion overreach beyond the results?
 
-### Methods And Statistics Reviewer
+### Methods And Statistics Reviewer (`methods-statistics`)
 
 Use on every manuscript.
 
@@ -34,7 +39,7 @@ Questions:
 - Are the statistics appropriate and reported clearly?
 - Which claims fail because of design or analysis weakness?
 
-### Skeptical Reviewer
+### Skeptical Reviewer (`skeptic`)
 
 Use on every manuscript.
 
@@ -51,7 +56,7 @@ Questions:
 
 ## Support Reviewers
 
-### Reproducibility Reviewer
+### Reproducibility Reviewer (`reproducibility`)
 
 Add for computational, bioinformatics, AI, or code-heavy papers.
 
@@ -60,7 +65,7 @@ Focus:
 - workflow clarity, parameters, and environment definition
 - whether a competent reader could repeat the analysis
 
-### Ethics Or Compliance Reviewer
+### Ethics Or Compliance Reviewer (`ethics-compliance`)
 
 Add for human subjects, animal work, privacy-sensitive data, dual-use work, or papers with conflict-of-interest concerns.
 
@@ -69,7 +74,7 @@ Focus:
 - privacy, safety, and compliance gaps
 - conflict disclosures and citation bias concerns
 
-### Translational Reviewer
+### Translational Reviewer (`translational`)
 
 Add when the paper makes clinical, ecological, operational, or deployment claims.
 

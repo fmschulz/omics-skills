@@ -226,9 +226,24 @@ def expand_author_variants(author_filters: list[str]) -> list[str]:
     return sorted(variants)
 
 
+PAGE_MIN_INTERVAL = 0.2
+_last_request = 0.0
+
+
+def pace_request() -> None:
+    """Space calls to the bioRxiv API. Deep scans page through many requests
+    back to back; backoff only reacts once the service has already refused."""
+    global _last_request
+    remaining = PAGE_MIN_INTERVAL - (time.monotonic() - _last_request)
+    if remaining > 0:
+        time.sleep(remaining)
+    _last_request = time.monotonic()
+
+
 def fetch_json(url: str, timeout: int, retries: int = 3, retry_backoff: float = 1.0) -> dict[str, object]:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     for attempt in range(retries + 1):
+        pace_request()
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 charset = response.headers.get_content_charset() or "utf-8"

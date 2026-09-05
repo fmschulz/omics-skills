@@ -1,43 +1,207 @@
 {
   "records": {
-    "10.1038/nature12373": {
+    "10.1016/j.jgg.2021.03.006": {
+      "checked_at": "2026-09-05T16:53:54Z",
       "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/nature12373": {
+      "checked_at": "2026-09-05T16:53:54Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/nbt.3893": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/s41467-022-29843-y": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/s41587-023-01953-y": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1038/s41587-023-01983-6": {
+      "checked_at": "2026-09-05T16:53:55Z",
       "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/s41592-021-01101-x": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/s41592-023-01940-w": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1038/s41592-025-02819-8": {
+      "checked_at": "2026-09-05T16:53:55Z",
       "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1038/s41596-024-01060-5": {
+      "checked_at": "2026-09-05T16:53:55Z",
       "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1038/s44298-024-00069-7": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1093/bioinformatics/btu031": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1093/bioinformatics/bty633": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1093/molbev/msab293": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1093/molbev/msw046": {
+      "checked_at": "2026-09-05T16:53:55Z",
+      "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1101/682021": {
+      "checked_at": "2026-09-05T16:53:56Z",
       "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1111/jeu.12691": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1126/science.1234567": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1177/1177932220938064": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1186/s12915-025-02455-w": {
+      "checked_at": "2026-09-05T16:53:56Z",
       "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1186/s13059-019-1832-y": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1186/s13059-020-02155-4": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1186/s13059-021-02393-0": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1186/s13059-023-03089-3": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1186/s13059-024-03312-9": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1186/s13062-019-0234-0": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.1371/journal.pbio.3001827": {
+      "checked_at": "2026-09-05T16:53:56Z",
+      "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1371/journal.pcbi.1000424": {
+      "checked_at": "2026-09-05T16:53:56Z",
       "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1371/journal.pcbi.1003285": {
+      "checked_at": "2026-09-05T16:53:57Z",
       "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.1371/journal.pcbi.1005510": {
+      "checked_at": "2026-09-05T16:53:57Z",
       "registered": true,
+      "source": "doi.org handle",
       "title": null
     },
     "10.5281/zenodo.14897628": {
+      "checked_at": "2026-09-05T16:53:57Z",
       "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.5281/zenodo.19154110": {
+      "checked_at": "2026-09-05T16:53:57Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.64898/2026.01.08.698506": {
+      "checked_at": "2026-09-05T16:53:57Z",
+      "registered": true,
+      "source": "doi.org handle",
+      "title": null
+    },
+    "10.7717/peerj.7359": {
+      "checked_at": "2026-09-05T16:53:57Z",
+      "registered": true,
+      "source": "doi.org handle",
       "title": null
     }
   },

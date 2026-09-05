@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -17,6 +18,9 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CACHE = ROOT / "catalog" / "citation-cache.json"
+# A cached registration check has a shelf life: without one, CI can accept a
+# result from years ago for a DOI whose metadata has since changed.
+MAX_CACHE_AGE_DAYS = 180
 DOI_PATTERN = re.compile(r"10\.\d{4,9}/[^\s<>\"'`]+", re.IGNORECASE)
 FRONTMATTER_DOI = re.compile(r"^\s*doi:\s*[\"']?([^\"'#\s]+)", re.IGNORECASE | re.MULTILINE)
 FRONTMATTER_TITLE = re.compile(
@@ -25,6 +29,11 @@ FRONTMATTER_TITLE = re.compile(
 )
 TITLE_TOKEN = re.compile(r"[a-z0-9]+")
 TITLE_CHECK_SKIP_PREFIXES = ("10.48550/", "10.5281/")
+# A preprint landing URL appends a version the DOI resolver rejects:
+# https://www.biorxiv.org/content/10.64898/2026.01.08.698506v3
+PREPRINT_HOST = re.compile(r"(?:^|[/.])(?:bio|med)rxiv\.org/content/?$", re.IGNORECASE)
+# ...698506v3, ...698506v3.full, ...698506v3?x=1 all resolve to the same DOI.
+PREPRINT_VERSION_SUFFIX = re.compile(r"(?<=\d)v\d+(?:\.[a-z]+)?(?:[?#].*)?$", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -43,6 +52,12 @@ def normalize_doi(raw: str) -> str | None:
     while doi != previous:
         previous = doi
         doi = doi.rstrip(".,;:")
+        # Markdown emphasis leaks into a bare DOI (`10.5281/zenodo.19154110**`).
+        # Strip a trailing run only when it is unbalanced, since these characters
+        # are legal inside a DOI.
+        for mark in ("**", "*", "__", "_", "~~", "~"):
+            while doi.endswith(mark) and doi.count(mark) % 2 == 1:
+                doi = doi[: -len(mark)]
         while doi.endswith(("}", "]")):
             doi = doi[:-1]
         while doi.endswith(")") and doi.count(")") > doi.count("("):
@@ -87,11 +102,11 @@ def collect_citations(paths: list[Path]) -> list[Citation]:
             doi = normalize_doi(match.group(1))
             if doi:
                 citations.append(Citation(doi, path, text[: match.start()].count("\n") + 2, title))
-        if path.name != "SKILL.md":
-            continue
         header_dois = {citation.doi for citation in citations if citation.path == path}
         for match in DOI_PATTERN.finditer(text):
             doi = normalize_doi(match.group(0))
+            if doi and PREPRINT_HOST.search(text[max(0, match.start() - 60) : match.start()]):
+                doi = PREPRINT_VERSION_SUFFIX.sub("", doi)
             if doi and doi not in header_dois:
                 citations.append(Citation(doi, path, text[: match.start()].count("\n") + 1))
     return citations
@@ -142,7 +157,12 @@ def refresh_cache(
                 if not cached_title:
                     errors.append(f"{doi}: Crossref returned no title")
                     continue
-            records[doi] = {"registered": True, "title": cached_title}
+            records[doi] = {
+                "registered": True,
+                "title": cached_title,
+                "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "source": "doi.org handle" + (" + Crossref title" if cached_title else ""),
+            }
         except HTTPError as error:
             if error.code == 404:
                 errors.append(f"{doi}: HTTP 404")
@@ -174,6 +194,8 @@ def validate_cache(citations: list[Citation], cache_path: Path) -> list[str]:
         return ["citation cache has an unsupported schema"]
 
     errors: list[str] = []
+    stale: set[str] = set()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_CACHE_AGE_DAYS)
     for citation in citations:
         location = f"{citation.path}:{citation.line}"
         record = records.get(citation.doi)
@@ -182,6 +204,20 @@ def validate_cache(citations: list[Citation], cache_path: Path) -> list[str]:
                 f"{location}: {citation.doi} is not in the validated cache; run with --refresh"
             )
             continue
+        checked_at = record.get("checked_at")
+        if not isinstance(checked_at, str):
+            errors.append(f"{location}: {citation.doi} has no checked_at date; run with --refresh")
+        else:
+            try:
+                stamped = datetime.strptime(checked_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            except ValueError:
+                errors.append(f"{location}: {citation.doi} has an unreadable checked_at {checked_at!r}")
+            else:
+                # Age is a maintenance signal, not a verdict. Failing on it would
+                # break an offline, deterministic gate on a date certain, with no
+                # way to refresh without live services.
+                if stamped < cutoff:
+                    stale.add(f"{citation.doi} last checked {checked_at}")
         if citation.title and not citation.doi.startswith(TITLE_CHECK_SKIP_PREFIXES):
             registered_title = record.get("title")
             if not isinstance(registered_title, str):
@@ -191,6 +227,14 @@ def validate_cache(citations: list[Citation], cache_path: Path) -> list[str]:
                     f"{location}: title does not match Crossref for {citation.doi} "
                     f"({citation.title!r} vs {registered_title!r})"
                 )
+    unused = sorted(set(records) - {citation.doi for citation in citations})
+    if unused:
+        stale.add(
+            f"{len(unused)} cached DOI(s) nothing cites any more: "
+            f"{', '.join(unused[:5])}{'...' if len(unused) > 5 else ''}"
+        )
+    for note in sorted(stale):
+        print(f"citation cache maintenance: {note}; run with --refresh", file=sys.stderr)
     return errors
 
 

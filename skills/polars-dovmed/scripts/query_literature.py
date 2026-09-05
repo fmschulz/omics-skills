@@ -507,7 +507,26 @@ def crossref_year(item):
     return None
 
 
+# Crossref asks for 1 request/s from anonymous callers and 3/s from polite ones
+# that identify themselves with a mailto. 0.05s would have been 20/s.
+CROSSREF_MIN_INTERVAL = 1.0
+CROSSREF_POLITE_MIN_INTERVAL = 0.34
+_crossref_last_request = 0.0
+
+
+def pace_crossref(email=""):
+    """Space Crossref requests. The enrichment loop fires up to --crossref-limit
+    title lookups back to back; retry backoff only reacts after a refusal."""
+    global _crossref_last_request
+    interval = CROSSREF_POLITE_MIN_INTERVAL if email else CROSSREF_MIN_INTERVAL
+    remaining = interval - (time.monotonic() - _crossref_last_request)
+    if remaining > 0:
+        time.sleep(remaining)
+    _crossref_last_request = time.monotonic()
+
+
 def crossref_title_lookup(title, *, email="", rows=3, timeout=10):
+    pace_crossref(email)
     params = urllib.parse.urlencode({"query.title": title, "rows": rows})
     request = urllib.request.Request(
         f"https://api.crossref.org/works?{params}",

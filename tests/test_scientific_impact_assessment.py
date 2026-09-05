@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -71,6 +72,7 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         fetch_altmetric.assert_called_once_with(
             doi="10.1038/s41586-024-00000-0",
             api_key="test-key",
+            min_interval=unittest.mock.ANY,
         )
         self.assertEqual(report["openalex"]["doi"], "10.1038/s41586-024-00000-0")
 

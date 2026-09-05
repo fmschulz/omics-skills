@@ -165,5 +165,29 @@ class CredentialHandlingTests(unittest.TestCase):
             ["15718680", "157427902"],
         )
 
+
+    def test_rate_limit_state_is_shared_across_invocations(self) -> None:
+        """One lookup per run means an in-process pacer would only space
+        retries while a caller in a loop still hammers the service."""
+        import tempfile
+        import time
+
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp)
+            started = time.monotonic()
+            for _ in range(3):
+                public_db_lookup.pace_across_processes("string", 0.3, state)
+            elapsed = time.monotonic() - started
+        self.assertGreaterEqual(elapsed, 0.55)
+
+    def test_an_unwritable_state_directory_falls_back_to_a_plain_sleep(self) -> None:
+        """With interval 0.0 the function returns before touching the directory,
+        so the fallback was never exercised."""
+        import time
+
+        started = time.monotonic()
+        public_db_lookup.pace_across_processes("string", 0.2, Path("/proc/nonexistent/x"))
+        self.assertGreaterEqual(time.monotonic() - started, 0.19)
+
 if __name__ == "__main__":
     unittest.main()

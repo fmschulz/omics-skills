@@ -22,6 +22,9 @@ def load_smoke_module():
 
 class PolarsDovmedSmokeTests(unittest.TestCase):
     def test_defaults_keep_artifacts_outside_skill_source(self) -> None:
+        """Generated run artifacts must not land inside the installed skill
+        tree. The other argparse defaults are copies of the source constants
+        and assert nothing."""
         module = load_smoke_module()
         args = module.parse_args([])
 
@@ -29,9 +32,7 @@ class PolarsDovmedSmokeTests(unittest.TestCase):
             Path(args.run_dir),
             REPO_ROOT / "tasks" / "polars-dovmed-runs" / "smoke-test",
         )
-        self.assertNotIn("skills/polars-dovmed/runs", args.run_dir)
-        self.assertEqual(args.corpus, "biorxiv")
-        self.assertEqual(args.poll_timeout, 75)
+        self.assertNotIn("skills/polars-dovmed", args.run_dir)
 
 
 if __name__ == "__main__":

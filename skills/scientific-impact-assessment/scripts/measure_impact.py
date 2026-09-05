@@ -181,11 +181,18 @@ def summarize_altmetric_payload(payload: dict[str, Any] | None, reason: str | No
     }
 
 
-def fetch_altmetric_summary(doi: str | None, api_key: str | None) -> dict[str, Any]:
+def fetch_altmetric_summary(
+    doi: str | None, api_key: str | None, *, min_interval: float = DEFAULT_MIN_INTERVAL
+) -> dict[str, Any]:
     if not doi:
         return summarize_altmetric_payload(None, reason="doi_required")
     if not api_key:
         return summarize_altmetric_payload(None, reason="no_api_key")
+    # OpenAlex is paced across processes with a lock file; Altmetric only gets
+    # this per-caller delay, which spaces a serial shortlist run but does not
+    # coordinate concurrent callers.
+    if min_interval > 0:
+        time.sleep(min_interval)
     encoded_doi = urllib.parse.quote(doi, safe="")
     url = f"https://api.altmetric.com/v1/doi/{encoded_doi}?{urllib.parse.urlencode({'key': api_key})}"
     try:
@@ -230,6 +237,7 @@ def build_live_report(args: argparse.Namespace) -> dict[str, Any]:
     altmetric_summary = fetch_altmetric_summary(
         doi=resolved_doi,
         api_key=args.altmetric_api_key,
+        min_interval=min_interval,
     )
     journal_metric = lookup_journal_metric(journal_metrics, openalex_summary.get("journal_name"))
     return {

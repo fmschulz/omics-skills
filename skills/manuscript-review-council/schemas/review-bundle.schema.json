@@ -10,11 +10,12 @@
     "run_id": {"type": "string", "pattern": "^[0-9]{8}T[0-9]{6}Z$"},
     "mode": {"enum": ["critique", "revision_assessment", "rebuttal_assessment"]},
     "packet_path": {"type": "string"},
-    "reviewer_reports": {"type": "array", "minItems": 2, "items": {"type": "object", "additionalProperties": false, "required": ["role", "path", "recommendation", "confidence"], "properties": {"role": {"type": "string"}, "path": {"type": "string"}, "recommendation": {"enum": ["accept", "minor_revision", "major_revision", "reject"]}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}}}},
+    "reviewer_reports": {"type": "array", "minItems": 2, "items": {"type": "object", "additionalProperties": false, "required": ["role", "path", "recommendation", "confidence"], "properties": {"role": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"}, "path": {"type": "string"}, "recommendation": {"enum": ["accept", "minor_revision", "major_revision", "reject"]}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}}}},
     "issues": {"type": "array", "items": {"$ref": "#/$defs/issue"}},
     "conflicts_path": {"type": "string"},
     "editor_path": {"type": "string"},
-    "editor_recommendation": {"enum": ["accept", "minor_revision", "major_revision", "reject"]}
+    "editor_recommendation": {"enum": ["accept", "minor_revision", "major_revision", "reject"]},
+    "reduced_council_reason": {"type": "string", "minLength": 1}
   },
   "$defs": {
     "issue": {
@@ -23,7 +24,7 @@
       "required": ["issue_id", "source_roles", "severity", "category", "location", "evidence", "problem", "required_action", "status"],
       "properties": {
         "issue_id": {"type": "string", "pattern": "^ISSUE-[0-9]{3}$"},
-        "source_roles": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "source_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"}},
         "severity": {"enum": ["major", "minor"]},
         "category": {"type": "string"},
         "location": {"type": "string", "minLength": 1},
