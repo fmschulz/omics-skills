@@ -8,7 +8,7 @@ Pinning and capturing exact software environments so a rerun uses the identical 
 
 - pixi for bioinformatics tool stacks
 - uv for Python dependencies
-- conda env export (interop / legacy)
+- Sharing with conda-based collaborators (pixi export)
 - Containers (Docker / Apptainer / Singularity)
 - Recording exact versions into results
 
@@ -41,17 +41,16 @@ uv sync                                      # recreate env from uv.lock
 
 Commit `pyproject.toml` and `uv.lock`. Keep the heavy bioinformatics binaries (aligners, samtools) in pixi and the Python analysis libraries in uv; they coexist cleanly.
 
-## conda env export (interop / legacy)
+## Sharing with conda-based collaborators (pixi export)
 
-When collaborating with a conda-based group or reproducing an older project, export an explicit, version-pinned environment file.
+Keep pixi as the source of truth; do not maintain a separate conda environment. When a collaborator needs a conda file, export it from the workspace.
 
 ```bash
-conda env export --no-builds > environment.yml     # human-portable, versions pinned
-conda env export > environment.lock.yml            # fully pinned incl. builds (least portable)
-conda env create -f environment.yml                # recreate
+pixi workspace export conda-environment environment.yml   # conda environment.yaml from pixi.toml
+pixi workspace export conda-explicit-spec conda-spec/     # fully pinned explicit spec from pixi.lock
 ```
 
-Pin exact versions in `environment.yml` (`bwa=0.7.18`, `samtools=1.21`, `metabat2=2.15`). Prefer pixi for new work in this repo; treat conda export as interop only.
+Regenerate exported files after every change to `pixi.toml` or `pixi.lock`, and never edit them by hand. To reproduce an older conda-based project, import its file into pixi instead of running conda: `pixi init --import environment.yml`.
 
 ## Containers (Docker / Apptainer / Singularity)
 

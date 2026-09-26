@@ -157,14 +157,14 @@ House rule for this repo: bioinformatics tool stacks use **pixi** (conda-forge +
 - Record exact versions into each experiment's provenance file at run time (`samtools --version`, `bwa 2>&1 | head`, `metabat2 2>&1 | head`) and into `tasks/METHODS.md`.
 - Make dependencies machine-readable and explicit (Wilson 2017) — never rely on "whatever is on PATH".
 
-Manifest example with lock-capture comment: `examples/environment.pixi.toml`. Full guidance on pixi, uv, conda export, and containers: `references/environments.md` (read when setting up or capturing an environment).
+Manifest example with lock-capture comment: `examples/environment.pixi.toml`. Full guidance on pixi, uv, conda-file export, and containers: `references/environments.md` (read when setting up or capturing an environment).
 
 ### Version control
 
 - Put the project under Git for backup, history, and collaboration (Noble 2009); commit at least daily, keep changes small and focused (Wilson 2017).
 - Track only hand-edited files — code, configs, `runall`, notebook, sample sheets. **Never** commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
 - Use a `.gitignore` that ignores everything under `results/` (including `provenance.txt`, which `runall` regenerates) and allow-lists the hand-edited files that live there — the driver, its README, the lab notebook. Tested pattern: `examples/gitignore.example`.
-- Branch for experimental work (`git checkout -b try-metabat2`); merge to main only when it works.
+- Work directly on `main`; do not create feature branches for experiments. Give each experiment its own dated `results/` directory and lab-notebook entry, commit in small steps, and revert what does not work.
 - Tag the commit behind each published figure or release; archive the release for a DOI (Zenodo) (Sandve 2013, Wilson 2017).
 
 ### Sharing & collaboration
@@ -265,7 +265,7 @@ Load progressively as the task narrows:
 - `references/project-layout.md` — full annotated directory tree, dated `results/` dirs, lab-notebook practice, script categories (Noble 2009). Read when laying out or auditing structure.
 - `references/reproducibility-checklist.md` — Sandve 2013's ten rules operationalized, each with a bioinformatics how-to. Read when making an analysis reproducible.
 - `references/good-enough-practices.md` — Wilson 2017 data/software/collaboration/org/tracking/manuscript practices. Read for sharing, licensing, tidy data, deposition.
-- `references/environments.md` — pinning and capturing environments with pixi, uv, conda, containers. Read when setting up or recording the software stack.
+- `references/environments.md` — pinning and capturing environments with pixi, uv, and containers, plus conda-file export for collaborators. Read when setting up or recording the software stack.
 
 ## Example artifacts
 

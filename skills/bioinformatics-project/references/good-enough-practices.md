@@ -31,7 +31,7 @@ Derived from Wilson G, Bryan J, Cranston K, Kitzes J, Nederbragt L, Teal TK, "Go
 - **Always search for well-maintained libraries** before re-implementing. Parse alignments with `pysam` and sequences with Biopython rather than writing a homemade SAM/FASTQ parser.
 - **Test libraries before relying on them.** Run a new aligner on a small simulated read set with known truth positions and check the mapped coordinates before using it on real samples.
 - **Give functions and variables meaningful names.** `min_mapping_quality = 30` and `filter_low_qual_reads(reads)`, not `q=30` and `f(r)`.
-- **Make dependencies and requirements explicit** in a machine-readable manifest. Pin tools in `pixi.toml` / `environment.yml` (`bwa=0.7.18`, `samtools=1.21`, `snakemake=8.*`), committed with the code.
+- **Make dependencies and requirements explicit** in a machine-readable manifest. Pin tools in `pixi.toml` and commit `pixi.lock` (`bwa=0.7.18`, `samtools=1.21`, `snakemake=8.*`), committed with the code.
 - **Do not comment/uncomment sections to control behavior.** Drive behavior with config/CLI args (`--ref contigs.fasta --min-qual 30`), not by toggling commented `#ref = 'old.fa'` lines.
 - **Provide a simple example or test data set.** Ship `tests/data/tiny.fastq` (a few hundred reads) and `tests/expected/tiny_bins/` so `make test` runs the pipeline end-to-end and diffs output.
 - **Submit code to a DOI-issuing repository.** Connect the GitHub repo to Zenodo and tag a release (`v1.0.0`) to mint a DOI for the exact pipeline version used.

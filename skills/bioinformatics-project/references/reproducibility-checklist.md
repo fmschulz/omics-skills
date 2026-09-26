@@ -39,7 +39,7 @@ How-to: instead of opening a VCF in Excel to delete failing samples, filter prog
 
 Pin and archive the exact versions of all third-party tools so a rerun uses the identical software stack; capture full environment images when needed.
 
-- [ ] Toolchain pinned in `pixi.toml` / `environment.yml` with exact versions.
+- [ ] Toolchain pinned in `pixi.toml` with exact versions, and `pixi.lock` committed.
 - [ ] Container image built for long-lived analyses.
 - [ ] Tool versions recorded into `tasks/METHODS.md` and the experiment's provenance file.
 
