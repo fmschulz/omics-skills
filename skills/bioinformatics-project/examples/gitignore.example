@@ -45,6 +45,10 @@ results/*/*
 # provenance.txt is written by runall (regenerable) -> stays ignored.
 # Per-stage output dirs (qc/, assembly/, bins/, ...) stay ignored automatically.
 
+# --- Working notes stay local; tasks/METHODS.md is analysis provenance ---------
+tasks/*
+!tasks/METHODS.md
+
 # --- Compiled third-party tools in bin/ (track only your own wrappers) -----------
 bin/checkm
 bin/*.bin

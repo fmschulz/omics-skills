@@ -61,7 +61,7 @@ project_name/              # one self-contained, meaningfully named dir
 ├── src/                   # your own analysis code (importable, tested)
 ├── bin/                   # third-party / compiled tools, project wrappers
 ├── doc/                   # one subdir per manuscript + notes + changelog
-├── tasks/                 # todo, methods, lessons, and hypothesis register
+├── tasks/                 # METHODS.md (committed); todo, lessons, hypotheses (local)
 ├── pixi.toml / pixi.lock  # pinned bioinformatics tool stack (committed)
 ├── README.md  LICENSE  CITATION.cff
 └── .gitignore             # excludes data blobs and all results/ outputs
@@ -162,7 +162,7 @@ Manifest example with lock-capture comment: `examples/environment.pixi.toml`. Fu
 ### Version control
 
 - Put the project under Git for backup, history, and collaboration (Noble 2009); commit at least daily, keep changes small and focused (Wilson 2017).
-- Track only hand-edited files — code, configs, `runall`, notebook, sample sheets. **Never** commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
+- Track only hand-edited files — code, configs, `runall`, notebook, sample sheets, and `tasks/METHODS.md` as analysis provenance; the other `tasks/` notes stay local. **Never** commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
 - Use a `.gitignore` that ignores everything under `results/` (including `provenance.txt`, which `runall` regenerates) and allow-lists the hand-edited files that live there — the driver, its README, the lab notebook. Tested pattern: `examples/gitignore.example`.
 - Work directly on `main`; do not create feature branches for experiments. Give each experiment its own dated `results/` directory and lab-notebook entry, commit in small steps, and revert what does not work.
 - Tag the commit behind each published figure or release; archive the release for a DOI (Zenodo) (Sandve 2013, Wilson 2017).

@@ -115,6 +115,7 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
             gitignore = (project / ".gitignore").read_text(encoding="utf-8")
             self.assertIn("!00_data/00_raw/.gitkeep", gitignore)
             self.assertIn("!02_analyses/*/*/runall", gitignore)
+            self.assertIn("!tasks/METHODS.md", gitignore)
 
     def test_canonical_layout_can_add_a_dated_first_experiment(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
