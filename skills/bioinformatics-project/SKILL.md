@@ -7,7 +7,7 @@ metadata:
 
 # Bioinformatics Project Organization
 
-Set up a computational-biology project so a stranger can understand what was done and why, and so every analysis can be rerun end-to-end from a script. Apply this when creating, restructuring, or reproducibility-hardening any genomics, metagenomics, sequencing, or computational-biology project — and when running any single analysis command that should be reproducible.
+Set up a computational-biology project so a stranger can understand what was done and why, and so every analysis can be rerun end-to-end from a script. Apply this when creating, restructuring, or reproducibility-hardening any genomics, metagenomics, sequencing, or computational-biology project.
 
 Two assumptions drive every rule below (Noble 2009): a stranger must be able to reconstruct the analysis from the files alone, and everything will be rerun — with new data, new parameters, or a fixed bug — so build each experiment to re-execute from a script, never from memory.
 
@@ -132,9 +132,9 @@ scaffold and README files, move data with temporary compatibility symlinks,
 update scripts, then validate DuckDB builders, notebooks, and driver scripts
 before removing old paths.
 
-### Reproducibility rules (non-negotiable)
+### Reproducibility rules
 
-Harden every analysis against Sandve 2013's ten rules: record provenance, script all steps (no manual edits), pin and archive exact tool versions, version-control all custom code, persist standard-format intermediates per stage, fix and record random seeds, store the raw data behind every plot, emit hierarchical drill-down output, tie every claim to its result in a literate document, and provide public access (deposit reads, assemblies, derived tables; push the repo with its lockfile). Each rule has a bioinformatics how-to with concrete commands in `references/reproducibility-checklist.md` — read it when hardening an analysis for reproducibility.
+Harden every analysis against Sandve 2013's ten rules: record provenance, script all steps (no manual edits), pin and archive exact tool versions, version-control all custom code, persist standard-format intermediates per stage, fix and record random seeds, store the raw data behind every plot, emit hierarchical drill-down output, tie every claim to its result in a literate document, and, when sharing is in scope, provide public access (deposit reads, assemblies, derived tables; push the repo with its lockfile). Each rule has a bioinformatics how-to with concrete commands in `references/reproducibility-checklist.md` — read it when hardening an analysis for reproducibility.
 
 ### Driver-script discipline
 
@@ -144,7 +144,7 @@ Capture each experiment as one executable driver script, conventionally `runall`
 2. **Comment generously** — a reader understands the experiment from the comments alone.
 3. **Never hand-edit intermediates** — transform with `sed`/`awk`/`grep`/`cut` so edits are recorded and repeatable.
 4. **Store all file/dir names as variables at the top** — swapping a reference DB is a one-line change.
-5. **Use relative paths** (`../../data/...`) so the project runs after checkout elsewhere.
+5. **Use relative paths** (`../../data/...`) from the experiment directory so the project runs after checkout elsewhere. Under Slurm, submit with `--chdir=<experiment dir>` or export `EXPERIMENT_DIR`; the spooled batch script's own path is not the experiment directory.
 6. **Make it restartable** — guard each step with "skip if output exists"; write outputs to a temp name then `mv` to the final name so a partial result is never mistaken for a complete one.
 
 Pair `runall` with a `summarize` script (its final step) that produces a plot/table/HTML and can interpret a partially completed experiment. Abort on error (`set -euo pipefail`, check return codes, message to stderr, non-zero exit) and give every script a usage statement (Noble 2009). Runnable, idempotent template with version capture, fixed seed, and temp-then-rename: `examples/runall.sh` (copy and adapt when writing a pipeline).
@@ -181,7 +181,7 @@ Every project carries a `README.md` (study description, setup, how to reproduce)
 | Add publication metadata | Opt in with `--license MIT --author "Name or organization" --copyright-year YYYY`; all three explicit values are required. |
 | Repair a messy project | Inventory paths first, create the target scaffold, migrate with temporary compatibility links, and verify consumers before removing old paths. |
 | Run an experiment | Copy `examples/runall.sh`, pin inputs and parameters, write atomically, and record versions and seeds. |
-| Add structured metadata | Use `bio-foundation-housekeeping` as a separate follow-up only when schemas or a catalog are requested. |
+| Add structured metadata | When schemas or a catalog are requested and the `bio-foundation-housekeeping` skill is installed, use it as a separate follow-up. |
 | Prepare a release or deposition | Verify README, license, citation metadata, lockfiles, provenance, checksums, and regenerability. |
 
 ## Input Requirements
@@ -252,7 +252,7 @@ The bundled templates are annotated under "Example artifacts" below.
 
 **The environment cannot resolve:** Confirm channel order and platform support in `pixi.toml`. Record the failed solve, then constrain the conflicting package or use a pinned container for that stage.
 
-**The repository needs schemas and a queryable catalog:** Use `bio-foundation-housekeeping` after this skill establishes the project structure.
+**The repository needs schemas and a queryable catalog:** If the `bio-foundation-housekeeping` skill is installed, use it after this skill establishes the project structure.
 
 **A scaffold file already contains different content:** The command exits before writing anything and lists the conflicting paths. Reconcile those files manually; the scaffold does not overwrite project-owned content.
 

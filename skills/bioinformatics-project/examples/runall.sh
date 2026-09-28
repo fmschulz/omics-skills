@@ -28,9 +28,14 @@ set -euo pipefail
 usage() { sed -n '2,/^# --- END USAGE ---$/p' "$0"; }
 case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 
-# --- Rule 5: work from this script's own directory using RELATIVE paths only.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+# --- Rule 5: work from the experiment directory using RELATIVE paths only.
+# Under Slurm the batch script runs from a spooled copy, so its own path is not the
+# experiment directory: submit with --chdir=<experiment dir> or export EXPERIMENT_DIR.
+if [[ -n "${EXPERIMENT_DIR:-}" ]]; then
+  cd "$EXPERIMENT_DIR"
+elif [[ -z "${SLURM_JOB_ID:-}" ]]; then
+  cd "$(dirname "${BASH_SOURCE[0]}")"
+fi
 
 # --- Rule 4: every file and directory name lives here. Swap inputs in one place.
 RAW_DIR="../../data/raw"               # immutable raw reads (relative to experiment dir)
@@ -215,4 +220,4 @@ for output in "$TRIM_R1" "$TRIM_R2" "$CONTIGS" "$SORTED_BAM" "${SORTED_BAM}.bai"
 done
 samtools quickcheck "$SORTED_BAM"
 
-log "runall finished. Provenance in $PROV ; outputs under $SCRIPT_DIR"
+log "runall finished. Provenance in $PROV ; outputs under $PWD"

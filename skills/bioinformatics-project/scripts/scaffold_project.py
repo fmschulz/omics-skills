@@ -246,12 +246,20 @@ def experiment_files(layout: str, value: str) -> dict[Path, tuple[str, bool]]:
             False,
         ),
         experiment_root / "runall": (
-            "#!/usr/bin/env bash\n"
-            "set -euo pipefail\n\n"
-            'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
-            'cd "$SCRIPT_DIR"\n\n'
-            'printf "Adapt this experiment driver before running it.\\n" >&2\n'
-            "exit 1\n",
+            (
+                "#!/usr/bin/env bash\n"
+                "set -euo pipefail\n\n"
+                "# Under Slurm, submit with --chdir=<experiment dir> or export\n"
+                "# EXPERIMENT_DIR: the spooled batch script's own path is not the\n"
+                "# experiment directory.\n"
+                'if [[ -n "${EXPERIMENT_DIR:-}" ]]; then\n'
+                '  cd "$EXPERIMENT_DIR"\n'
+                'elif [[ -z "${SLURM_JOB_ID:-}" ]]; then\n'
+                '  cd "$(dirname "${BASH_SOURCE[0]}")"\n'
+                "fi\n\n"
+                'printf "Adapt this experiment driver before running it.\\n" >&2\n'
+                "exit 1\n"
+            ),
             True,
         ),
     }

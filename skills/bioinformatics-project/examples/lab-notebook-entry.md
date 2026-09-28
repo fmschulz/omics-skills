@@ -39,8 +39,7 @@ Chronological, dated decision log kept at the root of `results/` (Noble 2009). E
 
 **What I ran.** `results/2026-04-10_drep/runall` (commit `e4f5g6h`); CheckM on all bins, then `dRep dereplicate` on the medium-or-better MAGs (completeness >= 50%, contamination <= 10%).
 
-**Decision (transcribed from collaborator email, 2026-04-01).**
-> "Let's use the 95% ANI cutoff for species-level clustering to stay consistent with the dRep run in the 2025 paper. — J."
+**Decision (approved 2026-04-01; see the project decision record).** Use a 95% ANI secondary cutoff for species-level clustering, consistent with the dRep run in the 2025 paper.
 
 Applied that 95% ANI secondary cutoff (`dRep dereplicate -sa 0.95`); clustering table at `results/2026-04-10_drep/derep/Cdb.csv`.
 
