@@ -144,7 +144,7 @@ Capture each experiment as one executable driver script, conventionally `runall`
 2. **Comment generously** — a reader understands the experiment from the comments alone.
 3. **Never hand-edit intermediates** — transform with `sed`/`awk`/`grep`/`cut` so edits are recorded and repeatable.
 4. **Store all file/dir names as variables at the top** — swapping a reference DB is a one-line change.
-5. **Use relative paths** (`../../data/...`) from the experiment directory so the project runs after checkout elsewhere. Under Slurm, submit with `--chdir=<experiment dir>` or export `EXPERIMENT_DIR`; the spooled batch script's own path is not the experiment directory.
+5. **Use relative paths** (`../../data/...`) from the experiment directory so the project runs after checkout elsewhere. Under Slurm, submit from the project root (`--chdir=PROJECT_ROOT`) and export the absolute `EXPERIMENT_DIR`; the spooled batch script's own path is not the experiment directory.
 6. **Make it restartable** — guard each step with "skip if output exists"; write outputs to a temp name then `mv` to the final name so a partial result is never mistaken for a complete one.
 
 Pair `runall` with a `summarize` script (its final step) that produces a plot/table/HTML and can interpret a partially completed experiment. Abort on error (`set -euo pipefail`, check return codes, message to stderr, non-zero exit) and give every script a usage statement (Noble 2009). Runnable, idempotent template with version capture, fixed seed, and temp-then-rename: `examples/runall.sh` (copy and adapt when writing a pipeline).

@@ -30,11 +30,15 @@ case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 
 # --- Rule 5: work from the experiment directory using RELATIVE paths only.
 # Under Slurm the batch script runs from a spooled copy, so its own path is not the
-# experiment directory: submit with --chdir=<experiment dir> or export EXPERIMENT_DIR.
+# experiment directory: submit from the project root (sbatch --chdir=PROJECT_ROOT)
+# with the absolute experiment directory exported as EXPERIMENT_DIR.
 if [[ -n "${EXPERIMENT_DIR:-}" ]]; then
   cd "$EXPERIMENT_DIR"
 elif [[ -z "${SLURM_JOB_ID:-}" ]]; then
   cd "$(dirname "${BASH_SOURCE[0]}")"
+else
+  echo "Under Slurm, export the absolute EXPERIMENT_DIR (sbatch --export=ALL,EXPERIMENT_DIR=...)." >&2
+  exit 1
 fi
 
 # --- Rule 4: every file and directory name lives here. Swap inputs in one place.
