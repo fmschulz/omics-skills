@@ -8,13 +8,15 @@ user-invocable: true
 
 Search PubMed Central Open Access and bioRxiv parquet corpora with `polars-dovmed`.
 
-Use the bundled helper, `skills/polars-dovmed/scripts/query_literature.py`, for hosted API or local parquet-backed searches. The helper auto-loads `~/.config/polars-dovmed/.env`.
+Set `SKILL_DIR` to the directory containing this `SKILL.md` (installed at `~/.agents/skills/polars-dovmed`); the commands below use it.
+
+Use the bundled helper, `$SKILL_DIR/scripts/query_literature.py`, for hosted API or local parquet-backed searches. The helper auto-loads `~/.config/polars-dovmed/.env`.
 
 Run the helper with `uv run --script` so its pinned Parquet fallback dependency is available. Local runs record `--corpus-revision` (or `DOVMED_CORPUS_REVISION`) and fall back from `flattened.csv` to `processed.parquet` or the legacy `prcoessed.parquet` only when the compact output is absent.
 
 Current hosted API defaults:
 - Treat API keys as secrets in artifacts. Do not save keys in run directories, memory records, summaries, or final answers.
-- Save generated run artifacts under `tasks/polars-dovmed-runs/<slug>/` by default, not under `skills/polars-dovmed/`.
+- Save generated run artifacts under `tasks/polars-dovmed-runs/<slug>/` by default, not under `$SKILL_DIR`.
 - Prefer structured async search through `/api/jobs` targeting `scan_literature_advanced(mode="discovery")`.
 - Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.
 - Do not start with `--corpus both`. Run `--corpus biorxiv` and `--corpus pmc` as separate calls, then merge results.
@@ -82,10 +84,10 @@ Structured smoke check:
 ```bash
 RUN=tasks/polars-dovmed-runs/smoke-$(date +%Y%m%d)
 mkdir -p "$RUN"
-cp skills/polars-dovmed/fixtures/smoke_prompt.txt "$RUN/prompt.txt"
-cp skills/polars-dovmed/fixtures/smoke_query.json "$RUN/query.json"
+cp "$SKILL_DIR/fixtures/smoke_prompt.txt" "$RUN/prompt.txt"
+cp "$SKILL_DIR/fixtures/smoke_query.json" "$RUN/query.json"
 
-timeout 90s uv run --script skills/polars-dovmed/scripts/query_literature.py \
+timeout 90s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --queries-file "$RUN/query.json" \
   --corpus biorxiv \
   --mode discovery \
@@ -148,7 +150,7 @@ mkdir -p "$RUN"
 printf '%s\n' "papers describing hosts of Mirusviricota" > "$RUN/prompt.txt"
 # Write and inspect "$RUN/query.json" before running the search.
 
-timeout 90s uv run --script skills/polars-dovmed/scripts/query_literature.py \
+timeout 90s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --queries-file "$RUN/query.json" \
   --corpus biorxiv \
   --mode discovery \
@@ -165,7 +167,7 @@ timeout 90s uv run --script skills/polars-dovmed/scripts/query_literature.py \
 OpenPMC pass with parallel clean year bands:
 
 ```bash
-timeout 120s uv run --script skills/polars-dovmed/scripts/query_literature.py \
+timeout 120s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --queries-file "$RUN/query.json" \
   --corpus pmc \
   --mode discovery \
@@ -186,7 +188,7 @@ For citation metadata enrichment after a shortlist, prefer bounded Crossref
 fallback over web search:
 
 ```bash
-uv run --script skills/polars-dovmed/scripts/query_literature.py \
+uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --details PMC6362216 PMC10132079 \
   --corpus pmc \
   --crossref-metadata \
@@ -206,7 +208,7 @@ For a range crossing bands, pass an explicit comma list to `--year-bands`, for e
 Fetch details directly when you already know identifiers:
 
 ```bash
-uv run --script skills/polars-dovmed/scripts/query_literature.py \
+uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --details PMC6912108 PMC8490762 \
   --corpus pmc \
   --save-payload "$RUN/payload_details.json" \
@@ -220,7 +222,7 @@ For bioRxiv details, pass DOI values with `--corpus biorxiv`.
 Use local mode when hosted access is unavailable or explicitly unwanted.
 
 ```bash
-uv run --script skills/polars-dovmed/scripts/query_literature.py \
+uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --execution-mode local \
   --corpus pmc \
   --local-parquet-pattern "$DOVMED_PMC_PARQUET" \
@@ -238,7 +240,7 @@ Local corpus aliases:
 
 - Prefer structured JSON over ad hoc natural-language search strings.
 - Build searches around anchor concepts first.
-- List alternate names and spelling variants as separate single-term groups within a concept (groups are OR'd); keep a multi-word synonym as one phrase term. Multiple terms in one group are AND'd (all must co-occur) — now enforced on the FTS fast path too, so never pack synonyms into a single group.
+- List alternate names and spelling variants as separate single-term groups within a concept (groups are OR'd); keep a multi-word synonym as one phrase term. Multiple terms in one group are AND'd (all must co-occur) on both search paths, so never pack synonyms into a single group.
 - Treat support concepts as refiners, not anchors.
 - For "X of Y" prompts, combine X and relation terms inside an OR-of-AND group only after an anchor-only discovery pass if recall is poor.
 - Down-rank papers matching only generic support terms or full-text-only background mentions.
@@ -264,7 +266,7 @@ Ranking priority:
 | Details endpoint | `--details ... --corpus pmc|biorxiv` |
 | Missing DOI/year | `--crossref-metadata` or `skills/crossref-lookup/scripts/lookup --title ...` |
 | Local fallback | `--execution-mode local --local-parquet-pattern ...` |
-| Quick verification | `uv run --script skills/polars-dovmed/scripts/smoke_test.py --run-dir tasks/polars-dovmed-runs/smoke-test` |
+| Quick verification | `uv run --script "$SKILL_DIR/scripts/smoke_test.py" --run-dir tasks/polars-dovmed-runs/smoke-test` |
 | Timing | shell `time -p`, helper `elapsed_ms`, and timeout status |
 
 ## Input Requirements
@@ -282,7 +284,7 @@ Ranking priority:
 ## Quality Gates
 
 - [ ] API key handled as a secret and not persisted.
-- [ ] Run directory is outside `skills/polars-dovmed/`.
+- [ ] Run directory is outside `$SKILL_DIR`.
 - [ ] Query JSON authored and inspected before search.
 - [ ] Hosted API root or helper smoke checked before declaring outage.
 - [ ] Flat endpoint, `--corpus both`, and broad unbanded OpenPMC avoided unless explicitly justified.
@@ -312,7 +314,7 @@ Ranking priority:
 
 ```bash
 RUN=tasks/polars-dovmed-runs/klosneuvirinae-hosts
-uv run --script skills/polars-dovmed/scripts/query_literature.py \
+uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --execution-mode local \
   --corpus pmc \
   --local-parquet-pattern "$DOVMED_PMC_PARQUET" \
@@ -344,7 +346,7 @@ uv run --script skills/polars-dovmed/scripts/query_literature.py \
 **Issue**: `/usr/bin/time` is missing
 **Solution**: Use shell `time -p` or record start/end timestamps; do not assume `/usr/bin/time` exists.
 
-**Issue**: Artifacts were written under `skills/polars-dovmed/runs/`
+**Issue**: Artifacts were written under `$SKILL_DIR/runs/`
 **Solution**: Move future run artifacts to `tasks/polars-dovmed-runs/` and do not commit generated run outputs.
 
 **Issue**: Hosted API key is missing and local parquet files are missing
