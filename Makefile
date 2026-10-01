@@ -43,6 +43,13 @@ INSTALL_METHOD ?= symlink
 SELECTED_AGENT_FILES ?= $(AGENT_FILES)
 SELECTED_SKILL_DIRS ?= $(SKILL_DIRS)
 
+# yes (default) points ~/.claude/skills and ~/.codex/skills at ~/.agents/skills.
+# Set no when another tool manages those client skill directories, as
+# controlcenter's apply.sh does; the skills still land in ~/.agents/skills.
+LINK_CLIENT_SKILLS ?= yes
+CLAUDE_LINK_TARGET := $(if $(filter yes,$(LINK_CLIENT_SKILLS)),link-claude-skills)
+CODEX_LINK_TARGET := $(if $(filter yes,$(LINK_CLIENT_SKILLS)),link-codex-skills)
+
 ifeq ($(NO_COLOR),)
   GREEN := \033[0;32m
   YELLOW := \033[0;33m
@@ -72,12 +79,12 @@ install: check-deps install-claude install-codex ## Install agents and skills fo
 	@echo ""
 	@$(MAKE) --no-print-directory status
 
-install-claude: build-catalog install-skills install-catalog link-claude-skills ## Install for Claude Code only
+install-claude: build-catalog install-skills install-catalog $(CLAUDE_LINK_TARGET) ## Install for Claude Code only
 	@$(MAKE) --no-print-directory _install-agents \
 		AGENT_TARGET_DIR=$(CLAUDE_AGENTS_DIR) AGENT_PLATFORM="Claude Code" AGENT_FORMAT=md
 	@echo "$(GREEN)OK Claude Code installation complete$(NC)"
 
-install-codex: build-catalog install-skills install-catalog link-codex-skills ## Install for Codex CLI only
+install-codex: build-catalog install-skills install-catalog $(CODEX_LINK_TARGET) ## Install for Codex CLI only
 	@$(MAKE) --no-print-directory _install-agents \
 		AGENT_TARGET_DIR=$(CODEX_AGENTS_DIR) AGENT_PLATFORM="Codex CLI" AGENT_FORMAT=toml
 	@echo "$(GREEN)OK Codex CLI installation complete$(NC)"
@@ -94,7 +101,7 @@ install-selected: ## Install only SELECTED_AGENT_FILES / SELECTED_SKILL_DIRS
 			$(foreach s,$(SELECTED_SKILL_DIRS),--include-skill $(s)) >/dev/null; \
 		$(MAKE) --no-print-directory install-skills SELECTED_SKILL_DIRS="$(SELECTED_SKILL_DIRS)"; \
 		$(MAKE) --no-print-directory install-catalog CATALOG_SRC_DIR="$$tmp_catalog"; \
-		$(MAKE) --no-print-directory link-claude-skills link-codex-skills; \
+		$(if $(strip $(CLAUDE_LINK_TARGET) $(CODEX_LINK_TARGET)),$(MAKE) --no-print-directory $(CLAUDE_LINK_TARGET) $(CODEX_LINK_TARGET);,:;) \
 	else \
 		echo "$(YELLOW)Skipping shared skills and catalog$(NC)"; \
 	fi
@@ -134,31 +141,40 @@ install-catalog: ## Install the shared skill catalog to ~/.agents/omics-skills
 	done
 
 # One agent installer for both runtimes. Claude reads the Markdown source, so it
-# can be linked; Codex needs generated TOML, so it is always rendered afresh and
-# must be re-run after editing an agent prompt.
+# can be linked; Codex needs generated TOML, so it is rendered on every run and
+# must be re-run after editing an agent prompt. An installed file identical to the
+# fresh render is left in place; a differing real file is backed up once.
 _install-agents:
 	@echo "$(BLUE)Installing agents to $(AGENT_PLATFORM)...$(NC)"
 	@mkdir -p $(AGENT_TARGET_DIR)
-	@set -e; for agent in $(SELECTED_AGENT_FILES); do \
+	@set -e; fresh=""; trap '[ -z "$$fresh" ] || rm -f "$$fresh"' EXIT; \
+	for agent in $(SELECTED_AGENT_FILES); do \
 		source="$(AGENTS_DIR)/$$agent"; \
 		name=$${agent%.md}; \
 		target="$(AGENT_TARGET_DIR)/$$name.$(AGENT_FORMAT)"; \
 		[ -f "$$source" ] || { echo "  $(RED)ERROR$(NC) $$agent not found"; exit 1; }; \
+		fresh=""; \
+		if [ "$(AGENT_FORMAT)" = "toml" ]; then \
+			legacy="$(AGENT_TARGET_DIR)/$$name.md"; \
+			if [ -e "$$legacy" ]; then mv "$$legacy" "$$legacy.legacy.bak.$$(date +%s%N)"; fi; \
+			fresh=$$(mktemp "$(AGENT_TARGET_DIR)/.$$name.XXXXXX"); \
+			python3 $(SCRIPTS_DIR)/render_codex_agent.py "$$source" "$$fresh"; \
+		elif [ "$(INSTALL_METHOD)" != "symlink" ]; then \
+			fresh=$$(mktemp "$(AGENT_TARGET_DIR)/.$$name.XXXXXX"); \
+			cp "$$source" "$$fresh"; \
+		fi; \
+		if [ -n "$$fresh" ] && [ -f "$$target" ] && [ ! -L "$$target" ] && cmp -s "$$fresh" "$$target"; then \
+			rm -f "$$fresh"; fresh=""; \
+			echo "  $(GREEN)OK$(NC) $$name.$(AGENT_FORMAT) (unchanged)"; \
+			continue; \
+		fi; \
 		if [ -L "$$target" ]; then \
 			rm "$$target"; \
 		elif [ -f "$$target" ]; then \
 			mv "$$target" "$$target.bak.$$(date +%s%N)"; \
 			echo "  $(YELLOW)Backed up existing $$name.$(AGENT_FORMAT)$(NC)"; \
 		fi; \
-		if [ "$(AGENT_FORMAT)" = "toml" ]; then \
-			legacy="$(AGENT_TARGET_DIR)/$$name.md"; \
-			if [ -e "$$legacy" ]; then mv "$$legacy" "$$legacy.legacy.bak.$$(date +%s%N)"; fi; \
-			python3 $(SCRIPTS_DIR)/render_codex_agent.py "$$source" "$$target"; \
-		elif [ "$(INSTALL_METHOD)" = "symlink" ]; then \
-			ln -sf "$$source" "$$target"; \
-		else \
-			cp "$$source" "$$target"; \
-		fi; \
+		if [ -n "$$fresh" ]; then chmod 644 "$$fresh"; mv "$$fresh" "$$target"; fresh=""; else ln -sf "$$source" "$$target"; fi; \
 		echo "  $(GREEN)OK$(NC) $$name.$(AGENT_FORMAT)"; \
 	done
 
