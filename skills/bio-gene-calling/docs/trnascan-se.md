@@ -13,30 +13,10 @@ tRNA gene detection using covariance models and Infernal.
 
 ## Installation
 
-### Prerequisites
-- Perl 5.0 or later
-- Infernal (http://eddylab.org/infernal/)
-
-### Installation Steps
+Install tRNAscan-SE in the project's Pixi environment. The bioconda package pulls in Infernal.
 
 ```bash
-# Install Infernal first
-wget http://eddylab.org/infernal/infernal-1.1.5.tar.gz
-tar xzf infernal-1.1.5.tar.gz
-cd infernal-1.1.5
-./configure --prefix=/usr/local
-make
-make install
-
-# Install tRNAscan-SE in the project Pixi environment
-pixi add trnascan-se
-
-# From source
-git clone https://github.com/UCSC-LoweLab/tRNAscan-SE.git
-cd tRNAscan-SE
-./configure --prefix=/usr/local
-make
-make install
+pixi add "trnascan-se>=2.0.12"
 ```
 
 ## Key Command-Line Flags
@@ -44,7 +24,7 @@ make install
 ### Search Modes (Organism-Specific)
 - `-B` - Bacterial mode
 - `-A` - Archaeal mode
-- `-E` - Eukaryotic mode (default)
+- `-E` - Eukaryotic mode (default when no mode flag is given; always pass the flag for the inferred domain)
 - `-G` - General tRNA mode (all domains)
 
 ### Output Options
@@ -59,7 +39,8 @@ make install
 ### Search Parameters
 - `-H` - Report possible pseudogenes
 - `--detail` - Detailed output with scores
-- `--thread N` - Number of CPU threads
+- `--thread N` - Number of CPU threads (default: all available threads, so always set it)
+- `-Q`, `--forceow` - Overwrite existing output files without the interactive prompt
 - `--max` - Maximum-sensitivity Infernal search without the HMM filter; slow
 - `--fast` - Faster search mode with a stricter filter
 

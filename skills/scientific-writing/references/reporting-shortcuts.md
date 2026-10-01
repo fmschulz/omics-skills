@@ -10,6 +10,10 @@ Use these shortcuts when the user does not specify a reporting framework.
 - study protocol: SPIRIT
 - diagnostic accuracy study: STARD
 - case report: CARE
+- bacterial or archaeal single-amplified genome: MISAG (Bowers et al. 2017)
+- bacterial or archaeal metagenome-assembled genome: MIMAG (Bowers et al. 2017)
+- uncultivated virus genome: MIUViG (Roux et al. 2019)
+- sequence and sample metadata: MIxS checklists from the Genomic Standards Consortium
 
 If the venue gives its own checklist, that overrides the default mapping.
 

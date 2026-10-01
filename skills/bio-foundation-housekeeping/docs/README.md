@@ -12,7 +12,7 @@ This directory contains practical usage guides for the core tools used in bio-fo
 ### [Pixi](pixi.md)
 **Version checked**: v0.69.0
 **Purpose**: Developer workflow and environment management for multi-platform, language-agnostic workspaces
-**Key Use**: Creating reproducible conda/mamba environments with lockfiles
+**Key Use**: Creating locked conda-forge and bioconda environments
 
 **Quick Start**:
 ```bash

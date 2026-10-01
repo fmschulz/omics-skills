@@ -76,7 +76,7 @@ diamond blastx --query reads.fna --db reference.dmnd \
 - `--faster` - Fastest mode, lowest sensitivity
 - `--fast` - Fast mode
 - `--mid-sensitive` - Mid-sensitive mode
-- `--sensitive` - Sensitive mode (default-like)
+- `--sensitive` - Sensitive mode (the default mode, used when no flag is given, sits between `--fast` and `--mid-sensitive`)
 - `--more-sensitive` - More sensitive mode
 - `--very-sensitive` - Very sensitive mode
 - `--ultra-sensitive` - Highest sensitivity, slowest
@@ -91,7 +91,7 @@ diamond blastx --query reads.fna --db reference.dmnd \
 - `--top` - Report alignments within percentage range of top score
 
 ### Performance Options
-- `--memory-limit (-M)` - Memory limit in GB (default: 16)
+- `--memory-limit (-M)` - Memory limit in GB for `cluster` and `linclust` (default: 16); `blastp`/`blastx` memory is set through `--block-size` and `--index-chunks`
 - `--block-size (-b)` - Sequence block size in billions of letters (default: 2.0)
 - `--index-chunks (-c)` - Number of chunks for index processing (default: 4)
 - `--tmpdir (-t)` - Directory for temporary files

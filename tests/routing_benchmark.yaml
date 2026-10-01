@@ -388,3 +388,39 @@
   platform: codex
   expect_no_primary: true
   max_primary_skills: 0
+
+# ============================================================================
+# Intent guards added with the 2026-10 quality pass
+# ============================================================================
+
+- task: "Make a plot showing classifier calibration and cross-validation scores"
+  platform: generic
+  expected_agent: dataviz-artist
+  expected_primary_skills: [beautiful-data-viz]
+  forbidden_skills: [bio-reads-qc-mapping]
+
+- task: "train a model on genome features and report calibration"
+  platform: generic
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-stats-ml-reporting]
+
+- task: "plot random forest calibration"
+  platform: generic
+  expected_agent: dataviz-artist
+  expected_primary_skills: [beautiful-data-viz]
+  forbidden_skills: [bio-stats-ml-reporting, bio-reads-qc-mapping]
+
+- task: "review a manuscript on random forest calibration"
+  platform: generic
+  expected_primary_skills: [manuscript-review-council]
+  forbidden_skills: [bio-stats-ml-reporting, bio-reads-qc-mapping]
+
+- task: "count tRNA and rRNA genes in my assemblies"
+  platform: generic
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-gene-calling]
+
+- task: "find structural homologs for proteins with no blast hits"
+  platform: generic
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-structure-annotation]

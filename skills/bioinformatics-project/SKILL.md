@@ -9,7 +9,7 @@ metadata:
 
 Set up a computational-biology project so a stranger can understand what was done and why, and so every analysis can be rerun end-to-end from a script. Apply this when creating, restructuring, or reproducibility-hardening any genomics, metagenomics, sequencing, or computational-biology project.
 
-Two assumptions drive every rule below (Noble 2009): a stranger must be able to reconstruct the analysis from the files alone, and everything will be rerun — with new data, new parameters, or a fixed bug — so build each experiment to re-execute from a script, never from memory.
+Two assumptions drive every rule below (Noble 2009): a stranger must be able to reconstruct the analysis from the files alone, and everything will be rerun (with new data, new parameters, or a fixed bug), so build each experiment to re-execute from a script, never from memory.
 
 ## Instructions
 
@@ -67,7 +67,7 @@ project_name/              # one self-contained, meaningfully named dir
 └── .gitignore             # excludes data blobs and all results/ outputs
 ```
 
-Date every experiment dir `YYYY-MM-DD` (optionally `_topic`) so they sort in time order — never `final/` or `binning_v2_really_final/`. Full annotated tree, script categories, and the lab-notebook practice: `references/project-layout.md` (read when laying out or auditing a project). Concrete worked example: `examples/project-tree.txt`.
+Date every experiment dir `YYYY-MM-DD` (optionally `_topic`) so they sort in time order; never use names like `final/` or `binning_v2_really_final/`. Full annotated tree, script categories, and the lab-notebook practice: [references/project-layout.md](references/project-layout.md) (read when laying out or auditing a project). Concrete worked example: [examples/project-tree.txt](examples/project-tree.txt).
 
 ### Numbered layout for multi-track projects
 
@@ -134,42 +134,44 @@ before removing old paths.
 
 ### Reproducibility rules
 
-Harden every analysis against Sandve 2013's ten rules: record provenance, script all steps (no manual edits), pin and archive exact tool versions, version-control all custom code, persist standard-format intermediates per stage, fix and record random seeds, store the raw data behind every plot, emit hierarchical drill-down output, tie every claim to its result in a literate document, and, when sharing is in scope, provide public access (deposit reads, assemblies, derived tables; push the repo with its lockfile). Each rule has a bioinformatics how-to with concrete commands in `references/reproducibility-checklist.md` — read it when hardening an analysis for reproducibility.
+Harden every analysis against Sandve 2013's ten rules: record provenance, script all steps (no manual edits), pin and archive exact tool versions, version-control all custom code, persist standard-format intermediates per stage, fix and record random seeds, store the raw data behind every plot, emit hierarchical drill-down output, tie every claim to its result in a literate document, and, when sharing is in scope, provide public access (deposit reads, assemblies, derived tables; push the repo with its lockfile). Each rule has a bioinformatics how-to with concrete commands in [references/reproducibility-checklist.md](references/reproducibility-checklist.md); read it when hardening an analysis for reproducibility.
 
 ### Driver-script discipline
 
 Capture each experiment as one executable driver script, conventionally `runall`, so the whole analysis reproduces with one command (Noble 2009). Follow all six rules of thumb:
 
-1. **Record every operation** — even `gunzip` and a one-off `seqkit stats` go in the script.
-2. **Comment generously** — a reader understands the experiment from the comments alone.
-3. **Never hand-edit intermediates** — transform with `sed`/`awk`/`grep`/`cut` so edits are recorded and repeatable.
-4. **Store all file/dir names as variables at the top** — swapping a reference DB is a one-line change.
+1. **Record every operation**: even `gunzip` and a one-off `seqkit stats` go in the script.
+2. **Comment generously**: a reader understands the experiment from the comments alone.
+3. **Never hand-edit intermediates**: transform with `sed`/`awk`/`grep`/`cut` so edits are recorded and repeatable.
+4. **Store all file/dir names as variables at the top**: swapping a reference DB is a one-line change.
 5. **Use relative paths** (`../../data/...`) from the experiment directory so the project runs after checkout elsewhere. Under Slurm, submit from the project root (`--chdir=PROJECT_ROOT`) and export the absolute `EXPERIMENT_DIR`; the spooled batch script's own path is not the experiment directory.
-6. **Make it restartable** — guard each step with "skip if output exists"; write outputs to a temp name then `mv` to the final name so a partial result is never mistaken for a complete one.
+6. **Make it restartable**: guard each step with "skip if output exists"; write outputs to a temp name then `mv` to the final name so a partial result is never mistaken for a complete one.
 
-Pair `runall` with a `summarize` script (its final step) that produces a plot/table/HTML and can interpret a partially completed experiment. Abort on error (`set -euo pipefail`, check return codes, message to stderr, non-zero exit) and give every script a usage statement (Noble 2009). Runnable, idempotent template with version capture, fixed seed, and temp-then-rename: `examples/runall.sh` (copy and adapt when writing a pipeline).
+Pass an explicit thread count to every tool, and run heavy stages through the scheduler (`sbatch`), not on a login node.
+
+Pair `runall` with a `summarize` script (its final step) that produces a plot/table/HTML and can interpret a partially completed experiment. Plots are greyscale by default; use color only when it encodes information (a category the reader must tell apart, the highlighted finding, or an ordered or signed quantity), with a colorblind-safe palette and never as the only encoding. Abort on error (`set -euo pipefail`, check return codes, message to stderr, non-zero exit) and give every script a usage statement (Noble 2009). Runnable, idempotent template with version capture, fixed seed, and temp-then-rename: [examples/runall.sh](examples/runall.sh) (copy and adapt when writing a pipeline).
 
 ### Environment pinning
 
-House rule for this repo: bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Python-only deps use **uv**; never use system Python or conda directly.
+House rule: bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Python-only deps use **uv**; never use system Python or conda directly.
 
 - Pin the stack in `pixi.toml` and commit `pixi.lock`; capture a container (Docker / Apptainer) for long-lived or shared analyses (Sandve 2013).
 - Record exact versions into each experiment's provenance file at run time (`samtools --version`, `bwa 2>&1 | head`, `metabat2 2>&1 | head`) and into `tasks/METHODS.md`.
-- Make dependencies machine-readable and explicit (Wilson 2017) — never rely on "whatever is on PATH".
+- Make dependencies machine-readable and explicit (Wilson 2017); never rely on "whatever is on PATH".
 
-Manifest example with lock-capture comment: `examples/environment.pixi.toml`. Full guidance on pixi, uv, conda-file export, and containers: `references/environments.md` (read when setting up or capturing an environment).
+Manifest example with lock-capture comment: [examples/environment.pixi.toml](examples/environment.pixi.toml). Full guidance on pixi, uv, conda-file export, and containers: [references/environments.md](references/environments.md) (read when setting up or capturing an environment).
 
 ### Version control
 
 - Put the project under Git for backup, history, and collaboration (Noble 2009); commit at least daily, keep changes small and focused (Wilson 2017).
-- Track only hand-edited files — code, configs, `runall`, notebook, sample sheets, and `tasks/METHODS.md` as analysis provenance; the other `tasks/` notes stay local. **Never** commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
-- Use a `.gitignore` that ignores everything under `results/` (including `provenance.txt`, which `runall` regenerates) and allow-lists the hand-edited files that live there — the driver, its README, the lab notebook. Tested pattern: `examples/gitignore.example`.
+- Track only hand-edited files: code, configs, `runall`, notebook, sample sheets, and `tasks/METHODS.md` as analysis provenance; the other `tasks/` notes stay local. **Never** commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
+- Use a `.gitignore` that ignores everything under `results/` (including `provenance.txt`, which `runall` regenerates) and allow-lists the hand-edited files that live there: the driver, its README, the lab notebook. Tested pattern: [examples/gitignore.example](examples/gitignore.example).
 - Work directly on `main`; do not create feature branches for experiments. Give each experiment its own dated `results/` directory and lab-notebook entry, commit in small steps, and revert what does not work.
 - Tag the commit behind each published figure or release; archive the release for a DOI (Zenodo) (Sandve 2013, Wilson 2017).
 
 ### Sharing & collaboration
 
-Every project carries a `README.md` (study description, setup, how to reproduce), an explicit `LICENSE`, and a `CITATION.cff`; use tidy data (one variable per column, one observation per row) keyed by a stable unique ID (Wilson 2017). Detail: `references/good-enough-practices.md` (read for data management, software, collaboration, and manuscript practices).
+Every project carries a `README.md` (study description, setup, how to reproduce), an explicit `LICENSE`, and a `CITATION.cff`; use tidy data (one variable per column, one observation per row) keyed by a stable unique ID (Wilson 2017). Detail: [references/good-enough-practices.md](references/good-enough-practices.md) (read for data management, software, collaboration, and manuscript practices).
 
 ## Quick Reference
 
@@ -177,7 +179,7 @@ Every project carries a `README.md` (study description, setup, how to reproduce)
 |---|---|
 | Start a simple project | Run `scripts/scaffold_project.py` with the default canonical layout, resolve `pixi.lock`, then replace the hypothesis placeholders. |
 | Start a multi-track project | Add `--layout numbered`; use numbered, named roots for shared preprocessing, analyses, publication outputs, code, tests, logs, and scratch. |
-| Add the first experiment | Add `--first-experiment YYYY-MM-DD_topic` to create a README and refusing `runall` template without overwriting project-owned files. |
+| Add the first experiment | Add `--first-experiment YYYY-MM-DD_topic` to create a README and a `runall` template that exits non-zero until adapted, without overwriting project-owned files. |
 | Add publication metadata | Opt in with `--license MIT --author "Name or organization" --copyright-year YYYY`; all three explicit values are required. |
 | Repair a messy project | Inventory paths first, create the target scaffold, migrate with temporary compatibility links, and verify consumers before removing old paths. |
 | Run an experiment | Copy `examples/runall.sh`, pin inputs and parameters, write atomically, and record versions and seeds. |
@@ -262,20 +264,20 @@ The bundled templates are annotated under "Example artifacts" below.
 
 Load progressively as the task narrows:
 
-- `references/project-layout.md` — full annotated directory tree, dated `results/` dirs, lab-notebook practice, script categories (Noble 2009). Read when laying out or auditing structure.
-- `references/reproducibility-checklist.md` — Sandve 2013's ten rules operationalized, each with a bioinformatics how-to. Read when making an analysis reproducible.
-- `references/good-enough-practices.md` — Wilson 2017 data/software/collaboration/org/tracking/manuscript practices. Read for sharing, licensing, tidy data, deposition.
-- `references/environments.md` — pinning and capturing environments with pixi, uv, and containers, plus conda-file export for collaborators. Read when setting up or recording the software stack.
+- [references/project-layout.md](references/project-layout.md): full annotated directory tree, dated `results/` dirs, lab-notebook practice, script categories (Noble 2009). Read when laying out or auditing structure.
+- [references/reproducibility-checklist.md](references/reproducibility-checklist.md): Sandve 2013's ten rules operationalized, each with a bioinformatics how-to. Read when making an analysis reproducible.
+- [references/good-enough-practices.md](references/good-enough-practices.md): Wilson 2017 data/software/collaboration/org/tracking/manuscript practices. Read for sharing, licensing, tidy data, deposition.
+- [references/environments.md](references/environments.md): pinning and capturing environments with pixi, uv, and containers, plus conda-file export for collaborators. Read when setting up or recording the software stack.
 
 ## Example artifacts
 
-- `scripts/scaffold_project.py` — create or verify the minimal project scaffold without overwriting changed files.
-- `examples/project-tree.txt` — concrete annotated tree for an arctic metagenome / MAG-recovery study.
-- `examples/runall.sh` — runnable, restartable driver script (versions, seed, idempotency, temp-then-rename).
-- `examples/lab-notebook-entry.md` — dated lab-notebook entry template.
-- `examples/environment.pixi.toml` — pinned pixi manifest with lock-capture comment.
-- `examples/gitignore.example` — `.gitignore` that tracks only hand-edited files (ignores `results/` outputs, allow-lists the driver/README/notebook).
-- `examples/samples.tsv` — tidy sample sheet keyed by `sample_id` (one observation per row).
+- [scripts/scaffold_project.py](scripts/scaffold_project.py): create or verify the minimal project scaffold without overwriting changed files.
+- [examples/project-tree.txt](examples/project-tree.txt): concrete annotated tree for an arctic metagenome / MAG-recovery study.
+- [examples/runall.sh](examples/runall.sh): runnable, restartable driver script (versions, seed, idempotency, temp-then-rename).
+- [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md): dated lab-notebook entry template.
+- [examples/environment.pixi.toml](examples/environment.pixi.toml): pinned pixi manifest with lock-capture comment.
+- [examples/gitignore.example](examples/gitignore.example): `.gitignore` that tracks only hand-edited files (ignores `results/` outputs, allow-lists the driver/README/notebook).
+- [examples/samples.tsv](examples/samples.tsv): tidy sample sheet keyed by `sample_id` (one observation per row).
 
 ## Sources
 

@@ -17,28 +17,28 @@ This directory contains practical usage guides for structure prediction and anno
   - GitHub: https://github.com/jwohlwend/boltz
   - Version checked: v2.2.1
   - Use for: default structure and complex prediction, protein-ligand binding affinity, drug discovery
-  - Notes: replaces Boltz-1; ~1000× faster than FEP for affinity; benchmarked competitively with AlphaFold3
+  - Notes: replaces Boltz-1; predicts binding affinity alongside structure
 
 - **[colabfold](colabfold.md)** - ColabFold with MMseqs2-GPU MSA backend
   - GitHub: https://github.com/sokrypton/ColabFold
   - Version checked: v1.6.1
   - Use for: cases where a wider MSA than Boltz-2 builds is needed
-  - Notes: MMseqs2-GPU backend provides ~31.8× MSA-generation speedup over the standard AF2 pipeline
+  - Notes: with the MMseqs2-GPU backend, ColabFold prediction ran 31.8× faster than the standard AlphaFold2 pipeline (Kallenborn et al. 2025, *Nature Methods*)
 
 - **ESMFold** - fast monomer pre-screening only (15–20 GB VRAM)
   - Not used for final predictions; route ESMFold candidates to Boltz-2
 
-> AlphaFold3 is intentionally not part of this stack (non-commercial license, 40–80 GB VRAM, no clear quality gap for the workflows here). Use Boltz-2.
+> AlphaFold3 is not part of this stack (non-commercial license, large VRAM footprint). Use Boltz-2.
 
 ### Structure search and annotation
 
-- **[foldseek](foldseek.md)** - Foldseek 10-941cd33 with `--gpu 1` mode (ProstT5 on CUDA Turing+)
+- **[foldseek](foldseek.md)** - Foldseek 10-941cd33; `--gpu 1` enables the GPU prefilter on CUDA Turing+ and needs a `makepaddedseqdb` target
   - GitHub: https://github.com/steineggerlab/foldseek
-  - Use for: structure similarity search, clustering, large-scale database searches; ~4–27× speedup over CPU Foldseek
+  - Use for: structure similarity search, clustering, large-scale database searches; 4-27× faster than CPU Foldseek on GPU (Kallenborn et al. 2025)
 
 - **[tm-vec](tm-vec.md)** - Transformer-based structure embedding for rapid similarity search
-  - GitHub: https://github.com/tymor22/tm-vec
-  - Version checked: 1.0.2
+  - GitHub: https://github.com/valentynbez/tmvec (maintained fork; provides the `tmvec build-db` and `tmvec search` CLI the driver uses)
+  - Original: https://github.com/tymor22/tm-vec (release 1.0.2 ships `tmvec-build-database` and `tmvec-search` instead)
   - Use for: fast pre-screening, large-scale structure comparisons, vector-based search
 
 ## Quick reference
@@ -49,18 +49,18 @@ This directory contains practical usage guides for structure prediction and anno
 |------|------|--------|
 | Fast structure pre-screening (embedding) | TM-Vec | Vector-based search; seconds across millions of proteins |
 | Fast monomer pre-screening (structure) | ESMFold | Lowest VRAM; lower accuracy — triage only |
-| Default structure + complex + affinity | Boltz-2 | MIT license; CUDA-native; strong benchmark performance |
-| Wider MSA than Boltz-2 builds | ColabFold + MMseqs2-GPU | Fastest MSA pipeline for AF2-style runs |
+| Default structure + complex + affinity | Boltz-2 | MIT license; CUDA; complexes and ligands |
+| Deeper MSA than Boltz-2 builds | ColabFold + MMseqs2-GPU | GPU MSA search for AF2-style runs |
 | Detailed structure search | Foldseek 10 (`--gpu 1`) | High sensitivity, GPU-accelerated structural alignment |
 | Structure clustering | Foldseek | Built-in clustering algorithms |
 
 ### Installation Quick Start
 
+Install everything into the project's Pixi environment and pin versions:
+
 ```bash
-# tm-vec
-conda create -n tmvec faiss-cpu python=3.9 -c pytorch
-conda activate tmvec
-pip install tm-vec
+# tm-vec (maintained fork, pinned to a commit)
+pixi add --pypi "tmvec @ git+https://github.com/valentynbez/tmvec.git@6bdf11adff9884cff54e4f69927d40edebc80038"
 
 # foldseek
 pixi add foldseek
@@ -69,7 +69,7 @@ pixi add foldseek
 # See LocalColabFold: https://github.com/YoshitakaMo/localcolabfold
 
 # boltz
-pip install boltz[cuda] -U
+pixi add --pypi "boltz[cuda]==2.2.1"
 ```
 
 ## Typical Workflow

@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Create a restartable marker-to-tree plan with checksum and support normalization gates."""
 
 from __future__ import annotations
@@ -80,20 +84,64 @@ def normalize_tree(tree: Path, output: Path) -> None:
             handle.write(f"{node_index}\t{metric}\t{value:g}\t{value / scales[metric]:.6f}\n")
 
 
-def build_plan(markers: list[dict[str, str]], out: Path, tree_tool: str, seed: int) -> list[dict[str, object]]:
+def build_plan(
+    markers: list[dict[str, str]], out: Path, tree_tool: str, seed: int, threads: int
+) -> list[dict[str, object]]:
+    """Build the per-marker alignment, trimming, tree, and support steps.
+
+    Args:
+        markers: Marker manifest rows with resolved FASTA paths.
+        out: Output directory for per-marker stage outputs.
+        tree_tool: Either "iqtree3" or "veryfasttree".
+        seed: Fixed random seed passed to the tree tool.
+        threads: Thread count for MAFFT and the tree tool.
+
+    Returns:
+        Ordered plan steps with commands and declared outputs.
+    """
     plan: list[dict[str, object]] = []
     for row in markers:
         marker = row["marker_id"]
         target = out / marker
         alignment, trimmed = target / "alignment.fasta", target / "trimmed.fasta"
-        plan.append({"marker_id": marker, "stage": "alignment", "command": ["mafft", "--auto", row["fasta"]], "stdout": str(alignment), "outputs": [str(alignment)]})
+        plan.append(
+            {
+                "marker_id": marker,
+                "stage": "alignment",
+                "command": ["mafft", "--auto", "--thread", str(threads), row["fasta"]],
+                "stdout": str(alignment),
+                "outputs": [str(alignment)],
+            }
+        )
         plan.append({"marker_id": marker, "stage": "trimming", "command": ["trimal", "-in", str(alignment), "-out", str(trimmed), "-automated1"], "outputs": [str(trimmed)]})
         if tree_tool == "iqtree3":
             tree = Path(str(trimmed) + ".treefile")
-            command = ["iqtree3", "-s", str(trimmed), "-m", "MFP", "-B", "1000", "--alrt", "1000", "-seed", str(seed)]
+            command = [
+                "iqtree3",
+                "-s",
+                str(trimmed),
+                "-m",
+                "MFP",
+                "-B",
+                "1000",
+                "--alrt",
+                "1000",
+                "--seed",
+                str(seed),
+                "-T",
+                str(threads),
+            ]
         else:
             tree = target / "tree.nwk"
-            command = ["VeryFastTree", "-boot", "1000", "-seed", str(seed), "-threads", "1"]
+            command = [
+                "VeryFastTree",
+                "-boot",
+                "1000",
+                "-seed",
+                str(seed),
+                "-threads",
+                str(threads),
+            ]
             if row["sequence_type"] == "nucleotide":
                 command.append("-nt")
             command.append(str(trimmed))
@@ -146,6 +194,21 @@ def execute(plan: list[dict[str, object]]) -> None:
         step["status"] = "completed"
 
 
+def check_plan_args(args: argparse.Namespace) -> None:
+    """Reject plan runs that lack inputs or a positive seed and thread count.
+
+    Args:
+        args: Parsed command-line arguments.
+
+    Raises:
+        ValueError: If markers or references are missing, or seed or threads
+            are not positive.
+    """
+    if not args.markers or not args.references or args.seed <= 0 or args.threads <= 0:
+        msg = "markers, --references, and positive --seed and --threads are required"
+        raise ValueError(msg)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("markers", type=Path, nargs="?")
@@ -153,6 +216,9 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--tree-tool", choices=("iqtree3", "veryfasttree"), default="iqtree3")
     parser.add_argument("--seed", type=int, default=1729)
+    parser.add_argument(
+        "--threads", type=int, default=1, help="threads for MAFFT and the tree tool"
+    )
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--normalize-only", type=Path)
     args = parser.parse_args()
@@ -161,8 +227,7 @@ def main() -> int:
             normalize_tree(args.normalize_only, args.out)
             print(json.dumps({"ok": True, "skill": "bio-phylogenomics", "out": str(args.out.resolve()), "warnings": []}))
             return 0
-        if not args.markers or not args.references or args.seed <= 0:
-            raise ValueError("markers, --references, and a positive --seed are required")
+        check_plan_args(args)
         markers = read_tsv(args.markers, MARKER_FIELDS)
         references = read_tsv(args.references, REFERENCE_FIELDS)
         resolve_inputs(markers, args.markers, "fasta")
@@ -175,10 +240,26 @@ def main() -> int:
             if actual != row["sha256"]:
                 raise ValueError(f"reference checksum mismatch for {row['accession']}: expected {row['sha256']}, got {actual}")
         args.out.mkdir(parents=True, exist_ok=True)
-        plan = build_plan(markers, args.out.resolve(), args.tree_tool, args.seed)
+        plan = build_plan(
+            markers, args.out.resolve(), args.tree_tool, args.seed, args.threads
+        )
         if args.execute:
             execute(plan)
-        (args.out / "run_manifest.json").write_text(json.dumps({"schema_version": "1.0", "seed": args.seed, "tree_tool": args.tree_tool, "markers": markers, "references": references, "steps": plan}, indent=2) + "\n")
+        (args.out / "run_manifest.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "1.0",
+                    "seed": args.seed,
+                    "threads": args.threads,
+                    "tree_tool": args.tree_tool,
+                    "markers": markers,
+                    "references": references,
+                    "steps": plan,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-phylogenomics", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError) as error:

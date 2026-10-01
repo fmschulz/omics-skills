@@ -1,353 +1,160 @@
 ---
 name: polars-dovmed
-description: Search PMC Open Access and bioRxiv corpora with polars-dovmed. Use when structured, reproducible literature queries should run through the hosted API or local parquet indexes.
+description: Run structured full-text searches of PMC Open Access and bioRxiv with polars-dovmed. Use for reproducible literature searches through the hosted API or local parquet corpora.
 user-invocable: true
 ---
 
 # polars-dovmed
 
-Search PubMed Central Open Access and bioRxiv parquet corpora with `polars-dovmed`.
+Search the PubMed Central Open Access and bioRxiv corpora with `polars-dovmed`, through the hosted API or local parquet files.
 
-Set `SKILL_DIR` to the directory containing this `SKILL.md` (installed at `~/.agents/skills/polars-dovmed`); the commands below use it.
+`SKILL_DIR` is the directory that contains this `SKILL.md`, installed at `~/.agents/skills/polars-dovmed`. Run the helper as `uv run --script "$SKILL_DIR/scripts/query_literature.py"` so its pinned dependency is available. The helper loads `~/.config/polars-dovmed/.env`.
 
-Use the bundled helper, `$SKILL_DIR/scripts/query_literature.py`, for hosted API or local parquet-backed searches. The helper auto-loads `~/.config/polars-dovmed/.env`.
+## Access
 
-Run the helper with `uv run --script` so its pinned Parquet fallback dependency is available. Local runs record `--corpus-revision` (or `DOVMED_CORPUS_REVISION`) and fall back from `flattened.csv` to `processed.parquet` or the legacy `prcoessed.parquet` only when the compact output is absent.
-
-Current hosted API defaults:
-- Treat API keys as secrets in artifacts. Do not save keys in run directories, memory records, summaries, or final answers.
-- Save generated run artifacts under `tasks/polars-dovmed-runs/<slug>/` by default, not under `$SKILL_DIR`.
-- Prefer structured async search through `/api/jobs` targeting `scan_literature_advanced(mode="discovery")`.
-- Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.
-- Do not start with `--corpus both`. Run `--corpus biorxiv` and `--corpus pmc` as separate calls, then merge results.
-- For OpenPMC/PMC, do not run a broad unbanded scan. Use the materialized clean year bands in parallel with direct FTS-backed calls: `--sync --year-bands clean_split --year-band-workers 4`.
-- If the user names a specific publication year or narrow range, map it to the matching clean band(s) and search only those bands. Use all clean bands only when no year constraint is given.
-- For recent or emerging taxa, run bioRxiv anchor-only discovery and OpenPMC clean-band discovery as separate searches. bioRxiv is small and often returns first; OpenPMC should still use parallel clean bands.
-- For any entity-centric prompt with topic modifiers, such as "distribution and genomics of X", first search the exact entity/aliases only. Treat topic words as triage labels or a second-pass refinement after confirming anchor hits; do not build a large first-pass query of generic topic terms.
-- Do not invent aliases by splitting compact taxon, gene, or clade names into common words unless the prompt or literature supports that synonym. Keep aliases evidence-based; when a real synonym is multi-word, keep it as one phrase in a single JSON term.
-- For OpenPMC clean-band discovery, skip automatic details rerank: pass `--skip-details-rerank`. The FTS index searches title, abstract, and full text, but PMC details lookups still read parquet and can dominate wall time. Fetch details only for selected PMCID values after discovery.
-- Citation metadata should come from the corpus response/details endpoint first. If DOI/year/journal are missing, use bounded Crossref lookup through `--crossref-metadata` or the `crossref-lookup` skill. Do not use generic web search for DOI repair except as a final publisher-page check for unresolved/ambiguous records.
-- If OpenPMC clean-band search returns `Database not found`, stop and report that the deployment is not exposing the indexed OpenPMC bands. Do not fall back to a monolithic unbanded OpenPMC scan.
-- For interactive work, pass `--poll-timeout` and, when available, wrap searches in `timeout`. Do not rerun OpenPMC with longer waits after one bounded clean-band failure.
-
-Public access note:
-- `omics-skills` does not provide a hosted API key or the PMC/bioRxiv parquet corpora.
-- Public users can prepare local PMC searches from Uri Neri's upstream package: <https://github.com/UriNeri/polars-dovmed>.
-- Local setup uses upstream `dovmed download`, `dovmed build-parquet`, and `dovmed scan`.
-- If no API key and no local corpus exist, state that `polars-dovmed` is not configured and use another literature fallback.
+- Hosted API: needs `POLARS_DOVMED_API_KEY` in the environment or in the `.env` file. Never pass the key in argv, and never write it to run directories, memory records, summaries, or answers. The API root (`https://api.newlineages.com/`) states that keys are issued by the admin only.
+- Local corpora: upstream `dovmed download`, `dovmed build-parquet`, and `dovmed scan` from <https://github.com/UriNeri/polars-dovmed>. `omics-skills` ships neither an API key nor the corpora.
+- With neither, state that `polars-dovmed` is not configured and use another literature skill.
 
 ## Instructions
 
-1. Route the task and decide execution mode.
-   - Use the hosted API when `POLARS_DOVMED_API_KEY` is configured in the environment. Never pass the key in argv.
-   - Use local `dovmed scan` when hosted access is unavailable and local parquet paths exist.
-   - Do not imply that this repo ships hosted access or local corpora.
-2. Create a dedicated run directory.
-   - Default: `tasks/polars-dovmed-runs/<date-topic>/`.
-   - Save `prompt.txt`, `query.json`, submitted payloads, raw responses, timing files, and any curated summary.
-   - Never save secrets.
-3. Author a structured query JSON directly.
-   - Start with exact anchor names and aliases.
-   - Add relation groups only when they improve precision.
-   - Use `disqualifying_terms` for acronym collisions and wrong systems.
-   - For "hosts of X" or other recent-taxonomy prompts, first run an anchor-only query for X and aliases; use host terms during triage or a second pass.
-   - For "topic of X" prompts, such as environmental distribution, genomics, metabolism, or ecology of an entity, keep the first query anchor-only. Do not add broad words like distribution, genome, environment, host, or taxonomy as peer OR concepts.
-4. Inspect the query JSON before searching.
-   - Check spelling, taxonomy aliases, regex escaping, and noisy terms.
-   - Keep support terms soft in discovery; avoid generic anchors such as `host` alone.
-5. Run discovery first.
-   - bioRxiv API path: `--queries-file ... --mode discovery --corpus biorxiv`.
-   - OpenPMC API path: `--queries-file ... --mode discovery --corpus pmc --sync --year-bands clean_split --year-band-workers 4 --skip-details-rerank`, unless the prompt has a year constraint that maps to fewer bands.
-   - Use `--extract-matches none --add-group-counts primary`.
-   - Use bounded polling, for example `--poll-timeout 75` for bioRxiv and `--poll-timeout 120` for OpenPMC clean bands.
-   - Keep `--details-rerank-limit` modest, usually 8-12, and use it automatically only for bioRxiv or non-year-band searches. For OpenPMC, fetch details by PMCID after inspecting top hits.
-6. Inspect the first 5-10 hits.
-   - If results are noisy, refine `query.json` and rerun.
-   - For citation-quality answers, first use PMCID/DOI details from polars-dovmed, then `--crossref-metadata` or `/crossref-lookup` for missing DOI/year/journal. Use DOI landing pages or journal pages only when Crossref and corpus metadata disagree or remain ambiguous.
-7. Record timings when the user asks about speed.
-   - Capture wall time with shell `time -p` or `timeout ...`.
-   - Also report helper/API `elapsed_ms` when present.
-   - Timeouts and failed endpoints are valid measured results; do not hide them.
+1. Create a run directory, `tasks/polars-dovmed-runs/<date-topic>/`, outside `$SKILL_DIR`. Save `prompt.txt`, `query.json`, payloads, raw responses, timing files, and any curated summary there. Do not commit generated runs.
+2. Write `query.json` (format below) and inspect it before searching: spelling, taxonomy aliases, regex escaping, and noisy terms.
+   - Start anchor-only: exact entity names and evidence-based aliases. For prompts such as "hosts of X" or "distribution and genomics of X", search X and its aliases first and use the topic words for triage or a second pass. Never add generic words (distribution, genome, environment, host, taxonomy) as peer OR concepts.
+   - Do not invent aliases by splitting compact taxon, gene, or clade names. Keep a real multi-word synonym as one phrase term.
+   - Put acronym collisions and wrong systems in `disqualifying_terms`.
+3. Run discovery first, one corpus per call. Never start with `--corpus both`.
+   - bioRxiv: async discovery with `--poll-timeout 75` and `--details-rerank-limit` 8 to 12.
+   - OpenPMC: `--sync --year-bands clean_split --year-band-workers 4 --skip-details-rerank --poll-timeout 120`. Map a requested year range to its bands and search only those (table below). Never run a broad unbanded OpenPMC scan. Fetch details by PMCID after inspecting the top hits.
+   - Use `--extract-matches none --add-group-counts primary` for discovery.
+   - Wrap calls in `timeout` when it exists.
+4. Inspect the first 5 to 10 hits. If they are noisy, refine `query.json` and rerun.
+5. Fill citation metadata from the corpus details first, then from `--crossref-metadata` or `/crossref-lookup`. Use DOI landing pages only when corpus metadata and Crossref disagree or stay ambiguous; do not use generic web search for DOI repair.
+6. When speed matters, record wall time with shell `time -p` or `timeout`, plus the helper's `elapsed_ms`. Timeouts and failed endpoints are results; report them.
+7. Do not use the flat `/api/search_literature` endpoint. It needs `--allow-flat-query` and can hang behind the edge proxy.
 
-## Hosted API Reachability
-
-Minimal reachability check:
-
-```bash
-curl -sS --max-time 20 https://api.newlineages.com/
-```
-
-Expected: service metadata from the root endpoint. This only proves the service is reachable, not that a corpus scan is healthy.
-
-Structured smoke check:
-
-```bash
-RUN=tasks/polars-dovmed-runs/smoke-$(date +%Y%m%d)
-mkdir -p "$RUN"
-cp "$SKILL_DIR/fixtures/smoke_prompt.txt" "$RUN/prompt.txt"
-cp "$SKILL_DIR/fixtures/smoke_query.json" "$RUN/query.json"
-
-timeout 90s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --queries-file "$RUN/query.json" \
-  --corpus biorxiv \
-  --mode discovery \
-  --max-results 3 \
-  --skip-details-rerank \
-  --poll-timeout 75 \
-  --save-payload "$RUN/payload_smoke.json" \
-  --save-response "$RUN/results_smoke.json" \
-  > "$RUN/summary_smoke.json" 2> "$RUN/time_smoke.txt"
-```
-
-If `timeout` is unavailable, still pass `--poll-timeout` and record that no outer wall-clock guard was available. Avoid `/usr/bin/time`; use shell `time -p` unless you have confirmed the path exists.
-
-Known client pitfall: Cloudflare can reject Python `urllib`'s default user agent with HTTP `403` and error code `1010`. The helper sends a normal user agent. If raw `urllib` is unavoidable, send both `X-API-Key` and `User-Agent`.
-
-## Preferred Workflow
-
-### Step 1: Author Query JSON
-
-Use compact concept groups:
+### Query JSON
 
 ```json
 {
-  "anchor_entity": [
-    ["primary_name"],
-    ["alias_1"],
-    ["alias_2"]
-  ],
-  "relation_or_property": [
-    ["primary_name", "relation_term"],
-    ["alias_1", "specific_relation_alias"]
-  ],
-  "disqualifying_terms": [
-    ["term_to_exclude"]
-  ]
+  "anchor_entity": [["primary_name"], ["alias_1"], ["alias_2"]],
+  "relation_or_property": [["primary_name", "relation_term"]],
+  "disqualifying_terms": [["term_to_exclude"]]
 }
 ```
 
-**Group logic** (enforced consistently on both the FTS fast path and the parquet
-scan): terms inside one inner group are AND'd (all must co-occur); inner groups
-within a concept are OR'd; concepts are OR'd, with ranking favoring items that
-match more groups. A multi-word term is matched as an exact phrase. So list
-synonyms/aliases as **separate single-term groups** (each `["alias"]` on its own
-line) — never pack them into one group, which would require them all to co-occur.
-Use a multi-term group only to require co-occurrence (e.g. `["entity", "relation"]`).
+Both search paths (FTS and parquet scan) apply the same logic: terms in one inner group are AND'd and must co-occur; inner groups in a concept are OR'd; concepts are OR'd, and items matching more groups rank higher. A multi-word term matches as an exact phrase. List each synonym as its own single-term group; use a multi-term group only to require co-occurrence.
 
-For recent taxa or sparse terms, begin with anchor-only JSON:
+Rank hits in this order: anchor in title, anchor in abstract, anchor plus support term in title or abstract, several distinct group matches, full-text-only matches. Down-rank hits that match only generic support terms.
 
-```json
-{"anchor_entity": [["Mirusviricota"], ["mirusvirus"], ["mirusviruses"]]}
-```
+### Year bands (OpenPMC)
 
-### Step 2: Search With Hosted API
+| Requested years | `--year-bands` value |
+|---|---|
+| 2009 and earlier | `pre_2010` |
+| 2010 to 2020 | `2010_2020` |
+| 2021 to 2023 | `2021_2023` |
+| 2024 and later | `2024_plus` |
+| No constraint | `clean_split` (all four) |
 
-Fast first pass for emerging taxa:
+For a range that crosses bands, pass a comma list, for example `--year-bands 2021_2023,2024_plus`.
+
+### Hosted API commands
 
 ```bash
 RUN=tasks/polars-dovmed-runs/mirusviricota-hosts-$(date +%Y%m%d)
 mkdir -p "$RUN"
 printf '%s\n' "papers describing hosts of Mirusviricota" > "$RUN/prompt.txt"
-# Write and inspect "$RUN/query.json" before running the search.
+# Write and inspect "$RUN/query.json" before searching.
 
+# bioRxiv discovery
 timeout 90s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --queries-file "$RUN/query.json" \
-  --corpus biorxiv \
-  --mode discovery \
-  --extract-matches none \
-  --add-group-counts primary \
-  --max-results 25 \
-  --details-rerank-limit 12 \
-  --poll-timeout 75 \
-  --save-payload "$RUN/payload_biorxiv.json" \
-  --save-response "$RUN/results_biorxiv.json" \
+  --queries-file "$RUN/query.json" --corpus biorxiv --mode discovery \
+  --extract-matches none --add-group-counts primary \
+  --max-results 25 --details-rerank-limit 12 --poll-timeout 75 \
+  --save-payload "$RUN/payload_biorxiv.json" --save-response "$RUN/results_biorxiv.json" \
   > "$RUN/summary_biorxiv.json" 2> "$RUN/time_biorxiv.txt"
-```
 
-OpenPMC pass with parallel clean year bands:
-
-```bash
+# OpenPMC discovery over the four clean year bands
 timeout 120s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --queries-file "$RUN/query.json" \
-  --corpus pmc \
-  --mode discovery \
-  --sync \
-  --year-bands clean_split \
-  --year-band-workers 4 \
-  --extract-matches none \
-  --add-group-counts primary \
-  --max-results 25 \
-  --skip-details-rerank \
-  --poll-timeout 120 \
-  --save-payload "$RUN/payload_pmc.json" \
-  --save-response "$RUN/results_pmc.json" \
+  --queries-file "$RUN/query.json" --corpus pmc --mode discovery \
+  --sync --year-bands clean_split --year-band-workers 4 --skip-details-rerank \
+  --extract-matches none --add-group-counts primary \
+  --max-results 25 --poll-timeout 120 \
+  --save-payload "$RUN/payload_pmc.json" --save-response "$RUN/results_pmc.json" \
   > "$RUN/summary_pmc.json" 2> "$RUN/time_pmc.txt"
+
+# Details for known PMCIDs (bioRxiv: pass DOIs with --corpus biorxiv),
+# with bounded Crossref fill-in for missing DOI, year, or journal
+uv run --script "$SKILL_DIR/scripts/query_literature.py" \
+  --details PMC6362216 PMC10132079 --corpus pmc \
+  --crossref-metadata --crossref-limit 10 \
+  --save-payload "$RUN/payload_details.json" --save-response "$RUN/results_details.json"
 ```
 
-For citation metadata enrichment after a shortlist, prefer bounded Crossref
-fallback over web search:
+### Local commands
 
 ```bash
 uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --details PMC6362216 PMC10132079 \
-  --corpus pmc \
-  --crossref-metadata \
-  --crossref-limit 10 \
-  --save-payload "$RUN/payload_details.json" \
-  --save-response "$RUN/results_details.json"
-```
-
-If the prompt gives a year constraint, map it before searching:
-- `<=2009` -> `pre_2010`
-- `2010-2020` -> `2010_2020`
-- `2021-2023` -> `2021_2023`
-- `>=2024` -> `2024_plus`
-
-For a range crossing bands, pass an explicit comma list to `--year-bands`, for example `--year-bands 2021_2023,2024_plus`. Use a single `--year-band` only when the whole requested range is inside one band.
-
-Fetch details directly when you already know identifiers:
-
-```bash
-uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --details PMC6912108 PMC8490762 \
-  --corpus pmc \
-  --save-payload "$RUN/payload_details.json" \
-  --save-response "$RUN/results_details.json"
-```
-
-For bioRxiv details, pass DOI values with `--corpus biorxiv`.
-
-### Step 3: Search Locally With dovmed scan
-
-Use local mode when hosted access is unavailable or explicitly unwanted.
-
-```bash
-uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --execution-mode local \
-  --corpus pmc \
+  --execution-mode local --corpus pmc \
   --local-parquet-pattern "$DOVMED_PMC_PARQUET" \
   --queries-file "$RUN/query.json" \
-  --save-payload "$RUN/payload_local.json" \
-  --save-response "$RUN/results_local.json"
+  --save-payload "$RUN/payload_local.json" --save-response "$RUN/results_local.json"
 ```
 
-Local corpus aliases:
-- `--corpus pmc`: set `DOVMED_PMC_PARQUET` or pass `--local-parquet-pattern`.
-- `--corpus biorxiv`: set `DOVMED_BIORXIV_PARQUET` or pass `--local-parquet-pattern`.
-- `--corpus both`: only with one compatible explicit parquet pattern; otherwise run separate scans.
+- `--corpus pmc` reads `DOVMED_PMC_PARQUET` and `--corpus biorxiv` reads `DOVMED_BIORXIV_PARQUET` unless `--local-parquet-pattern` is given. `--corpus both` needs one compatible explicit pattern; otherwise run separate scans.
+- Local runs record `--corpus-revision` (or `DOVMED_CORPUS_REVISION`) and read `flattened.csv`, falling back to `processed.parquet` (or the legacy `prcoessed.parquet`) only when the compact output is absent. `--timeout` caps a local scan (default 900 seconds).
 
-## Search Semantics
+### Reachability and smoke check
 
-- Prefer structured JSON over ad hoc natural-language search strings.
-- Build searches around anchor concepts first.
-- List alternate names and spelling variants as separate single-term groups within a concept (groups are OR'd); keep a multi-word synonym as one phrase term. Multiple terms in one group are AND'd (all must co-occur) on both search paths, so never pack synonyms into a single group.
-- Treat support concepts as refiners, not anchors.
-- For "X of Y" prompts, combine X and relation terms inside an OR-of-AND group only after an anchor-only discovery pass if recall is poor.
-- Down-rank papers matching only generic support terms or full-text-only background mentions.
+`curl -sS --max-time 20 https://api.newlineages.com/` returns service metadata. It proves the service is reachable, not that a corpus scan works. The smoke check runs one bounded bioRxiv discovery and one details lookup:
 
-Ranking priority:
-1. exact anchor hit in title
-2. exact anchor hit in abstract
-3. anchor plus support co-occurrence in title or abstract
-4. multiple distinct relevant group matches
-5. full-text-only matches
+```bash
+uv run --script "$SKILL_DIR/scripts/smoke_test.py" --run-dir tasks/polars-dovmed-runs/smoke-test
+```
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Run directory | `tasks/polars-dovmed-runs/<date-topic>/` |
-| Preferred query | Authored `query.json`, inspected before search |
-| Preferred hosted path | helper `scan_literature_advanced(mode="discovery")`; async except FTS-backed OpenPMC clean bands |
-| Emerging taxon first pass | `--corpus biorxiv`, anchor-only query, bounded timeout |
-| OpenPMC pass | separate `--corpus pmc --sync --year-bands clean_split --year-band-workers 4 --skip-details-rerank` call |
-| Year-constrained OpenPMC | map requested years to one or more clean bands before searching |
-| Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |
-| Details endpoint | `--details ... --corpus pmc|biorxiv` |
-| Missing DOI/year | `--crossref-metadata` or `skills/crossref-lookup/scripts/lookup --title ...` |
-| Local fallback | `--execution-mode local --local-parquet-pattern ...` |
-| Quick verification | `uv run --script "$SKILL_DIR/scripts/smoke_test.py" --run-dir tasks/polars-dovmed-runs/smoke-test` |
-| Timing | shell `time -p`, helper `elapsed_ms`, and timeout status |
+Run either check before declaring an outage.
 
 ## Input Requirements
 
-- A literature search prompt or inspected structured `query.json`.
-- Hosted API key or local parquet files for the requested corpus.
-- Writable run directory outside the skill source tree.
+- A literature question, turned into an inspected `query.json`.
+- A hosted API key or local parquet files for the requested corpus.
+- A writable run directory outside `$SKILL_DIR`.
 
 ## Output
 
-- `prompt.txt`, `query.json`, payload JSON, raw response JSON, timing files, and optional curated summary.
-- Paper list with titles, identifiers, corpus, relevance notes, and timing.
-- Warnings for timeout, 502, database-not-found, missing metadata, or fallback use.
+- `prompt.txt`, `query.json`, payload JSON, raw response JSON, timing files, and an optional curated summary in the run directory.
+- A paper list with titles, identifiers, corpus, relevance notes, and timing.
+- Warnings for timeouts, HTTP 502, `Database not found`, missing metadata, or fallback use.
 
 ## Quality Gates
 
-- [ ] API key handled as a secret and not persisted.
-- [ ] Run directory is outside `$SKILL_DIR`.
-- [ ] Query JSON authored and inspected before search.
-- [ ] Hosted API root or helper smoke checked before declaring outage.
-- [ ] Flat endpoint, `--corpus both`, and broad unbanded OpenPMC avoided unless explicitly justified.
-- [ ] OpenPMC broad searches use direct parallel clean year bands with `--sync` and `--skip-details-rerank`; year-constrained searches use only matching bands.
-- [ ] Discovery mode used before advanced refinement.
-- [ ] First 5-10 hits reviewed and noisy terms refined.
-- [ ] Long PMC scans have bounded poll and wall-clock timeout.
-- [ ] Timings and failure modes reported when speed is part of the request.
-- [ ] Citation metadata uses DB/details first, then bounded Crossref fallback; generic web search is not used for routine DOI repair.
-
-## Examples
-
-### Mirusviricota Host Search
-
-1. Create `tasks/polars-dovmed-runs/mirusviricota-hosts-YYYYMMDD/query.json` with:
-
-```json
-{"anchor_entity": [["Mirusviricota"], ["mirusvirus"], ["mirusviruses"]], "disqualifying_terms": [["MIRU-VNTR"], ["mycobacterium"]]}
-```
-
-2. Run the bioRxiv hosted command from Step 2.
-3. Inspect `results_biorxiv.json` and any companion details response.
-4. Run the direct parallel OpenPMC clean-band command when PMC coverage is needed.
-5. Summarize direct host evidence separately from background mentions.
-
-### Local PMC Search
-
-```bash
-RUN=tasks/polars-dovmed-runs/klosneuvirinae-hosts
-uv run --script "$SKILL_DIR/scripts/query_literature.py" \
-  --execution-mode local \
-  --corpus pmc \
-  --local-parquet-pattern "$DOVMED_PMC_PARQUET" \
-  --queries-file "$RUN/query.json" \
-  --save-payload "$RUN/payload_local.json" \
-  --save-response "$RUN/results_local.json"
-```
+- [ ] The API key stayed in the environment and appears in no artifact.
+- [ ] The run directory is outside `$SKILL_DIR`.
+- [ ] `query.json` was written anchor-first and inspected before the search.
+- [ ] Each corpus ran as its own discovery call; OpenPMC used clean year bands with `--sync` and `--skip-details-rerank`, limited to the requested years.
+- [ ] The flat endpoint, `--corpus both`, and unbanded OpenPMC scans were avoided, or the reason is stated.
+- [ ] Every hosted call had a poll timeout and, where available, a wall-clock `timeout`.
+- [ ] The first 5 to 10 hits were reviewed and noisy terms refined.
+- [ ] Citation metadata came from corpus details, then bounded Crossref, not generic web search.
+- [ ] Timings and failures are reported when speed is part of the request.
 
 ## Troubleshooting
 
-**Issue**: Flat `/api/search_literature` times out
-**Solution**: Do not use it for smoke tests. Use the root endpoint plus structured helper smoke.
+**Issue**: `--corpus both` returns HTTP 502.
+**Solution**: Run `--corpus biorxiv` and `--corpus pmc` separately and merge the results.
 
-**Issue**: `--corpus both` returns 502
-**Solution**: Run separate `--corpus biorxiv` and `--corpus pmc` calls and merge results manually.
+**Issue**: OpenPMC year-band search returns `Database not found`.
+**Solution**: Report that the deployment does not expose the indexed OpenPMC bands. Do not fall back to an unbanded scan.
 
-**Issue**: OpenPMC `--year-bands clean_split` returns `Database not found`
-**Solution**: Stop and report that the hosted deployment is not exposing the indexed OpenPMC bands. Do not retry as an unbanded full-corpus OpenPMC scan.
+**Issue**: OpenPMC year-band search times out.
+**Solution**: Report the timeout and keep the bioRxiv result. Narrow to the requested bands or refine the anchors; do not retry with longer waits or an unbanded scan.
 
-**Issue**: OpenPMC clean-band search times out
-**Solution**: Report the measured timeout and keep the bioRxiv result. Do not retry the same OpenPMC query with a longer unbanded scan; narrow by user-specified year band or refine the anchor query.
+**Issue**: A "topic of X" query returns generic topic papers.
+**Solution**: Rerun with the entity and its aliases only, and use topic terms during triage.
 
-**Issue**: A query about "topic of X" retrieves generic topic papers
-**Solution**: Replace the first-pass query with exact entity aliases only. Use topic terms during manual triage or a focused second pass after confirming anchor hits.
+**Issue**: Raw `urllib` requests get HTTP 403 with Cloudflare error 1010.
+**Solution**: Cloudflare rejects Python's default user agent. Use the helper, or send both `X-API-Key` and a `User-Agent` header.
 
-**Issue**: DOI, year, or journal metadata is missing
-**Solution**: Fetch details by PMCID/DOI first. If still incomplete, use `--crossref-metadata` or the `crossref-lookup` skill. Avoid generic web search unless both corpus metadata and Crossref are unresolved or conflicting.
-
-**Issue**: `/usr/bin/time` is missing
-**Solution**: Use shell `time -p` or record start/end timestamps; do not assume `/usr/bin/time` exists.
-
-**Issue**: Artifacts were written under `$SKILL_DIR/runs/`
-**Solution**: Move future run artifacts to `tasks/polars-dovmed-runs/` and do not commit generated run outputs.
-
-**Issue**: Hosted API key is missing and local parquet files are missing
-**Solution**: State that `polars-dovmed` is not configured. Use another literature-search skill or ask the user to provide hosted access or local corpora.
+**Issue**: `/usr/bin/time` is missing.
+**Solution**: Use shell `time -p` or record start and end timestamps.

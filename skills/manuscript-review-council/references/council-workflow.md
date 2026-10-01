@@ -55,7 +55,7 @@ Retain these artifacts even if the user only asked for prose:
 - conflict log
 - editor meta-review
 
-Persist them under `reviews/<manuscript-slug>/<YYYYMMDDTHHMMSSZ>/`: `packet.json`, `reviewers/<role>.json`, `issues.json`, `conflicts.json`, and `editor.json`. Validate the bundle index against `../schemas/review-bundle.schema.json`; do not use ad hoc filenames that cannot be joined across runs.
+Persist them under `reviews/<manuscript-slug>/<YYYYMMDDTHHMMSSZ>/`: `packet.json`, `reviewers/<role>.json`, `conflicts.json`, `editor.json`, and a bundle index (for example `bundle.json`) that lists these paths and holds the machine-readable issue records. Validate the index with `scripts/validate_review_bundle.py`, which checks it against [../schemas/review-bundle.schema.json](../schemas/review-bundle.schema.json) and enforces the paths above; do not use ad hoc filenames that cannot be joined across runs. Set the bundle `mode` to `critique`, `revision_assessment`, or `rebuttal_assessment`.
 
 ## Decision Discipline
 

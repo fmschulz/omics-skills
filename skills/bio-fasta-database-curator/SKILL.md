@@ -1,40 +1,19 @@
 ---
 name: bio-fasta-database-curator
-description: Curate and validate FASTA or FAA databases. Use when standardizing headers, merging references, deduplicating sequences, converting GenBank files, or preparing BLAST, MMseqs2, and HMM inputs.
+description: Curate and validate FASTA or FAA databases. Use when standardizing headers, merging or deduplicating references, converting GenBank, or preparing BLAST, MMseqs2, or HMM inputs.
 ---
 
 # FASTA Database Curator
 
-## Overview
-
-Automate the curation and standardization of biological sequence databases. This skill handles the tedious work of processing FASTA/FAA files, ensuring consistent header formats, removing duplicates, and preparing databases for downstream analysis.
+Curate FASTA/FAA reference databases: standardize headers, merge files, remove duplicates, and validate the result for BLAST, DIAMOND, MMseqs2, or HMMER. Every transformation leaves a header mapping and a deduplication report.
 
 Supplementary version-grounded tool notes: [tools.md](tools.md).
-
-**Key Capabilities:**
-- Header format standardization (pipe separators, prefixes)
-- Duplicate detection and removal (by sequence or ID)
-- Format conversion (GenBank → FASTA, multi-line → single-line)
-- Database merging with conflict resolution
-- Statistics generation (counts, lengths, taxonomy, GC content)
-- Validation (no whitespace in headers, proper formatting)
-- Taxonomy label extraction and standardization
-
-## When to Use This Skill
-
-Use this skill when:
-- User needs to standardize sequence headers
-- User wants to merge multiple FASTA files
-- User needs to remove duplicate sequences
-- User is preparing a database for HMM/BLAST/MMseqs2
-- User wants database statistics and quality metrics
-- User needs to convert between sequence formats
 
 ## Header Format Standards
 
 ### Recommended Format
 
-Use pipe-separated fields with consistent prefixes:
+Use pipe-separated fields with a consistent source prefix:
 
 ```
 >PREFIX|ACCESSION|DESCRIPTION
@@ -43,26 +22,23 @@ SEQUENCE...
 
 **Examples:**
 ```
->VP|Mavirus_MCP|Major capsid protein [Virophage]
->PLV|NC_021333_1|Polinton-like virus hypothetical protein
->NCLDV|YP_009173877.1|DNA polymerase [Marseilleviridae]
+>VP|Mavirus_MCP|Major_capsid_protein_[Virophage]
+>PLV|NC_021333_1|Polinton-like_virus_hypothetical_protein
+>NCLDV|YP_009173877.1|DNA_polymerase_[Marseilleviridae]
 ```
 
-### Common Transformations
+### What the bundled script does
 
-```python
-# Remove whitespace from headers
-old: ">VP_MCP Mavirus major capsid protein"
-new: ">VP_MCP|Mavirus_major_capsid_protein"
+`scripts/curate_fasta.py` keeps the whole raw header, replaces each whitespace run and each character outside `A-Za-z0-9_.|:-` with `_`, collapses repeated `_`, and prepends `PREFIX|` when `--prefix` is set:
 
-# Add taxonomy prefix
-old: ">NC_021333.1 hypothetical protein"
-new: ">PLV|NC_021333.1|hypothetical_protein"
-
-# Standardize separators
-old: ">seq1 [organism=Virus] protein"
-new: ">seq1|Virus|protein"
 ```
+>seq 1 alpha protein          ->  >REF|seq_1_alpha_protein
+>NC_021333.1 hypothetical     ->  >REF|NC_021333.1_hypothetical
+```
+
+Split accession and description into separate pipe fields with a custom rule, and keep the mapping table for it as well.
+
+BLAST `makeblastdb -parse_seqids` reads `|` as NCBI seq-id syntax and fails on custom prefixes such as `VP|...` ("Could not construct seq-id"). Build pipe-delimited databases without `-parse_seqids`. DIAMOND, MMseqs2, and HMMER keep the full first word of the header.
 
 ## Quick Reference
 
@@ -73,13 +49,16 @@ new: ">seq1|Virus|protein"
 | Merge or deduplicate | Decide whether duplicates are removed by ID, sequence, or both, then report what changed. |
 | Validate output | Re-count records, verify FASTA syntax, and write database statistics. |
 | Run the bundled curator | `uv run --script skills/bio-fasta-database-curator/scripts/curate_fasta.py input.fasta --output curated.fasta --prefix REF --deduplicate both` |
+| Build search databases | Commands for `makeblastdb`, `diamond makedb`, `mmseqs createdb`, and `hmmpress` in [tools.md](tools.md). |
 
 ## Instructions
 
 Use `scripts/curate_fasta.py` for routine FASTA curation. It parses raw headers
-before any library can truncate them, uses SHA-256 sequence digests, refuses
-empty inputs and existing outputs, and writes both a header mapping and a JSON
-deduplication report. Keep the snippets below for custom transformations only.
+before any library can truncate them, uppercases sequences, uses SHA-256
+sequence digests, refuses empty inputs, empty records, and existing outputs,
+and writes a header mapping and a JSON deduplication report. A retained record
+whose curated ID repeats an earlier one gets a `|record_N` suffix. Keep the
+snippets below for custom transformations only.
 
 ### Step 1: Analyze Input Database
 
@@ -104,40 +83,28 @@ awk '/^>/ {if (seq) print length(seq); seq=""} !/^>/ {seq=seq$0} END {print leng
 The script standardizes headers, merges multiple inputs, deduplicates, and writes the mapping and report in one pass:
 
 ```bash
-uv run --no-project python scripts/curate_fasta.py \
+uv run --script skills/bio-fasta-database-curator/scripts/curate_fasta.py \
   input1.fasta input2.fasta \
   --output curated.fasta \
   --mapping header_mapping.tsv \
   --report dedup_report.json \
   --prefix REF \
-  --deduplicate both        # id | sequence | both
+  --deduplicate both        # none | id | sequence | both
 ```
+
+Without `--mapping` and `--report`, the script writes `curated.fasta.mapping.tsv` and `curated.fasta.report.json` next to the output.
 
 Write custom Biopython transformations only when a rule falls outside the script's flags, and keep the original-to-new ID mapping in that case too.
 
 ### Step 3: Generate Statistics and Validate
 
-Use SeqKit (versions and more commands in [tools.md](tools.md)) for statistics, then verify parseability, alphabet, and the prefix distribution in one pass:
+Use SeqKit (versions and more commands in [tools.md](tools.md)) to parse every record, check the alphabet, and summarize; count prefixes from the headers:
 
 ```bash
-seqkit stats -a curated.fasta               # counts, length distribution, sequence type
-seqkit grep -nrp " " curated.fasta | head   # must return nothing: no whitespace in headers
-uv run --with biopython python3 - <<'EOF'   # parse end-to-end, flag invalid residues, count prefixes
-from Bio import SeqIO
-from collections import Counter
-valid = set("ACDEFGHIKLMNPQRSTVWYXBZJUO*-")  # adjust to ACGTUN*- for nucleotide databases
-prefixes, bad = Counter(), []
-n = 0
-for rec in SeqIO.parse("curated.fasta", "fasta"):
-    n += 1
-    prefixes[rec.id.split("|")[0] if "|" in rec.id else "none"] += 1
-    extra = set(str(rec.seq).upper()) - valid
-    if extra:
-        bad.append((rec.id, "".join(sorted(extra))))
-print(f"records: {n}")
-print("prefix counts:", dict(prefixes))
-print("invalid residues:", bad if bad else "none")
-EOF
+seqkit stats -a -T curated.fasta              # counts, length distribution, sequence type, GC(%)
+seqkit seq -t protein --validate-seq curated.fasta > /dev/null   # nonzero exit on an invalid residue; -t dna for nucleotides
+seqkit grep -nrp " " curated.fasta | head     # must return nothing: no whitespace in headers
+grep '^>' curated.fasta | cut -c2- | cut -d'|' -f1 | sort | uniq -c   # records per prefix
 ```
 
 ## Input Requirements
@@ -170,6 +137,7 @@ EOF
 ```python
 from Bio import SeqIO
 
+
 def genbank_to_fasta(input_gb: str, output_fasta: str):
     """Convert GenBank format to FASTA."""
     records = SeqIO.parse(input_gb, "genbank")
@@ -196,6 +164,7 @@ def extract_cds_proteins(input_gb: str, output_faa: str):
                         protein = feature.qualifiers["translation"][0]
                         locus = feature.qualifiers.get("locus_tag", ["unknown"])[0]
                         product = feature.qualifiers.get("product", ["unknown"])[0]
+                        product = "_".join(product.split())  # no whitespace in IDs
                         out.write(f">{locus}|{product}\n{protein}\n")
 ```
 
@@ -218,27 +187,12 @@ uv run --script skills/bio-fasta-database-curator/scripts/curate_fasta.py \
 ```
 User: "Standardize the headers in virophage_raw.fasta and remove duplicates"
 
-1. Analyze input:
-   - 1,869 sequences
-   - Headers have spaces and inconsistent formats
-   - Some duplicate accessions
-
-2. Define rules:
-   - Add VP| prefix
-   - Replace spaces with underscores
-   - Use pipe separator
-
-3. Process and deduplicate:
-   - Standardized 1,869 headers
-   - Removed 23 duplicates
-   - Final: 1,846 unique sequences
-
-4. Validate output:
-   - No whitespace in headers OK
-   - All sequences non-empty OK
-   - Consistent format OK
-
-5. Generate stats report
+1. Analyze input: count records, sample headers, find whitespace and duplicate accessions.
+2. Define rules: `VP|` prefix, whitespace to underscores, deduplicate by ID and sequence.
+3. Run curate_fasta.py with --prefix VP --deduplicate both.
+4. Validate: record counts match the report (input = retained + removed),
+   no whitespace in headers, every record parses and is non-empty.
+5. Report statistics from seqkit stats -a and the deduplication report.
 ```
 
 ## Troubleshooting

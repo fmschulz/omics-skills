@@ -1,6 +1,6 @@
 ---
 name: bio-interdomain-hgt
-description: Detect and polarize interdomain horizontal gene transfer with homology, context, and phylogenetic checks. Use when studying lateral gene transfer, virus-host gene exchange, endogenous viral elements, or donor direction.
+description: Detect and polarize interdomain horizontal gene transfer with reciprocal hits, genomic context, and gene trees. Use for virus-host gene exchange, endogenous viral elements, or donor direction.
 ---
 
 # Bio Interdomain HGT
@@ -18,7 +18,12 @@ Run the steps in order; capture outputs and provenance at each step. Steps 0
 (database gate) and 5 (frame-aware context guard on eukaryotic DNA) are the ones
 most often skipped and most often responsible for wrong conclusions.
 
-Use the versioned evidence driver after the homology, context, and tree tools have produced their normalized TSVs:
+Run every search and tree step on compute nodes with an explicit thread count
+(`diamond --threads`, `iqtree3 -T`, `mafft --thread`); on HPC, submit through
+`sbatch` with CPUs matched to those counts.
+
+After Steps 0-7 have produced their normalized TSVs, apply the evidence gates with
+the driver:
 
 ```bash
 uv run --script skills/bio-interdomain-hgt/scripts/run_hgt_evidence.py \
@@ -28,40 +33,59 @@ uv run --script skills/bio-interdomain-hgt/scripts/run_hgt_evidence.py \
   --query-domain ncldv --out results/bio-interdomain-hgt
 ```
 
-The driver checksum-verifies the comprehensive arbiter, labels, and comparison collection; applies homology, reciprocal-best-hit, direction, frame-aware context, and phylogeny gates; normalizes confirmed candidates by lineage sampling depth; and requires a hypothesis reflection at every gate. Its run contract is `schemas/hgt-evidence.schema.json`.
+The driver checksum-verifies the arbiter, lineage labels, and comparison collection
+listed in `databases.json`, applies the gates below, normalizes confirmed candidates
+by lineage sampling depth, and writes `run_manifest.json` under
+[schemas/hgt-evidence.schema.json](schemas/hgt-evidence.schema.json). Input
+contracts (tab-separated, exact column order) are in `fixtures/`; the gates are:
 
-### Step 0 — Database availability gate (DO THIS FIRST; never hardcode paths)
+| Gate | Pass rule in the driver |
+|------|-------------------------|
+| Homology | query and subject coverage >= 0.5 and e-value <= 1e-5 |
+| Reciprocal best hit | `forward_rank` and `reverse_rank` both 1 |
+| Direction | query's best arbiter domain equals the recipient domain: `recipient_to_query`; recipient locus best-matches `--query-domain`: `query_to_recipient`; otherwise `ambiguous` |
+| Context | `recipient_domain_fraction` >= 0.6; eukaryotic recipients also need `method` `diamond_blastx` |
+| Phylogeny | `nesting_clade` equals `expected_clade` and `support` >= 0.9 on a 0-1 scale |
+
+A row is `confirmed` only when all gates pass and the direction is not ambiguous,
+`candidate` when homology passes but another gate fails, and `rejected` otherwise. Domain labels use
+the arbiter vocabulary `eukaryota`, `bacteria`, `archaea`, `ncldv`, `phage`,
+`organelle`, and `--query-domain` must be one of them. Hypotheses need five distinct
+IDs with one `technical` or `null` row; reflections must cover the gates `database`,
+`forward`, `reciprocal`, `context`, `phylogeny`, `final` in that order.
+
+### Step 0: Database availability gate (DO THIS FIRST; never hardcode paths)
 
 HGT calls are only as good as the reference. Resolve the site/project DB root from
-`$BIO_DB_ROOT` (or ask) — never bake absolute paths into the analysis. Verify that
+`$BIO_DB_ROOT` (or ask); never bake absolute paths into the analysis. Verify that
 BOTH of the following exist before any search; if one is missing, build it or STOP.
 
 1. A **comprehensive multi-domain reciprocal-arbiter proteome**: a single protein
    search database (DIAMOND `.dmnd` or MMseqs2) that contains eukaryotes + bacteria
    + archaea + viruses (including NCLDV/giant viruses and phages) + organelles,
    with a parallel `genome_id -> lineage` labels table. This one database is what
-   makes "best-hit taxon" — and therefore transfer direction — meaningful.
+   makes "best-hit taxon", and therefore transfer direction, meaningful.
    - Building blocks: EukProt, GTDB, NCBI nr/RefSeq, IMG/VR, a giant-virus proteome
      (GVDB / gvclass-style), organelle RefSeq.
    - Check: list `$BIO_DB_ROOT` for an existing combined-proteome `.dmnd` + labels.
    - If absent: build it with `/bio-fasta-database-curator` (prefix every header by
      domain, e.g. `EUK__`, `BAC__`, `ARC__`, `NCLDV__`, `PHAGE__`, then
      `diamond makedb`). A clustered build (clusterednr / MMseqs2-reduced) is much
-     faster at comparable sensitivity — prefer it.
+     faster at comparable sensitivity; prefer it.
    - A euk-only or virus-only arbiter CANNOT polarize transfer. Confirm it spans
      every candidate donor domain.
 2. A **per-domain genome/proteome collection** for the comparison side (e.g. a
    eukaryote genome catalog such as EukProt/MMETSP/NCBI/Mycocosm; a viral genome
    catalog such as IMG/VR/RefSeq). Prefer one with a queryable metadata table
    (per-genome taxonomy + completeness + contamination) so hits can be quality-flagged.
-   - Record whether the collection ships PROTEINS or only NUCLEOTIDES — this decides
+   - Record whether the collection ships PROTEINS or only NUCLEOTIDES; this decides
      the forward-search tool in Step 2.
 
 Record DB name / version / date / path-relative-to-root and per-genome counts in
 the run log. If a required comprehensive DB is missing and cannot be built, say so
-explicitly — do not silently substitute a non-comprehensive database.
+explicitly; do not silently substitute a non-comprehensive database.
 
-### Step 1 — Frame the query and register hypotheses
+### Step 1: Frame the query and register hypotheses
 - Infer the query's domain/lineage first (`/tracking-taxonomy-updates` QuickClade
   `percontig`; `/bio-viromics` GVClass for giant viruses).
 - Register >=5 working hypotheses, including technical nulls:
@@ -72,7 +96,7 @@ explicitly — do not silently substitute a non-comprehensive database.
   **virus <-> virus transfer** (a frequent confounder of apparent host-derived
   viral genes).
 
-### Step 2 — Forward search (query <-> comparison collection)
+### Step 2: Forward search (query <-> comparison collection)
 - If the comparison collection has PROTEINS: `diamond blastp` (query proteins as the
   small db, or vice versa).
 - If proteins are MISSING for most of the collection: `diamond blastx` of the
@@ -85,17 +109,17 @@ explicitly — do not silently substitute a non-comprehensive database.
 - Thresholds: e-value <=1e-5, subject coverage >=0.5, plus identity/bitscore floors.
   Record id%, query AND subject coverage, e-value, bitscore for every hit.
 
-### Step 3 — Reciprocal classification against the arbiter
+### Step 3: Reciprocal classification against the arbiter
 - `diamond blastp` the query proteins vs the comprehensive arbiter -> for each query
   protein, the best-hit DOMAIN and lineage (donor-derived vs query-core vs ORFan).
   Use a bitscore margin (e.g. best class must beat the next by >=10%) and coalesce
   empty-class scores to 0 before comparison (a `series.max()` on an empty group is
-  NaN, and `NaN or 0` stays NaN — guard with `pd.notna`).
+  NaN, and `NaN or 0` stays NaN; guard with `pd.notna`).
 - For candidate recipient loci, reverse-search vs the arbiter -> best-hit domain.
 - A reciprocal best hit = the query protein and the recipient locus are mutual best
   hits, with the arbiter confirming the partner domain.
 
-### Step 4 — Direction inference
+### Step 4: Direction inference
 - recipient <- donor (e.g. host -> virus): the query gene's best arbiter hit is the
   OTHER domain (e.g. eukaryote) and it nests within that clade.
 - donor -> recipient (e.g. virus -> host / endogenization): a recipient-genome locus
@@ -103,36 +127,40 @@ explicitly — do not silently substitute a non-comprehensive database.
   recipient-dominated genomic context (Step 5).
 - Leave deep-homology / tied cases as `ambiguous` for the phylogeny to polarize.
 
-### Step 5 — Genomic-context contamination guard
+### Step 5: Genomic-context contamination guard
 - Require the recipient locus to sit on a contig dominated by the RECIPIENT domain
   (flanking genes best-match the recipient); otherwise flag as contamination or a
   free donor contig (e.g. a mis-binned NCLDV contig inside a protist MAG).
 - **CRITICAL on eukaryotic genome assemblies**: do NOT call genes with a prokaryotic
-  caller (Prodigal/pyrodigal) — introns fragment euk genes, so the locus ORF comes
-  back short and unclassifiable (validated: ~94% blank with gene-calling). Instead
+  caller (Prodigal/pyrodigal): introns fragment euk genes, so the locus ORF comes
+  back short and unclassifiable (in one project ~94% of loci came back blank). Instead
   use frame-aware, intron-tolerant `diamond blastx` of the locus +/- flank window vs
   the arbiter (`--range-culling --top 10 -F 15`); each HSP is a gene, classified by
   subject domain, giving both the locus origin and the flanking-gene domain mix.
   Optionally cross-check with geNomad ("is this contig viral").
 - Transcriptome assemblies are ~one spliced transcript per contig, so the flanking
-  context signal is weak — rely more on reciprocity + phylogeny there.
+  context signal is weak; rely more on reciprocity + phylogeny there.
 
-### Step 6 — Deep homology vs recent transfer
+### Step 6: Deep homology vs recent transfer
 - Ancient shared genes sit at LOW identity; recent HGT sits HIGH. Bound the expensive
   context + phylogeny steps to high-identity candidates (state the cutoff and log how
   many were dropped). Do not treat every conserved-core hit as HGT.
 
-### Step 7 — Per-gene phylogenetic confirmation (gold standard)
+### Step 7: Per-gene phylogenetic confirmation (required for confirmed calls)
 - For each top candidate, gather homologs ACROSS ALL DOMAINS from the arbiter (one
   search returning subject sequences, e.g. DIAMOND `full_sseq`), taxon-balanced and
   dereplicated; align (MAFFT) -> trim (trimAl) -> tree (IQ-TREE with ultrafast
-  bootstrap, fixed seed). Pass `-keep-ident` so the focal tip is not collapsed; make
-  tip names unique to avoid duplicate-taxon failures.
+  bootstrap, fixed seed), for example
+  `iqtree3 -s aln.faa -m MFP -B 1000 --seed 1729 -keep-ident -T 4`. Pass
+  `-keep-ident` so the focal tip is not collapsed; make tip names unique to avoid
+  duplicate-taxon failures. Give the driver the support of the nesting node on a
+  0-1 scale (UFBoot 95 becomes 0.95); `/bio-phylogenomics` `--normalize-only`
+  converts a tree's labels.
 - Confirmed when the focal sequence nests inside the EXPECTED donor/recipient clade
   with support. Including donor + other-virus + recipient homologs is exactly what
   separates genuine host <-> virus transfer from virus <-> virus transfer.
 
-### Step 8 — Integrate, contextualize, report
+### Step 8: Integrate, contextualize, report
 - Lineage x function matrix; transfer-direction tallies; **normalize per-lineage
   counts by collection sampling depth** (control for reference bias before claiming a
   lineage is enriched).
@@ -151,23 +179,27 @@ explicitly — do not silently substitute a non-comprehensive database.
 | Polarize | Reciprocal best hit + arbiter best-hit domain -> direction. |
 | Guard | Frame-aware blastx context on euk DNA; geNomad cross-check. |
 | Confirm | All-domain homolog tree; focal must nest in expected clade. |
-| Tool docs | `docs/README.md`; DB recipe in `docs/database-availability.md`. |
+| Tool docs | [docs/README.md](docs/README.md); DB recipe in [docs/database-availability.md](docs/database-availability.md). |
 
 ## Input Requirements
 - `$BIO_DB_ROOT` set; comprehensive multi-domain arbiter `.dmnd` + labels; a
   per-domain comparison collection (proteins or nucleotides) with metadata.
 - Query proteins (`.faa`); query contigs (`.fna`); optional query domain annotations.
-- Tools: diamond, mafft, trimal, iqtree, geNomad, taxonkit, seqkit (see `docs/README.md`).
+- Tools pinned in the project's Pixi environment: diamond, mafft, trimal, iqtree, geNomad, taxonkit, seqkit (see [docs/README.md](docs/README.md)).
 
 ## Output
-- results/bio-interdomain-hgt/forward_hits.tsv
-- results/bio-interdomain-hgt/query_protein_origin.tsv  (donor-derived vs query-core)
-- results/bio-interdomain-hgt/hgt_candidates.tsv         (per locus: RBH, direction, context, confidence)
-- results/bio-interdomain-hgt/lineage_function_matrix.tsv
-- results/bio-interdomain-hgt/phylogeny/<gene>/          (alignment, tree, nesting call)
-- results/bio-interdomain-hgt/hgt_report.md + logs/
+Driver outputs under `results/bio-interdomain-hgt/`:
+- `hgt_candidates.tsv`: per hit, best arbiter domains, RBH, direction, context, phylogeny, and status
+- `query_protein_origin.tsv`: donor-derived vs query-core per query protein
+- `lineage_sampling_normalization.tsv`: confirmed candidates per 100 sampled genomes
+- `phylogeny_evidence.tsv`, `hypothesis_register.tsv`, `gate_reflections.tsv`
+- `run_manifest.json`, validated against [schemas/hgt-evidence.schema.json](schemas/hgt-evidence.schema.json)
 - stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
-- Artifact contract: [schemas/hgt-evidence.schema.json](schemas/hgt-evidence.schema.json)
+
+Workflow outputs, written by the agent:
+- (agent-authored) `forward_hits.tsv`, `lineage_function_matrix.tsv`
+- (agent-authored) `phylogeny/<gene>/`: alignment, tree, and nesting call
+- (agent-authored) `hgt_report.md`, `logs/`
 
 ## Examples
 
@@ -203,20 +235,20 @@ best-matches archaea (donor) can be polarized against eukaryotic and viral alter
 
 ## Non-Goals
 
-- No transfer direction without both a reciprocal best hit and phylogenetic nesting in the expected clade. Tied and deep-homology cases stay `ambiguous`.
+- No confirmed transfer direction without both a reciprocal best hit and phylogenetic nesting in the expected clade. Tied and deep-homology cases stay `ambiguous`.
 - No HGT call from single-domain hits. An arbiter that does not span every candidate donor domain cannot polarize anything.
 - No dating of transfer events. Identity separates recent from ancient; it does not give an age.
 - No lineage-enrichment claim before per-lineage counts are normalized by collection sampling depth.
 
 ## Performance gotchas (hard-won)
-- `diamond blastx --sensitive` vs a 100M+ protein arbiter is far too slow at scale
-  (multi-hour 8h timeouts, empty output). Use DEFAULT sensitivity for domain
-  classification; reserve `--sensitive` for small or divergent focal sets only.
-- A clustered arbiter (clusterednr / MMseqs2-reduced) is dramatically faster; on a
-  CUDA GPU node, MMseqs2-GPU `easy-taxonomy --gpu` is an alternative.
+- `diamond blastx --sensitive` against a 100M+ protein arbiter hit 8-hour wall-clock
+  limits with empty output in practice. Use default sensitivity for domain
+  classification; reserve `--sensitive` for small or divergent focal sets.
+- A clustered arbiter (clusterednr / MMseqs2-reduced) runs much faster; on a CUDA
+  GPU node, MMseqs2-GPU `easy-taxonomy --gpu` is an alternative.
 - SLURM: bin-pack by size; resume-safe `.done` sentinels; raise array throttle only
   into idle capacity; a watcher's "queue is empty" check must tolerate transient
-  empty `squeue` (controller socket timeouts) — require two consecutive empty reads
+  empty `squeue` (controller socket timeouts); require two consecutive empty reads
   before resubmitting, or you will fire duplicate arrays. Recover stragglers at finer
   granularity + longer `--time`, not by re-running everything.
 
@@ -225,7 +257,7 @@ best-matches archaea (donor) can be polarized against eukaryotic and viral alter
 **Solution**: you are gene-calling eukaryotic DNA with a prokaryotic caller; switch to frame-aware `diamond blastx` of the locus window (Step 5).
 
 **Issue**: context-guard / reverse search times out at the wall clock with little output.
-**Solution**: drop `--sensitive` to default, shrink the flank window, and re-shard finely; the 121M-protein arbiter is the cost driver.
+**Solution**: drop `--sensitive` to default, shrink the flank window, and re-shard finely; the size of the arbiter is the cost driver.
 
 **Issue**: apparent host-derived viral genes that may actually be virus-to-virus transfers.
 **Solution**: include NCLDV + other-virus + cellular homologs in the per-gene tree and require nesting in the expected clade (Step 7).

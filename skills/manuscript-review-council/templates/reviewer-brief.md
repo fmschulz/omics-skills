@@ -4,7 +4,9 @@ Use this template once per reviewer.
 
 ## Role
 
-`<domain-reviewer | methods-statistics-reviewer | skeptical-reviewer | reproducibility-reviewer | ethics-reviewer | translational-reviewer>`
+`<domain | methods-statistics | skeptic | reproducibility | ethics-compliance | translational>`
+
+Use the slug exactly as written; the bundle validator matches on it.
 
 ## Review Packet
 
@@ -25,7 +27,7 @@ Return:
 - major concerns
 - minor concerns
 - must-fix requests
-- confidence
+- confidence as a number from 0 to 1
 - provisional recommendation: `accept`, `minor_revision`, `major_revision`, or `reject`
 
 Ground each major concern in:

@@ -1,112 +1,85 @@
 ---
 name: crossref-lookup
-description: Query Crossref for DOI validation, title matching, citation metadata, and bibliography audits. Use when resolving references or cleaning citation records.
+description: Query Crossref to validate DOIs, match titles to DOIs, fetch citation metadata, and audit bibliographies. Use when resolving references or cleaning citation records.
 ---
 
 # Crossref Lookup
 
-Use this skill for citation metadata work backed by the Crossref REST API.
+Validate DOIs, find DOIs from titles, and audit bibliographies against the Crossref REST API.
 
 ## Instructions
 
-1. Prefer this skill when the user needs DOI validation, title search, citation metadata, or bibliography auditing.
-2. Use the bundled CLI:
-   - In this repository: `skills/crossref-lookup/scripts/lookup`
-   - After installation: `~/.agents/skills/crossref-lookup/scripts/lookup`
-3. Choose the narrowest mode that matches the request:
-   - `--doi` for validating or enriching one DOI
-   - `--title` for title-to-DOI discovery
-   - `--validate-file` for one DOI per line
-   - `--audit-bibliography` for a bibliography file such as `.bib` or plain text
-4. Normalize DOI strings before interpreting failures.
-   - Acceptable raw forms include `10.xxxx/...`, `doi:10.xxxx/...`, and `https://doi.org/10.xxxx/...`
-5. If the user has a contact email for polite-pool requests, pass it with `--email`.
-6. Treat Crossref as citation metadata, not full text.
-   - If exact abstract-page wording, final pagination, or publisher formatting matters, verify the shortlisted record on the publisher or DOI landing page.
-7. When title search returns multiple plausible records, keep the ambiguity explicit instead of selecting a match silently.
-8. Use `--strict` for audits that must fail on malformed, missing, or unresolved
-   records. Exit code 2 denotes a transient service/network failure; exit code 1
-   denotes invalid, missing, or other audit failures.
+1. Run the bundled CLI, `scripts/lookup`. Paths below are relative to this skill's directory, installed at `~/.agents/skills/crossref-lookup`.
+2. Choose the narrowest mode:
+   - `--doi` validates or enriches one DOI.
+   - `--title` returns ranked DOI candidates for a title (`--rows`, default 5).
+   - `--validate-file` checks one DOI per line.
+   - `--audit-bibliography` extracts DOIs from a `.bib` or plain-text file and checks each one.
+3. DOI inputs are normalized before lookup. `10.xxxx/...`, `doi:10.xxxx/...`, and `https://doi.org/10.xxxx/...` are all accepted, and trailing BibTeX punctuation is removed.
+4. Pass `--email` to identify the caller and use Crossref's polite pool. The CLI spaces requests to stay within the limits Crossref reported on 2026-10-01: single-DOI lookups at 5 per second (10 with `--email`), title searches at 1 per second (3 with `--email`).
+5. When a title search returns several plausible records, show the candidates instead of choosing one silently.
+6. Crossref holds citation metadata, not full text. When exact wording, pagination, or publisher formatting matters, check the DOI landing page.
+7. Use `--strict` for audits that must fail on any invalid, missing, or unresolved record.
 
 ## Quick Reference
 
-| Task | Action |
-|------|--------|
-| Validate DOI | `skills/crossref-lookup/scripts/lookup --doi 10.1038/nature12373` |
-| Search by title | `skills/crossref-lookup/scripts/lookup --title "CRISPR-Cas9 genome editing"` |
-| Validate a DOI list | `skills/crossref-lookup/scripts/lookup --validate-file dois.txt` |
-| Audit bibliography | `skills/crossref-lookup/scripts/lookup --audit-bibliography refs.bib` |
-| Write to file | `--output crossref-report.txt` |
-| Polite-pool email | `--email you@example.org` |
-| Strict audit | `--strict` returns nonzero for unresolved records |
+| Task | Command |
+|------|---------|
+| Validate a DOI | `scripts/lookup --doi 10.1038/nature12373` |
+| Search by title | `scripts/lookup --title "CRISPR-Cas9 genome editing" --rows 5` |
+| Validate a DOI list | `scripts/lookup --validate-file dois.txt` |
+| Audit a bibliography | `scripts/lookup --audit-bibliography refs.bib` |
+| Write the report to a file | `--output crossref-report.json` (refuses to overwrite) |
+| Polite pool | `--email you@example.org` |
+| Fail on any unresolved record | `--strict` |
 
 ## Input Requirements
 
-- `uv` and network access; the bundled PEP 723 script installs its pinned HTTP dependency
-- One of:
-  - a DOI via `--doi`
-  - a title via `--title`
-  - a file path for `--validate-file`
-  - a bibliography file path for `--audit-bibliography`
-- Optional:
-  - `--output` for saving the report
-  - `--email` for the Crossref user agent
+- `uv` and network access; the wrapper runs the PEP 723 script, which pins `requests`.
+- One of: a DOI, a title, a DOI list file, or a bibliography file.
+- Optional: `--email`, `--rows`, `--output`, `--strict`.
 
 ## Output
 
-- DOI validation status and normalized DOI when `--doi` is used
-- title, journal, year, authors, and DOI when metadata is found
-- ranked title-search candidates for `--title`
-- summary counts that distinguish invalid DOI syntax, Crossref 404 records,
-  transient 429/5xx/network failures, and other HTTP errors
-- optional output file if `--output` is set
+JSON on stdout, or in the `--output` file:
+
+- `--doi`: `status`, `doi`, `detail`, `title`, `journal`, `year`
+- `--title`: `query` and `candidates` with `doi`, `title`, `journal`, `year`
+- `--validate-file` and `--audit-bibliography`: `records`, `counts` per status (`valid`, `invalid`, `not_found`, `transient_error`, `http_error`), and `potentially_missing_dois` (BibTeX titles without a DOI)
+
+Exit codes: 0 on success; 1 for an invalid or missing single DOI, a strict-mode audit failure, or a refused overwrite; 2 for transient service or network failures (HTTP 429, 5xx, timeouts).
 
 ## Quality Gates
 
-- [ ] The lookup mode matches the user request
-- [ ] DOI inputs are normalized before treating them as invalid
-- [ ] Ambiguous title matches are presented as candidates rather than a silent single answer
-- [ ] Reference-list formatting is left to the citation manager or manuscript template; this skill returns metadata, not styled strings
-- [ ] The final answer distinguishes Crossref metadata from publisher full text
+- [ ] The lookup mode matches the request.
+- [ ] DOIs were normalized before any was reported as invalid.
+- [ ] Ambiguous title matches are shown as candidates.
+- [ ] `transient_error` records are reported as unchecked, not as invalid.
+- [ ] The answer separates Crossref metadata from publisher full text; reference formatting is left to the citation manager.
 
 ## Examples
 
-### Example 1: Validate a DOI
-
 ```bash
-skills/crossref-lookup/scripts/lookup --doi "10.1038/nature12373"
-```
+scripts/lookup --doi "10.1038/nature12373"
 
-### Example 2: Search by title
+scripts/lookup --title "CRISPR-Cas9 genome editing" --email you@example.org
 
-```bash
-skills/crossref-lookup/scripts/lookup \
-  --title "CRISPR-Cas9 genome editing" \
-  --email you@example.org
-```
-
-### Example 3: Audit a bibliography
-
-```bash
-skills/crossref-lookup/scripts/lookup \
-  --audit-bibliography refs.bib \
-  --output crossref-audit.txt
+scripts/lookup --audit-bibliography refs.bib --strict --output crossref-audit.json
 ```
 
 ## Troubleshooting
 
-**Issue**: The DOI looks valid but Crossref says it is missing.  
-**Solution**: Normalize the DOI first and retry. If it still fails, report that Crossref did not return a record instead of assuming publisher error.
+**Issue**: A DOI looks valid but Crossref returns `not_found`.
+**Solution**: Report that Crossref has no record. DataCite and other agencies register DOIs that Crossref does not hold, so check the DOI landing page before calling the citation wrong.
 
-**Issue**: Title search returns multiple plausible matches.  
-**Solution**: Return the shortlist with DOI, journal, and year so the user can disambiguate.
+**Issue**: Many bibliography entries have no DOI.
+**Solution**: Treat `potentially_missing_dois` as a coverage gap, not proof of invalid citations.
 
-**Issue**: Bibliography audit reports missing DOIs for many entries.  
-**Solution**: Treat that as a coverage gap, not proof that the citations are invalid. Crossref metadata may be incomplete for some records.
+**Issue**: Exit code 2.
+**Solution**: Crossref rate-limited the run or was unreachable. Wait, add `--email`, and rerun.
 
 ## Related Skills
 
-- `/polars-dovmed` — full-text PMC Open Access search when the DOI is unknown
-- `/arxiv-search` — source-native preprint search on arXiv
-- `/biorxiv-search` — source-native preprint search on bioRxiv
-- `/scientific-impact-assessment` — citation counts and journal impact
+- `/polars-dovmed`: full-text PMC Open Access search when the DOI is unknown
+- `/arxiv-search` and `/biorxiv-search`: preprint search
+- `/scientific-impact-assessment`: citation counts and journal impact

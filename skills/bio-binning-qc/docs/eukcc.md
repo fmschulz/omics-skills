@@ -242,9 +242,10 @@ checkm2 predict --input prokaryotic_bins/ \
 eukcc folder eukaryotic_bins/ \
   --db $EUKCC2_DB --threads 16
 
-# 5. Contamination check (all bins)
+# 5. Chimerism check (prokaryotic bins only)
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
 gunc run --input_dir prokaryotic_bins/ \
-  --db_file gunc_db --threads 16
+  --db_file "$GUNC_DB" --out_dir gunc_qc/ --threads 16
 ```
 
 ## Advanced Features

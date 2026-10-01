@@ -3,7 +3,7 @@
 ## Provenance / workflow run packaging
 - RO-Crate (workflow/run packaging with JSON-LD metadata)
 - W3C PROV (provenance data model: entities, activities, agents)
-- CWLProv (CWL/Nextflow provenance captured as Research Object)
+- CWLProv (CWL run provenance captured as a Research Object; for Nextflow, the nf-prov plugin emits comparable provenance)
 - BioCompute Objects (IEEE 2791-2020) for HTS workflow communication
 
 ## Publication / reporting expectations (computational)

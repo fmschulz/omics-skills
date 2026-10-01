@@ -88,21 +88,22 @@ def build_plan(args: argparse.Namespace) -> dict[str, object]:
         tmvec_db = existing(args.tmvec_db, "TM-Vec database")
         if tmvec_db is None:
             raise ValueError("TM-Vec query requires --tmvec-db")
-        result = out_dir / "tmvec_hits.tsv"
+        # The pinned fork's `search --output` is a folder; it writes results.tsv in it.
+        tmvec_dir = out_dir / "tmvec"
         commands.append(
             {
                 "name": "tmvec",
                 "command": [
                     "tmvec",
                     "search",
-                    "--query",
+                    "--input-fasta",
                     str(tmvec_query),
                     "--database",
                     str(tmvec_db),
                     "--output",
-                    str(result),
+                    str(tmvec_dir),
                 ],
-                "expected": str(result),
+                "expected": str(tmvec_dir / "results.tsv"),
             }
         )
     if not commands:

@@ -7,7 +7,7 @@ Strongest to weakest for intervention effects:
 | Level | Design | Strengths | Weaknesses |
 |-------|--------|-----------|------------|
 | 1 | Systematic reviews/meta-analyses | Combines studies, reduces anomalies | Garbage in = garbage out |
-| 2 | RCTs | Gold standard for causation | Expensive, may lack generalizability |
+| 2 | RCTs | Randomization controls measured and unmeasured confounding | Expensive, may lack generalizability |
 | 3 | Cohort | Temporal sequence, multiple outcomes | Susceptible to confounding |
 | 4 | Case-control | Efficient for rare outcomes | Recall bias, can't calculate incidence |
 | 5 | Cross-sectional | Quick, establishes prevalence | No temporal sequence |

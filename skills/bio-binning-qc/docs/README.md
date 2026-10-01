@@ -1,6 +1,6 @@
 # Tool Documentation
 
-Comprehensive usage guides for metagenomic binning and quality control tools.
+Usage guides for the metagenomic binning and bin quality-control tools.
 
 Last verified: 2026-05-30
 Tool version/release checked: CheckM2 v1.1.0; CoverM v0.7.0; EukCC2 v2.1.3; GUNC v1.1.1; MetaBAT2 v2.18; QuickBin/BBTools v39.85; SemiBin2 v2.3.0
@@ -46,7 +46,7 @@ docker pull bryce911/bbtools:39.85
 
 # Download databases
 checkm2 database --download
-gunc download_db -db progenomes_3 -o gunc_db/
+gunc download_db gunc_db/ -db progenomes_3
 wget http://ftp.ebi.ac.uk/pub/databases/metagenomics/eukcc/eukcc2_db_ver_1.2.tar.gz
 tar -xzvf eukcc2_db_ver_1.2.tar.gz
 export EUKCC2_DB=$(realpath eukcc2_db_ver_1.2)

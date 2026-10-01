@@ -5,7 +5,7 @@
         "Shen",
         "Ren"
       ],
-      "checked_at": "2026-09-05T17:29:30Z",
+      "checked_at": "2026-10-01T22:41:20Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "TaxonKit: A practical and efficient NCBI taxonomy toolkit",
@@ -13,7 +13,7 @@
     },
     "10.1038/nature12373": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:30Z",
+      "checked_at": "2026-10-01T22:41:20Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -76,7 +76,7 @@
         "Hugenholtz",
         "Woyke"
       ],
-      "checked_at": "2026-09-05T17:29:30Z",
+      "checked_at": "2026-10-01T22:41:20Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Minimum information about a single amplified genome (MISAG) and a metagenome-assembled genome (MIMAG) of bacteria and archaea",
@@ -89,11 +89,26 @@
         "Zhao",
         "Coelho"
       ],
-      "checked_at": "2026-09-05T17:29:31Z",
+      "checked_at": "2026-10-01T22:41:21Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "A deep siamese neural network improves metagenome-assembled genomes in microbiome datasets across different environments",
       "year": 2022
+    },
+    "10.1038/s41587-020-00774-7": {
+      "authors": [
+        "Nayfach",
+        "Camargo",
+        "Schulz",
+        "Eloe-Fadrosh",
+        "Roux",
+        "Kyrpides"
+      ],
+      "checked_at": "2026-10-01T22:41:21Z",
+      "registered": true,
+      "source": "doi.org handle + Crossref title",
+      "title": "CheckV assesses the quality and completeness of metagenome-assembled viral genomes",
+      "year": 2020
     },
     "10.1038/s41587-023-01953-y": {
       "authors": [
@@ -107,7 +122,7 @@
         "Nayfach",
         "Kyrpides"
       ],
-      "checked_at": "2026-09-05T17:29:31Z",
+      "checked_at": "2026-10-01T22:41:22Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Identification of mobile genetic elements with geNomad",
@@ -122,7 +137,7 @@
         "Chikhi",
         "Quince"
       ],
-      "checked_at": "2026-09-05T17:29:31Z",
+      "checked_at": "2026-10-01T22:41:22Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "High-quality metagenome assembly from long accurate reads with metaMDBG",
@@ -134,7 +149,7 @@
         "Reuter",
         "Drost"
       ],
-      "checked_at": "2026-09-05T17:29:32Z",
+      "checked_at": "2026-10-01T22:41:22Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Sensitive protein alignments at tree-of-life scale using DIAMOND",
@@ -147,7 +162,7 @@
         "Woodcroft",
         "Tyson"
       ],
-      "checked_at": "2026-09-05T17:29:32Z",
+      "checked_at": "2026-10-01T22:41:23Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "CheckM2: a rapid, scalable and accurate tool for assessing microbial genome quality using machine learning",
@@ -166,28 +181,11 @@
         "Schmidt",
         "Steinegger"
       ],
-      "checked_at": "2026-09-05T17:29:32Z",
+      "checked_at": "2026-10-01T22:41:23Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "GPU-accelerated homology search with MMseqs2",
       "year": 2025
-    },
-    "10.1038/s41596-024-01060-5": {
-      "authors": [
-        "Kim",
-        "Lee",
-        "Levy Karin",
-        "Kim",
-        "Moriwaki",
-        "Ovchinnikov",
-        "Steinegger",
-        "Mirdita"
-      ],
-      "checked_at": "2026-09-05T17:29:33Z",
-      "registered": true,
-      "source": "doi.org handle + Crossref title",
-      "title": "Easy and accurate protein structure prediction using ColabFold",
-      "year": 2024
     },
     "10.1038/s44298-024-00069-7": {
       "authors": [
@@ -195,7 +193,7 @@
         "Br\u016fna",
         "Schulz"
       ],
-      "checked_at": "2026-09-05T17:29:33Z",
+      "checked_at": "2026-10-01T22:41:23Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Conservative taxonomy and quality assessment of giant virus genomes with GVClass",
@@ -221,7 +219,7 @@
         "Lopez",
         "Hunter"
       ],
-      "checked_at": "2026-09-05T17:29:33Z",
+      "checked_at": "2026-10-01T22:41:24Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "InterProScan 5: genome-scale protein function classification",
@@ -229,7 +227,7 @@
     },
     "10.1093/bioinformatics/bty633": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:34Z",
+      "checked_at": "2026-10-01T22:41:24Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -243,7 +241,7 @@
         "Bork",
         "Huerta-Cepas"
       ],
-      "checked_at": "2026-09-05T17:29:34Z",
+      "checked_at": "2026-10-01T22:41:24Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "eggNOG-mapper v2: Functional Annotation, Orthology Assignments, and Domain Prediction at the Metagenomic Scale",
@@ -255,7 +253,7 @@
         "Serra",
         "Bork"
       ],
-      "checked_at": "2026-09-05T17:29:34Z",
+      "checked_at": "2026-10-01T22:41:24Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "ETE 3: Reconstruction, Analysis, and Visualization of Phylogenomic Data",
@@ -263,7 +261,7 @@
     },
     "10.1101/682021": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:34Z",
+      "checked_at": "2026-10-01T22:41:24Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -271,7 +269,7 @@
     },
     "10.1111/jeu.12691": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:34Z",
+      "checked_at": "2026-10-01T22:41:24Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -279,7 +277,7 @@
     },
     "10.1126/science.1234567": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:34Z",
+      "checked_at": "2026-10-01T22:41:25Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -287,7 +285,7 @@
     },
     "10.1177/1177932220938064": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:35Z",
+      "checked_at": "2026-10-01T22:41:25Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -301,7 +299,7 @@
         "Birol",
         "Warren"
       ],
-      "checked_at": "2026-09-05T17:29:35Z",
+      "checked_at": "2026-10-01T22:41:25Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "ntSynt: multi-genome synteny detection using minimizer graph mappings",
@@ -309,7 +307,7 @@
     },
     "10.1186/s13059-019-1832-y": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:35Z",
+      "checked_at": "2026-10-01T22:41:25Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -321,7 +319,7 @@
         "Mitchell",
         "Finn"
       ],
-      "checked_at": "2026-09-05T17:29:35Z",
+      "checked_at": "2026-10-01T22:41:25Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Estimating the quality of eukaryotic genomes recovered from metagenomic analysis with EukCC",
@@ -338,7 +336,7 @@
         "Schmidt",
         "Bork"
       ],
-      "checked_at": "2026-09-05T17:29:36Z",
+      "checked_at": "2026-10-01T22:41:26Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "GUNC: detection of chimerism and contamination in prokaryotic genomes",
@@ -346,7 +344,7 @@
     },
     "10.1186/s13059-023-03089-3": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:36Z",
+      "checked_at": "2026-10-01T22:41:26Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -354,7 +352,7 @@
     },
     "10.1186/s13059-024-03312-9": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:36Z",
+      "checked_at": "2026-10-01T22:41:26Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -362,7 +360,7 @@
     },
     "10.1186/s13062-019-0234-0": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:36Z",
+      "checked_at": "2026-10-01T22:41:26Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -370,7 +368,7 @@
     },
     "10.1371/journal.pbio.3001827": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:36Z",
+      "checked_at": "2026-10-01T22:41:26Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -380,7 +378,7 @@
       "authors": [
         "Noble"
       ],
-      "checked_at": "2026-09-05T17:29:36Z",
+      "checked_at": "2026-10-01T22:41:26Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "A Quick Guide to Organizing Computational Biology Projects",
@@ -393,7 +391,7 @@
         "Taylor",
         "Hovig"
       ],
-      "checked_at": "2026-09-05T17:29:37Z",
+      "checked_at": "2026-10-01T22:41:27Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Ten Simple Rules for Reproducible Computational Research",
@@ -408,7 +406,7 @@
         "Nederbragt",
         "Teal"
       ],
-      "checked_at": "2026-09-05T17:29:37Z",
+      "checked_at": "2026-10-01T22:41:27Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Good enough practices in scientific computing",
@@ -416,7 +414,7 @@
     },
     "10.5281/zenodo.14897628": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:37Z",
+      "checked_at": "2026-10-01T22:41:27Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -424,7 +422,7 @@
     },
     "10.5281/zenodo.19154110": {
       "authors": [],
-      "checked_at": "2026-09-05T17:29:37Z",
+      "checked_at": "2026-10-01T22:41:27Z",
       "registered": true,
       "source": "doi.org handle",
       "title": null,
@@ -435,7 +433,7 @@
         "Bushnell",
         "Villada"
       ],
-      "checked_at": "2026-09-05T17:29:38Z",
+      "checked_at": "2026-10-01T22:41:28Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "Deployable high-fidelity metagenome binning at scale with QuickBin",
@@ -451,7 +449,7 @@
         "An",
         "Wang"
       ],
-      "checked_at": "2026-09-05T17:29:38Z",
+      "checked_at": "2026-10-01T22:41:28Z",
       "registered": true,
       "source": "doi.org handle + Crossref title",
       "title": "MetaBAT 2: an adaptive binning algorithm for robust and efficient genome reconstruction from metagenome assemblies",

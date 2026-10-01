@@ -10,13 +10,12 @@ from pathlib import Path
 
 def parse_args(argv=None):
     skill_dir = Path(__file__).resolve().parents[1]
-    repo_root = skill_dir.parents[1]
     parser = argparse.ArgumentParser(
         description="Run a quick end-to-end smoke test for the polars-dovmed skill"
     )
     parser.add_argument(
         "--run-dir",
-        default=str(repo_root / "tasks" / "polars-dovmed-runs" / "smoke-test"),
+        default=str(Path.cwd() / "tasks" / "polars-dovmed-runs" / "smoke-test"),
         help="Directory where prompt, query, payloads, responses, and summary will be saved",
     )
     parser.add_argument(

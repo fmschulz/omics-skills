@@ -34,10 +34,10 @@
 
 ## Sample Size Quick Guide
 
-**For difference between means**:
+**For difference between means** (Lehr's rule: 80% power, two-sided α = .05):
 ```
-n per group ≈ 16 × (SD/d)² × 2
-where d = expected mean difference
+n per group ≈ 16 × (SD/d)²
+where d = expected mean difference; total n is twice this
 ```
 
 **For correlations**:

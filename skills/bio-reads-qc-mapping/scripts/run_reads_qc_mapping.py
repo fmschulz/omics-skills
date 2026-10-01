@@ -62,18 +62,77 @@ def load_samples(path: Path) -> list[dict[str, str]]:
     return rows
 
 
-def build_steps(rows: list[dict[str, str]], out: Path) -> list[dict[str, object]]:
+def build_steps(
+    rows: list[dict[str, str]], out: Path, threads: int
+) -> list[dict[str, object]]:
+    """Build the QC and optional mapping steps for every sample-sheet row.
+
+    Args:
+        rows: Validated sample-sheet rows.
+        out: Absolute output directory.
+        threads: Thread count passed to fastp, bwa-mem2, and minimap2.
+
+    Returns:
+        Ordered step dictionaries with commands and declared outputs.
+    """
     steps: list[dict[str, object]] = []
+    cpus = str(threads)
     for row in rows:
         sample, kind = row["sample_id"], row["read_type"]
         sample_dir = out / sample
         if kind == "paired_short":
             clean1, clean2 = sample_dir / "reads_R1.fastq", sample_dir / "reads_R2.fastq"
-            steps.append({"sample_id": sample, "stage": "qc", "command": ["fastp", "--in1", row["read1"], "--in2", row["read2"], "--out1", str(clean1), "--out2", str(clean2), "--json", str(sample_dir / "fastp.json"), "--html", str(sample_dir / "fastp.html")], "outputs": [str(clean1), str(clean2), str(sample_dir / "fastp.json")]})
+            steps.append(
+                {
+                    "sample_id": sample,
+                    "stage": "qc",
+                    "command": [
+                        "fastp",
+                        "--thread",
+                        cpus,
+                        "--in1",
+                        row["read1"],
+                        "--in2",
+                        row["read2"],
+                        "--out1",
+                        str(clean1),
+                        "--out2",
+                        str(clean2),
+                        "--json",
+                        str(sample_dir / "fastp.json"),
+                        "--html",
+                        str(sample_dir / "fastp.html"),
+                    ],
+                    "outputs": [
+                        str(clean1),
+                        str(clean2),
+                        str(sample_dir / "fastp.json"),
+                    ],
+                }
+            )
             mapped_reads = [clean1, clean2]
         elif kind == "single_short":
             clean1 = sample_dir / "reads.fastq"
-            steps.append({"sample_id": sample, "stage": "qc", "command": ["fastp", "--in1", row["read1"], "--out1", str(clean1), "--json", str(sample_dir / "fastp.json"), "--html", str(sample_dir / "fastp.html")], "outputs": [str(clean1), str(sample_dir / "fastp.json")]})
+            steps.append(
+                {
+                    "sample_id": sample,
+                    "stage": "qc",
+                    "command": [
+                        "fastp",
+                        "--thread",
+                        cpus,
+                        "--in1",
+                        row["read1"],
+                        "--out1",
+                        str(clean1),
+                        "--json",
+                        str(sample_dir / "fastp.json"),
+                        "--html",
+                        str(sample_dir / "fastp.html"),
+                    ],
+                    "outputs": [str(clean1), str(sample_dir / "fastp.json")],
+                }
+            )
             mapped_reads = [clean1]
         else:
             clean1 = sample_dir / "reads.fastq"
@@ -82,9 +141,24 @@ def build_steps(rows: list[dict[str, str]], out: Path) -> list[dict[str, object]
         if row["reference"]:
             sam = sample_dir / "mapped.sam"
             if kind == "long":
-                command = ["minimap2", "-ax", "map-ont", row["reference"], str(mapped_reads[0])]
+                command = [
+                    "minimap2",
+                    "-t",
+                    cpus,
+                    "-ax",
+                    "map-ont",
+                    row["reference"],
+                    str(mapped_reads[0]),
+                ]
             else:
-                command = ["bwa-mem2", "mem", row["reference"], *map(str, mapped_reads)]
+                command = [
+                    "bwa-mem2",
+                    "mem",
+                    "-t",
+                    cpus,
+                    row["reference"],
+                    *map(str, mapped_reads),
+                ]
             steps.append({"sample_id": sample, "stage": "mapping", "command": command, "stdout": str(sam), "outputs": [str(sam)]})
     return steps
 
@@ -130,11 +204,19 @@ def main() -> int:
     parser.add_argument("sample_sheet", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=4,
+        help="threads passed to fastp, bwa-mem2, and minimap2 (default: 4)",
+    )
     args = parser.parse_args()
+    if args.threads < 1:
+        parser.error("--threads must be at least 1")
     try:
         rows = load_samples(args.sample_sheet.resolve())
         args.out.mkdir(parents=True, exist_ok=True)
-        steps = build_steps(rows, args.out.resolve())
+        steps = build_steps(rows, args.out.resolve(), args.threads)
         if args.execute:
             execute(steps)
         manifest = {"schema_version": "1.0", "mapping_required": any(r["reference"] for r in rows), "samples": rows, "steps": steps}

@@ -1,2 +1,2 @@
-genome	pass_gunc	css
-bin_prok	True	0.12
+genome	n_genes_called	n_genes_mapped	n_contigs	taxonomic_level	proportion_genes_retained_in_major_clades	genes_retained_index	clade_separation_score	contamination_portion	n_effective_surplus_clades	mean_hit_identity	reference_representation_score	pass.GUNC
+bin_prok	2810	2650	41	kingdom	1.0	0.94	0.0	0.0	0.0	0.91	0.86	True

@@ -151,7 +151,8 @@ After binning, assess bin quality:
 checkm2 predict --input bins/ --output-directory qc/ -t 16
 
 # For contamination detection
-gunc run --input_dir bins/ --db_file gunc_db --threads 16
+GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
+gunc run --input_dir bins/ --db_file "$GUNC_DB" --out_dir gunc_qc/ --threads 16
 ```
 
 ## Common Issues

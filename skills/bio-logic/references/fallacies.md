@@ -34,7 +34,7 @@
 | Base rate neglect | Ignoring prior probability | 99% accurate test + rare disease ≠ 99% certainty |
 | Texas sharpshooter | Find pattern → claim prediction | Data mining until finding significant correlation |
 | Multiple comparisons | Many tests → report hits | "Jellybean color X causes acne" (after testing 20 colors) |
-| Prosecutor's fallacy | P(E|H) confused with P(H|E) | "1 in million match" ≠ "1 in million innocent" |
+| Prosecutor's fallacy | P(E\|H) confused with P(H\|E) | "1 in million match" ≠ "1 in million innocent" |
 
 ## Structural Fallacies
 
@@ -73,4 +73,4 @@ When identifying a fallacy:
 **What would be needed**: [Evidence that would support the claim]
 ```
 
-**Note**: Fallacious reasoning doesn't prove the conclusion false—only that this argument doesn't support it.
+**Note**: Fallacious reasoning doesn't prove the conclusion false. It shows only that this argument doesn't support it.

@@ -45,20 +45,19 @@
 - Could unmeasured confounding explain findings?
 - Is there residual confounding after adjustment?
 
-**Control methods**: Randomization > matching > stratification > statistical adjustment > restriction
+**Control methods**: Randomization balances measured and unmeasured confounders. Restriction, matching, stratification, and statistical adjustment control only the confounders that were measured.
 
 ## Study-Level Bias Assessment
 
-### Cochrane Risk of Bias Domains
+### Cochrane Risk of Bias 2 (RoB 2) Domains for Randomized Trials
 
-1. **Selection**: Random sequence generation, allocation concealment
-2. **Performance**: Blinding of participants and personnel
-3. **Detection**: Blinding of outcome assessment
-4. **Attrition**: Incomplete outcome data
-5. **Reporting**: Selective outcome reporting
-6. **Other**: Funding, early stopping, baseline imbalance
+1. **Randomization process**: sequence generation, allocation concealment, baseline imbalance
+2. **Deviations from intended interventions**: blinding of participants and personnel, adherence
+3. **Missing outcome data**: attrition and how it was handled
+4. **Measurement of the outcome**: blinding of outcome assessors, measurement method
+5. **Selection of the reported result**: outcomes and analyses chosen after seeing the data
 
-Rate each: Low risk / High risk / Unclear
+Rate each assessed result, not the whole study: give a judgment for each domain and an overall judgment for every outcome and time point assessed (Low risk / Some concerns / High risk)
 
 ### Newcastle-Ottawa Scale (Observational)
 

@@ -1,2 +1,2 @@
-genome	completeness	contamination	taxonomy
-bin_euk	88.1	3.4	Fungi
+bin	completeness	contamination	ncbi_lng
+bin_euk.fa	88.1	3.4	1-131567-2759-4751

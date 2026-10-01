@@ -1,28 +1,28 @@
 # Prefect + Dask playbook (local-first, scalable to clusters)
 
-Last verified: 2026-05-30
-Tool version/release checked: Prefect 3.7.2; Dask/distributed 2026.3.0; prefect-dask package release v0.2.6 (archived repository; install through `prefect[dask]` per Prefect docs)
-Official docs/manual: https://docs.prefect.io/latest/integrations/prefect-dask/task_runners/; https://docs.dask.org/en/stable/; https://distributed.dask.org/en/stable/
-Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2; https://github.com/dask/dask/releases/tag/2026.3.0; https://github.com/prefect-archive/prefect-dask/releases/tag/v0.2.6
+Last verified: 2026-10-01
+Tool version/release checked: Prefect 3.8.7; Dask/distributed 2026.8.0; prefect-dask 0.3.7 (maintained in the Prefect repository under `src/integrations/prefect-dask`; install through `prefect[dask]`)
+Official docs/manual: https://docs.prefect.io/integrations/prefect-dask; https://docs.dask.org/en/stable/; https://distributed.dask.org/en/stable/
+Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.8.7; https://github.com/dask/dask/releases/tag/2026.8.0; https://github.com/PrefectHQ/prefect/tree/main/src/integrations/prefect-dask
 
 ## What this gives you
 - Prefect handles orchestration (retries, states, schedules, artifacts).
 - Dask handles parallel execution of Prefect tasks (local or distributed).
 
 ## Install
-Prefer the official extra:
-- `pip install "prefect[dask]"`
+Add the official extra to the project's uv environment:
+- `uv add "prefect[dask]"`
 
-## Local setup (optional but recommended)
+## Local setup (optional)
 1. Start a local Prefect server/UI:
    - `prefect server start`
 2. Run flows locally during development (you can still run without the UI).
 
 ## Key rules (agent should enforce)
 - **Concurrency requires `.submit()` or `.map()`**. Direct task calls run sequentially.
-- `DaskTaskRunner` uses multiprocessing → guard flow invocation with:
-  `if __name__ == "__main__":`
-- Default behavior: if no Dask scheduler address is provided, Prefect can create a temporary local cluster.
+- `DaskTaskRunner` starts worker processes, so guard the flow call with
+  `if __name__ == "__main__":`.
+- Without `address`, `DaskTaskRunner` creates a temporary local cluster for the flow run and closes it afterwards. Set `n_workers` and `threads_per_worker` explicitly so the run stays inside its CPU allocation.
 
 ## Minimal template: sample-parallel QC
 ```python
@@ -47,7 +47,7 @@ def fastqc(reads: Path, outdir: Path) -> Path:
     sample_out = outdir / sample_name(reads)
     sample_out.mkdir(exist_ok=True)
 
-    cmd = ["fastqc", "-o", str(sample_out), str(reads)]
+    cmd = ["fastqc", "--threads", "1", "-o", str(sample_out), str(reads)]
     subprocess.run(cmd, check=True)
 
     # Return a deterministic artifact path
@@ -87,5 +87,5 @@ def my_flow():
 - Make tasks idempotent: write outputs to deterministic locations and check for existence.
 
 ## When NOT to use DaskTaskRunner
-- Work is mostly “shell out to many tiny CLI calls on HPC” (Nextflow is usually a better fit).
-- Tasks depend on non-picklable state (open DB connections, open file handles, GPU contexts) that isn’t recreated inside the task.
+- Work is mostly many small CLI calls on HPC; Nextflow is usually a better fit.
+- Tasks depend on non-picklable state (open DB connections, open file handles, GPU contexts) that is not recreated inside the task.

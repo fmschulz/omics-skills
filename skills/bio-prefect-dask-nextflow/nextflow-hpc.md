@@ -1,9 +1,9 @@
 # Nextflow on HPC (Slurm/PBS) playbook
 
-Last verified: 2026-05-30
-Tool version/release checked: Nextflow v26.04.3
+Last verified: 2026-10-01
+Tool version/release checked: Nextflow v26.04.6
 Official docs/manual: https://www.nextflow.io/docs/latest/; https://www.nextflow.io/docs/latest/executor.html
-Release/source: https://github.com/nextflow-io/nextflow/releases/tag/v26.04.3
+Release/source: https://github.com/nextflow-io/nextflow/releases/tag/v26.04.6
 
 ## Why Nextflow for HPC bioinformatics
 - Nextflow’s executor layer lets you keep pipeline logic independent of the execution platform (local vs Slurm vs PBS).
@@ -18,14 +18,14 @@ Release/source: https://github.com/nextflow-io/nextflow/releases/tag/v26.04.3
   - `align_bwa.nf`
 - Optional: `conf/` for profile-specific configs
 
-## Minimal DSL2 skeleton (main.nf)
-```nextflow
-nextflow.enable.dsl=2
+## Minimal skeleton (main.nf)
+DSL2 is the only dialect, so `nextflow.enable.dsl = 2` is not needed. Nextflow v26.04+ parses scripts and configs with the strict syntax by default; check code with `nextflow lint`.
 
+```nextflow
 include { FASTQC } from './modules/fastqc'
 
 workflow {
-  reads_ch = Channel.fromPath(params.reads)
+  reads_ch = channel.fromPath(params.reads)
   FASTQC(reads_ch)
 }
 ```
@@ -39,8 +39,9 @@ process FASTQC {
     path reads
 
   output:
-    path "${reads.baseName}_fastqc.zip"
-    path "${reads.baseName}_fastqc.html"
+    // FastQC strips .gz and .fastq/.fq itself; a glob avoids rebuilding its name rules.
+    path "*_fastqc.zip"
+    path "*_fastqc.html"
 
   script:
   """
@@ -51,8 +52,6 @@ process FASTQC {
 
 ## HPC config example (nextflow.config)
 ```groovy
-nextflow.enable.dsl=2
-
 params {
   reads  = null
   outdir = "results"
@@ -72,6 +71,7 @@ profiles {
     process.cpus     = 4
     process.memory   = '16 GB'
     process.time     = '2h'
+    // process.clusterOptions = '--account=site-account'
 
     // Protect the scheduler / shared FS from too many tiny jobs
     // executor.queueSize       = 100
@@ -94,9 +94,12 @@ Run:
 - Resume: `nextflow run main.nf -profile slurm -resume --reads '/path/*.fastq.gz'`
 
 For a scheduler-submitted launch job, use
-`scripts/submit_nextflow.sh`. It requires `SLURM_ACCOUNT`, submits the launch
-through `sbatch`, enables trace/report/timeline artifacts, and rejects a run
-whose trace or declared result directory is missing or empty.
+`scripts/submit_nextflow.sh` from the project root. It requires `SLURM_ACCOUNT`,
+submits the launch through `sbatch --chdir` set to the current directory,
+enables trace/report/timeline artifacts, and rejects a run whose trace or
+declared result directory is missing or empty. On multi-cluster sites, export
+`SBATCH_CLUSTERS` (and `SBATCH_PARTITION`, `SBATCH_QOS`) first; `--parsable`
+then prints `jobid;cluster`.
 
 ## Resuming and caching (agent guidance)
 - Use `-resume` to reuse cached task results.
@@ -110,6 +113,6 @@ whose trace or declared result directory is missing or empty.
 - Avoid generating huge numbers of tiny intermediate files when possible (pipe/stream between tools).
 
 ## Pitfalls
-- Too many tiny processes → scheduler overhead + filesystem pressure.
-- Mis-specified resources → jobs killed by scheduler; start conservative and tune with trace reports.
-- Container policy mismatches (Docker blocked on HPC) → plan for Singularity/Apptainer or Conda.
+- Too many tiny processes add scheduler overhead and filesystem pressure.
+- Mis-specified resources get jobs killed by the scheduler; start conservative and tune from trace reports.
+- Container policy mismatches (Docker blocked on HPC): plan for Apptainer/Singularity images.

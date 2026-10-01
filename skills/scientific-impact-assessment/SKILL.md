@@ -16,9 +16,8 @@ Use this skill to measure the reach of a paper with citation, attention, and jou
    - After installation: `~/.agents/skills/scientific-impact-assessment/scripts/measure-impact`
 3. OpenAlex is the default source for paper-level citation data.
    - The CLI retrieves `cited_by_count`, publication year, journal/source name, and citation history from OpenAlex.
-4. Altmetric is optional and should be treated as conditional enrichment.
-   - Current Altmetric documentation says an API key is required for Details Page API access.
-   - If `ALTMETRIC_API_KEY` is not available, the CLI should report Altmetric as unavailable instead of failing.
+4. Altmetric is optional enrichment. The Details Page API requires an API key.
+   - Without `ALTMETRIC_API_KEY`, the CLI reports Altmetric as unavailable (`no_api_key`) instead of failing. A keyless request to `api.altmetric.com/v1/doi/...` returned HTTP 403 when checked on 2026-10-01.
 5. Journal-level impact factors come from the curated references table in `references/journal_metrics_2024.tsv`.
    - These are curated public web values, mostly from official publisher pages.
    - The `Science` row uses a labeled third-party fallback because no public official AAAS JIF page was located during skill creation on March 19, 2026.
@@ -34,21 +33,21 @@ Use this skill to measure the reach of a paper with citation, attention, and jou
 |------|--------|
 | Measure by DOI | `skills/scientific-impact-assessment/scripts/measure-impact --doi 10.1038/nature12373` |
 | Measure by OpenAlex ID | `skills/scientific-impact-assessment/scripts/measure-impact --openalex-id W2741809807` |
-| Add OpenAlex polite-pool email | `--mailto you@example.org` |
+| Add OpenAlex polite-pool email | `--mailto you@example.org` or `OPENALEX_MAILTO` |
 | Enable Altmetric enrichment | Source `ALTMETRIC_API_KEY` from a private environment file before running |
 | Text summary output | `--format text` |
 | Save JSON report | `--output impact-report.json` |
-| Journal metrics table | `references/journal_metrics_2024.tsv` |
-| Deployment regression test | `python3 -m unittest tests/test_scientific_impact_assessment.py -v` |
+| Journal metrics table | [references/journal_metrics_2024.tsv](references/journal_metrics_2024.tsv) (sources: [references/README.md](references/README.md)) |
+| Regression test (repository root) | `uv run --no-project --with pytest python -m pytest tests/test_scientific_impact_assessment.py -q` |
 
 ## Input Requirements
 
-- Python 3
+- `uv` (the CLI runs the stdlib-only script through `uv run --script`)
 - One of:
   - `--doi <doi>`
   - `--openalex-id <id>`
 - Optional:
-  - `--mailto <email>` for OpenAlex polite-pool identification
+  - `--mailto <email>` or `OPENALEX_MAILTO` for OpenAlex polite-pool identification
   - `ALTMETRIC_API_KEY` loaded from a private environment file
   - `--output <path>`
   - `--format json|text`
@@ -99,7 +98,7 @@ skills/scientific-impact-assessment/scripts/measure-impact \
 ## Troubleshooting
 
 **Issue**: Altmetric is always unavailable.  
-**Solution**: Check whether `ALTMETRIC_API_KEY` is set. Current Altmetric docs require a key for all Details Page API endpoints.
+**Solution**: Check whether `ALTMETRIC_API_KEY` is set. The Details Page API requires a key for every endpoint.
 
 **Issue**: The journal-level lookup is empty.  
 **Solution**: The journal is probably not in `references/journal_metrics_2024.tsv` yet. Return the OpenAlex paper metrics and add the journal later if you can source a public metric page.
@@ -109,5 +108,5 @@ skills/scientific-impact-assessment/scripts/measure-impact \
 
 ## Related Skills
 
-- `/crossref-lookup` — resolve DOIs before scoring impact
-- `/polars-dovmed` — retrieve the full text that backs the impact claim
+- `/crossref-lookup`: resolve DOIs before scoring impact
+- `/polars-dovmed`: retrieve the full text that backs the impact claim

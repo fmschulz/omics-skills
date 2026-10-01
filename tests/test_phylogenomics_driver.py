@@ -100,3 +100,52 @@ def test_reference_checksum_mismatch_is_rejected(tmp_path):
     result = subprocess.run([sys.executable, str(SCRIPT), str(SKILL / "fixtures" / "markers.tsv"), "--references", str(refs), "--out", str(tmp_path / "out")], text=True, capture_output=True)
     assert result.returncode != 0
     assert "checksum mismatch" in result.stderr
+
+
+def test_threads_reach_alignment_and_tree_commands(tmp_path):
+    base = [
+        sys.executable,
+        str(SCRIPT),
+        str(SKILL / "fixtures" / "markers.tsv"),
+        "--references",
+        str(SKILL / "fixtures" / "references.tsv"),
+        "--seed",
+        "41",
+        "--threads",
+        "4",
+    ]
+    for tool, flag in (("iqtree3", "-T"), ("veryfasttree", "-threads")):
+        out = tmp_path / tool
+        result = subprocess.run(
+            [*base, "--tree-tool", tool, "--out", str(out)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        plan = json.loads((out / "run_manifest.json").read_text())
+        assert plan["threads"] == 4
+        alignment, _, tree, _ = plan["steps"]
+        assert alignment["command"][1:4] == ["--auto", "--thread", "4"]
+        assert tree["command"][tree["command"].index(flag) + 1] == "4"
+
+
+def test_non_positive_threads_are_rejected(tmp_path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(SKILL / "fixtures" / "markers.tsv"),
+            "--references",
+            str(SKILL / "fixtures" / "references.tsv"),
+            "--out",
+            str(tmp_path / "out"),
+            "--threads",
+            "0",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "positive --seed and --threads" in result.stderr

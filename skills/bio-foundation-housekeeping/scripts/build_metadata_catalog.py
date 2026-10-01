@@ -16,6 +16,7 @@ import hashlib
 import json
 import shutil
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +24,6 @@ import duckdb
 from pydantic import ValidationError
 
 from generate_models import generate_source, load_module
-
 
 TABLE_NAMES = ("samples", "runs", "files", "results", "result_inputs", "provenance")
 
@@ -422,6 +422,12 @@ def build_outputs(
         f"Input: `{input_path.name}`.",
         "",
         f"LinkML schema SHA-256: `{sha256(artifacts['schema'])}`.",
+        "",
+        "Dependencies: "
+        + ", ".join(
+            f"{name} {version(name)}" for name in ("linkml", "pydantic", "duckdb")
+        )
+        + ".",
         "",
         "| Table | Rows | Parquet SHA-256 |",
         "|---|---:|---|",

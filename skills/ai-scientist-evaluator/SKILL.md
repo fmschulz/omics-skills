@@ -1,16 +1,12 @@
 ---
 name: ai-scientist-evaluator
-description: >-
-  Score completed AI-generated biology or bioinformatics work against its
-  original task and required artifacts. Use when auditing or comparing AI
-  scientist submissions for task completion, scientific validity, and
-  reproducibility.
+description: Score finished AI-generated biology or bioinformatics work against its task and required artifacts. Use when auditing or ranking AI scientist submissions for task completion, scientific validity, and reproducibility.
 ---
 
 # AI Scientist Evaluator
 
-Use this skill when Codex should behave like a skeptical reviewer panel rather
-than a research generator. Evaluate completed outputs, not just plans.
+Act as a skeptical reviewer panel, not a research generator. Evaluate completed
+outputs, not plans.
 
 ## Instructions
 
@@ -35,7 +31,9 @@ than a research generator. Evaluate completed outputs, not just plans.
    - scientific validity reviewer
    - computational and reproducibility reviewer
    - domain biology reviewer
-   - writing and editorial reviewer
+   - writing and editorial reviewer, who also checks the `/scientific-writing`
+     Manuscript Rules (each limitation stated once, no results restated in
+     legends, no unchecked explanations of results)
 6. Apply hard gates before generous scoring. A submission is not
    publication-ready if required deliverables are missing, claims are not
    supported by visible outputs, provenance is untraceable, the core method is
@@ -74,8 +72,8 @@ than a research generator. Evaluate completed outputs, not just plans.
     validate the shape against
     [`assets/evaluation_schema.json`](assets/evaluation_schema.json). Use
     [`assets/report_template.md`](assets/report_template.md) for markdown
-    reports. For completed JSON reviews, you may aggregate rankings with
-   `uv run --script "$HOME/.agents/skills/ai-scientist-evaluator/scripts/aggregate_reviews.py" review1.json review2.json --out_md leaderboard.md`.
+    reports. For completed JSON reviews, aggregate rankings with
+    `uv run --script "$HOME/.agents/skills/ai-scientist-evaluator/scripts/aggregate_reviews.py" review1.json review2.json --out_md leaderboard.md`.
 
 ## Quick Reference
 
@@ -87,13 +85,6 @@ than a research generator. Evaluate completed outputs, not just plans.
 | Viral functional genomics review | Use profile `viral-functional-genomics` |
 | Methods or software benchmark review | Use profile `methods-software` |
 | Manuscript or short communication review | Use profile `manuscript-packaging` |
-| Pick scoring weights | Read `assets/default_weight_profiles.yaml` |
-| Interpret category names | Read `references/category_definitions.md` |
-| Ask evidence-forcing review questions | Read `references/question_bank.md` |
-| Check integrity and rigor failures | Read `references/red_flags.md` |
-| Score consistently | Read `references/score_scale.md` |
-| Draft a report | Use `assets/report_template.md` |
-| Produce structured JSON | Use `assets/evaluation_template.json` and `assets/evaluation_schema.json` |
 | Rank finished JSON reviews | Run `uv run --script "$HOME/.agents/skills/ai-scientist-evaluator/scripts/aggregate_reviews.py" review1.json review2.json --out_md leaderboard.md` |
 
 ## Input Requirements
@@ -195,6 +186,6 @@ uv run --script \
 
 ## Related Skills
 
-- `/bio-logic` — general scientific reasoning beyond AI evaluation
-- `/manuscript-review-council` — equivalent pipeline for human-authored manuscripts
-- `/scientific-writing` — draft the evaluation writeup
+- `/bio-logic`: general scientific reasoning beyond AI evaluation
+- `/manuscript-review-council`: equivalent review for human-authored manuscripts
+- `/scientific-writing`: draft the evaluation writeup

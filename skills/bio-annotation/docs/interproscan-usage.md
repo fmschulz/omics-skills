@@ -21,19 +21,17 @@ InterProScan is a genome-scale protein function classification tool that combine
 
 ### InterProScan 6 (Nextflow-based)
 
-Recommended for most users, supports Docker, Singularity, and Apptainer:
+Needs Nextflow 25.10 or later and a container runtime (Docker, Podman, SingularityCE, or Apptainer). Profiles in 6.0.2.2 include `docker`, `podman`, `singularity`, `apptainer`, `slurm`, `lsf`, and `test`; there is no `local` profile. Pin the workflow release with `-r` and the InterPro data release with `--interpro` (the default `latest` is not reproducible). Compute nodes without internet access need `--noMatchesApi`, which skips the precalculated-match lookup.
 
 ```bash
-# Install Nextflow
-curl -s https://get.nextflow.io | bash
+pixi add "nextflow>=25.10"
 
-# Run InterProScan6
-nextflow run ebi-pf-team/interproscan6 \
-  -r 6.0.0 \
-  -profile docker,local \
+pixi run nextflow run ebi-pf-team/interproscan6 \
+  -r 6.0.2.2 \
+  -profile singularity \
   --input proteins.faa \
   --datadir /path/to/interpro_data \
-  --interpro latest
+  --interpro 110.0
 ```
 
 ### Traditional Installation
@@ -202,10 +200,10 @@ mkdir -p "${work_tmp}"
 test -s smoke_run.tsv'
 ```
 
-On Dori, use the required project account and debug QOS:
+On Dori, use the required cluster, project account, partition and normal QOS (never a debug partition or QOS):
 
 ```bash
-sbatch -A grp-org-sc-mgs --qos=jgi_debug \
+sbatch -M perceus-00 -A grp-org-sc-mgs -p dori --qos=jgi_normal \
   --job-name=interpro-smoke --cpus-per-task=1 --mem=16G --time=00:15:00 \
   --wrap='set -euo pipefail
 work_tmp="${TMPDIR:-${SLURM_TMPDIR:-/tmp}}/interproscan"
@@ -259,13 +257,13 @@ present, non-empty, and parseable.
 ### InterProScan 6 with Nextflow
 ```bash
 nextflow run ebi-pf-team/interproscan6 \
-  -r 6.0.0 \
-  -profile docker,slurm \
+  -r 6.0.2.2 \
+  -profile singularity,slurm \
   --input proteins.faa \
   --datadir /data/interpro \
-  --interpro latest \
+  --interpro 110.0 \
   --outdir results \
-  --formats TSV,GFF3 \
+  --formats tsv,gff3 \
   --goterms \
   --pathways
 ```

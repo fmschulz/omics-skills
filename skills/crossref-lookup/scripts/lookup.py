@@ -21,6 +21,11 @@ import requests
 
 
 CROSSREF_API_BASE = "https://api.crossref.org"
+# Seconds between requests, from the x-rate-limit headers Crossref returned on
+# 2026-10-01: single-record lookups 5/s public and 10/s polite (mailto), list
+# queries 1/s public and 3/s polite.
+SINGLE_INTERVAL_S = {"public": 0.2, "polite": 0.1}
+LIST_INTERVAL_S = {"public": 1.0, "polite": 0.34}
 DOI_PATTERN = re.compile(r"^10\.\d{4,9}/\S+$", re.IGNORECASE)
 DOI_IN_TEXT = re.compile(
     r"(?:doi:\s*|https?://(?:dx\.)?doi\.org/)?(10\.\d{4,9}/[^\s\"']+)",
@@ -57,10 +62,11 @@ class CrossrefClient:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": f"omics-skills-crossref/1.5{suffix}"})
         self.timeout = timeout
+        self.pool = "polite" if email else "public"
         self._last_request = 0.0
 
-    def _pace(self) -> None:
-        remaining = 0.05 - (time.monotonic() - self._last_request)
+    def _pace(self, interval_s: float) -> None:
+        remaining = interval_s - (time.monotonic() - self._last_request)
         if remaining > 0:
             time.sleep(remaining)
         self._last_request = time.monotonic()
@@ -69,7 +75,7 @@ class CrossrefClient:
         doi = normalize_doi(raw_doi)
         if doi is None:
             return LookupResult("invalid", None, detail="invalid DOI format")
-        self._pace()
+        self._pace(SINGLE_INTERVAL_S[self.pool])
         try:
             response = self.session.get(
                 f"{CROSSREF_API_BASE}/works/{quote(doi, safe='')}",
@@ -96,7 +102,7 @@ class CrossrefClient:
         return LookupResult("valid", doi, metadata=payload["message"])
 
     def search_title(self, title: str, rows: int = 5) -> list[dict[str, Any]]:
-        self._pace()
+        self._pace(LIST_INTERVAL_S[self.pool])
         response = self.session.get(
             f"{CROSSREF_API_BASE}/works",
             params={"query.title": title, "rows": rows},

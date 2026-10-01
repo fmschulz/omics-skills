@@ -1,6 +1,6 @@
 ---
 name: bio-annotation
-description: Annotate genes or proteins and infer taxonomy from sequence homology. Use when assigning functions, domains, or taxonomic labels to genomes, contigs, or protein sets.
+description: Annotate proteins with functions, domains, and homology-based taxonomy. Use when assigning functional or taxonomic labels to proteins from genomes, contigs, or MAGs.
 ---
 
 # Bio Annotation
@@ -18,11 +18,11 @@ Functional annotation and taxonomy inference from sequence homology.
      --out results/bio-annotation
    ```
 
-   The driver refuses a non-empty destination, enforces globally unique protein identifiers, writes normalized Parquet tables, adds explicit absent-marker rows, and computes query-specific/missing/expanded/contracted families against the reference median. The artifact contract is in `schemas/artifacts.schema.json`.
+   `raw_annotations.tsv` is one row per protein and family hit with columns `genome, protein_id, family_id, family_name, category, e_value, annotation, taxonomy, confidence`, merged by you from the tool outputs below. `genomes.tsv` has `genome, role (query|reference), domain, route`; `marker_catalog.tsv` has `category, family_id, family_name, expected`. `fixtures/` holds a runnable example. The driver refuses a non-empty destination, enforces globally unique protein identifiers, writes normalized Parquet tables, adds explicit absent-marker rows, and computes query-specific/missing/expanded/contracted families against the reference median. The artifact contract is in `schemas/artifacts.schema.json`.
 3. When a nucleotide assembly, MAG, genome, or contig FASTA is available, run `/tracking-taxonomy-updates` first for the BBTools-container QuickClade `percontig` domain screen. Use that routing table to choose the right taxonomy/QC path before interpreting protein annotations.
-4. For InterProScan, read `docs/interproscan-usage.md` and validate the exact CLI with `--help` or `--version`. Current stable is v5.77-108.0; InterProScan 6 (Nextflow-based) is a forward-looking migration target.
+4. For InterProScan, read `docs/interproscan-usage.md` and validate the exact CLI with `--help` or `--version`. InterProScan 5 (5.78-109.0) and the Nextflow-based InterProScan 6 (6.0.2.2) both have current releases (checked 2026-10-01). Pin one release and one InterPro data release per project.
 5. Run InterProScan for domain/family annotation.
-6. Run eggNOG-mapper v2.1.13+ for orthology-based annotation.
+6. Run eggNOG-mapper v2.1.13+ for orthology-based annotation. v3.0.0 is in beta; use it only when the project pins it deliberately.
 7. Run sequence-vs-database search and resolve taxonomy with TaxonKit v0.20.0+ (required for the March 2025 NCBI rank update that replaces "superkingdom" with "domain" and adds "realm" for viruses).
    Backend choice (DIAMOND, clustered nr, MMseqs2-GPU): see [docs/README.md](docs/README.md#sequence-search-backends).
 8. For domain-specific taxonomy after QuickClade:
@@ -32,8 +32,8 @@ Functional annotation and taxonomy inference from sequence homology.
    - Eukaryota -> use EukCC for MAG/genome QC and lineage context; avoid CheckM/GTDB-Tk assumptions.
 9. For group-appropriate marker families, run HMM searches against the relevant profile libraries (Pfam, TIGRFAM, COG/arCOG, PHROG/NCVOG for viruses, eukaryotic ribosomal/structural HMMs when applicable). Use `pyhmmer` (Python bindings around HMMER 3.4 with native SIMD and batch-friendly APIs) by default; fall back to the HMMER CLI (`hmmsearch` / `hmmscan`) when an upstream tool requires it. The choice of profile libraries is derived from the literature-derived playbook for the inferred group.
 10. Build an annotation-wide feature inventory by genome/contig and by gene family/domain/pathway.
-11. **Marker-gene census** — from the literature-derived playbook, list the diagnostic marker / machinery categories for the inferred group (e.g., replication, transcription, translation-related such as ribosomal proteins and translation factors, packaging, capsid/structural, chromatin/SMC/topoisomerase, host-interaction). For EACH query genome and each comparison-set genome supplied, record presence and copy number per category. Save as `marker_census.tsv` (columns: genome, category, family_id, family_name, copy_number, evidence_source, e_value, notes). Expected-but-absent markers are first-class rows, not silent omissions.
-12. **Per-family copy-number matrix** — build a Pfam/InterPro/HMM-family × genome integer matrix covering queries AND the supplied relatives. Persist as `family_copy_number_matrix.parquet`. Compute per-family fold change vs the relative median; flag query-specific families, missing-expected families, expansions, and contractions in `family_expansion_candidates.tsv`.
+11. **Marker-gene census**: From the literature-derived playbook, list the diagnostic marker / machinery categories for the inferred group (e.g., replication, transcription, translation-related such as ribosomal proteins and translation factors, packaging, capsid/structural, chromatin/SMC/topoisomerase, host-interaction). For EACH query genome and each comparison-set genome supplied, record presence and copy number per category. Save as `marker_census.tsv` (columns: genome, category, family_id, family_name, copy_number, evidence_source, e_value, notes). Expected-but-absent markers are first-class rows, not silent omissions.
+12. **Per-family copy-number matrix**: Build a Pfam/InterPro/HMM-family × genome integer matrix covering queries AND the supplied relatives. Persist as `family_copy_number_matrix.parquet`. Compute per-family fold change vs the relative median; flag query-specific families, missing-expected families, expansions, and contractions in `family_expansion_candidates.tsv`.
 13. For exploratory work, read the literature-derived analysis playbook for the inferred organism or virus group before deciding what to flag.
 14. Mine the inventory for discovery candidates relative to that playbook: expected features, missing expected features, rare or expanded families, unusual combinations, annotation/taxonomy conflicts, and high-value unknowns.
 15. For specialized inputs such as viruses, organelles, symbionts, pathogens, or poorly characterized lineages, use the feature classes and outlier dimensions reported in the relevant literature rather than a fixed global checklist.
@@ -49,8 +49,11 @@ Prerequisites:
 Inputs:
 - proteins.faa (FASTA protein sequences).
 - reference_db/ (eggNOG, InterPro, DIAMOND databases + taxdump).
+- For the driver: `raw_annotations.tsv`, `genomes.tsv` (at least one query and one reference), and `marker_catalog.tsv` with the columns listed in Instructions step 2.
 
 ## Output
+
+The driver writes every file below except the agent-authored report and `logs/`, and also writes `run_manifest.json`.
 
 - results/bio-annotation/annotations.parquet
 - results/bio-annotation/domain_routing.tsv
@@ -60,7 +63,7 @@ Inputs:
 - results/bio-annotation/family_copy_number_matrix.parquet
 - results/bio-annotation/family_expansion_candidates.tsv
 - results/bio-annotation/discovery_candidates.tsv
-- results/bio-annotation/annotation_report.md
+- results/bio-annotation/annotation_report.md (agent-authored)
 - results/bio-annotation/logs/
 - stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
 - Artifact contract: [schemas/artifacts.schema.json](schemas/artifacts.schema.json)
@@ -75,7 +78,7 @@ Inputs:
 - [ ] Verify InterProScan output options are valid: use `-b` or `-d`, never both together.
 - [ ] Verify packaged InterProScan installs have been initialized with `python3 setup.py -f interproscan.properties` when required.
 - [ ] Verify required InterProScan helper binaries are resolvable, especially `ps_scan.pl`, `pfscan`, and `pfsearch`.
-- [ ] Run a short debug-queue `sbatch` smoke test on 1-2 proteins before submitting a large cluster job; do not compute on the login node.
+- [ ] Run a short `sbatch` smoke test on 1-2 proteins before submitting a large cluster job; do not compute on the login node. On Dori use `-M perceus-00 -A grp-org-sc-mgs -p dori --qos=jgi_normal` with a short `--time`, never a debug partition or QOS.
 - [ ] Verify required reference DBs exist under the reference root.
 - [ ] Domain-specific taxonomy tools match the route: GTDB-Tk for Bacteria/Archaea, `/bio-viromics` plus vConTACT3/GVClass as appropriate for viruses, and EukCC for Eukaryota.
 - [ ] Feature inventory summarizes all annotated and unannotated proteins, not only top hits.

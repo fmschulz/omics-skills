@@ -13,6 +13,7 @@ Do not use these tools to pad references. Use them only to verify or fill clearl
 ## Writing and review
 
 - Use this skill's sentence-review mode for final prose cleanup after factual accuracy is locked.
+- `academic-writing` and `stop-slop` (installed outside this pack): final prose pass when available.
 - `manuscript-review-council` or `proposal-review`: formal critique of manuscripts or proposals
 
 ## Reporting and methods support

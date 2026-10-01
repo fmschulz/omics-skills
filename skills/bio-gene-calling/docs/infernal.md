@@ -43,7 +43,7 @@ cmsearch --rfam --cut_ga --nohmmonly \
   Rfam.cm assembly.fna > output.cmsearch
 ```
 
-`--cut_ga` applies Rfam gathering thresholds (recommended default). If no hits are found, rerun without `--cut_ga` and record both the default and relaxed results in `ncRNA_census.tsv`.
+`--cut_ga` applies Rfam gathering thresholds and is the default run. The relaxed run drops `--cut_ga`; cmsearch then reports hits up to E = 10 but marks only those within the inclusion threshold (`--incE`, default 0.01) with `!` in the tblout `inc` column. Count only `!` hits and record both the default and relaxed results in `ncRNA_census.tsv`.
 
 ## Quality gates
 

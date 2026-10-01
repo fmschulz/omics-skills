@@ -21,17 +21,7 @@ Release/source: https://github.com/grp-bork/gunc/releases/tag/v1.1.1
 pixi add gunc
 ```
 
-**PyPI:**
-```bash
-pip install gunc
-```
-
-**From source:**
-```bash
-git clone https://github.com/grp-bork/gunc.git
-cd gunc
-pip install -e .
-```
+Install GUNC into the project's pixi environment; do not use `pip` against a system or base Python.
 
 ## Database Setup
 
@@ -40,25 +30,27 @@ GUNC requires one of two reference databases:
 
 ```bash
 # Option 1: ProGenomes 3 database
-gunc download_db -db progenomes_3 -o gunc_db/
+gunc download_db gunc_db/ -db progenomes_3
 
-# Option 2: GTDB release 214 database (larger, more comprehensive)
-gunc download_db -db gtdb_214 -o gunc_db/
+# Option 2: GTDB release 214 database (larger)
+gunc download_db gunc_db/ -db gtdb_214
 ```
 
 **Database sizes:**
 - ProGenomes: ~7 GB
 - GTDB: ~30 GB
 
-**Recommendation:** Use GTDB for most comprehensive detection, ProGenomes for faster processing.
+**Recommendation:** Use GTDB r214 for broader reference coverage and ProGenomes 3 for faster runs. Record which database produced the scores.
 
 ## Key Command-Line Flags
 
 | Flag | Description |
 |------|-------------|
-| `-i, --input_dir` | Directory containing genome FASTA files |
-| `-r, --input_file` | Single genome FASTA file |
-| `-d, --db_file` | Path to GUNC database |
+| `-d, --input_dir` | Directory containing genome FASTA files |
+| `-e, --file_suffix` | Suffix of files in `--input_dir` (default `.fa`; set `.fasta` or `.fna` to match your bins) |
+| `-i, --input_fasta` | Single genome FASTA file |
+| `-f, --input_file` | Text file listing FASTA paths, one per line |
+| `-r, --db_file` | DIAMOND database (`.dmnd`) file; defaults to the `GUNC_DB` environment variable |
 | `-o, --out_dir` | Output directory |
 | `-t, --threads` | Number of threads |
 | `--detailed_output` | Generate detailed per-contig output |
@@ -79,7 +71,7 @@ gunc run --input_dir bins/ \
 ### Run on single genome
 ```bash
 GUNC_DB=$(find gunc_db -name '*.dmnd' | head -n 1)
-gunc run --input_file bin1.fasta \
+gunc run --input_fasta bin1.fasta \
   --db_file "$GUNC_DB" \
   --out_dir gunc_output/ \
   --threads 8
@@ -175,7 +167,7 @@ join -t $'\t' \
 
 ## Performance Tips
 
-1. **Database selection**: ProGenomes for speed, GTDB for comprehensiveness
+1. **Database selection**: ProGenomes for speed, GTDB for broader reference coverage
 2. **Threading**: Scales well with CPU cores (16-32 threads typical)
 3. **Sensitive mode**: Use for critical applications (slower but more accurate)
 4. **Batch processing**: Process all bins in one run for efficiency

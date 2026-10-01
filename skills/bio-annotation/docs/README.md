@@ -35,7 +35,7 @@ Each tool has a dedicated markdown file with comprehensive usage information inc
 **Official docs/source**: https://bioinf.shenwei.me/taxonkit/usage/; https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0
 
 ### [InterProScan](interproscan-usage.md)
-**Version**: v5.77-108.0 (stable); InterProScan 6.0.0 (Nextflow) is the forward migration path
+**Version**: v5.77-108.0 checked in the guide; 5.78-109.0 and InterProScan 6.0.2.2 (Nextflow) were current on 2026-10-01. Pin one release per project
 **Purpose**: Protein function classification and domain prediction
 **Key features**: Integrates multiple signature databases, GO terms, pathway annotations
 **Documentation**: [interproscan-usage.md](interproscan-usage.md)
@@ -147,7 +147,7 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 - **Slow performance**: Use faster sensitivity mode, reduce `--max-target-seqs`
 
 ### TaxonKit
-- **Missing TaxIDs**: Update taxdump files, handle with `-F` flag
+- **Missing TaxIDs**: Update taxdump files (merged.dmp and delnodes.dmp resolve renamed and deleted IDs); set `reformat2 -R` to mark unresolved IDs
 - **Slow processing**: Increase thread count, check disk I/O
 
 ### InterProScan

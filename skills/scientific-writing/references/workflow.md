@@ -59,7 +59,7 @@ If the task is only a section rewrite, still do a short plan first and keep the 
 After the first full draft exists, run this cycle:
 
 1. Reviewer pass
-   - assess logic, evidence alignment, results-to-text consistency, citation safety, paragraph quality, and figure/table usefulness and caption clarity
+   - assess logic, evidence alignment, results-to-text consistency, citation safety, paragraph quality, figure/table usefulness, and the Manuscript Rules in `SKILL.md` (no caveat after every claim, each limitation once, no results in legends, no unchecked explanations, no implementation details in Results)
    - separate major issues from minor issues
    - state whether another revision pass is required
 2. Reviser pass
@@ -87,7 +87,7 @@ Three substantive loops are usually enough, but continue if the draft is still i
 
 Trim or expand after the major issues are under control. Avoid one-shot compression passes that destabilize technical details, citations, or numerical statements.
 
-## 8. Finalize conservatively
+## 8. Finalize
 
 The final response should include:
 

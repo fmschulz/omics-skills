@@ -1,6 +1,6 @@
 # Tool Documentation
 
-This directory contains comprehensive usage guides for the bioinformatics tools used in the bio-reads-qc-mapping skill.
+Usage guides for the tools used in the bio-reads-qc-mapping skill.
 
 **Last verified:** 2026-05-30
 **Tool version/release checked:** BBTools v39.85; minimap2 v2.31; Filtlong v0.3.1; Porechop_ABI source 0.5.1 / tag v0.5.0
@@ -10,6 +10,7 @@ This directory contains comprehensive usage guides for the bioinformatics tools 
 ## Tools Covered
 
 ### Short Read Processing
+- **fastp** - driver default for short-read QC and adapter/quality trimming; v1.3.7 is current as of 2026-10-01 ([GitHub](https://github.com/OpenGene/fastp), `-w/--thread` sets worker threads)
 - **[bbduk.md](bbduk.md)** - BBTools/BBDuk v39.85 quality control, adapter trimming, and contamination filtering
 - **[bbmap.md](bbmap.md)** - BBTools/BBMap v39.85 short read alignment to reference genomes
 
@@ -78,14 +79,14 @@ Run BBTools programs through Bryce Foster's official Docker image. As of
 2026-05-30, `bryce911/bbtools:39.85` and `latest` point to digest
 `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`.
 
-Install non-BBTools dependencies via conda/mamba or pixi:
+Install non-BBTools dependencies into the project's pixi environment:
 
 ```bash
 # BBTools container
 docker pull bryce911/bbtools:39.85
 
 # Other tools
-pixi add minimap2 chopper filtlong porechop_abi
+pixi add fastp bwa-mem2 minimap2 samtools chopper filtlong porechop_abi
 ```
 
 ## Documentation Sources

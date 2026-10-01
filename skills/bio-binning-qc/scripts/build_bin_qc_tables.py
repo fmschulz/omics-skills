@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Join routed CheckM2, GUNC, EukCC, and GTDB-Tk outputs into stable tables."""
+"""Join routed CheckM2, GUNC, EukCC, and GTDB-Tk outputs into stable tables.
+
+Expected inputs are the tools' native tables: CheckM2 `quality_report.tsv`
+(`Name`), GUNC `GUNC.*.maxCSS_level.tsv` (`genome`), EukCC folder-mode
+`eukcc.csv` (tab-separated, `bin` with its FASTA suffix), and GTDB-Tk
+`gtdbtk.*.summary.tsv` (`user_genome`).
+"""
 
 from __future__ import annotations
 
@@ -22,6 +28,7 @@ METRIC_FIELDS = (
     "taxonomy_tool",
     "review_flag",
 )
+FASTA_SUFFIXES = (".fasta", ".fna", ".fa")
 
 
 def read_table(path: Path, delimiter: str = "\t") -> list[dict[str, str]]:
@@ -35,7 +42,7 @@ def read_table(path: Path, delimiter: str = "\t") -> list[dict[str, str]]:
 def keyed(rows: list[dict[str, str]], key: str, label: str) -> dict[str, dict[str, str]]:
     result: dict[str, dict[str, str]] = {}
     for row in rows:
-        value = row.get(key, "").strip()
+        value = bin_name(row.get(key, ""))
         if not value:
             raise ValueError(f"{label} row is missing {key}")
         if value in result:
@@ -44,11 +51,27 @@ def keyed(rows: list[dict[str, str]], key: str, label: str) -> dict[str, dict[st
     return result
 
 
+def bin_name(value: str) -> str:
+    """Return a bin identifier without a trailing FASTA suffix.
+
+    Args:
+        value: Identifier as written by a QC tool.
+
+    Returns:
+        The stripped identifier; EukCC keeps the suffix that the other tools drop.
+    """
+    name = value.strip()
+    for suffix in FASTA_SUFFIXES:
+        if name.endswith(suffix):
+            return name[: -len(suffix)]
+    return name
+
+
 def build(args: argparse.Namespace) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     routes = keyed(read_table(args.routing), "query_id", "domain routing")
     checkm2 = keyed(read_table(args.checkm2), "Name", "CheckM2") if args.checkm2 else {}
     gunc = keyed(read_table(args.gunc), "genome", "GUNC") if args.gunc else {}
-    eukcc = keyed(read_table(args.eukcc), "genome", "EukCC") if args.eukcc else {}
+    eukcc = keyed(read_table(args.eukcc), "bin", "EukCC") if args.eukcc else {}
     gtdbtk = keyed(read_table(args.gtdbtk), "user_genome", "GTDB-Tk") if args.gtdbtk else {}
 
     for bin_id in gunc:
@@ -82,8 +105,8 @@ def build(args: argparse.Namespace) -> tuple[list[dict[str, str]], list[dict[str
                 }
             )
             if bin_id in gunc:
-                metric["gunc_pass"] = gunc[bin_id].get("pass_gunc", "")
-                metric["gunc_css"] = gunc[bin_id].get("css", "")
+                metric["gunc_pass"] = gunc[bin_id].get("pass.GUNC", "")
+                metric["gunc_css"] = gunc[bin_id].get("clade_separation_score", "")
             taxonomy_rows.append(
                 {"bin_id": bin_id, "classification": metric["taxonomy"], "tool": "gtdbtk"}
             )
@@ -96,7 +119,7 @@ def build(args: argparse.Namespace) -> tuple[list[dict[str, str]], list[dict[str
                     "completeness": qc.get("completeness", ""),
                     "contamination": qc.get("contamination", ""),
                     "qc_tool": "eukcc",
-                    "taxonomy": qc.get("taxonomy", ""),
+                    "taxonomy": qc.get("ncbi_lng", ""),
                     "taxonomy_tool": "eukcc",
                 }
             )

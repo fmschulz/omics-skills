@@ -13,7 +13,10 @@ reads_glob="$2"
 result_dir="$(realpath -m "$3")"
 mkdir -p "$result_dir"
 
+# Nextflow writes .nextflow/ and work/ in the launch directory: submit from the
+# project root and pin it with --chdir instead of relying on the spooled script path.
 exec sbatch --parsable \
     -A "$SLURM_ACCOUNT" \
+    --chdir="$PWD" \
     --export="ALL,NXF_PIPELINE=$pipeline,NXF_READS=$reads_glob,NXF_RESULTS=$result_dir" \
     "$script_dir/../templates/nextflow-run.sbatch"

@@ -5,7 +5,7 @@
 **Official docs/manual:** The Docs line on each card.
 **Release/source:** The Base line on each card.
 
-One card per `--service` value. Paths are relative to the base URL. All base URLs and example commands were checked live on 2026-08-24. "Not documented" means the official docs named on the card state no request rate.
+One card per `--service` value. Paths are relative to the base URL. All base URLs and example commands were checked live on 2026-08-24 and the example commands again on 2026-10-01 (all returned HTTP 200). "Not documented" means the official docs named on the card state no request rate.
 
 ## uniprot
 

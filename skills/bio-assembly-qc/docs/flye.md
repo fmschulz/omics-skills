@@ -17,22 +17,7 @@ Release/source: https://github.com/mikolmogorov/Flye/releases/tag/2.9.6
 pixi add "flye=2.9.6"
 ```
 
-**Via pip:**
-```bash
-pip install flye
-```
-
-**From source:**
-```bash
-git clone https://github.com/fenderglass/Flye
-cd Flye
-git checkout 2.9.6
-python setup.py install
-```
-
-**Requirements:**
-- Python 3.7+
-- C++ compiler (for building from source)
+Install the pinned bioconda build through pixi; do not run `setup.py install` against a system Python.
 
 ## Key Command-Line Flags
 

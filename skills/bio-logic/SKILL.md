@@ -1,6 +1,6 @@
 ---
 name: bio-logic
-description: Assess a scientific claim, study design, method, or interpretation against its evidence. Use when testing causal reasoning, finding methodological bias, weighing alternative explanations, or revising hypotheses.
+description: Assess a scientific claim, study design, or interpretation against its evidence. Use when testing causal reasoning, finding bias, weighing alternative explanations, or revising hypotheses.
 ---
 
 # Bio-Logic: Scientific Reasoning Evaluation
@@ -147,13 +147,13 @@ GRADE only when it applies to the review question.]
 
 | Task | Action |
 |------|--------|
-| Review a paper | Use the Critique Checklist below |
-| Evaluate a claim | Use Claim Assessment steps |
-| Assess evidence strength | See `references/evidence.md` |
-| Identify biases | See `references/biases.md` |
-| Statistical errors | See `references/stats.md` |
-| Logical fallacies | See `references/fallacies.md` |
-| Study design review | See `references/design.md` |
+| Review a paper | Use the Critique Checklist above |
+| Evaluate a claim | Use the Claim Assessment steps above |
+| Assess evidence strength | See [references/evidence.md](references/evidence.md) |
+| Identify biases | See [references/biases.md](references/biases.md) |
+| Statistical errors | See [references/stats.md](references/stats.md) |
+| Logical fallacies | See [references/fallacies.md](references/fallacies.md) |
+| Study design review | See [references/design.md](references/design.md) |
 
 ## Input Requirements
 
@@ -225,6 +225,6 @@ Suggestive but not conclusive due to differential attrition.
 
 ## Related Skills
 
-- `/ai-scientist-evaluator` — rubric-scored evaluation of AI scientist outputs
-- `/manuscript-review-council` — multi-reviewer critique of peer-reviewed manuscripts
-- `/proposal-review` — structured critique of funding proposals
+- `/ai-scientist-evaluator`: rubric-scored evaluation of AI scientist outputs
+- `/manuscript-review-council`: multi-reviewer critique of peer-reviewed manuscripts
+- `/proposal-review`: structured critique of funding proposals

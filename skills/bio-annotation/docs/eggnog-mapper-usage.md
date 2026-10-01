@@ -18,26 +18,18 @@ eggNOG-mapper is a tool for fast genome-wide functional annotation through ortho
 
 ## Installation
 
-### Conda/Mamba (Recommended)
+### Pixi (recommended)
 
 ```bash
-# Add to the project Pixi environment
-pixi add eggnog-mapper
+pixi add "eggnog-mapper>=2.1.13,<3"
 ```
 
-### Pip Installation
+### From the tagged GitHub release
 
 ```bash
-# Install latest version
-pip install eggnog-mapper
-
-# Install the tagged final-v2 release from GitHub
-pip install "git+https://github.com/eggnogdb/eggnog-mapper.git@v2.1.15"
+pixi add --pypi "eggnog-mapper @ git+https://github.com/eggnogdb/eggnog-mapper.git@v2.1.15"
 ```
 
-### Requirements
-- Python 3.7 or higher
-- Dependencies: biopython, psutil, wget
 
 ## Database Setup
 
@@ -47,18 +39,17 @@ pip install "git+https://github.com/eggnogdb/eggnog-mapper.git@v2.1.15"
 # Set data directory
 export EGGNOG_DATA_DIR=/path/to/eggnog-data
 
-# Download all databases (requires ~100GB)
-download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR
-
-# Download specific taxonomic scope
+# Core annotation database plus the DIAMOND database (-y answers yes to prompts)
 download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y
 
-# Download bacteria only
-download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y Bacteria
+# Add the MMseqs2 database (for -m mmseqs) and Pfam (for de novo annotation)
+download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y -M -P
 
-# Download with DIAMOND database
-download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y --dmnd
+# Add the Bacteria HMMER database (tax ID 2) in a directory named Bacteria (for -m hmmer)
+download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y -H -d 2 --dbname Bacteria
 ```
+
+`-D` skips the DIAMOND database; `-F` adds the novel-families databases.
 
 ### Database Components
 - **eggnog.db**: Core orthology database
@@ -85,9 +76,9 @@ download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y --dmnd
 - `--subject_cover` - Minimum subject coverage
 
 ### Taxonomic Scope
-- `--tax_scope` - Taxonomic scope (auto, bacteria, archaea, eukaryota, viruses)
-- `--target_orthologs` - Target ortholog selection (all, one2one)
-- `--go_evidence` - GO evidence codes to include
+- `--tax_scope` - Taxonomic scope (default `auto`; also tax names or IDs such as `Bacteria` or `2`)
+- `--target_orthologs` - Target ortholog selection (one2one, many2one, one2many, many2many, all)
+- `--go_evidence` - GO evidence to include (experimental, non-electronic, all)
 
 ### Output Options
 - `--output_dir` - Output directory
@@ -143,7 +134,7 @@ emapper.py -i proteins.faa -o annotation \
 ```bash
 emapper.py -i proteins.faa -o annotation \
   --data_dir $EGGNOG_DATA_DIR \
-  -m hmmer \
+  -m hmmer -d Bacteria \
   --cpu 32
 ```
 
@@ -183,7 +174,7 @@ emapper.py -i proteins.faa -o results -m diamond
 - Good for divergent sequences
 
 ```bash
-emapper.py -i proteins.faa -o results -m hmmer
+emapper.py -i proteins.faa -o results -m hmmer -d Bacteria
 ```
 
 ### MMseqs2 Mode
@@ -196,12 +187,11 @@ emapper.py -i proteins.faa -o results -m mmseqs
 ```
 
 ### Cache Mode
-- Use pre-computed annotations
-- For re-annotation with updated database
-- Fastest option
+- Reuses annotations from an earlier run made with `--md5`; `-c` names that annotations file
+- Skips the seed-ortholog search for queries whose MD5 hash is in the cache
 
 ```bash
-emapper.py -i proteins.faa -o results -m cache
+emapper.py -i proteins.faa -o results -m cache -c previous_md5.emapper.annotations
 ```
 
 ## Output Files

@@ -8,11 +8,11 @@ Release/source: https://github.com/duckdb/duckdb/releases/tag/v1.5.3
 ## Installation
 
 ```bash
-# Via pip
-pip install duckdb
-
-# Via Pixi
+# Bioinformatics project (Pixi, conda-forge)
 pixi add duckdb
+
+# Python tooling project (uv)
+uv add duckdb
 
 # CLI installation (download from duckdb.org/docs/stable/installation/)
 ```

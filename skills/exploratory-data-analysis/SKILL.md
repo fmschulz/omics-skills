@@ -1,6 +1,6 @@
 ---
 name: exploratory-data-analysis
-description: Inspect scientific data and generate a Markdown structure-and-quality report. Use when triaging tabular, array, sequence, HDF5, JSON, or raster files before downstream analysis.
+description: Inspect a scientific data file and report its structure and quality. Use when triaging an unknown table, array, sequence or image file.
 ---
 
 # Exploratory Data Analysis
@@ -17,16 +17,6 @@ The six reference files contain 239 format entries. Some entries describe the sa
 - TIFF/OME-TIFF, PNG, and JPEG raster images
 - Reference-only metadata for every other recognized suffix
 - Representative streaming analyzers for PDB/SDF/SMILES, MGF/mzML/mzXML, and mzTab families; proprietary binary formats remain reference-only unless their project environment supplies a reader.
-
-## When to Use This Skill
-
-Use this skill when:
-- User provides a path to a scientific data file for analysis
-- User asks to "explore", "analyze", or "summarize" a data file
-- User wants to understand the structure and content of scientific data
-- User needs a structure-and-quality report before analysis
-- User wants to assess data quality or completeness
-- User asks what type of analysis is appropriate for a file
 
 ## Quick Reference
 
@@ -193,7 +183,7 @@ The bundled script reports file metadata, the matching reference entry, sampled 
    - Preprocessing steps
    - Appropriate analyses
    - Tools and methods
-   - Visualization approaches
+   - Visualization approaches (any figures follow `/beautiful-data-viz`: greyscale first, color only to encode information)
 
 #### Template Location
 Use `assets/report_template.md` as a guide for report structure.
@@ -222,7 +212,7 @@ Reference files are large (10,000+ words each); do not load one whole. Search fo
 - Markdown EDA report next to the input file or at the requested output path.
 - Basic file metadata: path, size, modified time, detected format, and relevant parser.
 - Data structure summary, quality observations, likely issues, and downstream recommendations.
-- Any generated figures, tables, or temporary summaries needed to support the report.
+- Any generated figures (styled per `/beautiful-data-viz`), tables, or temporary summaries needed to support the report.
 
 ## Quality Gates
 
@@ -247,10 +237,12 @@ category = 'bioinformatics_genomics'
 # 2. Read reference info
 # Search references/bioinformatics_genomics_formats.md for "### .fastq"
 
-# 3. Perform analysis
+# 3. Perform analysis: stream records instead of loading the file into memory
 from Bio import SeqIO
-sequences = list(SeqIO.parse('reads.fastq', 'fastq'))
-# Calculate: read count, length distribution, quality scores, GC content
+lengths = []
+for record in SeqIO.parse('reads.fastq', 'fastq'):
+    lengths.append(len(record))
+    # also accumulate GC counts and per-read mean quality here
 
 # 4. Generate report
 # Include: format description, analysis results, QC recommendations
@@ -295,3 +287,5 @@ For very large files:
 2. Use memory-mapped access (for HDF5, NPY)
 3. Process in chunks (for CSV, FASTQ)
 4. Provide estimates based on samples
+
+On a shared HPC login node, inspect only small samples. Submit full-file inspection as a batch job (`sbatch`) with explicit CPU, memory, and thread limits.

@@ -1,6 +1,6 @@
 ---
 name: bio-stats-ml-reporting
-description: Analyze biological results with statistics or machine learning and produce validated reports. Use when aggregating features, testing hypotheses, training models, or reporting performance.
+description: Run statistics or machine learning on biological results and write a validated report. Use when testing hypotheses, training classifiers or rolling up discovery evidence.
 ---
 
 # Bio Stats ML Reporting
@@ -9,12 +9,11 @@ Aggregate results, train ML models, and produce reports with validated reference
 
 ## Instructions
 
-Tool guides and versions: [docs/README.md](docs/README.md).
-
-1. Join outputs in DuckDB v1.1+ and build feature tables. Arrow / DuckLake integration is the recommended bridge into ML pipelines for large datasets.
-2. Train baseline models and evaluate with cross-validation.
-   - CPU baseline: scikit-learn v1.5+ for linear/tree/clustering baselines; XGBoost v2.1.4+ for gradient boosting.
-   - GPU node available (CUDA): set `device="cuda"` on XGBoost (native since v2.0) by default. For sklearn-compatible estimators (random forest, k-means, PCA, UMAP), use **RAPIDS cuML** as a drop-in replacement and record the device in the run log.
+1. Join outputs in DuckDB and build feature tables. Hand large tables to ML code as Arrow (`.arrow()`, `.pl()`, or `.df()` on a DuckDB result) instead of writing intermediate CSVs.
+2. Train baseline models and evaluate with cross-validation. Versions checked for this skill are in [docs/README.md](docs/README.md); pin the ones you use in the project's `pixi.toml`.
+   - CPU baseline: scikit-learn for linear, tree, and clustering baselines; XGBoost for gradient boosting.
+   - GPU node available (CUDA): set `device="cuda"` on XGBoost (supported since v2.0). For scikit-learn-style estimators (random forest, k-means, PCA, UMAP), RAPIDS cuML provides GPU equivalents; record the device in the run log.
+   - On HPC, train through the scheduler (`sbatch`) and set explicit thread limits (`n_jobs`, `nthread`, `OMP_NUM_THREADS`) to match the allocation.
 3. Generate reports and validate references.
    - Validate the prediction table with
      `scripts/validate_predictions.py`. Keep group identifiers and confounder
@@ -35,6 +34,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
    - likely artifacts or conserved lineage features
    - explicit negative findings where nothing notable was detected
 7. Include the comparison baseline, literature context, confidence, and next discriminating analyses for each candidate.
+8. Draw report figures (performance curves, calibration plots, effect sizes) with `/beautiful-data-viz`: grey by default, color only for the compared models or the one highlighted result.
 
 ## Quick Reference
 

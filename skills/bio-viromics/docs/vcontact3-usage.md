@@ -1,7 +1,7 @@
 # vConTACT3 Usage Guide
 
-Last verified: 2026-05-30
-Tool version/release checked: vConTACT3 3.2.4 source tag; ReadTheDocs release notes list changes through v3.2.0
+Last verified: 2026-10-01
+Tool version/release checked: vConTACT3 3.2.4 source tag (`vcontact3 run --help` and `prepare_databases --help` run from that tag); bioconda latest 3.1.6
 Official docs/manual: https://vcontact3.readthedocs.io/en/latest/
 Release/source: https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4 ; https://bitbucket.org/MAVERICLab/vcontact3
 
@@ -10,82 +10,50 @@ Release/source: https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4 ; h
 - Bitbucket: https://bitbucket.org/MAVERICLab/vcontact3
 
 ## Overview
-vConTACT3 is a viral genome clustering and taxonomic assignment tool that improves upon previous versions through enhanced speed, scalability, and accuracy. It uses gene-sharing networks and protein cluster analysis for hierarchical viral classification.
+vConTACT3 clusters viral genomes with gene-sharing networks of protein clusters and assigns hierarchical taxonomy from genus to order against a reference database. It replaces vConTACT2.
 
 ## Installation
 
-### Pixi
 ```bash
 pixi add "python>=3.10,<3.12" vcontact3
 ```
 
-Requires Python >=3.10 and <3.12.
+Bioconda ships 3.1.6. The 3.2.x line is available from the Bitbucket tag; install it into the project environment as a PyPI dependency from Git when a project needs it, and record the version in the run manifest.
 
-### Optional: ANI Export Support
+Optional ANI export needs vclust:
 ```bash
 pixi add --pypi vclust
 ```
 
 ## Key Commands & Flags
 
-### Main Subcommands
-
 | Command | Purpose |
 |---------|---------|
-| `vcontact3 version` | Display current version |
-| `vcontact3 prepare_databases` | List, download, and setup reference databases |
-| `vcontact3 run` | Perform clustering and taxonomic assignment |
+| `vcontact3 version` | Show the version |
+| `vcontact3 prepare_databases` | List (`-l`), download (`-g VERSION`), and place (`-s PATH`) reference databases |
+| `vcontact3 run` | Cluster genomes and assign taxonomy |
 
-### Run Command Options
+### `vcontact3 run` options (3.2.4)
 
 | Flag | Description |
 |------|-------------|
-| `--nucleotide` | Input nucleotide sequence file (FASTA) |
-| `--proteins` | Pre-predicted protein sequences (FASTA) |
-| `--gene2genome` | Gene-to-genome mapping file (TSV) |
-| `--len-nucleotide` | Genome length data (TSV) |
-| `--output` | Output directory for results |
-| `--db-path` | Path to a downloaded vConTACT3 database version or directory |
-| `--db-domain` | Database domain selection (e.g., prokaryotes) |
-| `--exports` | Optional output/export types, for example `graphml`, `cytoscape`, `profiles`, or `ani` |
-| `--threads` | Number of threads for parallel processing |
-| `--reduce-memory` | Downcast arrays to reduce memory use |
-| `--max-iterations` | Mixed-realm component resolution iterations |
-| `-h, --help` | Display help message |
+| `-n, --nucleotide` | Nucleotide FASTA; enables gene calling |
+| `--pyrodigal-gv` | Use pyrodigal-gv models (giant viruses, alternative genetic codes) |
+| `-p, --proteins` | Protein FASTA; disables ANI export |
+| `-g, --gene2genome` | Gene-to-genome mapping (required with `--proteins`) |
+| `-l, --len-nucleotide` | Genome length file |
+| `-o, --output` | Output directory (default `vConTACT3_results`) |
+| `-d, --db-path` | Database file or directory. Required, also with `--no-db` |
+| `--db-domain` | `archaea`, `bacteria`, `prokaryotes` (default), or `eukaryotes` |
+| `--db-version` | Database version to use |
+| `--no-db` | Cluster user genomes de novo; VOG-based taxonomy still runs |
+| `-e, --exports` | Any of `cytoscape graphml cosmograph d3js ani newick profiles completeness centroids` |
+| `-t, --threads` | CPUs. Default: every CPU on the host (`multiprocessing.cpu_count()`), not the Slurm allocation; set it to the allocated CPU count |
+| `--reduce-memory` | Use float16 arrays |
+| `-i, --max-iterations` | Iterations for resolving mixed-realm components (default 3) |
+| `-f, --force-overwrite` | Overwrite existing files |
 
 ## Common Usage Examples
-
-### Basic nucleotide input workflow
-```bash
-vcontact3 prepare_databases --list-versions
-vcontact3 prepare_databases --get-version latest --set-location ./vcontact3_db
-
-vcontact3 run \
-  --nucleotide genomes.fna \
-  --db-path ./vcontact3_db \
-  --db-domain prokaryotes \
-  --output results_dir \
-  --threads 32
-```
-
-### Protein-based workflow
-```bash
-vcontact3 run \
-  --proteins proteins.faa \
-  --gene2genome gene2genome.tsv \
-  --len-nucleotide genome_lengths.tsv \
-  --db-path ./vcontact3_db \
-  --output results_dir
-```
-
-### Custom configuration with multiple exports
-```bash
-vcontact3 run \
-  --nucleotide genomes.fna \
-  --db-domain prokaryotes \
-  --exports graphml cytoscape profiles \
-  --output results_dir
-```
 
 ### Database preparation
 ```bash
@@ -93,63 +61,66 @@ vcontact3 prepare_databases --list-versions
 vcontact3 prepare_databases --get-version latest --set-location ./vcontact3_db
 ```
 
-### Multi-threaded analysis
+### Nucleotide input
 ```bash
 vcontact3 run \
-  --nucleotide viral_genomes.fna \
-  --output results \
-  --threads 32
+  --nucleotide genomes.fna \
+  --db-path ./vcontact3_db \
+  --db-domain prokaryotes \
+  --output results_dir \
+  --threads 16
+```
+
+### Protein input
+```bash
+vcontact3 run \
+  --proteins proteins.faa \
+  --gene2genome gene2genome.tsv \
+  --len-nucleotide genome_lengths.tsv \
+  --db-path ./vcontact3_db \
+  --output results_dir \
+  --threads 16
+```
+
+### Network and profile exports
+```bash
+vcontact3 run \
+  --nucleotide genomes.fna \
+  --db-path ./vcontact3_db \
+  --exports graphml cytoscape profiles \
+  --output results_dir \
+  --threads 16
 ```
 
 ## Input/Output
 
-### Input Formats
+### Input
+- Nucleotide mode: FASTA of viral genomes
+- Protein mode: protein FASTA, gene-to-genome TSV, and genome-length TSV
 
-**Nucleotide mode:**
-- FASTA file with viral genome sequences
-- Simplest workflow for most users
-
-**Protein mode (advanced):**
-- `--proteins`: FASTA with predicted proteins
-- `--gene2genome`: TSV mapping protein IDs to genome IDs
-- `--len-nucleotide`: TSV with genome lengths
-
-### Output Files
-
-Located in specified output directory:
-- **final_assignments.csv** - Main taxonomy and clustering assignments
-- **network files** - GraphML/Cytoscape visualizations if requested with `--exports`
-- **pc_profiles/** - Protein-cluster profiles when requested with `--exports profiles`
-- **ANI matrices** - Genome similarity data (if vclust installed)
-- Additional export-specific files, documented in the ReadTheDocs exports page
+### Output
+- `final_assignments.csv`: taxonomy and cluster assignments
+- Network files for the requested `--exports` formats
+- Protein-cluster profiles with `--exports profiles`
+- ANI matrices with `--exports ani` (requires vclust and nucleotide input)
 
 ## Performance Tips
 
-1. Use `--nucleotide` mode for simplest workflow
-2. Increase `--threads` for large datasets
-3. Use protein mode only if you have pre-computed gene calls
-4. Install vclust for ANI-based similarity analysis
-5. Limit export formats to only what you need to reduce runtime
-6. Pre-filter low-quality genomes using CheckV before clustering
-7. Use `--reduce-memory` for memory-constrained runs
+1. Filter low-quality genomes with CheckV before clustering.
+2. Request only the exports you need.
+3. Use `--reduce-memory` on memory-limited nodes.
+4. Set `--threads` to the allocated CPU count.
 
 ## Integration with Viromics Workflow
 
-vConTACT3 performs clustering and taxonomic assignment after quality control:
-1. Input: High/medium quality viral genomes from CheckV
-2. Analysis: Gene-sharing network construction and hierarchical clustering
-3. Output: Genome clusters and taxonomic assignments
-4. Downstream: Use clusters for diversity analysis and taxonomy for ecological interpretation
-
-## Platform Compatibility
-
-- Linux x86_64: Fully supported
-- Intel Macs: Expected to work
-- Apple Silicon: May require Rosetta terminal emulation or compilation from source
+1. Input: high- and medium-quality prokaryotic-virus genomes from CheckV.
+2. Analysis: gene-sharing network and hierarchical clustering.
+3. Output: genome clusters and taxonomy.
+4. Use only for prokaryotic viruses unless the literature playbook supports another group.
 
 ## Troubleshooting
 
-- **Memory issues**: Reduce dataset size or use more powerful hardware
-- **MMSeqs2 not found (pip install)**: Install MMSeqs2 separately from source
-- **Python version errors**: Ensure Python 3.10 or 3.11 (not 3.12+)
-- **Database errors**: Run `vcontact3 prepare_databases --list-versions` and `vcontact3 prepare_databases --get-version latest --set-location ./vcontact3_db`
+- **Memory errors**: use `--reduce-memory`, split the dataset, or request a larger node.
+- **MMseqs2 not found**: install `mmseqs2` in the environment or pass `--mmseqs-bin`.
+- **Python version errors**: use Python 3.10 or 3.11.
+- **Database errors**: run `vcontact3 prepare_databases --list-versions`, then download a listed version.

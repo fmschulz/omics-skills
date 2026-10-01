@@ -91,7 +91,11 @@ Output:
 Rules:
 
 - final manuscript sections must be prose, not bullets
-- keep claims conservative when evidence is incomplete
+- when evidence is incomplete, narrow the claim to what the evidence shows instead of adding hedging sentences
+- state each supported claim once and plainly; state each limitation once, where it applies
+- never explain a result with a cause that has not been checked
+- keep implementation details (script names, file formats, internal flags) out of Results
+- figure and table legends say what is plotted (panels, axes, units, encodings, n, error bars, test) and do not restate results
 - do not add citations unless they are validated or inherited from a trusted bibliography
 
 ## Citation Auditor Agent
@@ -134,7 +138,7 @@ Output:
   - Summary Statement
   - Major Comments
   - Minor Comments
-  - Prose-Quality Findings (one subsection per audit pass: Clutter, Voice and Verbs, Sentence Architecture, Terminology, Numbers and Citations)
+  - Prose-Quality Findings (one subsection per audit pass: Clutter, Voice and Verbs, Sentence Architecture, Terminology, Numbers and Citations, plus Manuscript Rules)
   - Questions For Authors
   - Revision Priorities
   - Recommendation
@@ -149,7 +153,7 @@ Rules:
 - compare the revised draft to the baseline manuscript when both are available
 - point to specific sections, figures, tables, or file artifacts when possible
 - every prose-quality finding must include: section/paragraph reference, original text, concrete revision, the audit pass it triggers, and a severity tag (`CRITICAL` / `MAJOR` / `MINOR`)
-- vague suggestions ("consider tightening", "improve clarity") are not acceptable findings — show the substitution
+- vague suggestions ("consider tightening", "improve clarity") are not acceptable findings; show the substitution
 - do not alter scientific content during a writing review; flag suspect claims as content notes rather than rewriting them
 - respect disciplinary and journal conventions (e.g. passive voice in Methods where house style requires it)
 - preserve author voice; a clear sentence that breaks an audit rule may stay
@@ -180,6 +184,7 @@ Rules:
 
 - address revision priorities in order: CRITICAL prose-quality findings and CRITICAL content findings first, then MAJOR, then MINOR (defer MINOR to a later pass when time is short)
 - do not "solve" missing evidence with stronger wording or invented support
+- do not answer a reviewer by adding caveat sentences after every claim; fix the claim or state the limitation once
 - preserve correct technical details, numbers, and citations while revising prose
 - preserve author voice; apply audit-pass substitutions only when they improve clarity in context, not as mechanical find-and-replace
 - if a reviewer request cannot be satisfied from the artifact bundle, carry it forward explicitly

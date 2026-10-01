@@ -9,28 +9,16 @@ Release/source: https://github.com/jwohlwend/boltz/releases/tag/v2.2.1; https://
 
 ## Installation
 
-### PyPI (Recommended)
+### Pixi (recommended)
 ```bash
-# With CUDA support
-pip install boltz[cuda] -U
+# With CUDA support (adds the cuEquivariance kernels)
+pixi add --pypi "boltz[cuda]==2.2.1"
 
 # CPU only or non-CUDA GPU
-pip install boltz -U
+pixi add --pypi "boltz==2.2.1"
 ```
 
-### From GitHub
-```bash
-git clone https://github.com/jwohlwend/boltz.git
-cd boltz
-
-# With CUDA support
-pip install -e .[cuda]
-
-# Without CUDA
-pip install -e .
-```
-
-**Important**: Install in a fresh Python environment to avoid dependency conflicts.
+**Important**: Keep Boltz in its own Pixi environment (or feature) to avoid dependency conflicts.
 
 ## Key Commands
 

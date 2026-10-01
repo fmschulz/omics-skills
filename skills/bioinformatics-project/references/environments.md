@@ -2,7 +2,7 @@
 
 Pinning and capturing exact software environments so a rerun uses the identical stack (Sandve 2013, Rule 3; Wilson 2017, "make dependencies explicit"). Read this when setting up or recording a project's software environment.
 
-**House rule for this repo:** bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Python-only deps use **uv**; never use the system Python or run `conda`/`pip` against a base environment.
+**House rule:** bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Python-only deps use **uv**; never use the system Python or run `conda`/`pip` against a base environment.
 
 ## Contents
 

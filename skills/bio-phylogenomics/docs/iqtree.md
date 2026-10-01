@@ -1,250 +1,169 @@
 # IQ-TREE Usage Guide
 
-Last verified: 2026-05-30
-Tool version/release checked: IQ-TREE v3.1.2
+Last verified: 2026-10-01
+Tool version/release checked: IQ-TREE v3.1.4 (`iqtree3 -h` from bioconda; flags below checked against it)
 Official docs/manual: https://iqtree.github.io/doc/
-Release/source: https://github.com/iqtree/iqtree3/releases/tag/v3.1.2
+Release/source: https://github.com/iqtree/iqtree3/releases/tag/v3.1.4
 
 ## Official Documentation
 - Main: https://iqtree.github.io/doc/
 - Command Reference: https://iqtree.github.io/doc/Command-Reference
 - Quickstart: https://iqtree.github.io/doc/Quickstart
 - Tutorial: https://iqtree.github.io/doc/Tutorial
-- IQ-TREE 3 source/releases: https://github.com/iqtree/iqtree3
+- IQ-TREE 3 source and releases: https://github.com/iqtree/iqtree3
 
 ## Installation
 
-### Package Managers
 ```bash
-# Pixi
 pixi add iqtree
 iqtree3 --version
-
-# macOS Homebrew
-brew install brewsci/bio/iqtree3
 ```
 
-### Manual Installation
-Download the v3.1.2 archive from the official IQ-TREE 3 release page and copy
-the versioned binary from `bin/` to the system path:
-```bash
-# Linux/macOS
-cp bin/iqtree3 /usr/local/bin/
-iqtree3 --version
-```
+The bioconda `iqtree` package installs the `iqtree3` binary.
 
 ## Input/Output Formats
 
-### Supported Input
-- PHYLIP format (default)
-- FASTA format
-- NEXUS format (for partitioned alignments)
+### Input
+- PHYLIP, FASTA, or NEXUS alignments
+- NEXUS or RAxML-style partition files for partitioned analyses
 
 ### Key Output Files
-- `.treefile` - Maximum likelihood tree in Newick format
-- `.iqtree` - Analysis report with model selection, tree statistics
-- `.log` - Run log with detailed progress
-- `.ckp.gz` - Checkpoint file for resuming interrupted runs
-- `.state` - Ancestral state reconstruction (with `-asr`)
+- `.treefile`: maximum-likelihood tree in Newick
+- `.iqtree`: report with model selection and tree statistics
+- `.log`: run log
+- `.ckp.gz`: checkpoint for resuming
+- `.contree`: UFBoot consensus tree (with `-B`)
+- `.state`: ancestral states (with `--ancestral`)
+
+With `-B` and `--alrt` together, internal labels in `.treefile` read `SH-aLRT/UFBoot` (for example `98.7/100`).
+
+IQ-TREE 3 still accepts the IQ-TREE 1 spellings (`-bb`, `-nt`, `-alrt`, `-pre`); new commands should use the forms below.
 
 ## Key Command-Line Flags
 
 ### Essential Options
 ```bash
--s <alignment>          # Input alignment file (required)
--st <AA|DNA|CODON>      # Sequence type (auto-detected if not specified)
--pre <prefix>           # Output file prefix
--nt AUTO                # Auto-detect CPU cores
--mem <GB>               # Maximum RAM allocation (e.g., 8G)
+-s <alignment>          # Input alignment (required)
+--seqtype <AA|DNA|CODON|...>   # Sequence type (auto-detected by default)
+--prefix <prefix>       # Output file prefix
+-T <n>|AUTO             # Threads (default 1); AUTO uses every core unless --threads-max is set
+--seed <n>              # Random seed; set it for reproducible runs
+--mem <n>G              # Maximum RAM
 ```
+
+On shared nodes, set `-T` to the allocated CPU count rather than `AUTO`.
 
 ### Model Selection
 ```bash
--m TEST                 # Standard model selection
--m MFP                  # Extended model selection with FreeRate models
--m <MODEL>              # Use specific model (e.g., GTR+I+G, LG+G4)
--mset <models>          # Restrict to specific models (e.g., WAG,LG,JTT)
--msub <type>            # AA model subset (nuclear|mitochondrial|chloroplast|viral)
--mfreq <freq_type>      # Frequency parameters
--mrate <rate_type>      # Rate heterogeneity parameters
+-m TEST                 # Standard model selection, then tree inference
+-m MFP                  # ModelFinder with FreeRate models, then tree inference
+-m <MODEL>              # Fixed model, e.g. GTR+I+G, LG+G4, Q.pfam+R4
+--mset <models>         # Restrict candidate models, e.g. WAG,LG,JTT
+--msub <source>         # Amino-acid model source (nuclear, mitochondrial, chloroplast, viral)
+--mfreq <list>          # Candidate state frequencies
+--mrate <list>          # Candidate rate heterogeneity models
 ```
 
 ### Model Syntax
-General format: `-m MODEL+FreqType+RateType`
+General form: `-m MODEL+Freq+Rate`.
 
-**DNA Models**: GTR, HKY, K2P, TN, TNe, K2P, F81, JC
+- DNA models: JC, F81, K2P, HKY, TN, TNe, GTR, and others
+- Protein models: LG, WAG, JTT, Q.pfam, Q.yeast, mtREV, cpREV, FLU, rtREV, VT, PMB, Blosum62, Dayhoff, and others
+- Rate heterogeneity: `+I`, `+G[n]` (Gamma, 4 categories by default), `+R[n]` (FreeRate), `+I+G`, `+I+R`
+- Mixtures: `MIX{m1,...,mK}`
 
-**Protein Models**: LG, WAG, JTT, Dayhoff, DCMut, CpREV, mtREV, mtART, MtZoa, VT, Blosum62, FLU, rtREV, PMB
-
-**Rate Heterogeneity**:
-- `+I` - Invariable sites
-- `+G4` - Gamma with 4 categories (default)
-- `+G8` - Gamma with 8 categories
-- `+R4` - FreeRate with 4 categories
-- `+I+G` - Combined invariable + Gamma
-
-### Bootstrap and Branch Support
+### Branch Support
 ```bash
--bb <replicates>        # Ultrafast bootstrap (recommended: ≥1000)
--bcor <threshold>       # Convergence threshold for UFBoot (default: 0.99)
--b <replicates>         # Standard nonparametric bootstrap
--alrt <replicates>      # SH-like approximate likelihood ratio test
--abayes                 # Approximate Bayes test
--lbp <replicates>       # Local bootstrap probability
+-B <n>                  # Ultrafast bootstrap (n >= 1000)
+--bnni                  # Optimize UFBoot trees by NNI (reduces overestimation under model violation)
+--bcor <x>              # UFBoot convergence threshold (default 0.99)
+-b <n>                  # Standard nonparametric bootstrap
+--alrt <n>              # SH-aLRT with n replicates
+--abayes                # Approximate Bayes test
+--lbp <n>               # Fast local bootstrap probabilities
 ```
 
-### Tree Search Optimization
+### Tree Search
 ```bash
--fast                   # Fast tree search mode
--nstop <iterations>     # Stop after N unsuccessful iterations (default: 100)
--pers <strength>        # Perturbation strength 0-1 (default: 0.5)
+--fast                  # Fast search resembling FastTree
+--nstop <n>             # Unsuccessful iterations before stopping (default 100)
+--perturb <x>           # Perturbation strength for randomized NNI (default 0.5)
 -g <constraint_tree>    # Topological constraint tree
--redo                   # Ignore checkpoint, overwrite outputs, and restart
--safe                   # Numerical stability for large datasets (>2000 seqs)
+-o <taxon>              # Outgroup for writing the .treefile
+--redo                  # Ignore the checkpoint and overwrite outputs
+--safe                  # Safe likelihood kernel against numerical underflow
 ```
 
 ### Partitioned Analysis
 ```bash
--p <partition_file>     # Partition file in NEXUS format
--sp <partition_file>    # Edge-unlinked partition model
--spp <partition_file>   # Edge-proportional partition model
--m MFP+MERGE            # Test merging partitions
+-p <file>               # Edge-linked partition model with proportional branch lengths
+-q <file>               # Edge-linked partition model with equal branch lengths
+-Q <file>               # Edge-unlinked partition model
+-m MFP+MERGE            # ModelFinder plus partition merging
 ```
 
-### Advanced Features
+### Other Analyses
 ```bash
---pathogen              # Use CMAPLE for low-divergence sequences
--asr                    # Ancestral state reconstruction
--z <tree_file>          # Tree topology tests (KH, SH, AU, ELW)
--zb <replicates>        # Bootstrap replicates for topology tests
+--pathogen              # CMAPLE search when sequence divergence is low
+--ancestral             # Ancestral state reconstruction
+--trees <file> --test <n> --test-au   # Tree topology tests (KH, SH, AU)
 ```
 
 ## Common Usage Examples
 
-### Basic Tree Inference with Auto Model Selection
+### Model selection with both support measures
 ```bash
-iqtree3 -s alignment.phy -nt AUTO
+iqtree3 -s alignment.faa -m MFP -B 1000 --alrt 1000 -T 8 --seed 1729
 ```
 
-### Specific Model with Ultrafast Bootstrap
+### Fixed model with ultrafast bootstrap
 ```bash
-iqtree3 -s alignment.phy -m GTR+I+G -bb 1000 -nt AUTO
+iqtree3 -s alignment.fna -m GTR+I+G -B 1000 -T 8 --seed 1729
 ```
 
-### Model Selection with Multiple Support Tests
+### Partitioned concatenated analysis
 ```bash
-iqtree3 -s alignment.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
+iqtree3 -s concat.faa -p partitions.nex -m MFP+MERGE -B 1000 -T 8 --seed 1729
 ```
 
-### Partitioned Analysis
+### Fast exploratory tree (fallback when VeryFastTree is unavailable)
 ```bash
-iqtree3 -s alignment.phy -p partitions.nex -m MFP+MERGE -bb 1000 -nt AUTO
+iqtree3 -s alignment.faa -m LG+G4 --fast -T 8 --seed 1729
 ```
 
-### Fast Mode for Large Datasets
+### Resume an interrupted run
+
+Repeat the exact original command. IQ-TREE finds the matching `.ckp.gz` and resumes; `--redo` discards that progress.
+
+### Ancestral state reconstruction
 ```bash
-iqtree3 -s large_alignment.phy -m GTR+G -fast -nt AUTO
+iqtree3 -s alignment.fna -m GTR+G --ancestral -T 8
 ```
 
-### Protein Alignment with AA Model Selection
+### Topology test of candidate trees
 ```bash
-iqtree3 -s proteins.faa -st AA -m MFP -bb 1000 -nt AUTO
-```
-
-### Resume Interrupted Run
-
-Repeat the exact original command. IQ-TREE detects the matching `.ckp.gz` file
-and resumes automatically; do not add `-redo`:
-
-```bash
-iqtree3 -s alignment.phy -m GTR+G -bb 1000 -nt 8
-```
-
-### Ancestral State Reconstruction
-```bash
-iqtree3 -s alignment.phy -m GTR+G -asr -nt AUTO
+iqtree3 -s alignment.faa -m LG+G4 --trees candidates.nwk --test 10000 --test-au -T 8
 ```
 
 ## Performance Tips
 
-### Dataset Size Guidelines
-- **<1K sequences**: Use standard mode with comprehensive model testing
-- **1K-10K sequences**: Consider `-fast` for exploratory analysis
-- **10K-100K sequences**: Use `-fast` mode or consider VeryFastTree
-- **>100K sequences**: Switch to VeryFastTree
-
-### Memory Optimization
-- Use `-mem` flag to limit RAM usage
-- Enable `-safe` for datasets >2000 sequences (adds numerical stability)
-- Checkpoint files (`.ckp.gz`) enable interrupted runs to resume when the exact
-  original command is repeated. `-redo` discards that progress and overwrites
-  existing outputs.
-
-### CPU Optimization
-- `-nt AUTO` automatically detects available cores
-- Specify exact core count with `-nt <number>`
-- Parallelization efficiency decreases beyond 8-16 cores for most datasets
-
-### Model Selection Speed
-- `-m TEST` is faster than `-m MFP`
-- Use `-mset` to restrict model testing to relevant subset
-- For large datasets, consider fixing model based on pilot analysis
-
-### Convergence
-- Default `-nstop 100` works for most datasets
-- Increase for difficult datasets: `-nstop 200` or `-nstop 500`
-- Use `-pers 0.2` for more thorough search (lower perturbation)
-
-## Typical Phylogenomic Workflows
-
-### Exploratory Analysis
-```bash
-# Quick tree with reasonable accuracy
-iqtree3 -s alignment.phy -m GTR+G -fast -bb 1000 -nt AUTO
-```
-
-### Publication-Quality Single Gene Tree
-```bash
-# Comprehensive model selection with multiple support measures
-iqtree3 -s gene.phy -m MFP -bb 1000 -alrt 1000 -nt AUTO
-```
-
-### Multi-Gene Concatenated Analysis
-```bash
-# Partitioned analysis with model testing per partition
-iqtree3 -s concat.phy -p partitions.nex -m MFP+MERGE -bb 1000 -nt AUTO
-```
-
-### Bootstrap Convergence Check
-```bash
-# Use correlation coefficient to assess convergence
-iqtree3 -s alignment.phy -m GTR+G -bb 1000 -bcor 0.99 -nt AUTO
-```
+- Below about 2,000 sequences, run full ModelFinder (`-m MFP`) for final trees.
+- For exploratory work at any size, use VeryFastTree first; `--fast` is the IQ-TREE fallback.
+- `-m TEST` is faster than `-m MFP`; `--mset` restricts the candidate set further.
+- For very large alignments, choose a model on a subsample and fix it with `-m`.
+- Use `--mem` to cap memory and `-T` to match the CPU allocation.
 
 ## Quality Control Checks
 
 ### Model Selection
-Check `.iqtree` file for:
-- BIC/AIC scores of selected model
-- Alternative models within 2 AIC units (essentially equivalent)
+In the `.iqtree` report, check the BIC-selected model and how close the next candidates are.
 
-### Bootstrap Support
-- UFBoot: Values ≥95% indicate strong support
-- SH-aLRT: Values ≥80% indicate strong support
-- Both tests agreeing provides strongest confidence
+### Branch Support
+IQ-TREE's documentation suggests trusting a clade when SH-aLRT is 80 or more and UFBoot is 95 or more. Report both, and report weakly supported placements as uncertain.
 
 ### Tree Statistics
-Check `.iqtree` file for:
-- Log-likelihood value
-- Tree length (sum of branch lengths)
-- Proportion of invariable sites
-- Gamma shape parameter
-
-### Alignment Quality Indicators
-- High proportion of invariable sites (>50%) may indicate poor alignment
-- Very long tree length may indicate saturation or alignment errors
-- Extremely short branches may indicate insufficient signal
+In the `.iqtree` report, check the log-likelihood, total tree length, the proportion of invariable sites, and the Gamma shape. Very long trees or extreme rate parameters can point to saturation or alignment problems; inspect the alignment before trusting such a tree.
 
 ## Version Information
 
-This guide was verified against IQ-TREE v3.1.2, the official IQ-TREE command reference, and the IQ-TREE 3 GitHub release/source pages on 2026-05-30. Use `iqtree3 --version` to confirm the v3 binary on PATH.
+Checked against IQ-TREE v3.1.4 on 2026-10-01; run `iqtree3 --version` to confirm the binary on PATH.

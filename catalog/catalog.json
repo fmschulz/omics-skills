@@ -2,13 +2,13 @@
   "metadata": {
     "skill_count": 34,
     "agent_count": 4,
-    "edge_count": 145
+    "edge_count": 161
   },
   "skills": [
     {
       "name": "ai-scientist-evaluator",
       "title": "AI Scientist Evaluator",
-      "description": "Score completed AI-generated biology or bioinformatics work against its original task and required artifacts. Use when auditing or comparing AI scientist submissions for task completion, scientific validity, and reproducibility.",
+      "description": "Score finished AI-generated biology or bioinformatics work against its task and required artifacts. Use when auditing or ranking AI scientist submissions for task completion, scientific validity, and reproducibility.",
       "path": "skills/ai-scientist-evaluator/SKILL.md",
       "platforms": [
         "claude",
@@ -37,21 +37,22 @@
         "scientific-writing"
       ],
       "reference_contexts": {
+        "scientific-writing": [
+          "- writing and editorial reviewer, who also checks the `/scientific-writing`",
+          "- `/scientific-writing`: draft the evaluation writeup"
+        ],
         "bio-logic": [
-          "- `/bio-logic` \u2014 general scientific reasoning beyond AI evaluation"
+          "- `/bio-logic`: general scientific reasoning beyond AI evaluation"
         ],
         "manuscript-review-council": [
-          "- `/manuscript-review-council` \u2014 equivalent pipeline for human-authored manuscripts"
-        ],
-        "scientific-writing": [
-          "- `/scientific-writing` \u2014 draft the evaluation writeup"
+          "- `/manuscript-review-council`: equivalent review for human-authored manuscripts"
         ]
       }
     },
     {
       "name": "arxiv-search",
       "title": "arXiv Search",
-      "description": "Search arXiv through its official API and save local Markdown summaries. Use when finding recent CS, math, physics, or quantitative-biology preprints or resolving arXiv IDs.",
+      "description": "Search arXiv through its official API and write Markdown notes for arXiv IDs. Use for CS, math, physics, statistics, or quantitative-biology preprints, or to resolve arXiv IDs.",
       "path": "skills/arxiv-search/SKILL.md",
       "platforms": [
         "claude",
@@ -75,23 +76,28 @@
         "physics preprints"
       ],
       "internal_references": [
+        "biorxiv-search",
         "crossref-lookup",
         "polars-dovmed"
       ],
       "reference_contexts": {
+        "biorxiv-search": [
+          "1. Use this skill for arXiv-native preprints: computer science, mathematics, physics, statistics, quantitative biology, and quantitative finance. Use `/biorxiv-search` for biology preprints and `/polars-dovmed` for peer-reviewed PMC full text.",
+          "- `/biorxiv-search`: biology preprints"
+        ],
         "polars-dovmed": [
-          "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead.",
-          "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+          "1. Use this skill for arXiv-native preprints: computer science, mathematics, physics, statistics, quantitative biology, and quantitative finance. Use `/biorxiv-search` for biology preprints and `/polars-dovmed` for peer-reviewed PMC full text.",
+          "- `/polars-dovmed`: peer-reviewed PMC full text"
         ],
         "crossref-lookup": [
-          "- `/crossref-lookup` \u2014 resolve citation metadata from arXiv DOIs"
+          "- `/crossref-lookup`: citation metadata for arXiv DOIs"
         ]
       }
     },
     {
       "name": "beautiful-data-viz",
       "title": "Beautiful Data Viz",
-      "description": "Create publication-quality static charts with matplotlib or seaborn. Use when scientific figures need readable axes, accessible palettes, tight layouts, and high data-ink design.",
+      "description": "Shared design rules for every plot, figure, chart, dashboard or data visual (matplotlib, seaborn, ggplot2, Plotly, HTML/SVG). Greyscale first, color only to encode information, colorblind-safe, publication-ready export. Use when making, restyling or reviewing any chart or figure.",
       "path": "skills/beautiful-data-viz/SKILL.md",
       "platforms": [
         "claude",
@@ -101,24 +107,41 @@
         "dataviz-artist"
       ],
       "sections": [
-        "Static Publication-Quality Plots"
+        "Figures and Visual Design",
+        "Interactive Dashboards"
       ],
       "task_patterns": [
         "chart",
+        "colors",
         "figure",
+        "ggplot2",
         "heatmap",
         "matplotlib",
+        "palette",
         "plot",
         "publication",
-        "seaborn"
+        "seaborn",
+        "svg"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "notebooks",
+        "plotly-dashboard-skill"
+      ],
+      "reference_contexts": {
+        "plotly-dashboard-skill": [
+          "The pack's shared rules for any data visual, whatever the library or medium. Show the data, remove decoration, label directly, and add only the context the reader needs. Other skills that draw figures (`/plotly-dashboard-skill`, `/notebooks`, the `bio-*` reporting skills) follow these rules and add only what their medium needs.",
+          "- Plotly or Dash: a registered template with a grey `colorway` and the accent added per trace; see `/plotly-dashboard-skill` [references/style.md](../plotly-dashboard-skill/references/style.md)."
+        ],
+        "notebooks": [
+          "The pack's shared rules for any data visual, whatever the library or medium. Show the data, remove decoration, label directly, and add only the context the reader needs. Other skills that draw figures (`/plotly-dashboard-skill`, `/notebooks`, the `bio-*` reporting skills) follow these rules and add only what their medium needs.",
+          "| Duplicate figures in an executed Jupyter notebook | See the `/notebooks` troubleshooting section |"
+        ]
+      }
     },
     {
       "name": "bio-annotation",
       "title": "Bio Annotation",
-      "description": "Annotate genes or proteins and infer taxonomy from sequence homology. Use when assigning functions, domains, or taxonomic labels to genomes, contigs, or protein sets.",
+      "description": "Annotate proteins with functions, domains, and homology-based taxonomy. Use when assigning functional or taxonomic labels to proteins from genomes, contigs, or MAGs.",
       "path": "skills/bio-annotation/SKILL.md",
       "platforms": [
         "claude",
@@ -171,7 +194,7 @@
     {
       "name": "bio-assembly-qc",
       "title": "Bio Assembly QC",
-      "description": "Assemble genomes or metagenomes and assess assembly quality. Use when turning sequence reads into contigs and reporting completeness, continuity, and contamination evidence.",
+      "description": "Assemble isolate genomes or metagenomes and run QUAST/MetaQUAST with a restartable driver. Use when turning QC-passed reads into contigs and checking assembly contiguity.",
       "path": "skills/bio-assembly-qc/SKILL.md",
       "platforms": [
         "claude",
@@ -190,10 +213,13 @@
         "contigs"
       ],
       "internal_references": [
+        "assembler",
         "bio-annotation",
         "bio-gene-calling",
         "bio-reads-qc-mapping",
         "bio-viromics",
+        "contigs",
+        "quast",
         "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
@@ -201,7 +227,8 @@
           "- For very large ONT/metagenome FASTQs, use `/bio-reads-qc-mapping` guidance for filtering and avoid redundant full-file raw-read preflights before filtering. Record raw file metadata (`stat` path, size, mtime), optionally run a small sampled check, and write `seqkit stats` after each produced read set."
         ],
         "tracking-taxonomy-updates": [
-          "5. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows."
+          "5. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows.",
+          "- results/bio-assembly-qc/domain_routing.tsv (written by the `/tracking-taxonomy-updates` QuickClade step, not by the driver)"
         ],
         "bio-gene-calling": [
           "- Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment."
@@ -211,13 +238,22 @@
         ],
         "bio-viromics": [
           "- Viral or virus-like -> `/bio-viromics` before prokaryotic MAG tooling."
+        ],
+        "assembler": [
+          "- results/bio-assembly-qc/<sample_id>/assembler/ (raw assembler output)"
+        ],
+        "contigs": [
+          "- results/bio-assembly-qc/<sample_id>/contigs.fasta (normalized assembly)"
+        ],
+        "quast": [
+          "- results/bio-assembly-qc/<sample_id>/quast/report.tsv (QUAST or MetaQUAST metrics)"
         ]
       }
     },
     {
       "name": "bio-binning-qc",
       "title": "Bio Binning QC",
-      "description": "Bin and refine metagenomic contigs, then assess MAG quality. Use when recovering genomes with QuickBin and checking completeness, contamination, and bin consistency.",
+      "description": "Bin metagenomic contigs with QuickBin and assess MAG quality with CheckM2, GUNC, EukCC, and GTDB-Tk. Use when binning an assembly or scoring bin completeness and contamination.",
       "path": "skills/bio-binning-qc/SKILL.md",
       "platforms": [
         "claude",
@@ -238,12 +274,17 @@
         "bins"
       ],
       "internal_references": [
+        "bio-reads-qc-mapping",
         "bio-viromics",
         "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
+        "bio-reads-qc-mapping": [
+          "1. Map each sample's reads back to the assembly (BBMap or `bwa-mem2` for short reads, minimap2 for long reads; see `/bio-reads-qc-mapping`), then compute per-sample contig depth from the sorted BAMs with CoverM v0.7.0+."
+        ],
         "tracking-taxonomy-updates": [
-          "3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible."
+          "3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible.",
+          "- results/bio-binning-qc/quickclade_percontig.tsv and domain_routing.tsv (from `/tracking-taxonomy-updates`)"
         ],
         "bio-viromics": [
           "- Viral or virus-like -> remove from MAG QC and route candidate contigs/genomes to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus evidence and GVClass for giant-virus/Nucleocytoviricota candidates.",
@@ -254,7 +295,7 @@
     {
       "name": "bio-fasta-database-curator",
       "title": "FASTA Database Curator",
-      "description": "Curate and validate FASTA or FAA databases. Use when standardizing headers, merging references, deduplicating sequences, converting GenBank files, or preparing BLAST, MMseqs2, and HMM inputs.",
+      "description": "Curate and validate FASTA or FAA databases. Use when standardizing headers, merging or deduplicating references, converting GenBank, or preparing BLAST, MMseqs2, or HMM inputs.",
       "path": "skills/bio-fasta-database-curator/SKILL.md",
       "platforms": [
         "claude",
@@ -277,13 +318,19 @@
         "prepare MMseqs database",
         "standardize headers"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "dev"
+      ],
+      "reference_contexts": {
+        "dev": [
+          "seqkit seq -t protein --validate-seq curated.fasta > /dev/null   # nonzero exit on an invalid residue; -t dna for nucleotides"
+        ]
+      }
     },
     {
       "name": "bio-foundation-housekeeping",
       "title": "Bio Foundation Housekeeping",
-      "description": "Add schema-backed metadata validation, normalized Parquet tables, and a DuckDB catalog to a bioinformatics project. Use when an analysis needs LinkML/Pydantic records or a queryable data catalog.",
+      "description": "Add LinkML/Pydantic metadata validation, Parquet tables, and a DuckDB catalog to a bioinformatics project. Use when records need schema checks or a queryable catalog.",
       "path": "skills/bio-foundation-housekeeping/SKILL.md",
       "platforms": [
         "claude",
@@ -309,7 +356,7 @@
     {
       "name": "bio-gene-calling",
       "title": "Bio Gene Calling",
-      "description": "Predict coding sequences and screen assemblies for non-coding RNA features. Use when calling genes in prokaryotic, viral, or eukaryotic assemblies, or when a tRNA, rRNA, or other ncRNA census is needed before functional annotation.",
+      "description": "Predict genes and count tRNA and rRNA genes in assemblies. Use when calling CDS in prokaryotic, viral, or eukaryotic assemblies, or when an ncRNA census is needed before annotation.",
       "path": "skills/bio-gene-calling/SKILL.md",
       "platforms": [
         "claude",
@@ -324,9 +371,14 @@
       "task_patterns": [
         "ORF",
         "Prodigal",
+        "Prodigal-GV",
         "gene calling",
         "gene prediction",
-        "predict genes"
+        "ncRNA census",
+        "predict genes",
+        "pyrodigal",
+        "rRNA",
+        "tRNA"
       ],
       "internal_references": [
         "bio-reads-qc-mapping",
@@ -346,7 +398,7 @@
     {
       "name": "bio-interdomain-hgt",
       "title": "Bio Interdomain HGT",
-      "description": "Detect and polarize interdomain horizontal gene transfer with homology, context, and phylogenetic checks. Use when studying lateral gene transfer, virus-host gene exchange, endogenous viral elements, or donor direction.",
+      "description": "Detect and polarize interdomain horizontal gene transfer with reciprocal hits, genomic context, and gene trees. Use for virus-host gene exchange, endogenous viral elements, or donor direction.",
       "path": "skills/bio-interdomain-hgt/SKILL.md",
       "platforms": [
         "claude",
@@ -386,7 +438,8 @@
           "genome-only (proteins missing). Pairs with `/bio-annotation` (homology/taxonomy),"
         ],
         "bio-phylogenomics": [
-          "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and"
+          "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and",
+          "0-1 scale (UFBoot 95 becomes 0.95); `/bio-phylogenomics` `--normalize-only`"
         ],
         "bio-viromics": [
           "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and",
@@ -410,7 +463,7 @@
     {
       "name": "bio-logic",
       "title": "Bio-Logic: Scientific Reasoning Evaluation",
-      "description": "Assess a scientific claim, study design, method, or interpretation against its evidence. Use when testing causal reasoning, finding methodological bias, weighing alternative explanations, or revising hypotheses.",
+      "description": "Assess a scientific claim, study design, or interpretation against its evidence. Use when testing causal reasoning, finding bias, weighing alternative explanations, or revising hypotheses.",
       "path": "skills/bio-logic/SKILL.md",
       "platforms": [
         "claude",
@@ -466,20 +519,20 @@
           "4. When findings need context, pair this reasoning with a literature-search skill such as `/polars-dovmed`, then revise hypotheses against the literature."
         ],
         "ai-scientist-evaluator": [
-          "- `/ai-scientist-evaluator` \u2014 rubric-scored evaluation of AI scientist outputs"
+          "- `/ai-scientist-evaluator`: rubric-scored evaluation of AI scientist outputs"
         ],
         "manuscript-review-council": [
-          "- `/manuscript-review-council` \u2014 multi-reviewer critique of peer-reviewed manuscripts"
+          "- `/manuscript-review-council`: multi-reviewer critique of peer-reviewed manuscripts"
         ],
         "proposal-review": [
-          "- `/proposal-review` \u2014 structured critique of funding proposals"
+          "- `/proposal-review`: structured critique of funding proposals"
         ]
       }
     },
     {
       "name": "bio-phylogenomics",
       "title": "Bio Phylogenomics",
-      "description": "Build and validate marker-gene alignments and phylogenetic trees. Use when inferring evolutionary relationships, choosing models, or checking tree support and contamination.",
+      "description": "Build marker-gene alignments and ML trees and find closest relatives. Use when inferring phylogenies, placing genomes, choosing substitution models, or checking tree support.",
       "path": "skills/bio-phylogenomics/SKILL.md",
       "platforms": [
         "claude",
@@ -494,7 +547,10 @@
         "Phylogenetic Analysis"
       ],
       "task_patterns": [
+        "IQ-TREE",
+        "VeryFastTree",
         "alignment",
+        "bootstrap support",
         "closest relatives",
         "compare relatives",
         "nearest relatives",
@@ -510,24 +566,24 @@
       ],
       "reference_contexts": {
         "genome": [
-          "9. **Fetch and persist the close-relative genomes and proteomes** that downstream comparative analyses will use. Save under `results/bio-phylogenomics/relatives/{accession}/genome.fna` and `proteins.faa`, plus `relatives_manifest.tsv` recording accession, source DB, taxonomy, genome size, gene count, and the reason for inclusion. If a relative cannot be downloaded, record the failure explicitly. Without this artifact, the comparative axes downstream cannot run.",
-          "- results/bio-phylogenomics/relatives/{accession}/genome.fna"
+          "10. Fetch and persist the close-relative genomes and proteomes for downstream comparisons: `results/bio-phylogenomics/relatives/{accession}/genome.fna` and `proteins.faa`, plus `relatives_manifest.tsv` with accession, source database, taxonomy, genome size, gene count, and the reason for inclusion. Record each failed download with its reason. The comparative axes downstream cannot run without this table.",
+          "- (agent-authored) `relatives/{accession}/genome.fna` and `relatives/{accession}/proteins.faa`"
         ],
         "bio-protein-clustering-pangenome": [
-          "10. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`."
+          "11. Pass the well-supported relatives, or a documented broader comparison set, to `/bio-protein-clustering-pangenome` and `/bio-annotation`."
         ],
         "bio-annotation": [
-          "10. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`."
+          "11. Pass the well-supported relatives, or a documented broader comparison set, to `/bio-protein-clustering-pangenome` and `/bio-annotation`."
         ],
         "proteins": [
-          "- results/bio-phylogenomics/relatives/{accession}/proteins.faa"
+          "- (agent-authored) `relatives/{accession}/genome.fna` and `relatives/{accession}/proteins.faa`"
         ]
       }
     },
     {
       "name": "bio-prefect-dask-nextflow",
       "title": "Bio Prefect + Dask + Nextflow",
-      "description": "Design reproducible bioinformatics pipelines with Prefect plus Dask or Nextflow. Use when scaffolding local, distributed, or scheduler-backed workflows.",
+      "description": "Choose and scaffold Prefect+Dask or Nextflow pipelines. Use when designing a local, distributed, or Slurm-backed bioinformatics workflow.",
       "path": "skills/bio-prefect-dask-nextflow/SKILL.md",
       "platforms": [
         "claude",
@@ -551,7 +607,7 @@
     {
       "name": "bio-protein-clustering-pangenome",
       "title": "Bio Protein Clustering Pangenome",
-      "description": "Cluster proteins into orthogroups and build pangenome matrices. Use when comparing gene-family presence, absence, expansion, contraction, or core and accessory content across genomes.",
+      "description": "Cluster proteins into orthogroups and build pangenome matrices. Use when comparing gene-family presence, copy number, or core and accessory content across genomes.",
       "path": "skills/bio-protein-clustering-pangenome/SKILL.md",
       "platforms": [
         "claude",
@@ -570,10 +626,14 @@
       ],
       "internal_references": [
         "bio-annotation",
+        "bio-gene-calling",
         "bio-phylogenomics",
         "bio-structure-annotation"
       ],
       "reference_contexts": {
+        "bio-gene-calling": [
+          "`orthogroups.tsv` is a long table with one row per protein: `orthogroup, protein_id, genome, contig, order, start, end`. Build it from the clustering output (OrthoFinder `Orthogroups.tsv` is wide and must be melted) joined with gene coordinates from the gene-calling GFF; `order` is the gene's rank along its contig. `genomes.tsv` has `genome, role (query|reference), genome_size, contig_count, n50, gene_count, coding_density, gc`. The marker catalog has `category, family_id, family_name`; marker hits have `genome, family_id, protein_id, e_value`; the ncRNA census uses the `/bio-gene-calling` columns. The driver requires globally unique protein IDs, at least two reference genomes for a defensible median, and a fresh output directory. It persists marker and ncRNA censuses alongside copy-number, presence/absence, family-comparison, genome-frontier, and conserved-neighborhood artifacts. `fixtures/` is a runnable three-genome contract test."
+        ],
         "bio-phylogenomics": [
           "3. Build presence/absence matrix AND an integer copy-number matrix (orthogroup \u00d7 genome) covering the query AND the close relatives produced by `/bio-phylogenomics`."
         ],
@@ -588,7 +648,7 @@
     {
       "name": "bio-reads-qc-mapping",
       "title": "Bio Reads QC Mapping",
-      "description": "Ingest, quality-control, and map sequencing reads with reproducible outputs. Use when processing raw reads, removing contaminants, or calculating mapping and coverage statistics.",
+      "description": "QC, trim, and map short or long reads with a restartable driver. Use when processing raw FASTQ, removing adapters or contaminants, or computing mapping and coverage statistics.",
       "path": "skills/bio-reads-qc-mapping/SKILL.md",
       "platforms": [
         "claude",
@@ -613,7 +673,7 @@
     {
       "name": "bio-stats-ml-reporting",
       "title": "Bio Stats ML Reporting",
-      "description": "Analyze biological results with statistics or machine learning and produce validated reports. Use when aggregating features, testing hypotheses, training models, or reporting performance.",
+      "description": "Run statistics or machine learning on biological results and write a validated report. Use when testing hypotheses, training classifiers or rolling up discovery evidence.",
       "path": "skills/bio-stats-ml-reporting/SKILL.md",
       "platforms": [
         "claude",
@@ -627,18 +687,27 @@
       ],
       "task_patterns": [
         "analysis report",
+        "cross-validate",
         "machine learning",
         "model report",
         "statistical report",
-        "statistics"
+        "statistics",
+        "train a classifier",
+        "train a model"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "beautiful-data-viz"
+      ],
+      "reference_contexts": {
+        "beautiful-data-viz": [
+          "8. Draw report figures (performance curves, calibration plots, effect sizes) with `/beautiful-data-viz`: grey by default, color only for the compared models or the one highlighted result."
+        ]
+      }
     },
     {
       "name": "bio-structure-annotation",
       "title": "Bio Structure Annotation",
-      "description": "Predict protein or complex structures and annotate proteins by structural similarity. Use when predicting a fold, judging prediction confidence, or finding structural homologs for proteins with weak sequence evidence.",
+      "description": "Predict protein or complex structures and find structural homologs. Use when sequence search gives weak or no hits, or when a fold, complex model, or prediction confidence is needed.",
       "path": "skills/bio-structure-annotation/SKILL.md",
       "platforms": [
         "claude",
@@ -656,6 +725,10 @@
         "ColabFold",
         "Foldseek",
         "TM-Vec",
+        "protein fold",
+        "remote homology",
+        "structural homolog",
+        "structural homologs",
         "structure prediction"
       ],
       "internal_references": [
@@ -674,7 +747,7 @@
     {
       "name": "bio-viromics",
       "title": "Bio Viromics",
-      "description": "Detect, quality-control, and classify viral contigs. Use when identifying viruses in assemblies, checking viral completeness and contamination, or assigning viral taxonomy.",
+      "description": "Detect, QC, and classify viral contigs with geNomad, CheckV, vConTACT3, and GVClass. Use when finding viruses in assemblies, grading viral genomes, or assigning phage or giant-virus taxonomy.",
       "path": "skills/bio-viromics/SKILL.md",
       "platforms": [
         "claude",
@@ -689,9 +762,11 @@
         "Viral Analysis"
       ],
       "task_patterns": [
+        "CheckV",
         "Mimivirus",
         "NCLDV",
         "VirSorter",
+        "geNomad",
         "giant virus",
         "large DNA virus",
         "phage",
@@ -699,11 +774,27 @@
         "viral genome"
       ],
       "internal_references": [
+        "bio-annotation",
+        "bio-gene-calling",
+        "bio-phylogenomics",
+        "polars-dovmed",
         "tracking-taxonomy-updates"
       ],
       "reference_contexts": {
         "tracking-taxonomy-updates": [
-          "2. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not already been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial/archaeal and eukaryotic rows stay on their domain-specific routes unless later evidence contradicts the triage."
+          "1. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial, archaeal, and eukaryotic rows stay on their domain routes unless later evidence contradicts the triage."
+        ],
+        "polars-dovmed": [
+          "5. Search the literature for that group (`/polars-dovmed`) and write `analysis_playbook.md`: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by people who study the group."
+        ],
+        "bio-phylogenomics": [
+          "- Nucleocytoviricota, Mirusviricota, and Preplasmiviricota: GVClass v2.0.3 with resource bundle v2.0.0, plus marker-gene phylogenies of core genes through `/bio-phylogenomics`."
+        ],
+        "bio-gene-calling": [
+          "7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (`/bio-gene-calling`, `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list."
+        ],
+        "bio-annotation": [
+          "7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (`/bio-gene-calling`, `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list."
         ]
       }
     },
@@ -730,8 +821,14 @@
         "methods",
         "pipeline methods"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "scientific-writing"
+      ],
+      "reference_contexts": {
+        "scientific-writing": [
+          "6. For manuscript Methods prose, hand the manifest to `/scientific-writing`. Keep script names, internal flags, and runtime bookkeeping in Methods or the supplement, not in Results."
+        ]
+      }
     },
     {
       "name": "bioinformatics-project",
@@ -766,7 +863,7 @@
     {
       "name": "biorxiv-search",
       "title": "bioRxiv Search",
-      "description": "Search bioRxiv through its official API and filter title, abstract, and author metadata. Use when finding recent biology preprints, scanning date ranges, resolving DOIs, or building author shortlists.",
+      "description": "Scan bioRxiv by date range, category, author, or DOI through its official API, with local keyword filtering. Use for recent biology preprints, bioRxiv DOI lookups, or author shortlists.",
       "path": "skills/biorxiv-search/SKILL.md",
       "platforms": [
         "claude",
@@ -786,22 +883,28 @@
         "recent biology preprints"
       ],
       "internal_references": [
+        "arxiv-search",
         "crossref-lookup",
         "polars-dovmed"
       ],
       "reference_contexts": {
-        "crossref-lookup": [
-          "- `/crossref-lookup` \u2014 resolve citation metadata from bioRxiv DOIs"
+        "arxiv-search": [
+          "1. Use this skill for bioRxiv preprints and for preprint metadata that may lag in PubMed, PMC, or Crossref. Use `/arxiv-search` for arXiv and `/polars-dovmed` for peer-reviewed PMC full text.",
+          "- `/arxiv-search`: arXiv preprints"
         ],
         "polars-dovmed": [
-          "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+          "1. Use this skill for bioRxiv preprints and for preprint metadata that may lag in PubMed, PMC, or Crossref. Use `/arxiv-search` for arXiv and `/polars-dovmed` for peer-reviewed PMC full text.",
+          "- `/polars-dovmed`: peer-reviewed PMC full text and bioRxiv full text"
+        ],
+        "crossref-lookup": [
+          "- `/crossref-lookup`: citation metadata for bioRxiv DOIs"
         ]
       }
     },
     {
       "name": "crossref-lookup",
       "title": "Crossref Lookup",
-      "description": "Query Crossref for DOI validation, title matching, citation metadata, and bibliography audits. Use when resolving references or cleaning citation records.",
+      "description": "Query Crossref to validate DOIs, match titles to DOIs, fetch citation metadata, and audit bibliographies. Use when resolving references or cleaning citation records.",
       "path": "skills/crossref-lookup/SKILL.md",
       "platforms": [
         "claude",
@@ -830,16 +933,16 @@
       ],
       "reference_contexts": {
         "polars-dovmed": [
-          "- `/polars-dovmed` \u2014 full-text PMC Open Access search when the DOI is unknown"
+          "- `/polars-dovmed`: full-text PMC Open Access search when the DOI is unknown"
         ],
         "arxiv-search": [
-          "- `/arxiv-search` \u2014 source-native preprint search on arXiv"
+          "- `/arxiv-search` and `/biorxiv-search`: preprint search"
         ],
         "biorxiv-search": [
-          "- `/biorxiv-search` \u2014 source-native preprint search on bioRxiv"
+          "- `/arxiv-search` and `/biorxiv-search`: preprint search"
         ],
         "scientific-impact-assessment": [
-          "- `/scientific-impact-assessment` \u2014 citation counts and journal impact"
+          "- `/scientific-impact-assessment`: citation counts and journal impact"
         ]
       }
     },
@@ -873,7 +976,7 @@
     {
       "name": "exploratory-data-analysis",
       "title": "Exploratory Data Analysis",
-      "description": "Inspect scientific data and generate a Markdown structure-and-quality report. Use when triaging tabular, array, sequence, HDF5, JSON, or raster files before downstream analysis.",
+      "description": "Inspect a scientific data file and report its structure and quality. Use when triaging an unknown table, array, sequence or image file.",
       "path": "skills/exploratory-data-analysis/SKILL.md",
       "platforms": [
         "claude",
@@ -895,13 +998,20 @@
         "inspect file",
         "unknown file"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "beautiful-data-viz"
+      ],
+      "reference_contexts": {
+        "beautiful-data-viz": [
+          "- Visualization approaches (any figures follow `/beautiful-data-viz`: greyscale first, color only to encode information)",
+          "- Any generated figures (styled per `/beautiful-data-viz`), tables, or temporary summaries needed to support the report."
+        ]
+      }
     },
     {
       "name": "manuscript-review-council",
       "title": "Manuscript Review Council",
-      "description": "Produce a journal-style peer review of a scientific manuscript with specialist reports and an editor decision. Use when assessing publication readiness, or whether a revision or author response resolves scientific objections.",
+      "description": "Journal-style manuscript peer review with specialist reviewer reports and an editor decision. Use when judging publication readiness or whether a revision or author response resolves scientific objections.",
       "path": "skills/manuscript-review-council/SKILL.md",
       "platforms": [
         "claude",
@@ -927,31 +1037,36 @@
       "internal_references": [
         "ai-scientist-evaluator",
         "bio-logic",
+        "pdf-to-md",
         "polars-dovmed",
         "scientific-writing"
       ],
       "reference_contexts": {
+        "scientific-writing": [
+          "1. Confirm the review context: manuscript or revision stage, target venue if known, decision scale, and whether the user wants a full review, triage, version comparison, or rebuttal assessment. Requests to rewrite manuscript prose or draft a rebuttal go to `/scientific-writing`; start a council only when the user also wants scientific critique or a resolution assessment.",
+          "12. For polished review prose or a cleaned-up decision letter, use `/scientific-writing` after the council has fixed the factual review content.",
+          "- [ ] Prose editing and rebuttal drafting stay with `/scientific-writing`",
+          "- `/scientific-writing`: apply the reviewer feedback to the manuscript"
+        ],
+        "pdf-to-md": [
+          "2. Gather the review packet: manuscript text (convert a PDF or DOCX to sectioned text first, for example with `/pdf-to-md`), title, abstract, main claims, methods snapshot, figure and table list, user priorities, and prior reviews or author response for a revision. Every reviewer gets the same packet; keep section boundaries, figure references, and the claims under test."
+        ],
         "polars-dovmed": [
-          "- use `/polars-dovmed` for claim-specific literature context"
+          "11. For outside validation, run targeted spot-checks, not a broad literature review: `/polars-dovmed` for claim-specific literature and `/bio-logic` for evidence strength and causal claims. Never fabricate supporting papers."
         ],
         "bio-logic": [
-          "- use `/bio-logic` for evidence-strength and causal-claim stress tests",
-          "- `/bio-logic` \u2014 deeper reasoning about evidence strength"
-        ],
-        "scientific-writing": [
-          "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.",
-          "- Requests to rewrite manuscript prose or draft an author rebuttal/response letter route directly to `/scientific-writing`; do not start a council unless the user also asks for scientific critique or resolution assessment.",
-          "- `/scientific-writing` \u2014 apply the reviewer feedback to the manuscript"
+          "11. For outside validation, run targeted spot-checks, not a broad literature review: `/polars-dovmed` for claim-specific literature and `/bio-logic` for evidence strength and causal claims. Never fabricate supporting papers.",
+          "- `/bio-logic`: deeper reasoning about evidence strength"
         ],
         "ai-scientist-evaluator": [
-          "- `/ai-scientist-evaluator` \u2014 equivalent pipeline for AI scientist outputs"
+          "- `/ai-scientist-evaluator`: equivalent review for AI scientist outputs"
         ]
       }
     },
     {
       "name": "notebooks",
       "title": "Notebooks",
-      "description": "Author, execute, validate, and convert reproducible marimo or Jupyter notebooks. Use when delivering an analysis notebook with all cells run and figures embedded.",
+      "description": "Author, run and convert marimo or Jupyter notebooks. Use when delivering an analysis notebook executed end to end with figures embedded.",
       "path": "skills/notebooks/SKILL.md",
       "platforms": [
         "claude",
@@ -973,8 +1088,15 @@
         "pixi kernel",
         "reactive notebook"
       ],
-      "internal_references": [],
-      "reference_contexts": {}
+      "internal_references": [
+        "beautiful-data-viz"
+      ],
+      "reference_contexts": {
+        "beautiful-data-viz": [
+          "7. **Evaluate the plots, then refine.** This step is required. Figures follow `/beautiful-data-viz` (greyscale first, color only to encode information, colorblind-safe, no in-plot titles on manuscript figures); [references/plot_style.md](references/plot_style.md) has the notebook style cell. After the run-all execution:",
+          "- [ ] Figures pass the `/beautiful-data-viz` quality gates: grey unless color encodes information, no in-plot titles on manuscript figures, caption cell below the figure."
+        ]
+      }
     },
     {
       "name": "pdf-to-md",
@@ -1031,7 +1153,7 @@
     {
       "name": "plotly-dashboard-skill",
       "title": "Plotly Dashboard Skill",
-      "description": "Build production-ready Plotly Dash dashboards. Use when scientific data needs an interactive, consistently themed layout with clear and performant callbacks.",
+      "description": "Build Plotly Dash apps with one shared figure template and fast callbacks. Use when data needs an interactive multi-view dashboard.",
       "path": "skills/plotly-dashboard-skill/SKILL.md",
       "platforms": [
         "claude",
@@ -1055,14 +1177,15 @@
       ],
       "reference_contexts": {
         "beautiful-data-viz": [
-          "- Static publication figures. Use `/beautiful-data-viz` for matplotlib or seaborn output."
+          "Build interactive Dash dashboards with a single source of truth for UI and figure styling. Visual rules (greyscale first, color only to encode information, direct labels, accessibility) come from `/beautiful-data-viz`; this skill applies them to Dash and adds app structure and performance.",
+          "- Static publication figures. Use `/beautiful-data-viz`, which also sets the visual rules this skill follows."
         ]
       }
     },
     {
       "name": "polars-dovmed",
       "title": "polars-dovmed",
-      "description": "Search PMC Open Access and bioRxiv corpora with polars-dovmed. Use when structured, reproducible literature queries should run through the hosted API or local parquet indexes.",
+      "description": "Run structured full-text searches of PMC Open Access and bioRxiv with polars-dovmed. Use for reproducible literature searches through the hosted API or local parquet corpora.",
       "path": "skills/polars-dovmed/SKILL.md",
       "platforms": [
         "claude",
@@ -1104,26 +1227,21 @@
         "usr"
       ],
       "reference_contexts": {
-        "api": [
-          "- Prefer structured async search through `/api/jobs` targeting `scan_literature_advanced(mode=\"discovery\")`.",
-          "- Do not use the flat `/api/search_literature` endpoint for smoke tests or normal skill work. It is opt-in only with `--allow-flat-query` and may hang behind the edge proxy.",
-          "| Avoid by default | flat `/api/search_literature`, `--corpus both`, unbanded broad OpenPMC |",
-          "**Issue**: Flat `/api/search_literature` times out"
-        ],
         "crossref-lookup": [
-          "- For citation-quality answers, first use PMCID/DOI details from polars-dovmed, then `--crossref-metadata` or `/crossref-lookup` for missing DOI/year/journal. Use DOI landing pages or journal pages only when Crossref and corpus metadata disagree or remain ambiguous."
+          "5. Fill citation metadata from the corpus details first, then from `--crossref-metadata` or `/crossref-lookup`. Use DOI landing pages only when corpus metadata and Crossref disagree or stay ambiguous; do not use generic web search for DOI repair."
+        ],
+        "api": [
+          "7. Do not use the flat `/api/search_literature` endpoint. It needs `--allow-flat-query` and can hang behind the edge proxy."
         ],
         "usr": [
-          "If `timeout` is unavailable, still pass `--poll-timeout` and record that no outer wall-clock guard was available. Avoid `/usr/bin/time`; use shell `time -p` unless you have confirmed the path exists.",
-          "**Issue**: `/usr/bin/time` is missing",
-          "**Solution**: Use shell `time -p` or record start/end timestamps; do not assume `/usr/bin/time` exists."
+          "**Issue**: `/usr/bin/time` is missing."
         ]
       }
     },
     {
       "name": "proposal-review",
       "title": "Proposal Review",
-      "description": "Evaluate a proposed AI/ML, computational-biology, or bioscience research project for a funding decision. Use when reviewing a grant, research proposal, or funding application against sponsor criteria, feasibility, budget, and risks.",
+      "description": "Review an AI/ML, computational-biology, or bioscience research proposal for a funding decision. Use when scoring a grant or funding application against sponsor criteria, feasibility, budget, and risk.",
       "path": "skills/proposal-review/SKILL.md",
       "platforms": [
         "claude",
@@ -1152,20 +1270,20 @@
       ],
       "reference_contexts": {
         "manuscript-review-council": [
-          "- `/manuscript-review-council` \u2014 equivalent pipeline for manuscripts"
+          "- `/manuscript-review-council`: equivalent review for manuscripts"
         ],
         "scientific-writing": [
-          "- `/scientific-writing` \u2014 draft or revise the proposal narrative"
+          "- `/scientific-writing`: draft or revise the proposal narrative"
         ],
         "bio-logic": [
-          "- `/bio-logic` \u2014 assess methodology and evidence rigor"
+          "- `/bio-logic`: assess methodology and evidence rigor"
         ]
       }
     },
     {
       "name": "public-db-lookup",
       "title": "Public Database Lookup",
-      "description": "Fetch bounded JSON records from UniProt, NCBI Entrez, NCBI Datasets, MGnify, InterPro, AlphaFold DB, STRING, or ENA over HTTP GET. Use when looking up an accession, taxon, entry, or structure record from a public database.",
+      "description": "Fetch compact JSON records from UniProt, NCBI, MGnify, InterPro, AlphaFold DB, STRING, or ENA. Use when looking up an accession, taxon, entry, or structure in a public database.",
       "path": "skills/public-db-lookup/SKILL.md",
       "platforms": [
         "claude",
@@ -1232,17 +1350,17 @@
         "crossref-lookup": [
           "- If you only have a title, use `/crossref-lookup` first to resolve a DOI before running this skill.",
           "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup.",
-          "- `/crossref-lookup` \u2014 resolve DOIs before scoring impact"
+          "- `/crossref-lookup`: resolve DOIs before scoring impact"
         ],
         "polars-dovmed": [
-          "- `/polars-dovmed` \u2014 retrieve the full text that backs the impact claim"
+          "- `/polars-dovmed`: retrieve the full text that backs the impact claim"
         ]
       }
     },
     {
       "name": "scientific-writing",
       "title": "Scientific Writing",
-      "description": "Draft or edit scientific prose while preserving its claims and evidence. Use when writing manuscript sections, proposal narratives, rebuttals, or response letters, or when checking sentence-level clarity and style.",
+      "description": "Draft or revise scientific prose without changing its claims. Use for manuscript sections, proposal narratives, rebuttals, response letters, or a sentence-level clarity review.",
       "path": "skills/scientific-writing/SKILL.md",
       "platforms": [
         "claude",
@@ -1274,28 +1392,27 @@
       ],
       "reference_contexts": {
         "bio-logic": [
-          "- Use `/bio-logic` when the main question is whether a method, design, causal",
-          "- `/bio-logic` \u2014 evaluate evidence quality and rigor during revision"
+          "- Use `/bio-logic` when the question is whether a method, design, causal claim, or interpretation is scientifically justified.",
+          "- `/bio-logic`: evidence quality and rigor during revision"
         ],
         "manuscript-review-council": [
-          "- Use `/manuscript-review-council` for journal-style peer review or a",
-          "- `/manuscript-review-council` \u2014 run a multi-reviewer critique before revision"
-        ],
-        "crossref-lookup": [
-          "9. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
-          "| Validate citations | `/crossref-lookup` |",
-          "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
-          "- `/crossref-lookup` \u2014 validate every cited DOI"
+          "- Use `/manuscript-review-council` for journal-style peer review or a multi-reviewer critique, then bring the evidence-backed revisions back here.",
+          "- `/manuscript-review-council`: multi-reviewer critique before revision"
         ],
         "proposal-review": [
-          "- `/proposal-review` \u2014 switch here for funding-proposal critique"
+          "- Use `/proposal-review` to critique a funding proposal; use this skill to write or revise its narrative.",
+          "- `/proposal-review`: funding-proposal critique"
+        ],
+        "crossref-lookup": [
+          "9. Validate citations before finalizing. Use `/crossref-lookup` for DOI and title checks.",
+          "- `/crossref-lookup`: DOI validation for every cited reference"
         ]
       }
     },
     {
       "name": "tracking-taxonomy-updates",
       "title": "Tracking Taxonomy Updates",
-      "description": "Track taxonomy changes and triage sequence assignments across NCBI, GTDB, ICTV, and eukaryotic frameworks. Use when comparing releases, resolving renamed taxa, or routing genomes, bins, and contigs by domain.",
+      "description": "Track NCBI, GTDB, ICTV, and eukaryotic taxonomy releases, and route genomes, bins, or contigs to domain classifiers. Use when comparing releases, resolving renamed taxa, or assigning taxonomy.",
       "path": "skills/tracking-taxonomy-updates/SKILL.md",
       "platforms": [
         "claude",
@@ -1329,7 +1446,8 @@
       ],
       "reference_contexts": {
         "bio-viromics": [
-          "- Viral or virus-like -> route to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus gene-sharing taxonomy and GVClass for giant-virus/Nucleocytoviricota candidates."
+          "- Phage or prokaryotic virus: `/bio-viromics`, then vConTACT3.",
+          "- Giant virus or Nucleocytoviricota: `/bio-viromics`, then GVClass plus a marker-gene phylogeny."
         ]
       }
     }
@@ -1337,10 +1455,14 @@
   "agents": [
     {
       "name": "dataviz-artist",
-      "description": "Expert data visualization specialist for publication-quality figures, dashboards, and reproducible analysis notebooks.",
+      "description": "Data visualization specialist for figures, charts, dashboards, and reproducible analysis notebooks, with greyscale-first, colorblind-safe design.",
       "path": "agents/dataviz-artist.md",
       "skill_sections": {
+        "Figures and Visual Design": [
+          "beautiful-data-viz"
+        ],
         "Interactive Dashboards": [
+          "beautiful-data-viz",
           "plotly-dashboard-skill"
         ],
         "Notebook authoring": [
@@ -1348,12 +1470,15 @@
         ],
         "Scientific Data Inspection": [
           "exploratory-data-analysis"
-        ],
-        "Static Publication-Quality Plots": [
-          "beautiful-data-viz"
         ]
       },
-      "workflow_edges": [],
+      "workflow_edges": [
+        {
+          "source": "beautiful-data-viz",
+          "target": "plotly-dashboard-skill",
+          "evidence": "\u2514\u2500 Need Interactive Dashboard? \u2192 /beautiful-data-viz \u2192 /plotly-dashboard-skill"
+        }
+      ],
       "task_patterns": [
         {
           "skill_name": "exploratory-data-analysis",
@@ -1388,7 +1513,11 @@
             "heatmap",
             "publication",
             "matplotlib",
-            "seaborn"
+            "seaborn",
+            "ggplot2",
+            "palette",
+            "colors",
+            "svg"
           ]
         },
         {
@@ -1405,7 +1534,7 @@
     },
     {
       "name": "literature-expert",
-      "description": "Expert literature discovery and citation metadata agent for peer-reviewed papers, preprints, DOI lookup, and evidence-grounded search triage.",
+      "description": "Literature discovery and citation metadata agent for peer-reviewed papers, preprints, DOI lookup, and evidence-grounded search triage.",
       "path": "agents/literature-expert.md",
       "skill_sections": {
         "Argument Graph Extraction": [
@@ -1822,7 +1951,12 @@
             "predict genes",
             "gene prediction",
             "ORF",
-            "Prodigal"
+            "Prodigal",
+            "Prodigal-GV",
+            "pyrodigal",
+            "tRNA",
+            "rRNA",
+            "ncRNA census"
           ]
         },
         {
@@ -1904,7 +2038,10 @@
           "phrases": [
             "phylogeny",
             "tree",
-            "alignment"
+            "alignment",
+            "IQ-TREE",
+            "VeryFastTree",
+            "bootstrap support"
           ]
         },
         {
@@ -1931,7 +2068,11 @@
             "Boltz",
             "Foldseek",
             "TM-Vec",
-            "ColabFold"
+            "ColabFold",
+            "structural homolog",
+            "structural homologs",
+            "remote homology",
+            "protein fold"
           ]
         },
         {
@@ -1939,7 +2080,9 @@
           "phrases": [
             "viral",
             "phage",
-            "VirSorter"
+            "VirSorter",
+            "geNomad",
+            "CheckV"
           ]
         },
         {
@@ -1976,7 +2119,10 @@
             "statistical report",
             "analysis report",
             "model report",
-            "machine learning"
+            "machine learning",
+            "train a classifier",
+            "train a model",
+            "cross-validate"
           ]
         },
         {
@@ -2026,7 +2172,7 @@
     },
     {
       "name": "science-writer",
-      "description": "Expert scientific writer and editor for publication-quality manuscripts, revision strategy, peer review, and reproducible methods documentation.",
+      "description": "Scientific writer and editor for manuscripts, revisions, peer review, proposal review, AI scientist output review, and reproducible methods documentation.",
       "path": "agents/science-writer.md",
       "skill_sections": {
         "Argument Graph Extraction": [
@@ -2176,7 +2322,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/bio-logic` \u2014 general scientific reasoning beyond AI evaluation"
+        "- `/bio-logic`: general scientific reasoning beyond AI evaluation"
       ]
     },
     {
@@ -2190,7 +2336,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/manuscript-review-council` \u2014 equivalent pipeline for human-authored manuscripts"
+        "- `/manuscript-review-council`: equivalent review for human-authored manuscripts"
       ]
     },
     {
@@ -2204,7 +2350,23 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/scientific-writing` \u2014 draft the evaluation writeup"
+        "- writing and editorial reviewer, who also checks the `/scientific-writing`",
+        "- `/scientific-writing`: draft the evaluation writeup"
+      ]
+    },
+    {
+      "source": "arxiv-search",
+      "target": "biorxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "1. Use this skill for arXiv-native preprints: computer science, mathematics, physics, statistics, quantitative biology, and quantitative finance. Use `/biorxiv-search` for biology preprints and `/polars-dovmed` for peer-reviewed PMC full text.",
+        "- `/biorxiv-search`: biology preprints"
       ]
     },
     {
@@ -2218,22 +2380,66 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/crossref-lookup` \u2014 resolve citation metadata from arXiv DOIs"
+        "- `/crossref-lookup`: citation metadata for arXiv DOIs"
       ]
     },
     {
       "source": "arxiv-search",
       "target": "polars-dovmed",
-      "type": "similar_to",
+      "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.8,
+      "confidence": 0.75,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "9. If the user wants peer-reviewed biomedical full text rather than preprints, use `/polars-dovmed` instead.",
-        "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+        "1. Use this skill for arXiv-native preprints: computer science, mathematics, physics, statistics, quantitative biology, and quantitative finance. Use `/biorxiv-search` for biology preprints and `/polars-dovmed` for peer-reviewed PMC full text.",
+        "- `/polars-dovmed`: peer-reviewed PMC full text"
+      ]
+    },
+    {
+      "source": "beautiful-data-viz",
+      "target": "notebooks",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "The pack's shared rules for any data visual, whatever the library or medium. Show the data, remove decoration, label directly, and add only the context the reader needs. Other skills that draw figures (`/plotly-dashboard-skill`, `/notebooks`, the `bio-*` reporting skills) follow these rules and add only what their medium needs.",
+        "| Duplicate figures in an executed Jupyter notebook | See the `/notebooks` troubleshooting section |"
+      ]
+    },
+    {
+      "source": "beautiful-data-viz",
+      "target": "plotly-dashboard-skill",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "The pack's shared rules for any data visual, whatever the library or medium. Show the data, remove decoration, label directly, and add only the context the reader needs. Other skills that draw figures (`/plotly-dashboard-skill`, `/notebooks`, the `bio-*` reporting skills) follow these rules and add only what their medium needs.",
+        "- Plotly or Dash: a registered template with a grey `colorway` and the accent added per trace; see `/plotly-dashboard-skill` [references/style.md](../plotly-dashboard-skill/references/style.md)."
+      ]
+    },
+    {
+      "source": "beautiful-data-viz",
+      "target": "plotly-dashboard-skill",
+      "type": "workflow_next",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2514\u2500 Need Interactive Dashboard? \u2192 /beautiful-data-viz \u2192 /plotly-dashboard-skill"
       ]
     },
     {
@@ -2404,7 +2610,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "5. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows."
+        "5. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows.",
+        "- results/bio-assembly-qc/domain_routing.tsv (written by the `/tracking-taxonomy-updates` QuickClade step, not by the driver)"
       ]
     },
     {
@@ -2437,6 +2644,20 @@
     },
     {
       "source": "bio-binning-qc",
+      "target": "bio-reads-qc-mapping",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "1. Map each sample's reads back to the assembly (BBMap or `bwa-mem2` for short reads, minimap2 for long reads; see `/bio-reads-qc-mapping`), then compute per-sample contig depth from the sorted BAMs with CoverM v0.7.0+."
+      ]
+    },
+    {
+      "source": "bio-binning-qc",
       "target": "tracking-taxonomy-updates",
       "type": "compose_with",
       "source_type": "skill",
@@ -2446,7 +2667,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible."
+        "3. Run `/tracking-taxonomy-updates` for BBTools-container QuickClade domain triage on the bin directory and the source assembly with `percontig`. Persist the per-contig screen so mixed bins are visible.",
+        "- results/bio-binning-qc/quickclade_percontig.tsv and domain_routing.tsv (from `/tracking-taxonomy-updates`)"
       ]
     },
     {
@@ -2631,7 +2853,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and"
+        "`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and",
+        "0-1 scale (UFBoot 95 becomes 0.95); `/bio-phylogenomics` `--normalize-only`"
       ]
     },
     {
@@ -2730,7 +2953,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/ai-scientist-evaluator` \u2014 rubric-scored evaluation of AI scientist outputs"
+        "- `/ai-scientist-evaluator`: rubric-scored evaluation of AI scientist outputs"
       ]
     },
     {
@@ -2744,7 +2967,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/manuscript-review-council` \u2014 multi-reviewer critique of peer-reviewed manuscripts"
+        "- `/manuscript-review-council`: multi-reviewer critique of peer-reviewed manuscripts"
       ]
     },
     {
@@ -2772,7 +2995,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/proposal-review` \u2014 structured critique of funding proposals"
+        "- `/proposal-review`: structured critique of funding proposals"
       ]
     },
     {
@@ -2837,12 +3060,12 @@
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.75,
+      "confidence": 0.6,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "10. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`."
+        "11. Pass the well-supported relatives, or a documented broader comparison set, to `/bio-protein-clustering-pangenome` and `/bio-annotation`."
       ]
     },
     {
@@ -2851,12 +3074,12 @@
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.75,
+      "confidence": 0.6,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "10. Use well-supported relatives or a documented broader comparison set to guide downstream comparative analysis with `/bio-protein-clustering-pangenome` and `/bio-annotation`."
+        "11. Pass the well-supported relatives, or a documented broader comparison set, to `/bio-protein-clustering-pangenome` and `/bio-annotation`."
       ]
     },
     {
@@ -2965,9 +3188,11 @@
       "target_type": "skill",
       "confidence": 0.95,
       "provenance": [
+        "skill_body_reference",
         "workflow_decision_tree"
       ],
       "evidence": [
+        "`orthogroups.tsv` is a long table with one row per protein: `orthogroup, protein_id, genome, contig, order, start, end`. Build it from the clustering output (OrthoFinder `Orthogroups.tsv` is wide and must be melted) joined with gene coordinates from the gene-calling GFF; `order` is the gene's rank along its contig. `genomes.tsv` has `genome, role (query|reference), genome_size, contig_count, n50, gene_count, coding_density, gc`. The marker catalog has `category, family_id, family_name`; marker hits have `genome, family_id, protein_id, e_value`; the ncRNA census uses the `/bio-gene-calling` columns. The driver requires globally unique protein IDs, at least two reference genomes for a defensible median, and a fresh output directory. It persists marker and ncRNA censuses alongside copy-number, presence/absence, family-comparison, genome-frontier, and conserved-neighborhood artifacts. `fixtures/` is a runnable three-genome contract test.",
         "\u2502       \u2502               \u251c\u2500> /bio-protein-clustering-pangenome"
       ]
     },
@@ -3043,6 +3268,20 @@
     },
     {
       "source": "bio-stats-ml-reporting",
+      "target": "beautiful-data-viz",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "8. Draw report figures (performance curves, calibration plots, effect sizes) with `/beautiful-data-viz`: grey by default, color only for the compared models or the one highlighted result."
+      ]
+    },
+    {
+      "source": "bio-stats-ml-reporting",
       "target": "bio-reads-qc-mapping",
       "type": "depend_on",
       "source_type": "skill",
@@ -3099,6 +3338,62 @@
     },
     {
       "source": "bio-viromics",
+      "target": "bio-annotation",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (`/bio-gene-calling`, `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list."
+      ]
+    },
+    {
+      "source": "bio-viromics",
+      "target": "bio-gene-calling",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (`/bio-gene-calling`, `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list."
+      ]
+    },
+    {
+      "source": "bio-viromics",
+      "target": "bio-phylogenomics",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Nucleocytoviricota, Mirusviricota, and Preplasmiviricota: GVClass v2.0.3 with resource bundle v2.0.0, plus marker-gene phylogenies of core genes through `/bio-phylogenomics`."
+      ]
+    },
+    {
+      "source": "bio-viromics",
+      "target": "polars-dovmed",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "5. Search the literature for that group (`/polars-dovmed`) and write `analysis_playbook.md`: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by people who study the group."
+      ]
+    },
+    {
+      "source": "bio-viromics",
       "target": "tracking-taxonomy-updates",
       "type": "compose_with",
       "source_type": "skill",
@@ -3108,7 +3403,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "2. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not already been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial/archaeal and eukaryotic rows stay on their domain-specific routes unless later evidence contradicts the triage."
+        "1. Start from `/tracking-taxonomy-updates` QuickClade domain routing when assemblies, MAGs, genomes, or contigs have not been screened. Viral, virus-like, mixed, or low-confidence contigs enter this skill; bacterial, archaeal, and eukaryotic rows stay on their domain routes unless later evidence contradicts the triage."
       ]
     },
     {
@@ -3140,6 +3435,35 @@
       ]
     },
     {
+      "source": "bio-workflow-methods-docwriter",
+      "target": "scientific-writing",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "6. For manuscript Methods prose, hand the manifest to `/scientific-writing`. Keep script names, internal flags, and runtime bookkeeping in Methods or the supplement, not in Results."
+      ]
+    },
+    {
+      "source": "biorxiv-search",
+      "target": "arxiv-search",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "1. Use this skill for bioRxiv preprints and for preprint metadata that may lag in PubMed, PMC, or Crossref. Use `/arxiv-search` for arXiv and `/polars-dovmed` for peer-reviewed PMC full text.",
+        "- `/arxiv-search`: arXiv preprints"
+      ]
+    },
+    {
       "source": "biorxiv-search",
       "target": "crossref-lookup",
       "type": "compose_with",
@@ -3150,21 +3474,22 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/crossref-lookup` \u2014 resolve citation metadata from bioRxiv DOIs"
+        "- `/crossref-lookup`: citation metadata for bioRxiv DOIs"
       ]
     },
     {
       "source": "biorxiv-search",
       "target": "polars-dovmed",
-      "type": "similar_to",
+      "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.8,
+      "confidence": 0.75,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/polars-dovmed` \u2014 switch here if the query wants peer-reviewed PMC full text instead of preprints"
+        "1. Use this skill for bioRxiv preprints and for preprint metadata that may lag in PubMed, PMC, or Crossref. Use `/arxiv-search` for arXiv and `/polars-dovmed` for peer-reviewed PMC full text.",
+        "- `/polars-dovmed`: peer-reviewed PMC full text and bioRxiv full text"
       ]
     },
     {
@@ -3178,7 +3503,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/arxiv-search` \u2014 source-native preprint search on arXiv"
+        "- `/arxiv-search` and `/biorxiv-search`: preprint search"
       ]
     },
     {
@@ -3192,7 +3517,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/biorxiv-search` \u2014 source-native preprint search on bioRxiv"
+        "- `/arxiv-search` and `/biorxiv-search`: preprint search"
       ]
     },
     {
@@ -3206,7 +3531,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/polars-dovmed` \u2014 full-text PMC Open Access search when the DOI is unknown"
+        "- `/polars-dovmed`: full-text PMC Open Access search when the DOI is unknown"
       ]
     },
     {
@@ -3220,7 +3545,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/scientific-impact-assessment` \u2014 citation counts and journal impact"
+        "- `/scientific-impact-assessment`: citation counts and journal impact"
       ]
     },
     {
@@ -3291,6 +3616,21 @@
       ],
       "evidence": [
         "agents/dataviz-artist.md"
+      ]
+    },
+    {
+      "source": "exploratory-data-analysis",
+      "target": "beautiful-data-viz",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "- Visualization approaches (any figures follow `/beautiful-data-viz`: greyscale first, color only to encode information)",
+        "- Any generated figures (styled per `/beautiful-data-viz`), tables, or temporary summaries needed to support the report."
       ]
     },
     {
@@ -3416,7 +3756,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/ai-scientist-evaluator` \u2014 equivalent pipeline for AI scientist outputs"
+        "- `/ai-scientist-evaluator`: equivalent review for AI scientist outputs"
       ]
     },
     {
@@ -3425,13 +3765,27 @@
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.75,
+      "confidence": 0.6,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "- use `/bio-logic` for evidence-strength and causal-claim stress tests",
-        "- `/bio-logic` \u2014 deeper reasoning about evidence strength"
+        "11. For outside validation, run targeted spot-checks, not a broad literature review: `/polars-dovmed` for claim-specific literature and `/bio-logic` for evidence strength and causal claims. Never fabricate supporting papers.",
+        "- `/bio-logic`: deeper reasoning about evidence strength"
+      ]
+    },
+    {
+      "source": "manuscript-review-council",
+      "target": "pdf-to-md",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.6,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "2. Gather the review packet: manuscript text (convert a PDF or DOCX to sectioned text first, for example with `/pdf-to-md`), title, abstract, main claims, methods snapshot, figure and table list, user priorities, and prior reviews or author response for a revision. Every reviewer gets the same packet; keep section boundaries, figure references, and the claims under test."
       ]
     },
     {
@@ -3440,12 +3794,12 @@
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.75,
+      "confidence": 0.6,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "- use `/polars-dovmed` for claim-specific literature context"
+        "11. For outside validation, run targeted spot-checks, not a broad literature review: `/polars-dovmed` for claim-specific literature and `/bio-logic` for evidence strength and causal claims. Never fabricate supporting papers."
       ]
     },
     {
@@ -3459,9 +3813,25 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "14. If the user wants polished review prose, a rebuttal outline, or a cleaned-up decision letter, use `/scientific-writing` after the council establishes the factual review skeleton.",
-        "- Requests to rewrite manuscript prose or draft an author rebuttal/response letter route directly to `/scientific-writing`; do not start a council unless the user also asks for scientific critique or resolution assessment.",
-        "- `/scientific-writing` \u2014 apply the reviewer feedback to the manuscript"
+        "1. Confirm the review context: manuscript or revision stage, target venue if known, decision scale, and whether the user wants a full review, triage, version comparison, or rebuttal assessment. Requests to rewrite manuscript prose or draft a rebuttal go to `/scientific-writing`; start a council only when the user also wants scientific critique or a resolution assessment.",
+        "12. For polished review prose or a cleaned-up decision letter, use `/scientific-writing` after the council has fixed the factual review content.",
+        "- [ ] Prose editing and rebuttal drafting stay with `/scientific-writing`",
+        "- `/scientific-writing`: apply the reviewer feedback to the manuscript"
+      ]
+    },
+    {
+      "source": "notebooks",
+      "target": "beautiful-data-viz",
+      "type": "compose_with",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.75,
+      "provenance": [
+        "skill_body_reference"
+      ],
+      "evidence": [
+        "7. **Evaluate the plots, then refine.** This step is required. Figures follow `/beautiful-data-viz` (greyscale first, color only to encode information, colorblind-safe, no in-plot titles on manuscript figures); [references/plot_style.md](references/plot_style.md) has the notebook style cell. After the run-all execution:",
+        "- [ ] Figures pass the `/beautiful-data-viz` quality gates: grey unless color encodes information, no in-plot titles on manuscript figures, caption cell below the figure."
       ]
     },
     {
@@ -3783,7 +4153,22 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- Static publication figures. Use `/beautiful-data-viz` for matplotlib or seaborn output."
+        "Build interactive Dash dashboards with a single source of truth for UI and figure styling. Visual rules (greyscale first, color only to encode information, direct labels, accessibility) come from `/beautiful-data-viz`; this skill applies them to Dash and adds app structure and performance.",
+        "- Static publication figures. Use `/beautiful-data-viz`, which also sets the visual rules this skill follows."
+      ]
+    },
+    {
+      "source": "plotly-dashboard-skill",
+      "target": "beautiful-data-viz",
+      "type": "depend_on",
+      "source_type": "skill",
+      "target_type": "skill",
+      "confidence": 0.95,
+      "provenance": [
+        "workflow_decision_tree"
+      ],
+      "evidence": [
+        "\u2514\u2500 Need Interactive Dashboard? \u2192 /beautiful-data-viz \u2192 /plotly-dashboard-skill"
       ]
     },
     {
@@ -3797,7 +4182,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- For citation-quality answers, first use PMCID/DOI details from polars-dovmed, then `--crossref-metadata` or `/crossref-lookup` for missing DOI/year/journal. Use DOI landing pages or journal pages only when Crossref and corpus metadata disagree or remain ambiguous."
+        "5. Fill citation metadata from the corpus details first, then from `--crossref-metadata` or `/crossref-lookup`. Use DOI landing pages only when corpus metadata and Crossref disagree or stay ambiguous; do not use generic web search for DOI repair."
       ]
     },
     {
@@ -3895,7 +4280,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/bio-logic` \u2014 assess methodology and evidence rigor"
+        "- `/bio-logic`: assess methodology and evidence rigor"
       ]
     },
     {
@@ -3909,7 +4294,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/manuscript-review-council` \u2014 equivalent pipeline for manuscripts"
+        "- `/manuscript-review-council`: equivalent review for manuscripts"
       ]
     },
     {
@@ -3923,7 +4308,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/scientific-writing` \u2014 draft or revise the proposal narrative"
+        "- `/scientific-writing`: draft or revise the proposal narrative"
       ]
     },
     {
@@ -4066,7 +4451,7 @@
       "evidence": [
         "- If you only have a title, use `/crossref-lookup` first to resolve a DOI before running this skill.",
         "**Solution**: Resolve the title to a DOI first with `/crossref-lookup`, then rerun this skill using the DOI for a deterministic lookup.",
-        "- `/crossref-lookup` \u2014 resolve DOIs before scoring impact"
+        "- `/crossref-lookup`: resolve DOIs before scoring impact"
       ]
     },
     {
@@ -4080,7 +4465,7 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/polars-dovmed` \u2014 retrieve the full text that backs the impact claim"
+        "- `/polars-dovmed`: retrieve the full text that backs the impact claim"
       ]
     },
     {
@@ -4094,8 +4479,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- Use `/bio-logic` when the main question is whether a method, design, causal",
-        "- `/bio-logic` \u2014 evaluate evidence quality and rigor during revision"
+        "- Use `/bio-logic` when the question is whether a method, design, causal claim, or interpretation is scientifically justified.",
+        "- `/bio-logic`: evidence quality and rigor during revision"
       ]
     },
     {
@@ -4109,10 +4494,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "9. Validate citations before finalizing. Use `/crossref-lookup` when DOI or title checks are needed.",
-        "| Validate citations | `/crossref-lookup` |",
-        "Use `/crossref-lookup` for DOI validation, title matching, and bibliography audits before finalizing the manuscript.",
-        "- `/crossref-lookup` \u2014 validate every cited DOI"
+        "9. Validate citations before finalizing. Use `/crossref-lookup` for DOI and title checks.",
+        "- `/crossref-lookup`: DOI validation for every cited reference"
       ]
     },
     {
@@ -4126,8 +4509,8 @@
         "skill_body_reference"
       ],
       "evidence": [
-        "- Use `/manuscript-review-council` for journal-style peer review or a",
-        "- `/manuscript-review-council` \u2014 run a multi-reviewer critique before revision"
+        "- Use `/manuscript-review-council` for journal-style peer review or a multi-reviewer critique, then bring the evidence-backed revisions back here.",
+        "- `/manuscript-review-council`: multi-reviewer critique before revision"
       ]
     },
     {
@@ -4136,12 +4519,13 @@
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.6,
+      "confidence": 0.75,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "- `/proposal-review` \u2014 switch here for funding-proposal critique"
+        "- Use `/proposal-review` to critique a funding proposal; use this skill to write or revise its narrative.",
+        "- `/proposal-review`: funding-proposal critique"
       ]
     },
     {
@@ -4150,12 +4534,13 @@
       "type": "compose_with",
       "source_type": "skill",
       "target_type": "skill",
-      "confidence": 0.75,
+      "confidence": 0.6,
       "provenance": [
         "skill_body_reference"
       ],
       "evidence": [
-        "- Viral or virus-like -> route to `/bio-viromics`; use vConTACT3 for phage/prokaryotic-virus gene-sharing taxonomy and GVClass for giant-virus/Nucleocytoviricota candidates."
+        "- Phage or prokaryotic virus: `/bio-viromics`, then vConTACT3.",
+        "- Giant virus or Nucleocytoviricota: `/bio-viromics`, then GVClass plus a marker-gene phylogeny."
       ]
     },
     {

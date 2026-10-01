@@ -4,11 +4,11 @@ These audits are applied by the `reviewer` and `reviser` roles. They cover sente
 
 The methodology is drawn from Sainani's *Writing in the Sciences* (Stanford, Coursera).
 
-Use the audits as a checklist, not as mechanical find-and-replace. Every flagged item must be reviewed in context — some phrases on the lookup tables below are correct in standard methodological language, and some "rules" are appropriately broken for emphasis or rhythm.
+Use the audits as a checklist, not as mechanical find-and-replace. Review every flagged item in context: some phrases on the lookup tables below are correct in standard methodological language, and some "rules" are appropriately broken for emphasis or rhythm.
 
 ---
 
-## Pass 1 — Clutter
+## Pass 1: Clutter
 
 Strip every sentence to its cleanest components. Each word must earn its place.
 
@@ -27,14 +27,14 @@ Strip every sentence to its cleanest components. Each word must earn its place.
 | a number of | several / many |
 | on the basis of | based on |
 | in light of the fact that | because / since |
-| it is worth noting that | (delete — state the point) |
+| it is worth noting that | (delete; state the point) |
 | it is important to note that | (delete) |
 | it is interesting to note that | (delete) |
 | in terms of | (rewrite to be specific) |
 
-### Dead-weight openers — flag for deletion
+### Dead-weight openers: flag for deletion
 
-- "As it is well known..." → replace with a direct citation
+- "As it is well known...": replace with a direct citation
 - "It should be emphasized that..."
 - "It can be regarded that..."
 - "As it has been shown..."
@@ -53,7 +53,7 @@ Adjectives or adverbs that repeat information already carried by the noun or ver
 
 ---
 
-## Pass 2 — Voice and verb vitality
+## Pass 2: Voice and verb vitality
 
 Scientific transparency requires accountability: identify who did what.
 
@@ -94,11 +94,11 @@ Do not mechanically convert every passive. Flag the ones where the passive obscu
 
 ---
 
-## Pass 3 — Sentence architecture
+## Pass 3: Sentence architecture
 
 ### Buried-predicate audit
 
-Count words between the subject and its main verb. If more than ~12 words intervene, the predicate is buried — recommend restructuring.
+Count words between the subject and its main verb. If more than ~12 words intervene, the predicate is buried; recommend restructuring.
 
 - Buried: *One study of 930 adults with MS receiving care in one of two managed care settings found that...*
 - Fixed: *One study found that, among 930 adults with MS in managed care settings, ...*
@@ -106,8 +106,9 @@ Count words between the subject and its main verb. If more than ~12 words interv
 ### Punctuation for compression
 
 - **Colon** sets up a list or specific explanation, replacing wordy openings.
-- **Em dash (—)** marks emphatic parentheticals or merges sentences where a transition feels forced.
 - **Semicolon** links closely related independent clauses without a transition word.
+- **Parentheses** hold a short aside that would otherwise break the sentence.
+- Do not use an em dash as the default connector. Replace it with a period, comma, colon, semicolon, or parentheses, or split the sentence.
 
 ### Sentence-length variation
 
@@ -115,7 +116,7 @@ Flag paragraphs where every sentence is roughly the same length (±5 words). Rec
 
 ---
 
-## Pass 4 — Terminology and keyword consistency
+## Pass 4: Terminology and keyword consistency
 
 In scientific prose, terminological consistency is a virtue, not a defect.
 
@@ -133,11 +134,11 @@ Do not call a banana an "elongated yellow fruit" to avoid repetition. If Methods
 
 - Reject non-standard acronyms invented only for author convenience.
 - Permit widely recognized acronyms (DNA, RNA, PCR, MAG, ORF, etc.).
-- Each acronym must be defined at first use in the Abstract AND in the main text AND in each table or figure legend — readers do not read linearly.
+- Define each acronym at first use in the Abstract, in the main text, and in each table or figure legend, because readers do not read in order.
 
 ---
 
-## Pass 5 — Numbers and citations
+## Pass 5: Numbers and citations
 
 ### Numerical consistency checklist
 
@@ -148,7 +149,7 @@ Do not call a banana an "elongated yellow fruit" to avoid repetition. If Methods
 
 ### Citation integrity ("telephone game" audit)
 
-Flag any statistic presented as established fact but cited only through secondary sources (reviews, textbooks). Recommend tracing it back to the primary source. Common pattern: *"According to [Review, 2020], the prevalence is 15–62%..."* — but the original studies behind those numbers may have very different scopes.
+Flag any statistic presented as established fact but cited only through secondary sources (reviews, textbooks). Recommend tracing it back to the primary source. Common pattern: *"According to [Review, 2020], the prevalence is 15–62%..."*, while the original studies behind those numbers may have very different scopes.
 
 ---
 
@@ -175,6 +176,19 @@ Every finding must include:
 - the severity tag
 
 A `reviewer` report that ends with "consider tightening the language" without a concrete revision fails the rules. Each suggestion must show the substitution.
+
+---
+
+## Manuscript rules
+
+Flag these as MAJOR findings in every review. They are listed in the skill's `SKILL.md` under Manuscript Rules.
+
+- A caveat sentence after every claim. Keep the claim; move the limitation to the one place it applies.
+- A limitation repeated across sections.
+- A supported comparative claim buried under qualifiers. State it with the numbers.
+- A result explained by a cause the authors did not check.
+- A figure or table legend that restates the result. The legend says what is plotted: panels, axes and units, encodings, n, error bars, and test.
+- Implementation details in Results (script names, file formats, internal flags, refactors). Move what a reader needs to Methods; cut the rest.
 
 ---
 

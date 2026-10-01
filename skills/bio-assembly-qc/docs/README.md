@@ -8,7 +8,7 @@ Release/source: See linked per-tool guides in this directory.
 ## Assembly tools
 
 ### SPAdes v4.2.0
-Versatile genome assembler for short-read data (Illumina, IonTorrent) with support for hybrid assembly using long reads. Current upstream release checked: v4.2.0.
+Genome assembler for short-read data (Illumina, IonTorrent) with hybrid assembly using long reads. [spades.md](spades.md) documents v4.2.0. v4.3.0 (2026-06-14) adds a low-memory `--frugal` mode, and its release notes list no removed options.
 
 - Documentation: [spades.md](spades.md)
 - Official website: https://github.com/ablab/spades
@@ -31,21 +31,22 @@ Consensus assembler for bacterial isolate genomes. Use it when the goal is a com
 - Release/source: https://github.com/rrwick/Autocycler/releases/tag/v0.6.2
 - Use cases: haploid prokaryotic isolate genomes with enough long-read coverage to compare multiple draft assemblies
 
-### metaMDBG v1.1 (preferred for HiFi metagenomes)
-Minimizer-based de Bruijn graph assembler tuned for PacBio HiFi metagenomes. Produces ~2× more circularized high-quality MAGs than metaFlye on HiFi data and recovers more viruses and plasmids (*Nature Biotechnology* 2024, DOI: 10.1038/s41587-023-01983-6).
+### metaMDBG v1.1+ (preferred for HiFi metagenomes; v1.4 current)
+Minimizer-space de Bruijn graph assembler for PacBio HiFi metagenomes; v1.1+ also accepts ONT R10.4+ reads (`--in-ont`). In its benchmark it recovered up to twice as many circularized high-quality MAGs as metaFlye on HiFi data (Benoit et al. 2024, *Nature Biotechnology*, https://doi.org/10.1038/s41587-023-01983-6). It writes `contigs.fasta.gz` to `--out-dir`.
 
 - Official website: https://github.com/GaetanBenoitDev/metaMDBG
+- Release/source: https://github.com/GaetanBenoitDev/metaMDBG/releases
 - Use cases: PacBio HiFi metagenomes (preferred over metaFlye for this read type)
 
 ### myloasm (optional, large or diverse long-read datasets)
-Fast long-read metagenome assembler released in 2025. Consider when runtime is the binding constraint on diverse or very large datasets and the read profile matches its assumptions. Document the choice in the run log.
+Long-read metagenome assembler first released in 2025 (v0.7.0 current). Consider it when runtime limits a diverse or very large dataset and the read profile matches its assumptions. Record the choice and version in the run log.
 
-- Source: see preprint and project repo when adding to your environment
+- Source: https://github.com/bluenote-1577/myloasm
 
 ## Quality Control Tools
 
 ### QUAST v5.3.0
-Comprehensive assembly quality assessment tool providing contiguity, completeness, and correctness metrics.
+Assembly quality assessment: contiguity, and with a reference, completeness and misassembly metrics.
 
 - Documentation: [quast.md](quast.md)
 - Official website: http://quast.sourceforge.net/
@@ -73,9 +74,9 @@ quast.py spades_out/contigs.fasta -r reference.fasta -o qc_results -t 8
 | Illumina paired-end | Bacterial isolate | `spades.py --isolate` | — |
 | Illumina paired-end | Metagenomic | `spades.py --meta` | — |
 | PacBio HiFi | Isolate | `flye --pacbio-hifi` | Autocycler consensus when complete isolate closure is required |
-| PacBio HiFi | Metagenomic | **metaMDBG v1.1** | metaFlye `--meta --pacbio-hifi` |
+| PacBio HiFi | Metagenomic | metaMDBG v1.1+ | metaFlye `--meta --pacbio-hifi` |
 | ONT Q20+ | Isolate | `flye --nano-hq` | Autocycler consensus when complete isolate closure is required |
-| ONT Q20+ | Metagenomic | metaFlye `--meta --nano-hq` | myloasm (when speed-bound) |
+| ONT Q20+ | Metagenomic | metaFlye `--meta --nano-hq` | metaMDBG `--in-ont` (R10.4+); myloasm (when speed-bound) |
 | Illumina + PacBio | Hybrid | SPAdes (hybrid) | Flye + short-read polishing |
 | Illumina + ONT | Hybrid | SPAdes (hybrid) | Flye + short-read polishing |
 
@@ -89,4 +90,4 @@ quast.py spades_out/contigs.fasta -r reference.fasta -o qc_results -t 8
 
 ## Additional Resources
 
-- All tools available via pixi (see `pixi.toml` in skill root)
+- Install the tools into the project's pinned pixi environment; this skill ships no `pixi.toml`.

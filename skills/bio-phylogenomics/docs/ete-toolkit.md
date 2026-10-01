@@ -1,7 +1,7 @@
 # ETE Toolkit Usage Guide
 
-Last verified: 2026-05-30
-Tool version/release checked: ETE Toolkit 4.4.0 (`ete4`)
+Last verified: 2026-10-01
+Tool version/release checked: ETE Toolkit 4.4.0 (`ete4`, bioconda); code examples run against it
 Official docs/manual: https://etetoolkit.github.io/ete/
 Release/source: https://github.com/etetoolkit/ete/releases/tag/4.4.0
 
@@ -14,28 +14,11 @@ Release/source: https://github.com/etetoolkit/ete/releases/tag/4.4.0
 
 ## Installation
 
-### Quick Installation
 ```bash
-pip install ete4==4.4.0
+pixi add "ete4=4.4.0"
 ```
 
-### Pixi Installation
-```bash
-pixi add ete4
-```
-
-### Development Installation
-```bash
-git clone https://github.com/etetoolkit/ete.git
-cd ete
-git checkout 4.4.0
-pip install -e .
-```
-
-### With Visualization Support (PyQt)
-```bash
-pip install -e ".[treeview,test,doc]"
-```
+In a uv-managed Python project, `uv add "ete4==4.4.0"` works as well. The Qt tree renderer is optional; the web explorer (`ete4 explore`) needs no Qt.
 
 ### Dependencies
 Core: Cython, Bottle, Cheroot, Brotli, NumPy, SciPy
@@ -58,9 +41,14 @@ t = Tree('(A:1,(B:1,(E:1,D:1):0.5):0.5);')
 # From file
 t = Tree(open('tree.nw'))
 
-# With format specification (0-10)
-t = Tree('tree.nw', parser=1)  # Internal nodes as names
+# A path also works
+t = Tree('tree.nw')
+
+# Internal labels as names (needed for IQ-TREE SH-aLRT/UFBoot labels)
+t = Tree('tree.nw', parser=1)
 ```
+
+The default parser reads internal labels as numeric support and raises `NewickError` on IQ-TREE labels such as `98.7/100`. See [Post-Process IQ-TREE Output](#post-process-iq-tree-output).
 
 ### Writing Trees
 ```python
@@ -291,6 +279,8 @@ t.set_outgroup(midpoint)
 t.unroot()
 ```
 
+`unroot()` and `set_outgroup()` raise `AssertionError: inconsistent support at the root` when the two root branches carry different support values. Trees from IQ-TREE and VeryFastTree have a trifurcating root and are not affected.
+
 ### Distance Calculations
 
 #### Between Nodes
@@ -385,11 +375,10 @@ print(f'Unique to t1: {parts_t1 - parts_t2}')
 
 #### General Comparison
 ```python
-result = t1.compare(t2, prop='name')
+result = t1.compare(t2)  # matches leaves by name
 
 print(f"Normalized RF: {result['norm_rf']}")
 print(f"Effective tree size: {result['effective_tree_size']}")
-print(f"Common leaves: {result['common_leaves']}")
 ```
 
 ### Resolving Polytomies
@@ -445,7 +434,7 @@ t = Tree('tree.nw')
 # Remove poorly supported branches
 threshold = 70.0
 
-for node in t.traverse():
+for node in list(t.traverse()):
     if not node.is_leaf and not node.is_root:
         if node.support < threshold:
             node.delete()
@@ -550,7 +539,7 @@ print("Path from leaf to root:", ' -> '.join(path))
 ```python
 # Generators are memory-efficient
 for node in t.traverse():  # Generator
-    if node.support > 90:
+    if not node.is_leaf and not node.is_root and node.support > 90:
         process(node)
 
 # Lists load everything into memory
@@ -594,25 +583,28 @@ t2 = t.copy('deepcopy')
 ## Integration with Phylogenomic Workflows
 
 ### Post-Process IQ-TREE Output
+
+IQ-TREE run with both `-B` and `--alrt` writes internal labels as `SH-aLRT/UFBoot` (for example `98.7/100`). Load them as names with `parser=1` and split them into properties. Read the labels before rerooting: a label stored as a node name stays on its node when the tree is rerooted, which can attach a branch value to the wrong side.
+
 ```python
 from ete4 import Tree
 
-# Load IQ-TREE result
-t = Tree('alignment.treefile')
+t = Tree(open('alignment.treefile'), parser=1)
+for node in t.traverse():
+    if not node.is_leaf and '/' in (node.name or ''):
+        sh_alrt, ufboot = (float(value) for value in node.name.split('/'))
+        node.add_props(sh_alrt=sh_alrt, ufboot=ufboot)
 
-# Root at midpoint
-midpoint = t.get_midpoint_outgroup()
-t.set_outgroup(midpoint)
-
-# Filter by UFBoot support
-for node in list(t.traverse()):
-    if not node.is_leaf and not node.is_root:
-        if node.support < 95:
-            print(f"Low support node: {node.name} ({node.support})")
-
-# Save rooted tree
-t.write(outfile='alignment.rooted.nw')
+# IQ-TREE guidance: trust a clade at SH-aLRT >= 80 and UFBoot >= 95
+weak = [
+    node for node in t.traverse()
+    if 'ufboot' in node.props
+    and (node.props['sh_alrt'] < 80 or node.props['ufboot'] < 95)
+]
+print(f"Weakly supported nodes: {len(weak)}")
 ```
+
+A tree from `-B` alone has single numeric labels and loads with the default parser. The skill driver writes both values to `support.tsv` on a 0-1 scale.
 
 ### Post-Process VeryFastTree Output
 ```python
@@ -646,13 +638,15 @@ t = Tree('tree.nw')
 t.explore()
 ```
 
+For figures, keep branches, labels, and support marks in greyscale. Add color only when it encodes something the reader must tell apart, such as the query versus references or a few named clades; use a colorblind-safe palette and repeat the encoding in label text or line style.
+
 ## Typical Phylogenomic Analysis Pipeline
 
 ```python
 from ete4 import Tree
 import numpy as np
 
-# 1. Load tree
+# 1. Load tree (single support values, e.g. IQ-TREE with -B only)
 t = Tree('iqtree_output.treefile')
 
 # 2. Basic statistics
@@ -663,7 +657,7 @@ print(f"Number of internal nodes: {len([n for n in t.traverse() if not n.is_leaf
 supports = [n.support for n in t.traverse() if not n.is_leaf and not n.is_root]
 print(f"Mean support: {np.mean(supports):.2f}")
 print(f"Median support: {np.median(supports):.2f}")
-print(f"Support >95%: {sum(s > 95 for s in supports)}/{len(supports)}")
+print(f"Support >=95: {sum(s >= 95 for s in supports)}/{len(supports)}")
 
 # 4. Root tree
 midpoint = t.get_midpoint_outgroup()

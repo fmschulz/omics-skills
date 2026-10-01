@@ -66,13 +66,11 @@ python generate_report.py
 
 ## Tool Installation
 
-All tools are managed via pixi (see `pixi.toml` in skill directory):
+Declare the tools in the analysis project's `pixi.toml` (this skill ships none):
 
 ```bash
-# Install all dependencies
-pixi install
-
-# Run in pixi environment
+pixi add duckdb scikit-learn xgboost
+pixi add --pypi crossrefapi
 pixi run python train_models.py
 ```
 

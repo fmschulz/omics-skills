@@ -9,7 +9,8 @@ Release/source: https://github.com/duckdb/duckdb/releases/tag/v1.5.3
 
 ### Python
 ```bash
-pip install duckdb
+uv add duckdb          # Python project managed by uv
+pixi add duckdb        # pixi-managed bioinformatics project
 ```
 
 ### Command Line (Universal)

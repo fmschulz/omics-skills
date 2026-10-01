@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# sbatch also reads SBATCH_CLUSTERS, SBATCH_PARTITION, and SBATCH_QOS from the
+# environment; set them for sites that need a cluster, partition, or QOS.
 if [[ $# -ne 3 ]]; then
     echo "Usage: SLURM_ACCOUNT=account $0 TOOL INPUT OUTPUT_DIR" >&2
     exit 2

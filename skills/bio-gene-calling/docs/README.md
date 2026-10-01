@@ -21,8 +21,9 @@ This directory contains practical usage guides for gene calling and RNA-feature 
   - Source: https://github.com/althonos/pyrodigal
 
 - **[pyrodigal-gv.md](pyrodigal-gv.md)** - pyrodigal-gv v0.3.2 for viruses, including giant viruses and alternative-code viruses
-  - Use the `pyrodigal-gv` CLI or `pyrodigal_gv.ViralGeneFinder`, not the retired standalone `prodigal-gv` workflow
+  - Use the `pyrodigal-gv` CLI or `pyrodigal_gv.ViralGeneFinder` in new workflows
   - Distributes the prodigal-gv viral metagenomic model set (`PRODIGAL_GV_VERSION` v2.11.0)
+  - The standalone `prodigal-gv` 2.11.0 binary (https://github.com/apcamargo/prodigal-gv) uses the same models; ViroSync pins a patched build of it. Use it with `-p meta` when results must match such a pipeline
   - Source: https://github.com/althonos/pyrodigal-gv
 
 ### Eukaryotic gene calling
@@ -59,7 +60,7 @@ This directory contains practical usage guides for gene calling and RNA-feature 
 | tRNAscan-SE | 2.0.12 | All domains | Domain-specific | tRNA detection |
 | Infernal `cmsearch` | 1.1.5 | All domains | Rfam covariance models | rRNA (SSU/LSU/5S/5.8S) and other ncRNA |
 
-> **Retired from this workflow:** AUGUSTUS as a standalone tool (invoke it through BRAKER4 or a documented BRAKER3 reproduction); standalone `prodigal-gv` (use pyrodigal-gv); `barrnap` (replaced by Infernal `cmsearch` against domain-specific Rfam models).
+> **Retired from this workflow:** AUGUSTUS as a standalone tool (invoke it through BRAKER4 or a documented BRAKER3 reproduction); `barrnap` (replaced by Infernal `cmsearch` against domain-specific Rfam models).
 
 ## Documentation Format
 
@@ -73,7 +74,7 @@ Each tool guide includes:
 
 ## Usage Notes
 
-- All tools are installed via pixi (see pixi.toml in skill root)
+- Install the tools in the project's pinned Pixi environment; this skill ships no environment file
 - Examples assume tools are in PATH
-- Adjust thread counts based on available resources
+- Set thread counts explicitly to match the allocated CPUs
 - Check tool-specific QC recommendations

@@ -19,10 +19,11 @@ LocalColabFold installer for Windows 10+, macOS, and Linux:
 ### Docker
 See ColabFold wiki for Docker deployment instructions.
 
-### Manual Installation
+### Python package
 ```bash
-pip install colabfold
+pixi add --pypi "colabfold[alphafold]"
 ```
+Pin the version the project tested; LocalColabFold above sets up the GPU JAX stack.
 
 ## Key Commands
 

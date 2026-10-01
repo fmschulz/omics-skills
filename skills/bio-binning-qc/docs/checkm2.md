@@ -20,23 +20,7 @@ Release/source: https://github.com/chklovski/CheckM2/releases/tag/1.1.0
 pixi add checkm2
 ```
 
-**From source:**
-```bash
-git clone --recursive https://github.com/chklovski/checkm2.git
-cd checkm2
-git checkout 1.1.0
-conda env create -n checkm2 -f checkm2.yml
-conda activate checkm2
-python setup.py install
-```
-
-**PyPI:**
-```bash
-# Create conda environment first for dependencies
-conda create -n checkm2 python=3.8
-conda activate checkm2
-pip install CheckM2
-```
+Use the pixi (bioconda) package. Do not build CheckM2 into a conda environment or `pip install` it into a system Python; the bioconda recipe supplies matching DIAMOND and TensorFlow builds.
 
 ## Database Setup
 

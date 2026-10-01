@@ -8,11 +8,11 @@ Release/source: https://github.com/fabiobatalha/crossrefapi/releases/tag/1.7.0
 ## Installation
 
 ```bash
-# Via pip
-pip install crossrefapi
+# Pixi project (crossrefapi is on PyPI, not conda-forge)
+pixi add --pypi "crossrefapi==1.7.0"
 
-# Specific version
-pip install crossrefapi==1.7.0
+# uv project
+uv add "crossrefapi==1.7.0"
 ```
 
 ## Key Features

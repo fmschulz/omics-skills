@@ -101,6 +101,6 @@ Every reviewer should return:
 - major concerns
 - minor concerns
 - must-fix requests
-- confidence
+- confidence (0 to 1)
 - provisional recommendation
 - evidence anchors to manuscript sections, figures, tables, or explicit missing information

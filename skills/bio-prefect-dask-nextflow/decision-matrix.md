@@ -1,13 +1,13 @@
 # Decision matrix: Prefect + Dask vs Nextflow (HPC bioinformatics)
 
-Last verified: 2026-05-30
-Tool version/release checked: Prefect 3.7.2; Dask/distributed 2026.3.0; prefect-dask package release v0.2.6 (archived repository; install through `prefect[dask]`); Nextflow v26.04.3
+Last verified: 2026-10-01
+Tool version/release checked: Prefect 3.8.7; Dask/distributed 2026.8.0; prefect-dask 0.3.7 (maintained in the Prefect repository under `src/integrations/prefect-dask`; install through `prefect[dask]`); Nextflow v26.04.6
 Official docs/manual: https://docs.prefect.io/latest/ ; https://docs.dask.org/en/stable/ ; https://www.nextflow.io/docs/latest/
-Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2 ; https://github.com/dask/dask/releases/tag/2026.3.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.3
+Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.8.7 ; https://github.com/dask/dask/releases/tag/2026.8.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.6
 
 ## One-sentence summary
-- **Prefect + Dask**: Python-first orchestration + distributed Python task execution (excellent for dynamic, Python-heavy pipelines).
-- **Nextflow**: DSL + scheduler-native execution for file-based scientific workflows (excellent on HPC with Slurm/PBS).
+- **Prefect + Dask**: Python-first orchestration plus distributed Python task execution; fits dynamic, Python-heavy pipelines.
+- **Nextflow**: a workflow language with scheduler-native execution for file-based scientific workflows; fits HPC with Slurm or PBS.
 
 ## Choose Prefect + Dask when…
 - Steps are primarily **Python functions** (data transforms, API calls, ML inference/training, metadata handling).
@@ -28,7 +28,7 @@ Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2 ; https:
 ## Choose Nextflow when…
 - Pipeline is mostly **CLI bioinformatics tools** reading/writing files (FASTQ/BAM/VCF/FASTA, etc.).
 - You need **HPC scheduler-native** execution (Slurm/PBS/LSF) and portability.
-- Reproducibility matters: pinned containers/conda envs, consistent work directory, deterministic caching.
+- Reproducibility matters: pinned containers or environments, a consistent work directory, deterministic caching.
 - You expect users to run the pipeline on many infrastructures (local, HPC, cloud) via profiles.
 
 ### Strengths

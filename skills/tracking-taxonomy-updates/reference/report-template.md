@@ -1,7 +1,7 @@
 # Reporting templates
 
-Last verified: 2026-05-30
-Source/version summary: templates align with current provenance requirements for NCBI taxdump, GTDB R232/GTDB-Tk 2.7.2, ICTV MSL41, vConTACT3 v3.2.0 release notes, GVClass v1.6.0, and TaxonKit v0.20.0.
+Last verified: 2026-10-01
+Source/version summary: templates align with current provenance requirements for NCBI taxdump, GTDB R232/GTDB-Tk 2.7.2, ICTV MSL41, vConTACT3 3.2.4, GVClass v2.0.3, and TaxonKit v0.20.0.
 
 These templates are meant to be copied into agent outputs.
 

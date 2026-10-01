@@ -13,7 +13,7 @@
 
 ## Multiple Comparisons
 
-**Problem**: Testing 20 hypotheses at α=.05 → ~65% chance of false positive
+**Problem**: Testing 20 independent true-null hypotheses at α=.05 gives a ~64% chance of at least one false positive (1 − 0.95²⁰)
 
 **Corrections**:
 - Bonferroni: α/n (conservative)
@@ -30,7 +30,7 @@
 | No power analysis | Can't interpret null results |
 | Post-hoc power | Uninformative (just transforms p-value) |
 
-**Rule of thumb**: n < 30 per group warrants skepticism
+**Rule of thumb**: judge sample size against a stated power analysis or precision target, not a fixed n
 
 ## Effect Size Interpretation
 
@@ -86,7 +86,7 @@
 | Continuous, normal | 3+ groups | ANOVA |
 | Continuous, non-normal | 2 groups | Mann-Whitney U |
 | Continuous, non-normal | 3+ groups | Kruskal-Wallis |
-| Categorical | 2x2 | Chi-square (or Fisher's if n<5) |
+| Categorical | 2x2 | Chi-square (Fisher's exact test when any expected cell count is below 5) |
 | Correlation, linear | - | Pearson r |
 | Correlation, monotonic or ordinal | - | Spearman ρ |
 

@@ -1,18 +1,18 @@
 # Tool cheat sheets (QuickClade, GTDB-Tk, EukCC, vConTACT3, GVClass, TaxonKit)
 
-Last verified: 2026-05-30
-Tool version/release checked: QuickClade / BBTools v39.85 via `bryce911/bbtools:39.85`; GTDB-Tk 2.7.2 / GTDB Release 232; EukCC v.2.1.3; vConTACT3 release notes v3.2.0; GVClass v1.6.0; TaxonKit v0.20.0
+Last verified: 2026-10-01
+Tool version/release checked: QuickClade / BBTools v39.85 via `bryce911/bbtools:39.85` (40.02 is the newest tag, not tested here); GTDB-Tk 2.7.2 / GTDB Release 232; EukCC v.2.2.0; vConTACT3 3.2.4; GVClass v2.0.3; TaxonKit v0.20.0
 Official docs/manual: See table below.
 Release/source: See table below.
 
 | Tool/source | Tool version/release checked | Official docs/manual | Release/source |
 |---|---|---|---|
-| QuickClade / BBTools | BBTools QuickClade docs checked; examples use container tag `39.85` and checked digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1` | https://bbmap.org/tools/quickclade | https://hub.docker.com/r/bryce911/bbtools/tags |
+| QuickClade / BBTools | BBTools QuickClade docs checked; examples use container tag `39.85` and checked digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`; newest tag on 2026-10-01 is `40.02` | https://bbmap.org/tools/quickclade | https://hub.docker.com/r/bryce911/bbtools/tags |
 | GTDB-Tk | GTDB-Tk 2.7.2; GTDB-Tk reference package Release 232 (`gtdbtk_r232_data.tar.gz`) | https://ecogenomics.github.io/GTDBTk/ | https://github.com/Ecogenomics/GTDBTk/releases/tag/2.7.2 |
-| EukCC | EukCC v.2.1.3; EukCC2 database docs still show `eukcc2_db_ver_1.1` | https://eukcc.readthedocs.io/ | https://github.com/EBI-Metagenomics/EukCC/releases/tag/v.2.1.3 |
-| vConTACT3 | Release notes latest entry v3.2.0 (2026-03-26); ReadTheDocs title still says 3.0.1 | https://vcontact3.readthedocs.io/ | https://bitbucket.org/MAVERICLab/vcontact3 |
-| GVClass | GVClass v1.6.0; resource bundle v1.5.0 compatible | https://github.com/NeLLi-team/gvclass | https://github.com/NeLLi-team/gvclass/releases/tag/v1.6.0 |
-| TaxonKit | TaxonKit v0.20.0; NCBI taxdump FTP listing checked 2026-05-30 | https://bioinf.shenwei.me/taxonkit/ | https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0 |
+| EukCC | EukCC v.2.2.0 (git tag); EukCC2 database docs still show `eukcc2_db_ver_1.1` | https://eukcc.readthedocs.io/ | https://github.com/EBI-Metagenomics/EukCC/tree/v.2.2.0 |
+| vConTACT3 | git tag 3.2.4; `run` options checked in `vcontact3/cli.py` | https://vcontact3.readthedocs.io/ | https://bitbucket.org/MAVERICLab/vcontact3 |
+| GVClass | GVClass v2.0.3; resource bundle v2.0.0 compatible | https://github.com/NeLLi-team/gvclass | https://github.com/NeLLi-team/gvclass/releases/tag/v2.0.3 |
+| TaxonKit | TaxonKit v0.20.0 (newest tag on 2026-10-01); NCBI taxdump FTP listing checked 2026-05-30 | https://bioinf.shenwei.me/taxonkit/ | https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0 |
 
 This file focuses on **operational usage** and **provenance capture**.
 
@@ -49,7 +49,7 @@ Authoritative docs:
 Run QuickClade via the BBTools container image used in the examples below:
 
 - Container image in examples: `bryce911/bbtools:39.85`
-- Checked digest on 2026-05-30: `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`
+- Checked digest of tag 39.85 (unchanged on 2026-10-01): `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`
 - Record the resolved image digest at run time with `docker image inspect` or the equivalent Apptainer/Singularity metadata.
 - Docker Hub page:
   https://hub.docker.com/r/bryce911/bbtools/
@@ -131,6 +131,8 @@ SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
   scripts/submit_taxonomy.sh gtdbtk bins results/taxonomy/gtdbtk
 ```
 
+The template passes `-x "${GTDBTK_EXTENSION:-fa}"`; export `GTDBTK_EXTENSION=fna` (or another suffix) when the genome files do not end in `.fa`.
+
 GTDB-Tk 2.7.x runs the ANI screen by default using the pre-sketched skani database. If a project requires species that pass the ANI screen to still be placed in pplacer trees, add `--place_species`; this replaces the older `--skip_ani_screen` workflow.
 
 ---
@@ -140,7 +142,7 @@ GTDB-Tk 2.7.x runs the ANI screen by default using the pre-sketched skani databa
 Docs:
 - https://eukcc.readthedocs.io/
 Release checked:
-- EukCC v.2.1.3 (GitHub release).
+- EukCC v.2.2.0 (git tag; `eukcc folder --db --out --threads` options unchanged).
 - EukCC docs still show EukCC2 database `eukcc2_db_ver_1.1`; record the exact database directory or `--db` path used in each run.
 
 ### When to use
@@ -165,8 +167,9 @@ SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
 Docs:
 - https://vcontact3.readthedocs.io/
 Release checked:
-- vConTACT3 release notes latest entry: v3.2.0 (2026-03-26).
-- The ReadTheDocs page title still reports "vConTACT3 3.0.1"; prefer the release notes and installed `vcontact3 --version` for provenance.
+- vConTACT3 3.2.4 (git tag). Record the installed `vcontact3 version` for provenance.
+- `vcontact3 run` needs `--db-path` (from `vcontact3 prepare_databases --get-version latest --set-location DIR`), even with `--no-db`.
+- `--threads` defaults to every CPU on the node, so always pass it on shared nodes. The bundled sbatch template passes `--db-path "$VCONTACT3_DB"` and `--threads "$SLURM_CPUS_PER_TASK"`.
 
 ### When to use
 - Phage/prokaryotic-virus contigs/genomes: protein-sharing network clustering supports taxonomy inference.
@@ -180,7 +183,7 @@ Use the project's pinned **Pixi** environment and capture:
 
 ### Run examples
 ```bash
-SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
+SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" VCONTACT3_DB=/path/to/vcontact3_db \
   scripts/submit_taxonomy.sh vcontact3 genomes.fna results/taxonomy/vcontact3
 ```
 
@@ -191,8 +194,8 @@ SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
 Docs:
 - https://github.com/NeLLi-team/gvclass
 Release checked:
-- GVClass v1.6.0 (2026-05-29).
-- Release notes state software v1.6.0 is compatible with resource bundle v1.5.0.
+- GVClass v2.0.3 (2026-07-27).
+- The changelog states v2.0.3 is compatible with resource bundle v2.0.0.
 
 ### When to use
 - Giant-virus, NCLDV, or Nucleocytoviricota candidates from QuickClade, geNomad, hallmark genes, or genome-size/marker evidence.

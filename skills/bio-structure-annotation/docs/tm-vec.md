@@ -3,7 +3,7 @@
 Fast protein structure embedding and similarity search using transformer-based vector representations.
 
 Last verified: 2026-05-30
-Tool version/release checked: TM-Vec 1.0.2
+Tool version/release checked: TM-Vec 1.0.2 (original); valentynbez/tmvec fork 1.1.0 at commit 6bdf11a (2026-07-24; the fork has no tagged releases)
 Official docs/manual: https://github.com/tymor22/tm-vec; https://github.com/valentynbez/tmvec
 Release/source: https://github.com/tymor22/tm-vec/releases/tag/1.0.2
 
@@ -11,7 +11,23 @@ Release/source: https://github.com/tymor22/tm-vec/releases/tag/1.0.2
 
 Pin the maintained fork in the project's Pixi environment. The original
 `tymor22/tm-vec` repository points users to `valentynbez/tmvec` for continued
-maintenance.
+maintenance. The fork provides the `tmvec build-db` and `tmvec search`
+commands used below; the original 1.0.2 package ships `tmvec-build-database`
+and `tmvec-search` with different arguments. The fork's README shows
+`tmvec search --query`, but the pinned CLI (`src/tmvec/cli.py`) requires
+`--input-fasta` for both subcommands and rejects `--query`.
+
+```bash
+pixi add --pypi "tmvec @ git+https://github.com/valentynbez/tmvec.git@6bdf11adff9884cff54e4f69927d40edebc80038"
+```
+
+With internet access the fork downloads its models on first use into a cache
+directory. Compute nodes without internet need the models copied in. Pass
+them to `build-db` with `--tm-vec-model` and `--protrans-model`, plus
+`--local` to stop download attempts. The database stores these model paths,
+and `search` reuses them: it ignores `--protrans-model` and uses
+`--tm-vec-model` only to override the stored path. Keep the stored paths
+valid on the compute node.
 
 ### Download Model Weights
 Required for embedding generation:
@@ -58,10 +74,21 @@ tmvec build-db --input-fasta references.faa --output tmvec_db/references
 
 ```bash
 tmvec search \
-  --query queries.faa \
+  --input-fasta queries.faa \
   --database tmvec_db/references.npz \
-  --output tmvec_hits.tsv
+  --output tmvec_out
 ```
+
+`--output` is a folder. The search writes the hit table to
+`tmvec_out/results.tsv` and, with the default `--output-fmt npz`, the query
+embeddings to `tmvec_out/embeddings.npy`.
+It returns 5 neighbors per query by default (`--k-nearest`) and skips
+sequences longer than 1024 residues. `build-db --output tmvec_db/references`
+writes `tmvec_db/references.npz`.
+
+`scripts/run_structure_annotation.py --tmvec-query queries.faa --tmvec-db
+tmvec_db/references.npz --out-dir OUT` plans this search with
+`--output OUT/tmvec` and checks `OUT/tmvec/results.tsv` after `--execute`.
 
 ## Input/Output Formats
 

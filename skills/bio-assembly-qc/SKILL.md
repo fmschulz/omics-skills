@@ -1,11 +1,11 @@
 ---
 name: bio-assembly-qc
-description: Assemble genomes or metagenomes and assess assembly quality. Use when turning sequence reads into contigs and reporting completeness, continuity, and contamination evidence.
+description: Assemble isolate genomes or metagenomes and run QUAST/MetaQUAST with a restartable driver. Use when turning QC-passed reads into contigs and checking assembly contiguity.
 ---
 
 # Bio Assembly QC
 
-Assemble genomes/metagenomes and produce assembly QC artifacts.
+Assemble isolate genomes or metagenomes from QC-passed reads, normalize the assembler output to one `contigs.fasta` per sample, and run QUAST or MetaQUAST.
 
 ## Instructions
 
@@ -15,23 +15,25 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
    ```bash
    uv run --script skills/bio-assembly-qc/scripts/run_assembly_qc.py \
-     assemblies.tsv --out results/bio-assembly-qc
+     assemblies.tsv --out results/bio-assembly-qc --threads 4
+   # Inspect run_manifest.json, then execute the same plan on a compute node:
    uv run --script skills/bio-assembly-qc/scripts/run_assembly_qc.py \
-     assemblies.tsv --out results/bio-assembly-qc --execute
+     assemblies.tsv --out results/bio-assembly-qc --threads 16 --execute
    ```
 
-   The driver rejects samples whose upstream `read_qc_status` is not `passed`. It normalizes assembler outputs to per-sample `contigs.fasta` and chooses QUAST or MetaQUAST from the declared mode. It reuses a stage only when its declared outputs are non-empty and its `.done` marker exists.
+   The driver rejects samples whose upstream `read_qc_status` is not `passed`. It runs SPAdes (`--isolate`), metaSPAdes, Flye/metaFlye, or metaMDBG by mode, passes `--threads` to every tool (default 4; SPAdes otherwise uses 16), normalizes the assembler output to per-sample `contigs.fasta`, and chooses QUAST or MetaQUAST from the mode. It reuses a stage only when its declared outputs are non-empty and its `.done` marker exists. Run `--execute` through the scheduler (`sbatch`) for anything beyond the fixtures, not on a login node.
 2. Select an assembler based on read type, genome/metagenome scope, and sample diversity:
-   - Illumina short-read isolates and hybrid assemblies: SPAdes v4.0.0+ (final feature release; bug-fix-only series continues). Use `metaSPAdes` for short-read metagenomes.
-   - Long-read bacterial isolates (PacBio CLR, ONT): Flye v2.9.5+ for the draft/baseline assembly. Use Autocycler v0.6+ when a complete, high-confidence bacterial consensus genome is needed from multiple independent long-read assembly attempts; do not use it for mixed-community metagenomes.
-   - Long-read metagenomes: Flye v2.9.5+ in `--meta` mode (metaFlye) as the baseline for ONT/CLR mixed-community assemblies.
-   - HiFi metagenomes: prefer **metaMDBG v1.1** (~2× more circularized high-quality MAGs vs metaFlye on HiFi, better virus/plasmid recovery; *Nature Biotechnology* 2024, DOI: 10.1038/s41587-023-01983-6). Keep metaFlye as a comparator when a per-sample failure mode is suspected.
-   - Diverse or very large long-read datasets where speed dominates: **myloasm** (2025) as a faster long-read metagenome assembler when its profile matches the dataset; document the choice in the run log.
+   - Illumina short-read isolates and hybrid assemblies: SPAdes v4.0.0+ (v4.3.0 current). Use `metaSPAdes` for short-read metagenomes.
+   - Long-read bacterial isolates (PacBio CLR, ONT): Flye v2.9.5+ for the draft assembly. Use Autocycler v0.6+ when a complete bacterial consensus genome is needed from several independent long-read assemblies; do not use it for mixed communities.
+   - Long-read metagenomes: Flye v2.9.5+ in `--meta` mode (metaFlye) as the baseline for ONT and CLR communities.
+   - HiFi metagenomes: metaMDBG v1.1+. In its benchmark it recovered up to twice as many circularized high-quality MAGs as metaFlye on HiFi data (see [docs/README.md](docs/README.md)). Keep metaFlye as a comparator when a per-sample failure is suspected.
+   - Very large or diverse long-read datasets where runtime limits the work: myloasm, when its read profile matches the dataset.
+   - The driver does not run Autocycler, hybrid SPAdes, or myloasm. Run those by hand and record the exact commands and versions.
 3. Run assembly with resource-aware settings and record exact CLI, version, thread count, and RAM ceiling.
    - For very large ONT/metagenome FASTQs, use `/bio-reads-qc-mapping` guidance for filtering and avoid redundant full-file raw-read preflights before filtering. Record raw file metadata (`stat` path, size, mtime), optionally run a small sampled check, and write `seqkit stats` after each produced read set.
    - Use atomic output patterns for long-running filters and assemblies: write to `.tmp`, verify non-empty/readable output, then `mv` into the final path. Resume mode should skip existing final outputs only after sanity checks; when checks fail, use a tool-supported overwrite option or remove the corrupt final output before rerunning.
    - For Flye/metaFlye failures or interrupted jobs, prefer `--resume` or `--resume-from` in the existing output directory when the prior run is structurally intact. Do not delete a large partial assembly unless logs or missing stage files show it is corrupted.
-4. Run QUAST v5.3+ (use MetaQUAST for metagenomes) and summarize metrics.
+4. Summarize the QUAST v5.3+ or MetaQUAST `report.tsv` per sample (contig count, total length, N50, largest contig) against project thresholds.
 5. For every produced `contigs.fasta`, invoke `/tracking-taxonomy-updates` to run the BBTools-container QuickClade `percontig` domain screen before choosing downstream genome/MAG/viral/eukaryotic workflows.
 6. Use the QuickClade domain routing table to decide the next step:
    - Bacteria/Archaea -> `/bio-gene-calling`, `/bio-annotation`, and GTDB-Tk taxonomy assignment.
@@ -50,11 +52,11 @@ Inputs:
 
 ## Output
 
-- results/bio-assembly-qc/contigs.fasta
-- results/bio-assembly-qc/assembly_metrics.tsv
-- results/bio-assembly-qc/domain_routing.tsv
-- results/bio-assembly-qc/qc_report.html
-- results/bio-assembly-qc/logs/
+- results/bio-assembly-qc/run_manifest.json (validated rows, planned commands, and per-stage `status` after `--execute`)
+- results/bio-assembly-qc/<sample_id>/assembler/ (raw assembler output)
+- results/bio-assembly-qc/<sample_id>/contigs.fasta (normalized assembly)
+- results/bio-assembly-qc/<sample_id>/quast/report.tsv (QUAST or MetaQUAST metrics)
+- results/bio-assembly-qc/domain_routing.tsv (written by the `/tracking-taxonomy-updates` QuickClade step, not by the driver)
 - stdout: the last line is one JSON envelope `{ok, skill, out, manifest, warnings}` (driver stdout contract in AGENTS.md)
 
 ## Quality Gates

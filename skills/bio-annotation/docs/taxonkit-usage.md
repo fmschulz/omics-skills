@@ -135,16 +135,20 @@ echo "9606,9597" | taxonkit lca
 ### Lineage Options
 - `-n, --show-name` - Show scientific name
 - `-r, --show-rank` - Show taxonomic rank
-- `-L, --show-lineage-taxids` - Show lineage TaxIDs
-- `-t, --show-status-code` - Show status code
+- `-t, --show-lineage-taxids` - Append the lineage as TaxIDs
+- `-R, --show-lineage-ranks` - Append the rank of every lineage level
+- `-c, --show-status-code` - Show status code before the lineage
+- `-L, --no-lineage` - Omit the lineage (names or ranks only)
 
 ### Reformat Options
-- `reformat2 -f, --format` - Output format with explicit rank names, including March 2025 NCBI rank changes such as `domain` and viral `realm`
-- `-d, --delimiter` - Field delimiter (default: tab)
-- `-F, --fill-miss-rank` - Fill missing ranks with placeholder
-- `-P, --add-prefix` - Add rank prefix to names
+`reformat2` accepts TaxIDs only (field set with `-I`, default 1):
+- `-f, --format` - Output format with full rank names; `{a|b}` takes the first rank present, which handles the March 2025 NCBI change from `superkingdom` to `domain` and `acellular root`
 - `-r, --miss-rank-repl` - Replacement for missing ranks
-- `-R, --miss-rank-repl-prefix` - Prefix for missing rank replacement
+- `-R, --miss-taxid-repl` - Replacement for missing TaxIDs
+- `-t, --show-lineage-taxids` - Append the TaxIDs of the reformatted lineage
+- `-T, --trim` - Do not fill missing ranks below the rank of the current node
+
+Classic `reformat` keeps `-F, --fill-miss-rank` and `-P, --add-prefix`; `reformat2` has neither.
 
 ### Name2taxid Options
 - `-s, --sci-name` - Only search scientific names
@@ -158,16 +162,17 @@ echo "9606,9597" | taxonkit lca
 
 ### Filter Options
 - `-E, --equal-to` - Filter at specific rank
-- `-L, --lower-than` - Filter at rank and below
-- `-H, --higher-than` - Filter at rank and above
-- `-d, --discard-noranks` - Discard unranked TaxIDs
-- `-r, --save-predictable-norank` - Save predictable unranked TaxIDs
+- `-L, --lower-than` - Keep TaxIDs with rank lower than the given rank (the rank itself is excluded)
+- `-H, --higher-than` - Keep TaxIDs with rank higher than the given rank (the rank itself is excluded)
+- `-N, --discard-noranks` - Discard TaxIDs whose rank has no order
+- `-n, --save-predictable-norank` - With `-L`, keep unranked TaxIDs whose closest ranked ancestor is below the cutoff
 
 ## Common Usage Examples
 
 ### Resolve taxonomy from DIAMOND output
 ```bash
-# Extract TaxIDs from DIAMOND results (column 13)
+# Extract TaxIDs from DIAMOND results run with
+# --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids
 cut -f13 diamond_results.tsv | \
   taxonkit lineage -n -r | \
   taxonkit reformat2 \
@@ -176,8 +181,8 @@ cut -f13 diamond_results.tsv | \
 
 ### Get full lineage with names
 ```bash
-echo "562" | taxonkit lineage -n -r -L
-# Shows Escherichia coli with full lineage and ranks
+echo "562" | taxonkit lineage -n -r -R
+# Escherichia coli with its full lineage, its rank, and the rank of every lineage level
 ```
 
 ### Convert list of species names
@@ -189,7 +194,7 @@ cat species_list.txt | \
     -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" > species_taxonomy.tsv
 ```
 
-### Filter for genus-level and below
+### Keep TaxIDs below genus
 ```bash
 cat all_taxids.txt | \
   taxonkit filter -L genus | \
@@ -293,7 +298,7 @@ echo "12345" | \
   taxonkit lineage | \
   taxonkit reformat2 \
     -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" \
-    -F -r "unclassified"
+    -r "unclassified"
 ```
 
 ## Troubleshooting

@@ -1,6 +1,6 @@
 ---
 name: bio-foundation-housekeeping
-description: Add schema-backed metadata validation, normalized Parquet tables, and a DuckDB catalog to a bioinformatics project. Use when an analysis needs LinkML/Pydantic records or a queryable data catalog.
+description: Add LinkML/Pydantic metadata validation, Parquet tables, and a DuckDB catalog to a bioinformatics project. Use when records need schema checks or a queryable catalog.
 ---
 
 # Bio Foundation Housekeeping
@@ -29,7 +29,7 @@ Add validated metadata models and a queryable catalog to an existing bioinformat
 | Sample-only smoke test | Run `scripts/build_sample_catalog.py` with the JSONL fixtures. |
 | Build catalog | Register validated Parquet only, then verify counts, hashes, and foreign keys. |
 | Check an extension | Run `check_schema_compatibility.py` and review its machine-readable report before regenerating models. |
-| Tool docs | See `docs/README.md`. |
+| Tool docs | See [docs/README.md](docs/README.md). |
 
 ## Input Requirements
 
@@ -47,22 +47,18 @@ Inputs:
 - schemas/generated/project_metadata.py
 - data/catalog.duckdb
 - data/normalized/{samples,runs,files,results,result_inputs,provenance}.parquet
-- results/bio-foundation-housekeeping/report.md
+- results/bio-foundation-housekeeping/report.md (status, schema and Parquet SHA-256 values, row counts, and LinkML, Pydantic, and DuckDB versions)
+- results/bio-foundation-housekeeping/rejections.json (failed runs only: field locations and error classes)
 - results/bio-foundation-housekeeping/logs/
 
 ## Quality Gates
 
-- [ ] Schema generation succeeds and models are importable.
-- [ ] Generated model source contains no build-machine absolute paths.
-- [ ] Raw metadata validates against LinkML and Pydantic before DuckDB ingestion.
-- [ ] Duplicate identifiers and broken foreign keys fail before artifact publication.
-- [ ] The run manifest records exact schema/catalog dependency versions.
-- [ ] DuckDB catalog is readable and points at validated Parquet tables.
-- [ ] Invalid fixtures fail before Parquet or DuckDB ingestion.
-- [ ] On failure: record the field location and validation error without copying rejected values, then exit non-zero.
-- [ ] Verify project root exists and is writable.
-- [ ] Validate generated schemas against expected fields.
-- [ ] The valid fixture produces six verified Parquet tables and a non-empty DuckDB catalog; invalid fixtures exit non-zero without publishing schema, model, Parquet, or DuckDB artifacts.
+- [ ] Model generation succeeds, the generated module imports, `--expect-class` finds every expected class, and the source contains no build-machine absolute paths.
+- [ ] Raw metadata validates against the LinkML schema and generated Pydantic models before DuckDB ingestion.
+- [ ] Duplicate identifiers and broken foreign keys fail before any artifact is published.
+- [ ] `report.md` records the schema hash, Parquet hashes, row counts, and exact LinkML, Pydantic, and DuckDB versions.
+- [ ] The valid fixture produces six verified Parquet tables and a readable DuckDB catalog that points at them; invalid fixtures exit non-zero without publishing schema, model, Parquet, or DuckDB artifacts.
+- [ ] On failure, the report records the field location and error class without copying rejected values.
 - [ ] Project-specific schema extensions have a compatibility report, and each supported schema-version transition has an input/expected migration fixture.
 
 ## Examples
@@ -83,6 +79,8 @@ Run the same command with `--check` in CI. The generator exits non-zero if the o
 ### Example 2: Build the linked metadata catalog
 
 ```bash
+SKILL_ROOT=~/.agents/skills/bio-foundation-housekeeping
+
 uv run --script "$SKILL_ROOT/scripts/build_metadata_catalog.py" \
   --schema "$SKILL_ROOT/schemas/project-metadata.yaml" \
   --input "$SKILL_ROOT/fixtures/valid-project-metadata.json" \
@@ -104,9 +102,6 @@ uv run --script "$SKILL_ROOT/scripts/build_sample_catalog.py" \
 The bundled invalid fixtures demonstrate that malformed types, unexpected keys, duplicate identifiers, and missing foreign keys fail before ingestion. Rejection reports record locations and error classes, not rejected values.
 
 ## Troubleshooting
-
-**Issue**: Missing inputs or reference databases
-**Solution**: Verify paths and permissions before running the workflow.
 
 **Issue**: A Pydantic field validator cannot see another field
 **Solution**: Pydantic validates fields in declaration order. Declare the dependency first or move the cross-field rule to `@model_validator(mode="after")`.

@@ -1,11 +1,11 @@
 ---
 name: proposal-review
-description: Evaluate a proposed AI/ML, computational-biology, or bioscience research project for a funding decision. Use when reviewing a grant, research proposal, or funding application against sponsor criteria, feasibility, budget, and risks.
+description: Review an AI/ML, computational-biology, or bioscience research proposal for a funding decision. Use when scoring a grant or funding application against sponsor criteria, feasibility, budget, and risk.
 ---
 
 # Proposal Review
 
-Produce a rigorous, decision-ready review for AI/ML, computational biology, and bioscience proposals. Be fair, skeptical, specific, and explicit about missing information.
+Produce a decision-ready review of an AI/ML, computational biology, or bioscience proposal. Be fair, skeptical, and specific, and name missing information.
 
 ## Instructions
 
@@ -31,11 +31,13 @@ Produce a rigorous, decision-ready review for AI/ML, computational biology, and 
 7. Default weights: strategic fit and novelty 15%, technical rigor 25%, feasibility and resources 20%, team and execution 15%, risk, ethics, and compliance 15%, budget and schedule 10%.
 8. Map the default weighted mean to `Strong Accept` (>=4.5), `Accept` (>=3.7), `Borderline` (>=2.8), or `Reject` (<2.8). A documented fatal flaw may override the numeric band.
 9. Keep the review concrete and action-oriented. Reference proposal details when available and name fatal flaws plainly.
-10. For a machine-checked scorecard, run
-    `uv run --script skills/proposal-review/scripts/score_proposal.py scorecard.json`. The
-    helper rejects weights that do not total 100%, category mismatches, and
-    scores outside 1–5. Sponsor rubrics must provide both weights and their own
-    recommendation bands, so defaults are never mixed into a sponsor rubric.
+10. For a machine-checked scorecard, write the scores to JSON and run the helper:
+
+    ```bash
+    uv run --script "$HOME/.agents/skills/proposal-review/scripts/score_proposal.py" scorecard.json
+    ```
+
+    With the default rubric, `scores` must contain exactly these 1-to-5 keys: `strategic_fit_and_novelty`, `technical_rigor`, `feasibility_and_resources`, `team_and_execution`, `risk_ethics_and_compliance`, `budget_and_schedule`. For a sponsor rubric, add `"rubric": {"weights": {...}, "recommendations": [{"minimum": 4, "label": "Fund"}, ...]}`; weights must total 100 and the score keys must match them. Set `"fatal_flaw": true` (and optionally `fatal_flaw_recommendation`) to override the band. The helper rejects weights that do not total 100, category mismatches, and scores outside 1 to 5, and never mixes default bands into a sponsor rubric.
 
 ## Quick Reference
 
@@ -48,7 +50,7 @@ Produce a rigorous, decision-ready review for AI/ML, computational biology, and 
 | Review risk | Build a risk register with likelihood, impact, warning signs, and mitigations |
 | Make a decision | Give a final recommendation plus concrete funding conditions or rejection reasons |
 | Use a sponsor rubric | Preserve its categories, weights, thresholds, and recommendation labels |
-| Validate a scorecard | `uv run --script skills/proposal-review/scripts/score_proposal.py scorecard.json` |
+| Validate a scorecard | `uv run --script "$HOME/.agents/skills/proposal-review/scripts/score_proposal.py" scorecard.json` |
 
 ## Input Requirements
 
@@ -100,6 +102,6 @@ $1.5M budget cap, and high concern for regulatory risk.
 
 ## Related Skills
 
-- `/manuscript-review-council` — equivalent pipeline for manuscripts
-- `/scientific-writing` — draft or revise the proposal narrative
-- `/bio-logic` — assess methodology and evidence rigor
+- `/manuscript-review-council`: equivalent review for manuscripts
+- `/scientific-writing`: draft or revise the proposal narrative
+- `/bio-logic`: assess methodology and evidence rigor

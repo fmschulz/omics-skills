@@ -1,333 +1,140 @@
 # VeryFastTree Usage Guide
 
-Last verified: 2026-05-30
-Tool version/release checked: VeryFastTree v4.0.5
+Last verified: 2026-10-01
+Tool version/release checked: VeryFastTree v4.0.5 (`VeryFastTree -expert` from bioconda; flags below checked against it)
 Official docs/manual: https://github.com/citiususc/veryfasttree
 Release/source: https://github.com/citiususc/veryfasttree/releases/tag/v4.0.5
 
 ## Official Documentation
-- GitHub Repository: https://github.com/citiususc/veryfasttree
+- GitHub: https://github.com/citiususc/veryfasttree
 - Releases: https://github.com/citiususc/veryfasttree/releases
-- Based on FastTree-2 algorithm with parallelization and vectorization optimizations
+- VeryFastTree reimplements the FastTree-2 algorithm with parallelization and vector instructions and keeps its command line.
 
 ## Installation
 
-### Package Managers
 ```bash
-# Pixi
 pixi add veryfasttree
-
-# Homebrew (macOS)
-brew install veryfasttree
-
-# MacPorts
-port install veryfasttree
-
-# Python bindings
-pip install veryfasttree
+VeryFastTree -h
 ```
 
 ### From Source
-Requires CMake 3.5+, C++11 compiler (GCC 5+), and optionally CUDA Toolkit for GPU support.
+Requires CMake and a C++ compiler; CUDA is optional.
 
 ```bash
 git clone https://github.com/citiususc/veryfasttree.git
 cd veryfasttree
 git checkout v4.0.5
-cmake .
+cmake -DEXT=AVX2 .
 make
-make install  # Optional
-```
-
-### Build Options
-```bash
-cmake -DEXT=AVX2 .           # Specify vector extension
-cmake -DCUDA_ENABLED=ON .    # Enable experimental GPU support
 ```
 
 ## Input/Output Formats
 
-### Supported Input
-- FASTA
-- FASTQ
-- PHYLIP (interleaved)
-- NEXUS
-- Compressed formats (zlib, libBZ2)
+### Input
+- FASTA, FASTQ, NEXUS, or interleaved PHYLIP alignments
+- zlib- or bzip2-compressed files
 
 ### Output
-- Newick format phylogenetic trees
-- Branch lengths and support values included
+- Newick tree with branch lengths and local support values on a 0–1 scale
 
 ## Key Command-Line Flags
 
-VeryFastTree maintains exact CLI compatibility with FastTree-2, allowing drop-in replacement.
+`VeryFastTree -expert` lists every option.
 
-### Essential Options
+### Essentials
 ```bash
--nt                          # Nucleotide sequences (default: protein)
--n <number>                  # Number of sequences
--threads <n>                 # Number of threads (default: OMP_NUM_THREADS)
--threads-level <0-4>         # Parallelization degree (default: 3)
--threads-mode <0-1>          # 0=non-deterministic, 1=deterministic (default)
+-nt                     # Nucleotide alignment (default: protein)
+-out <file>             # Write the tree to a file instead of stdout
+-threads <n>            # Threads (default: OMP_NUM_THREADS)
+-seed <n>               # Random seed
+-log <file>             # Save intermediate trees and per-site rates
+-n <number>             # Read <number> alignments from one interleaved PHYLIP file (e.g. seqboot output)
 ```
 
-### Vector Extensions
+### Models
 ```bash
--ext <type>                  # Vector instruction set
-                             # AUTO (default): AVX2 if available, else SSE3
-                             # SSE3, AVX, AVX2, AVX512
-                             # CUDA (experimental GPU)
-                             # NONE (native with loop unrolling)
+# Protein: JTT by default
+-lg                     # Le-Gascuel 2008 instead of JTT
+-wag                    # Whelan-Goldman 2001 instead of JTT
+# Nucleotide: Jukes-Cantor by default
+-gtr                    # GTR instead of Jukes-Cantor
+-cat <n>                # Number of CAT rate categories (default 20)
+-gamma                  # After CAT optimization, report the Gamma likelihood and rescale branch lengths
 ```
 
-### Arithmetic Precision
+### Support
 ```bash
--double-precision            # Use 64-bit floats (default: 32-bit)
+-boot <n>               # Number of resamples for local support (default 1000)
+-nosupport              # No support values
 ```
 
-### Fast Exponential Approximations
+### Speed and parallelism
 ```bash
--fastexp <0-3>               # Exponential function implementation
-                             # 0: Standard library (default)
-                             # 1-3: Fast approximations (decreasing precision)
+-fastest                # Search only the top hit per node; faster, less thorough
+-threads-level <0-4>    # Degree of parallelization (default 3)
+-threads-mode <0-1>     # 1 (default): deterministic; 0: non-deterministic parts
+-ext <name>             # Vector extension: AUTO (default), NONE, SSE, SSE3, AVX, AVX2, AVX512, CUDA
+-double-precision       # 64-bit arithmetic
+-fastexp <0-3>          # Exponential implementation; 0 (default) is the standard library
 ```
 
-### Memory Optimization
-```bash
--disk-computing              # Use disk when RAM insufficient
--disk-computing-path <path>  # Specify storage location
--disk-dynamic-computing      # Further memory reduction with performance cost
-```
+Since v4.0, deterministic mode (`-threads-mode 1`) is at least as fast as non-deterministic mode, per the tool's help text. Levels 2 and above traverse the tree in a different order, so results can differ from level 0 or 1.
 
-### Tree Search Parameters
+### Memory
 ```bash
--fastest                     # Speed-up heuristics (less thorough)
--gtr                         # Generalized time-reversible model (DNA)
--lg                          # Le-Gascuel model (protein, default)
--wag                         # Whelan-And-Goldman model (protein)
--cat <n>                     # CAT approximation with n rate categories (default: 20)
--gamma                       # Use Gamma instead of CAT approximation
-```
-
-### Bootstrap Support
-```bash
--boot <replicates>           # Calculate local bootstrap support
-                             # Recommended: 1000 replicates
-```
-
-### Advanced Threading
-```bash
--threads-ptw <n>             # Partitioning Tendency Window (default: 50)
--threads-verbose             # Display thread assignments and speedup estimates
+-disk-computing              # Store static data on disk when RAM runs short
+-disk-computing-path <path>  # Directory for that data
+-disk-dynamic-computing      # Also store dynamic data on disk (slower)
+-disk-dynamic-limit <n>      # Cap memory-mapped files if mapping fails
 ```
 
 ## Common Usage Examples
 
-### Basic Nucleotide Tree (DNA/RNA)
+### Protein tree with local support
 ```bash
-VeryFastTree -nt < alignment.fna > tree.nw
+VeryFastTree -boot 1000 -seed 1729 -threads 8 alignment.faa > tree.nwk
 ```
 
-### Protein Tree with Default Settings
+### Nucleotide tree under GTR
 ```bash
-VeryFastTree < alignment.faa > tree.nw
+VeryFastTree -nt -gtr -threads 8 alignment.fna > tree.nwk
 ```
 
-### Multi-threaded Analysis
+### LG model with Gamma-rescaled branch lengths
 ```bash
-VeryFastTree -threads 16 < alignment.faa > tree.nw
+VeryFastTree -lg -gamma -threads 8 alignment.faa > tree.nwk
 ```
 
-### High-Precision Analysis
+### Very large alignment with limited memory
 ```bash
-VeryFastTree -double-precision -threads 16 < alignment.faa > tree.nw
+VeryFastTree -fastest -disk-computing -disk-computing-path /scratch/$USER/vft \
+  -threads 32 alignment.faa > tree.nwk
 ```
 
-### GTR Model for Nucleotides
-```bash
-VeryFastTree -nt -gtr < alignment.fna > tree.nw
-```
+## Choosing Settings
 
-### Fastest Mode for Very Large Datasets
-```bash
-VeryFastTree -fastest -threads 32 < alignment.faa > tree.nw
-```
-
-### Memory-Constrained Environment
-```bash
-VeryFastTree -disk-computing -disk-computing-path /scratch/tmp < alignment.faa > tree.nw
-```
-
-### Maximum Parallelization
-```bash
-VeryFastTree -threads 64 -threads-level 4 < alignment.faa > tree.nw
-```
-
-### Specific Vector Extension
-```bash
-VeryFastTree -ext AVX512 -threads 32 < alignment.faa > tree.nw
-```
-
-### Bootstrap Support Values
-```bash
-VeryFastTree -boot 1000 -threads 16 < alignment.faa > tree.nw
-```
-
-## Performance Tips
-
-### Dataset Size Guidelines
-- **Exploratory or time-bounded analyses at any size**: VeryFastTree is the default first-pass tree builder; reserve IQ-TREE for final publication-quality inference or explicit project requirements.
-- **10K-100K sequences**: VeryFastTree preferred over IQ-TREE -fast
-- **>100K sequences**: VeryFastTree is the practical choice
-- **>1M sequences**: Demonstrated capability (36 hours on 1M taxa)
-
-### Speed vs Accuracy Tradeoffs
-
-| Mode | Speed | Accuracy | Use Case |
-|------|-------|----------|----------|
-| Default | Fast | High | Balanced phylogenomics |
-| `-fastest` | Fastest | Reduced | Exploratory, ultra-large datasets |
-| `-double-precision` | Slower | Highest | Publication-quality |
-| `-gamma` | Slower | Higher | Better model fit than CAT |
-
-### Threading Optimization
-- **Threads-level 3** (default): Optimal for most datasets
-- **Threads-level 4**: Maximum parallelization for very large datasets
-- **Threads-mode 1** (default): Deterministic results (reproducible)
-- **Threads-mode 0**: Faster but non-deterministic
-
-### Vector Extension Selection
-- **AUTO** (default): Safe choice, automatically selects best available
-- **AVX2**: Good balance for modern CPUs (2013+)
-- **AVX512**: Best for recent server CPUs (2017+)
-- **SSE3**: Compatibility mode for older systems
-
-### Memory Management
-VeryFastTree typically requires less memory than IQ-TREE:
-- Default mode: Efficient memory usage
-- Memory issues: Enable `-disk-computing`
-- Extreme constraints: Add `-disk-dynamic-computing`
-- Specify temp path: `-disk-computing-path /path/to/fast/disk`
-
-### Fast Exponential Approximations
-- **-fastexp 0** (default): Standard library, most accurate
-- **-fastexp 1**: Fast approximation, minimal accuracy loss
-- **-fastexp 2**: Faster, slight accuracy reduction
-- **-fastexp 3**: Fastest, noticeable accuracy reduction
-
-**Recommendation**: Use default unless speed is critical; test `-fastexp 1` on subset first.
-
-## Comparison with FastTree-2
-
-| Feature | VeryFastTree | FastTree-2 |
-|---------|--------------|------------|
-| Speed | 3x+ faster | Baseline |
-| Tree topology | Identical | N/A |
-| Determinism | Yes | No (parallel mode) |
-| Vectorization | AVX/AVX512 | Limited |
-| GPU support | Experimental | None |
-| Memory efficiency | Enhanced | Standard |
-| Max tested dataset | 1M sequences | ~100K |
-
-## Typical Phylogenomic Workflows
-
-### Standard Large Dataset Analysis
-```bash
-# 10K-100K sequences, balanced speed/accuracy
-VeryFastTree -threads 32 -threads-level 3 < alignment.faa > tree.nw
-```
-
-### Ultra-Large Dataset (>100K sequences)
-```bash
-# Maximum speed with reasonable accuracy
-VeryFastTree -fastest -threads 64 -threads-level 4 < massive.faa > tree.nw
-```
-
-### Publication-Quality Large Tree
-```bash
-# Higher precision, Gamma model, bootstrap
-VeryFastTree -double-precision -gamma -boot 1000 -threads 32 < alignment.faa > tree.nw
-```
-
-### Memory-Limited Server
-```bash
-# Use disk for overflow, specify fast scratch space
-VeryFastTree -disk-computing -disk-computing-path /scratch/phylo \
-  -threads 16 < alignment.faa > tree.nw
-```
-
-### Nucleotide Metagenome Tree
-```bash
-# GTR model for DNA, multi-threaded
-VeryFastTree -nt -gtr -threads 32 < 16S_alignment.fna > 16S_tree.nw
-```
-
-### Exploratory Analysis of Massive Dataset
-```bash
-# Fastest possible, then refine subsets with IQ-TREE
-VeryFastTree -fastest -fastexp 1 -threads 64 < huge.faa > rough_tree.nw
-```
+- Exploratory or time-bounded work at any size: VeryFastTree is the default first tree; keep IQ-TREE for final inference.
+- Above about 2,000 sequences: VeryFastTree with default settings; add `-fastest` only when runtime forces it.
+- Memory limits: `-disk-computing`, then `-disk-dynamic-computing`.
+- Set `-threads` to the allocated CPU count and keep the default deterministic mode for reproducible trees.
+- Compare `-fastexp` or `-fastest` runs against a default run on a subset before using them for a result.
 
 ## Quality Control Checks
 
-### Tree Validity
-- Ensure all input sequences appear in output tree
-- Check for suspiciously long branches (potential alignment errors)
-- Verify tree is binary (fully resolved)
-
-### Performance Monitoring
-- Use `-threads-verbose` to check parallelization efficiency
-- Expected speedup: 50-80% of thread count for large datasets
-- Sublinear scaling normal beyond 32-64 threads
-
-### Model Fit
-- CAT approximation (default) suitable for most large-scale analyses
-- Consider `-gamma` for better model fit if time permits
-- GTR generally preferred over simpler models for nucleotides
-
-### Bootstrap Values
-- VeryFastTree writes support as fractions from 0 to 1; normalize other producers before comparison
-- Values >0.70 suggest reasonable support
-- Values >0.90 indicate strong support
-- Lower support expected for rapid diversifications
+- Every input sequence appears in the output tree.
+- Very long branches can point to alignment errors or contaminant sequences.
+- Support values are on a 0–1 scale; the skill driver writes them to `support.tsv` unchanged. Many studies treat 0.7 or more as moderate and 0.9 or more as strong support; state the threshold you use.
 
 ## Integration with Downstream Tools
 
-### ETE Toolkit
-```python
-from ete4 import Tree
-t = Tree('tree.nw')
-# Perform post-processing, annotation, visualization
-```
-
-### Rooting and Refinement
-```bash
-# Generate tree with VeryFastTree
-VeryFastTree -threads 32 < alignment.faa > tree.nw
-
-# Root and analyze with ETE
-ete4 explore -t tree.nw
-```
-
-## Performance Benchmarks
-
-Based on published results (VeryFastTree v4.0) and checked against the v4.0.5 source release:
-
-| Dataset Size | VeryFastTree | FastTree-2 | IQ-TREE |
-|-------------|--------------|------------|---------|
-| 10K sequences | ~5 min | ~15 min | ~30 min |
-| 100K sequences | ~30 min | ~2 hours | ~10 hours |
-| 1M sequences | ~36 hours | ~5+ days | Impractical |
-
-**Notes**: Times approximate, vary with alignment length, model, hardware.
+Post-process with ETE 4 ([ete-toolkit.md](ete-toolkit.md)) or inspect interactively with `ete4 explore -t tree.nwk`.
 
 ## Citation
 
-When using VeryFastTree, cite:
-- Piñeiro & Pichel (2024) - VeryFastTree 4.0 and 1M taxa analysis (GigaScience)
-- Piñeiro et al. (2020) - Original VeryFastTree parallelization (Bioinformatics)
-- Price et al. (2010) - Original FastTree-2 algorithm (PLoS ONE)
+- Piñeiro and Pichel (2024) *GigaScience*: VeryFastTree 4.0
+- Piñeiro et al. (2020) *Bioinformatics*: VeryFastTree
+- Price et al. (2010) *PLoS ONE*: FastTree 2
 
 ## Version Information
 
-This guide was verified against VeryFastTree v4.0.5 and the official GitHub source/release page on 2026-05-30.
+Checked against VeryFastTree v4.0.5 on 2026-10-01.

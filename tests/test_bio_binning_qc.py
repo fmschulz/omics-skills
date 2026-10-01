@@ -34,13 +34,20 @@ class BioBinningQCTests(unittest.TestCase):
                 rows = list(csv.DictReader(handle, delimiter="\t"))
             self.assertEqual(len(rows), 3)
             self.assertEqual(rows[0]["qc_tool"], "checkm2")
+            self.assertEqual(rows[0]["gunc_pass"], "True")
+            self.assertEqual(rows[0]["gunc_css"], "0.0")
             self.assertEqual(rows[1]["qc_tool"], "eukcc")
+            self.assertEqual(rows[1]["bin_id"], "bin_euk")
+            self.assertEqual(rows[1]["taxonomy"], "1-131567-2759-4751")
             self.assertEqual(rows[2]["domain_route"], "prokaryotic_virus")
 
     def test_gunc_rejects_eukaryotic_bin(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             gunc = Path(tmp) / "gunc.tsv"
-            gunc.write_text("genome\tpass_gunc\tcss\nbin_euk\tTrue\t0.1\n", encoding="utf-8")
+            gunc.write_text(
+                "genome\tclade_separation_score\tpass.GUNC\nbin_euk\t0.1\tTrue\n",
+                encoding="utf-8",
+            )
             result = subprocess.run(self.command(Path(tmp) / "out", gunc), cwd=REPO_ROOT, text=True, capture_output=True, check=False)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("non-prokaryotic route", result.stderr)

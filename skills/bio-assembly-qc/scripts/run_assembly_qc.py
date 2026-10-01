@@ -59,33 +59,119 @@ def load(path: Path) -> list[dict[str, str]]:
                 )
         elif mode == "hifi_metagenome" and platform not in ("", "pacbio-hifi"):
             raise ValueError(f"{sample}: hifi_metagenome cannot use read_platform {platform!r}")
-        row["read_platform"] = platform or "ont"
+        row["read_platform"] = platform or (
+            "pacbio-hifi" if mode == "hifi_metagenome" else ""
+        )
     return rows
 
 
-def plan(rows: list[dict[str, str]], out: Path) -> list[dict[str, object]]:
+def plan(
+    rows: list[dict[str, str]], out: Path, threads: int
+) -> list[dict[str, object]]:
+    """Build the assembly, normalize, and QC steps for every manifest row.
+
+    Args:
+        rows: Validated manifest rows.
+        out: Absolute output directory.
+        threads: Thread count passed to every assembler and QUAST call.
+
+    Returns:
+        Ordered step dictionaries with commands and declared outputs.
+    """
     steps: list[dict[str, object]] = []
+    cpus = str(threads)
     for row in rows:
         sample, mode = row["sample_id"], row["mode"]
         work = out / sample / "assembler"
         normalized = out / sample / "contigs.fasta"
         if mode == "short_isolate":
-            command, source = ["spades.py", "-1", row["read1"], "-2", row["read2"], "-o", str(work)], work / "scaffolds.fasta"
+            command, source = (
+                [
+                    "spades.py",
+                    "--isolate",
+                    "-1",
+                    row["read1"],
+                    "-2",
+                    row["read2"],
+                    "-t",
+                    cpus,
+                    "-o",
+                    str(work),
+                ],
+                work / "scaffolds.fasta",
+            )
         elif mode == "short_metagenome":
-            command, source = ["metaspades.py", "-1", row["read1"], "-2", row["read2"], "-o", str(work)], work / "scaffolds.fasta"
+            command, source = (
+                [
+                    "metaspades.py",
+                    "-1",
+                    row["read1"],
+                    "-2",
+                    row["read2"],
+                    "-t",
+                    cpus,
+                    "-o",
+                    str(work),
+                ],
+                work / "scaffolds.fasta",
+            )
         elif mode == "hifi_metagenome":
-            command, source = ["metaMDBG", "asm", "--in-hifi", row["read1"], "--out-dir", str(work)], work / "contigs.fasta.gz"
+            command, source = (
+                [
+                    "metaMDBG",
+                    "asm",
+                    "--in-hifi",
+                    row["read1"],
+                    "--threads",
+                    cpus,
+                    "--out-dir",
+                    str(work),
+                ],
+                work / "contigs.fasta.gz",
+            )
         else:
-            command = ["flye", LONG_READ_FLAGS[row["read_platform"]], row["read1"], "--out-dir", str(work)]
+            command = [
+                "flye",
+                LONG_READ_FLAGS[row["read_platform"]],
+                row["read1"],
+                "--threads",
+                cpus,
+                "--out-dir",
+                str(work),
+            ]
             if mode == "long_metagenome":
                 command.append("--meta")
             source = work / "assembly.fasta"
         qc_tool = "metaquast.py" if "metagenome" in mode else "quast.py"
-        steps.extend([
-            {"sample_id": sample, "stage": "assembly", "command": command, "outputs": [str(source)]},
-            {"sample_id": sample, "stage": "normalize", "source": str(source), "outputs": [str(normalized)]},
-            {"sample_id": sample, "stage": "qc", "command": [qc_tool, str(normalized), "-o", str(out / sample / "quast")], "outputs": [str(out / sample / "quast" / "report.tsv")]},
-        ])
+        steps.extend(
+            [
+                {
+                    "sample_id": sample,
+                    "stage": "assembly",
+                    "command": command,
+                    "outputs": [str(source)],
+                },
+                {
+                    "sample_id": sample,
+                    "stage": "normalize",
+                    "source": str(source),
+                    "outputs": [str(normalized)],
+                },
+                {
+                    "sample_id": sample,
+                    "stage": "qc",
+                    "command": [
+                        qc_tool,
+                        str(normalized),
+                        "-t",
+                        cpus,
+                        "-o",
+                        str(out / sample / "quast"),
+                    ],
+                    "outputs": [str(out / sample / "quast" / "report.tsv")],
+                },
+            ]
+        )
     return steps
 
 
@@ -143,11 +229,19 @@ def main() -> int:
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=4,
+        help="threads passed to every tool (default: 4)",
+    )
     args = parser.parse_args()
+    if args.threads < 1:
+        parser.error("--threads must be at least 1")
     try:
         rows = load(args.manifest.resolve())
         args.out.mkdir(parents=True, exist_ok=True)
-        steps = plan(rows, args.out.resolve())
+        steps = plan(rows, args.out.resolve(), args.threads)
         if args.execute:
             execute(steps)
         (args.out / "run_manifest.json").write_text(json.dumps({"schema_version": "1.0", "assemblies": rows, "steps": steps}, indent=2) + "\n")

@@ -1,9 +1,9 @@
 # Examples (Prefect-only, Nextflow-only, Hybrid)
 
-Last verified: 2026-05-30
-Tool version/release checked: Prefect 3.7.2; Dask/distributed 2026.3.0; prefect-dask package release v0.2.6 (archived repository; install through `prefect[dask]`); Nextflow v26.04.3
+Last verified: 2026-10-01
+Tool version/release checked: Prefect 3.8.7; Dask/distributed 2026.8.0; prefect-dask 0.3.7 (maintained in the Prefect repository under `src/integrations/prefect-dask`; install through `prefect[dask]`); Nextflow v26.04.6
 Official docs/manual: https://docs.prefect.io/latest/ ; https://docs.dask.org/en/stable/ ; https://www.nextflow.io/docs/latest/
-Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.7.2 ; https://github.com/dask/dask/releases/tag/2026.3.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.3
+Release/source: https://github.com/PrefectHQ/prefect/releases/tag/3.8.7 ; https://github.com/dask/dask/releases/tag/2026.8.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.6
 
 ## Example 1: Prefect + Dask local QC
 Use when:

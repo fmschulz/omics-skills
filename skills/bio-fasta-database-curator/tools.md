@@ -43,6 +43,8 @@ makeblastdb -in proteins.faa -dbtype prot -parse_seqids \
   -out blast/proteins
 ```
 
+`-parse_seqids` reads `|` as NCBI seq-id syntax. With custom pipe-delimited IDs such as `VP|Mavirus_MCP|...` it stops with "Could not construct seq-id"; drop `-parse_seqids` for those databases (checked with BLAST+ 2.17.0).
+
 For nucleotide FASTA:
 
 ```bash
@@ -60,7 +62,7 @@ diamond makedb --in proteins.faa -d diamond/proteins
 
 ```bash
 hmmpress markers.hmm
-hmmscan --cpu 8 --tblout hits.tbl markers.hmm proteins.faa
+hmmscan --cpu 4 --tblout hits.tbl markers.hmm proteins.faa
 ```
 
 ### Scripted FASTA/GenBank conversion with Biopython

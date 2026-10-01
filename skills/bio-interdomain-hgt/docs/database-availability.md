@@ -1,7 +1,7 @@
 # Database availability & build recipe (path-agnostic)
 
-Last verified: 2026-06-27
-Tool version/release checked: DIAMOND v2.2.x, MMseqs2 (linclust/cluster), geNomad v1.8+
+Last verified: 2026-10-01
+Tool version/release checked: DIAMOND v2.2.8, MMseqs2 (linclust/cluster), geNomad v1.12.0 / DB v1.9
 Official docs/manual: https://github.com/bbuchfink/diamond/wiki
 Release/source: https://github.com/bbuchfink/diamond/releases
 
@@ -42,8 +42,8 @@ Build (if absent), via `/bio-fasta-database-curator`:
 # 4) diamond makedb --in combined_proteome.faa --db combined_proteome.dmnd
 # 5) write genome_id<TAB>lineage labels.tsv from each source's taxonomy
 ```
-A clustered build (clusterednr / MMseqs2-reduced) is strongly preferred — full nr or
-a 100M+ unreduced proteome makes blastx of many windows prohibitively slow.
+Prefer a clustered build (clusterednr / MMseqs2-reduced): blastx of many windows
+against full nr or a 100M+ unreduced proteome is too slow to finish at scale.
 
 ## 2. The comparison genome/proteome collection (required)
 
@@ -52,7 +52,7 @@ is a virus). Prefer a collection with a queryable metadata table.
 
 Check for:
 - Sequences: `sequences/fna/*.fna.gz` (nucleotides) and/or `faa/*.faa.gz` (proteins).
-  Note which is present — if proteins are missing for most genomes, the forward
+  Note which is present: if proteins are missing for most genomes, the forward
   search MUST be blastx on the nucleotides.
 - Metadata: a table (DuckDB/parquet/TSV) keyed by a stable genome id (matching the
   fasta basenames) with taxonomy, completeness, and contamination per genome. Use it

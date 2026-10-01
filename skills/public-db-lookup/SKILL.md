@@ -1,6 +1,6 @@
 ---
 name: public-db-lookup
-description: Fetch bounded JSON records from UniProt, NCBI Entrez, NCBI Datasets, MGnify, InterPro, AlphaFold DB, STRING, or ENA over HTTP GET. Use when looking up an accession, taxon, entry, or structure record from a public database.
+description: Fetch compact JSON records from UniProt, NCBI, MGnify, InterPro, AlphaFold DB, STRING, or ENA. Use when looking up an accession, taxon, entry, or structure in a public database.
 ---
 
 # Public Database Lookup
@@ -11,13 +11,11 @@ One bounded GET against a public life-science REST API. The bundled script picks
 
 1. Pick the service that owns the record: `uniprot`, `ncbi-entrez`, `ncbi-datasets`, `mgnify`, `interpro`, `alphafold`, `string`, or `ena`.
 2. Read the card for that service in [references/services.md](references/services.md) for the path, parameters, and the right `--record-path`.
-3. Run the wrapper:
-   - In this repository: `skills/public-db-lookup/scripts/lookup`
-   - After installation: `~/.agents/skills/public-db-lookup/scripts/lookup`
+3. Run the wrapper, `scripts/lookup` in this skill's directory (installed at `~/.agents/skills/public-db-lookup/scripts/lookup`).
 4. Keep `--max-items` small (default 5). Raise it only when the user needs more rows.
 5. When the full payload matters, add `--save-raw PATH` and work from the file; the envelope still carries the compacted view.
 6. For the two NCBI services, export `NCBI_API_KEY` and `NCBI_EMAIL` (and `NCBI_TOOL` if you have one). The script adds them as request parameters and redacts the key from its output.
-7. Requests are paced across invocations, not just within one, so calling the CLI in a loop stays inside each service's documented rate. The timestamps live under `$XDG_STATE_HOME/omics-skills/public-db-lookup`; override with `--state-dir`. Never pass a credential in `--path` or `--param`: the script refuses it, because it would be echoed back in the emitted URL and land in shell history.
+7. Requests are paced across invocations, so calling the CLI in a loop stays inside each service's documented rate. The timestamps live under `$XDG_STATE_HOME/omics-skills/public-db-lookup`; override with `--state-dir`. Never pass a credential in `--path` or `--param`: the script refuses it, because it would be echoed back in the emitted URL and land in shell history.
 8. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.
 
 ### Execution behavior
