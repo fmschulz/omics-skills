@@ -1,6 +1,6 @@
 # Beautiful Data Viz Checklist
 
-Use this as a final QA pass before you declare a chart "done".
+Run this pass before calling a chart, figure, or dashboard view done.
 
 ## 1) Integrity (never tell a lie)
 
@@ -21,9 +21,8 @@ Use this as a final QA pass before you declare a chart "done".
 
 - One primary element (data marks) gets the most contrast.
 - Secondary elements (grid, spines, annotations) are quieter.
-- Manuscript/paper figures do not use in-plot titles or subtitles; the caption carries the title and interpretation.
+- Manuscript/paper figures do not use in-plot titles or subtitles. The caption carries a short title that names what is shown, then states what is plotted: axes and units, what colours and symbols encode, and n. The finding goes in the Results text, not the caption.
 - For notebooks or slides, titles and annotations explain the “so what” without duplicating axis labels.
-- Use gray-first styling with one accent for the main finding. Past three or four categorical colors the chart usually needs grouping, faceting, or a different form.
 - Prefer direct labels over legends; keep a legend only when direct labels would collide with the data or each other.
 
 ## 4) Data-ink and chart form
@@ -43,9 +42,11 @@ Use this as a final QA pass before you declare a chart "done".
 
 ## 6) Color and accessibility
 
-- Palette type matches data (qualitative / sequential / diverging).
-- Do not encode meaning using color alone when shape/position could do it better.
-- Palette is distinguishable under common color-vision deficiencies and in grayscale (when practical).
+- Marks are grey by default. Each color present encodes a category the reader must tell apart, the one highlighted finding, or an ordered or signed quantity; remove any other color.
+- One accent marks the finding. Past three or four categorical colors, group the rest as grey "Other", facet, or use a table.
+- Palette type matches data (qualitative / sequential / diverging); see [palettes.md](palettes.md).
+- Color is never the only encoding: position, shape, line style, or a direct label carries the same information.
+- Colors are colorblind-safe, and a greyscale copy of the figure (`Image.open(path).convert("L")`) still shows every distinction.
 - Text and important marks have enough contrast for the target background.
 - Static exports have useful alt text in the surrounding manuscript, notebook, or web page.
 - Interactive charts do not hide essential values behind hover-only behavior; provide tap/focus alternatives or a companion table.
@@ -55,9 +56,4 @@ Use this as a final QA pass before you declare a chart "done".
 - At small widths, reduce tick density, abbreviate labels, or switch vertical bars to horizontal bars.
 - Animation explains state change only; no decorative entrance animations. Respect reduced-motion settings when producing web figures.
 - Dark-mode figures use an intentional palette; do not simply invert light-mode colors.
-
-## 8) Finishing touches
-
-- Remove chart junk (gratuitous borders, heavy grids, 3D, shadows).
-- Prefer direct labels for a small number of series; otherwise use a clean legend.
-- Use consistent styling across figures in a deck/paper (same palette + typography + line widths).
+- Figures in one paper, deck, or dashboard share palette, typography, and line widths.

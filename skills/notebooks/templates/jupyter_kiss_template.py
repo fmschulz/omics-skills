@@ -76,28 +76,34 @@ print("OUT_DIR:", OUT_DIR)
 # %% [markdown]
 # ## Plot styling
 # - Apply a compact style with minimal whitespace.
-# - Use a cohesive, non-default palette.
+# - Greyscale first (see the beautiful-data-viz skill): series are grey and differ
+#   by line style; use ACCENT only for the one highlighted finding.
 
 # %%
-PALETTE = ["#0B1320", "#2C7DA0", "#5C4D7D", "#F1C453", "#E85D75", "#43AA8B"]
+GREYS = ["#333333", "#7a7a7a", "#a8a8a8", "#555555"]
+LINE_STYLES = ["-", "--", ":", "-."]
+ACCENT = "#D55E00"  # Okabe-Ito vermillion, colorblind-safe
+
 
 def set_plot_style() -> None:
-    mpl.rcParams.update({
-        "figure.dpi": 120,
-        "savefig.dpi": 200,
-        "figure.figsize": (8, 4.5),
-        "axes.titlesize": 12,
-        "axes.labelsize": 11,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 10,
-        "axes.grid": True,
-        "grid.alpha": 0.25,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "axes.prop_cycle": cycler(color=PALETTE),
-        "figure.constrained_layout.use": True,
-    })
+    mpl.rcParams.update(
+        {
+            "figure.dpi": 120,
+            "savefig.dpi": 200,
+            "figure.figsize": (8, 4.5),
+            "axes.titlesize": 12,
+            "axes.labelsize": 11,
+            "xtick.labelsize": 10,
+            "ytick.labelsize": 10,
+            "legend.fontsize": 10,
+            "axes.grid": False,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.prop_cycle": cycler(color=GREYS) + cycler(linestyle=LINE_STYLES),
+            "figure.constrained_layout.use": True,
+        }
+    )
+
 
 set_plot_style()
 

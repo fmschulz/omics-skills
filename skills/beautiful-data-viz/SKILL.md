@@ -1,113 +1,99 @@
 ---
 name: beautiful-data-viz
-description: Create publication-quality static charts with matplotlib or seaborn. Use when scientific figures need readable axes, accessible palettes, tight layouts, and high data-ink design.
-argument-hint: "[medium=notebook|paper|slides] [background=light|dark]"
+description: Shared design rules for every plot, figure, chart, dashboard or data visual (matplotlib, seaborn, ggplot2, Plotly, HTML/SVG). Greyscale first, color only to encode information, colorblind-safe, publication-ready export. Use when making, restyling or reviewing any chart or figure.
+argument-hint: "[medium=notebook|paper|slides|web] [background=light|dark]"
 ---
 
 # Beautiful Data Viz
 
-Create polished, publication-ready visualizations in Python/Jupyter with strong typography, clean layout, accessible color choices, and high data-ink. The default style is restrained: show the data, remove non-data decoration, label directly when possible, and add only the context needed to interpret the finding.
+The pack's shared rules for any data visual, whatever the library or medium. Show the data, remove decoration, label directly, and add only the context the reader needs. Other skills that draw figures (`/plotly-dashboard-skill`, `/notebooks`, the `bio-*` reporting skills) follow these rules and add only what their medium needs.
 
 ## Instructions
 
-1. Clarify the message, comparison context, audience, and medium (notebook/paper/slides). If the data is one or two values, prefer a sentence; if it is a short lookup list, prefer a table.
-2. Choose the simplest chart type that answers the question. Prefer horizontal bars for ranked categories, small multiples for >4 series or dual-axis temptations, slopegraphs for before/after changes, and sparklines for compact trend context.
-3. Start gray-first: neutral series by default, one accent for the finding, and no rainbow palettes. Select an appropriate palette type only when color is carrying real information.
-4. Remove chart junk before styling: no 3D, pie charts only if explicitly requested, no decorative borders, no heavy grids, no gradient fills, no dual y-axes.
-5. Use direct labels instead of legends when series count and space allow. Keep legends only when direct labels would collide or obscure data.
-6. For manuscript/paper figures, do not add in-plot titles or subtitles; use axis labels, legends/direct labels, panel letters, and the manuscript caption instead.
-7. Place the figure caption/legend text BELOW the figure, directly under it — never above. In a notebook this means the figure (code) cell comes first and the caption (markdown) cell immediately follows it; in a document the caption goes beneath the image. A reader sees the figure, then its legend. (Journal convention: legends sit below the figure.)
-8. Apply the shared style helpers, then build the plot.
-9. Validate readability, accessibility, and export quality at the target size.
-10. Use `pixi.toml` for a project figure environment, or [scripts/export_fixture.py](scripts/export_fixture.py) — a PEP 723 script with exact version pins — for a reproducible smoke test. Annotation helpers inherit the active light/dark text color unless an explicit color is supplied.
+1. **Greyscale first.** Draw every mark in neutral greys by default. Add color only when it encodes information:
+   - a category the reader must tell apart,
+   - the one highlighted finding (one accent color; everything else stays grey),
+   - an ordered or signed quantity (sequential or diverging scale).
+
+   Use colorblind-safe colors, never make color the only encoding (add position, shape, line style, or a direct label), and keep the figure readable in greyscale print. When color is warranted, pick it from [references/palettes.md](references/palettes.md).
+2. Clarify the message, comparison context, audience, and medium (notebook, paper, slides, web). One or two values read better as a sentence; a short lookup list reads better as a table.
+3. Choose the simplest chart that answers the question: horizontal bars or dot plots for ranked categories, small multiples instead of more than four overlaid series or a dual axis, slopegraphs for before/after, sparklines for compact trends.
+4. Remove chart junk: no 3D, no pie charts unless asked for, no decorative borders, no heavy grids, no gradient fills, no dual y-axes.
+5. Label series directly. Keep a legend only when direct labels would collide with the data or each other.
+6. Manuscript figures carry no in-plot title or subtitle; axis labels, direct labels, panel letters, and the caption do that work. The caption sits below the figure: in a notebook the figure cell comes first and the caption cell follows it.
+7. Apply the style for the medium:
+   - matplotlib or seaborn: `set_beautiful_style(...)` from [assets/beautiful_style.py](assets/beautiful_style.py). It sets a grey series cycle with distinct line styles and returns a config whose `accent` is a colorblind-safe highlight color for the current background.
+   - R / ggplot2: `theme_classic()` or `theme_minimal()`, `scale_colour_grey()` for neutral series, and `scale_colour_manual()` to give only the finding the accent.
+   - Plotly or Dash: a registered template with a grey `colorway` and the accent added per trace; see `/plotly-dashboard-skill` [references/style.md](../plotly-dashboard-skill/references/style.md).
+   - HTML / SVG: define neutral greys and one accent as CSS custom properties and redefine them for dark mode.
+8. Check the result at the target size: run the [references/checklist.md](references/checklist.md) pass, and view a greyscale copy to confirm every encoding survives (`Image.open(path).convert("L")` with Pillow).
+9. Reproduce figures from a pinned environment: the project's `pixi.toml` (this skill ships one in [pixi.toml](pixi.toml)), or a PEP 723 script run with `uv run --script`, as in [scripts/export_fixture.py](scripts/export_fixture.py).
 
 ## Quick Reference
 
 | Task | Action |
 |------|--------|
-| Apply style | Use `assets/beautiful_style.py` helpers |
-| Pick palette | See `references/palettes.md` |
-| QA checklist | See `references/checklist.md` |
-| Plot recipes | See `examples/recipes.md` |
-| Tufte finish | Use `direct_label`, `annotate_point`, `apply_range_frame`, or `sparkline` from `assets/beautiful_style.py` |
+| Apply matplotlib style | `cfg = set_beautiful_style(medium="paper")` from `assets/beautiful_style.py` |
+| Highlight the finding | `ax.plot(x, y, color=cfg.accent)`; all other series keep the grey cycle |
+| Direct label, range frame, sparkline | `direct_label`, `annotate_point`, `apply_range_frame`, `sparkline` |
+| Choose colors when warranted | [references/palettes.md](references/palettes.md) |
+| Final QA pass | [references/checklist.md](references/checklist.md) |
+| Copyable plot patterns | [examples/recipes.md](examples/recipes.md) |
+| Duplicate figures in an executed Jupyter notebook | See the `/notebooks` troubleshooting section |
 
 ## Input Requirements
 
-- Data in a tabular form (pandas DataFrame or similar)
-- Clear statement of the primary message
-- Target medium and background preference
+- Data in tabular form (pandas or polars DataFrame, R data frame, or similar).
+- The primary message the figure must carry.
+- Target medium, size, and background.
 
 ## Output
 
-- Publication-ready figure(s) (PNG/SVG/PDF)
-- Consistent styling and labeling
+- Figures exported as PNG, SVG, or PDF (or an HTML/SVG visual) with consistent styling and labeling.
+- The plotting code that reproduces them from a pinned environment.
 
 ## Quality Gates
 
-- [ ] Message is clear in 3 seconds at target size
-- [ ] Chart earns its space; a sentence or table would not communicate the pattern better
-- [ ] Manuscript/paper figures have no plot title; the caption carries the title/interpretation
-- [ ] The caption/legend is placed BELOW the figure (in a notebook: figure cell first, caption markdown cell directly after), never above it
-- [ ] Non-data ink is minimized: no top/right spines, no decorative borders, no 3D, no heavy grid
-- [ ] Direct labels replace legends when feasible
-- [ ] Comparison context is present when interpretation depends on it
-- [ ] Labels and units are readable and accurate
-- [ ] Color choice is colorblind-safe and grayscale-tolerant
-- [ ] Color is not the only encoding for important categories
-- [ ] Layout is tight with minimal whitespace
-- [ ] `uv run --script skills/beautiful-data-viz/scripts/export_fixture.py fixtures/growth_curve.csv --out build/fixture` writes non-empty PNG, SVG, and PDF files; dark-theme labels and annotations inherit readable theme colors.
+- [ ] The message is clear within a few seconds at the target size, and a sentence or table would not do better.
+- [ ] Marks are grey unless color encodes a category, the one finding, or an ordered or signed quantity.
+- [ ] Colors are colorblind-safe, color is never the only encoding, and the greyscale copy stays readable.
+- [ ] Manuscript figures have no in-plot title; the caption sits below the figure.
+- [ ] No top/right spines, decorative borders, 3D, or heavy grid; direct labels replace legends where they fit.
+- [ ] Labels carry units, and comparison context is present when the claim depends on it.
+- [ ] `uv run --script skills/beautiful-data-viz/scripts/export_fixture.py skills/beautiful-data-viz/fixtures/growth_curve.csv --out build/fixture` writes non-empty PNG, SVG, and PDF files with grey default series; with `--background dark`, labels inherit the dark-theme text color.
 
 ## Examples
 
-### Example 1: Apply the shared style helper
+### Example 1: Grey series with one highlighted finding
 
 ```python
 from pathlib import Path
 import sys
 
-SKILL_DIR = Path.home() / ".agents" / "skills" / "beautiful-data-viz"
-sys.path.insert(0, str(SKILL_DIR))
-from assets.beautiful_style import set_beautiful_style, finalize_axes
-
-set_beautiful_style(medium="paper", background="light")
-# build plot here
-finalize_axes(ax, xlabel="Time (days)", ylabel="Value", tight=True)
-```
-
-### Example 2: Direct labels and range-frame axes
-
-```python
-from pathlib import Path
-import sys
+import matplotlib.pyplot as plt
 
 SKILL_DIR = Path.home() / ".agents" / "skills" / "beautiful-data-viz"
 sys.path.insert(0, str(SKILL_DIR))
-from assets.beautiful_style import apply_range_frame, direct_label
+from assets.beautiful_style import direct_label, finalize_axes, set_beautiful_style
 
-ax.plot(x, y, color="#666666", linewidth=1.5)
-apply_range_frame(ax, x, y)
-direct_label(ax, x, y, "Observed", color="#666666")
+cfg = set_beautiful_style(medium="paper", background="light")
+fig, ax = plt.subplots(figsize=(4.2, 2.8))
+for name, y in reference_series.items():  # context: default grey cycle
+    ax.plot(x, y, linewidth=1)
+    direct_label(ax, x, y, name)
+ax.plot(x, treated, color=cfg.accent, linewidth=2)  # the finding
+direct_label(ax, x, treated, "Treated", color=cfg.accent)
+finalize_axes(ax, xlabel="Time (days)", ylabel="Biomass (g/L)")
+fig.savefig("growth.pdf")
 ```
 
 ## Troubleshooting
 
-**Issue**: Labels overlap or are unreadable
-**Solution**: Reduce tick count, rotate labels, or increase figure width.
+**Issue**: Labels overlap or are unreadable.
+**Solution**: Reduce tick count, wrap or abbreviate labels, switch to horizontal bars, or widen the figure.
 
-**Issue**: Colors are hard to distinguish
-**Solution**: Use a colorblind-safe categorical palette and limit categories.
+**Issue**: Categories are hard to tell apart.
+**Solution**: Reduce the number of colored categories (group the rest in grey as "Other"), add markers or line styles, or split into small multiples.
 
-**Issue**: A chart needs a legend, many colors, and a second y-axis to fit
+**Issue**: A chart needs a legend, many colors, and a second y-axis to fit.
 **Solution**: Split it into small multiples with shared scales and direct labels.
-
-**Issue**: Every figure appears twice in the executed Jupyter notebook
-**Solution**: The matplotlib inline backend's `flush_figures` post-execute hook auto-displays every open figure as `display_data`, and the cell's `fig` return value produces a second copy as `execute_result`. Fix by unregistering the hook in the preamble cell:
-```python
-plt.ioff()
-try:
-    from matplotlib_inline.backend_inline import flush_figures
-    get_ipython().events.unregister("post_execute", flush_figures)
-except Exception:
-    pass
-```
-With this fix, only the cell's final `fig` expression produces output. For figures created inside `if/else` blocks (where `fig` is not a top-level expression), use `display(fig)` explicitly instead of bare `fig`.

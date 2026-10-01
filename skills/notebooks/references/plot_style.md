@@ -1,108 +1,53 @@
-# Plot styling rules (pretty + minimal whitespace)
+# Plot style in notebooks
 
-## Goals
-- Compact figures with **minimal whitespace**
-- Sans-serif typography (Arial preferred) with consistent sizing
-- Pure white background (`#ffffff`), not beige or off-white
-- A cohesive, **non-default** palette that’s still readable
-- Clean axes (no chart junk)
+Figures in notebooks follow `/beautiful-data-viz` ([../../beautiful-data-viz/SKILL.md](../../beautiful-data-viz/SKILL.md)): greyscale first, color only to encode a category the reader must tell apart, the one highlighted finding, or an ordered or signed quantity; colorblind-safe; never color as the only encoding; direct labels over legends; no in-plot titles on manuscript figures. This file covers only what is specific to notebooks.
 
-## Matplotlib baseline (recommended)
-Put this in an early “Plot styling” cell.
+## Style cell
+
+Put one styling cell near the top and reuse its result in every plot cell. With the skill installed, use its helper:
+
+```python
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path.home() / ".agents" / "skills" / "beautiful-data-viz"))
+from assets.beautiful_style import set_beautiful_style
+
+cfg = set_beautiful_style(medium="notebook", background="light")
+# cfg.accent is the one highlight color; all other series use the grey cycle.
+```
+
+A marimo `--sandbox` notebook or a teammate's clean clone may not have the skill installed. Then inline the same defaults instead of importing them:
 
 ```python
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 from cycler import cycler
 
-# A cohesive, non-default palette (feel free to swap)
-PALETTE = [
-    "#0B1320",  # deep ink
-    "#2C7DA0",  # ocean
-    "#5C4D7D",  # dusk purple
-    "#F1C453",  # warm sand
-    "#E85D75",  # rose
-    "#43AA8B",  # mint
-]
-
-def set_plot_style() -> None:
-    mpl.rcParams.update({
-        "figure.dpi": 120,
-        "savefig.dpi": 200,
-        "figure.figsize": (8, 4.5),
-        "font.family": "sans-serif",
-        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans", "Liberation Sans"],
-        "figure.facecolor": "#ffffff",
-        "axes.facecolor": "#ffffff",
-        "axes.titlesize": 12,
-        "axes.labelsize": 11,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 10,
-        "axes.grid": True,
-        "grid.alpha": 0.25,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "axes.prop_cycle": cycler(color=PALETTE),
-        # Tight layout defaults
-        "figure.constrained_layout.use": True,
-    })
-
-set_plot_style()
+ACCENT = "#D55E00"  # Okabe-Ito vermillion: the one highlighted finding
+mpl.rcParams.update({
+    "figure.dpi": 120,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
+    "savefig.pad_inches": 0.02,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans", "Liberation Sans"],
+    "figure.facecolor": "#ffffff",
+    "axes.facecolor": "#ffffff",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.grid": False,
+    "axes.prop_cycle": cycler(color=["#333333", "#7a7a7a", "#a8a8a8", "#555555"])
+    + cycler(linestyle=["-", "--", ":", "-."]),
+    "legend.frameon": False,
+    "figure.constrained_layout.use": True,
+})
 ```
 
-## Preventing duplicate figure outputs in Jupyter
+## Notebook-specific rules
 
-The matplotlib inline backend’s `flush_figures` post-execute hook auto-displays
-every open figure as `display_data`. When a cell also returns `fig` as its final
-expression (`execute_result`), each figure appears twice. Fix by unregistering
-the hook in the preamble cell:
-
-```python
-plt.ioff()
-try:
-    from matplotlib_inline.backend_inline import flush_figures
-    get_ipython().events.unregister("post_execute", flush_figures)
-except Exception:
-    pass
-```
-
-With this fix, only the cell’s final `fig` expression produces output. For
-figures created inside `if/else` blocks (where `fig` is not a top-level
-expression), use `display(fig)` explicitly instead of bare `fig`. Do not use
-`mpl.use("agg")` — it disables `_repr_png_()` entirely and produces zero
-images.
-
-## Whitespace control
-- Prefer `constrained_layout=True` (global) or `plt.tight_layout()` (local).
-- When saving: `bbox_inches="tight", pad_inches=0.05`.
-
-Example:
-```python
-fig, ax = plt.subplots(figsize=(7.5, 4.0))
-# ... plotting ...
-fig.savefig(OUT_DIR / "figure.png", bbox_inches="tight", pad_inches=0.05)
-```
-
-## Annotation conventions
-- Always label axes (with units if relevant).
-- Manuscript/paper figures should not have in-plot titles or subtitles; use captions and panel labels instead.
-- Notebook exploration or slide figures may use short titles; subtitles go in markdown.
-- Legends only when needed; place outside if crowded.
-
-## “Pretty plot” checklist
-- readable fonts and sizes
-- meaningful ticks (not 1000 tick labels)
-- consistent palette across plots
-- no overlapping labels
-- compact margins
-
-## If the notebook uses many plots
-Create a helper like:
-```python
-def finalize(ax, title: str | None = None, *, manuscript: bool = False):
-    if title and not manuscript:
-        ax.set_title(title)
-    ax.grid(True, alpha=0.25)
-    return ax
-```
+- Build a fresh figure with `plt.subplots(...)` in each plot cell and make the figure the cell's final expression, so marimo and the executed `.ipynb` both embed it.
+- In marimo, name the figure and axes `_fig, _ax` (or give each cell unique names). Marimo rejects a global such as `fig` defined in two cells, and the underscore makes the names private to the cell.
+- Caption order: the figure cell comes first and its caption markdown cell follows directly below.
+- Exploratory or slide figures may carry a short title; manuscript figures do not.
+- Save exported figures from the same cell that draws them: `_fig.savefig(OUT_DIR / "figure.pdf")`.
+- Duplicate figures in executed Jupyter notebooks: see the troubleshooting section of [../SKILL.md](../SKILL.md).

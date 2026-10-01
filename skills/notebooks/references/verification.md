@@ -19,7 +19,7 @@ A notebook is “done” only if:
    - Markdown above every code cell
    - Sections follow a clear arc: purpose → data → method → results
 4. **Plots render cleanly**
-   - tight layout, labels, consistent palette
+   - tight layout, labels, grey unless color encodes information (see `/beautiful-data-viz`)
 5. **Re-run instructions exist**
    - in the notebook header and/or README
 

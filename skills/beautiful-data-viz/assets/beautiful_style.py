@@ -1,13 +1,14 @@
-"""Beautiful plotting defaults for matplotlib / seaborn.
+"""Greyscale-first plotting defaults for matplotlib / seaborn.
 
 Goal:
 - Publication-quality plots with readable labels, minimal whitespace, and sensible defaults.
-- Works in Jupyter notebooks.
-- Matplotlib-first; uses seaborn if available for easier theming.
+- Series default to neutral greys with distinct line styles; one colorblind-safe
+  accent (``VizConfig.accent``) marks the finding.
+- Works in Jupyter notebooks. Matplotlib-first; uses seaborn if available.
 
 References:
 - Seaborn aesthetics + palettes: https://seaborn.pydata.org/
-- LearnUI palette guidance: https://www.learnui.design/tools/data-color-picker.html
+- Okabe-Ito colorblind-safe colors: https://jfly.uni-koeln.de/color/
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from dataclasses import dataclass
 from typing import Optional, Sequence
 
 import matplotlib as mpl
+from cycler import cycler
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
@@ -26,6 +28,7 @@ class VizConfig:
     background: str = "light"     # light | dark
     font_scale: float = 1.0
     dpi: int = 150
+    accent: str = "#D55E00"  # the one highlighted finding
 
 
 TUFTE_COLORS = {
@@ -39,11 +42,18 @@ TUFTE_COLORS = {
     "dark_axis": "#444444",
     "series_default": "#666666",
     "series_default_dark": "#999999",
-    "highlight": "#e41a1c",
-    "highlight_dark": "#fc8d62",
-    "min": "#e15759",
-    "max": "#4e79a7",
+    # Okabe-Ito vermillion / orange: colorblind-safe accent for the finding.
+    "highlight": "#D55E00",
+    "highlight_dark": "#E69F00",
+    "min": "#D55E00",
+    "max": "#0072B2",
 }
+
+# Neutral series cycle: grey steps plus line styles, so series stay
+# distinguishable in greyscale print without relying on color.
+GREY_SERIES = ["#333333", "#7a7a7a", "#a8a8a8", "#555555"]
+GREY_SERIES_DARK = ["#dddddd", "#999999", "#6e6e6e", "#bbbbbb"]
+LINE_STYLES = ["-", "--", ":", "-."]
 
 
 def _maybe_set_retina() -> None:
@@ -92,6 +102,8 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
     grid = TUFTE_COLORS["dark_axis"] if is_dark else TUFTE_COLORS["light_axis"]
     face = TUFTE_COLORS["dark_bg"] if is_dark else TUFTE_COLORS["light_bg"]
     secondary = TUFTE_COLORS["dark_secondary"] if is_dark else TUFTE_COLORS["light_secondary"]
+    greys = GREY_SERIES_DARK if is_dark else GREY_SERIES
+    accent = TUFTE_COLORS["highlight_dark"] if is_dark else TUFTE_COLORS["highlight"]
 
     rc = {
         # Figure / save
@@ -101,7 +113,6 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "savefig.pad_inches": 0.02,
         "figure.facecolor": face,
         "axes.facecolor": face,
-
         # Typography
         "font.family": "sans-serif",
         "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans", "Liberation Sans"],
@@ -114,11 +125,10 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "ytick.color": fg,
         "xtick.labelsize": tick,
         "ytick.labelsize": tick,
-
-        # Lines / markers
+        # Lines / markers: neutral greys first; color only via the accent.
+        "axes.prop_cycle": cycler(color=greys) + cycler(linestyle=LINE_STYLES),
         "lines.linewidth": 1.5,
         "lines.markersize": 3,
-
         # Axes / spines
         "axes.edgecolor": grid,
         "axes.linewidth": 0.5,
@@ -128,7 +138,6 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "grid.color": grid,
         "grid.linewidth": 0.5,
         "grid.alpha": 0.12,
-
         # Ticks
         "xtick.direction": "in",
         "ytick.direction": "in",
@@ -136,7 +145,6 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "ytick.major.size": 4,
         "xtick.major.width": 0.5,
         "ytick.major.width": 0.5,
-
         # Legend
         "legend.frameon": False,
         "legend.fontsize": legend,
@@ -150,12 +158,17 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         import seaborn as sns  # type: ignore
         sns.set_theme(style="white", context=medium)
         sns.set_context(medium, font_scale=font_scale)
-        sns.set_palette("colorblind")
         mpl.rcParams.update(rc)
     except Exception:
         pass
 
-    return VizConfig(medium=medium, background=background, font_scale=font_scale, dpi=dpi)
+    return VizConfig(
+        medium=medium,
+        background=background,
+        font_scale=font_scale,
+        dpi=dpi,
+        accent=accent,
+    )
 
 
 def despine(ax: Axes) -> Axes:

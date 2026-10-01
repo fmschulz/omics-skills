@@ -88,6 +88,10 @@ Each axis must yield (a) a persisted comparison artifact (TSV/parquet) and (b) a
 
 ## Skill Conventions
 
+### Figures
+
+Every chart, figure, dashboard view, or web visual produced by a skill or agent follows `/beautiful-data-viz`: greyscale by default; color only to encode a category the reader must tell apart, the one highlighted finding, or an ordered or signed quantity; colorblind-safe; never color as the only encoding.
+
 ### Directory structure
 
 ```

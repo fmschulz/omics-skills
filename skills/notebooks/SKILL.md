@@ -1,6 +1,6 @@
 ---
 name: notebooks
-description: Author, execute, validate, and convert reproducible marimo or Jupyter notebooks. Use when delivering an analysis notebook with all cells run and figures embedded.
+description: Author, run and convert marimo or Jupyter notebooks. Use when delivering an analysis notebook executed end to end with figures embedded.
 ---
 
 # Notebooks
@@ -38,7 +38,7 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
      # ///
      ```
      Run with `uvx marimo run --sandbox <notebook.py>` or edit interactively with `uvx marimo edit --sandbox <notebook.py>`. The sandbox reads the header and resolves the notebook environment.
-   - **Jupyter.** Register a named ipykernel for the project's pixi env *before* the first execution and pin the kernel in the notebook metadata. The kernel name is mandatory — the generic `python3` kernel leaks the system interpreter:
+   - **Jupyter.** Register a named ipykernel for the project's pixi env *before* the first execution and pin the kernel in the notebook metadata. The kernel name is mandatory: the generic `python3` kernel leaks the system interpreter.
      ```bash
      pixi run python -m ipykernel install --user --name <project> --display-name "<project> (pixi)"
      ```
@@ -60,11 +60,10 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
      ```
      The helper writes `<notebook>.executed.ipynb`. `pixi run jupyter nbconvert --to notebook --execute --inplace <notebook.ipynb>` is also valid when Jupyter is declared in the project environment.
 
-7. **Evaluate the plots, then refine.** This step is required, not optional. After the run-all execution:
+7. **Evaluate the plots, then refine.** This step is required. Figures follow `/beautiful-data-viz` (greyscale first, color only to encode information, colorblind-safe, no in-plot titles on manuscript figures); [references/plot_style.md](references/plot_style.md) has the notebook style cell. After the run-all execution:
    - Open the executed notebook (or exported HTML) and visually inspect every figure.
-   - Check for: empty axes, mis-scaled axes (log when linear was intended or vice versa), missing labels/legends, overlapping ticks, illegible font sizes at target output size, ambiguous palettes, colorbars without units, NaN-driven gaps, axis ranges clipping data, broken layouts.
-   - For manuscript/paper figures, remove all in-plot titles and subtitles. Use axis labels, legends, panel letters, and manuscript captions instead.
-   - Place each figure's caption/legend BELOW the figure: the figure (code) cell comes first and the caption (markdown) cell immediately follows it — never put the caption above the figure. A reader sees the figure, then its legend (journal convention).
+   - Check for: empty axes, mis-scaled axes (log when linear was intended or vice versa), missing labels or legends, overlapping ticks, illegible font sizes at target output size, color that encodes nothing, colorbars without units, NaN-driven gaps, axis ranges clipping data, broken layouts.
+   - Place each caption below its figure: the figure cell comes first and the caption markdown cell follows it.
    - If a figure is wrong or unclear, edit the source cell and re-run end-to-end. Repeat until each figure communicates what the surrounding markdown says it communicates.
    - Record what changed between revisions in a brief "Figure revision log" markdown cell or in the run log.
 
@@ -123,7 +122,7 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
 - [ ] Data paths are project-relative and verified to exist.
 - [ ] Headless run-all succeeds on a fresh kernel: marimo export uses `--include-outputs --sandbox`, or Jupyter execution exits zero.
 - [ ] Every figure is inspected after execution; any figure that fails the visual checks above triggers a code revision and re-run.
-- [ ] Manuscript/paper figures have no in-plot titles or subtitles.
+- [ ] Figures pass the `/beautiful-data-viz` quality gates: grey unless color encodes information, no in-plot titles on manuscript figures, caption cell below the figure.
 - [ ] Delivered notebook has every cell pre-executed with figures embedded; users do not have to run the notebook to see the plots.
 - [ ] For marimo: `uvx marimo check --strict <notebook.py>` passes before and after export.
 - [ ] For marimo: no malformed markdown cells, quoted-string fragments inside `mo.md(...)`, trailing empty cells, or `return`-only placeholder cells remain.
@@ -168,10 +167,10 @@ def _(duckdb):
 
 @app.cell
 def _(df, plt):
-    fig, ax = plt.subplots(figsize=(5, 3.2))
-    ax.scatter(df["x"], df["y"], s=10)
-    ax.set_xlabel("x (units)"); ax.set_ylabel("y (units)")
-    fig
+    _fig, _ax = plt.subplots(figsize=(5, 3.2))
+    _ax.scatter(df["x"], df["y"], s=10)
+    _ax.set_xlabel("x (units)"); _ax.set_ylabel("y (units)")
+    _fig
     return
 ```
 
@@ -214,7 +213,7 @@ uvx marimo export ipynb notebooks/legacy.py -o notebooks/legacy.executed.ipynb \
 **Solution:** The figure must be the final expression of the cell. Indented expressions inside `if` blocks or expressions buried before other statements will not render.
 
 **Issue:** Figures look correct interactively but the executed file shows empty plots.
-**Solution:** Code is mutating shared state across cells (e.g. `plt.gcf()` reuse). Build a fresh `fig, ax = plt.subplots(...)` per cell and return / display `fig` as the final expression.
+**Solution:** Code is mutating shared state across cells (e.g. `plt.gcf()` reuse). Build a fresh figure per cell (in marimo `_fig, _ax = plt.subplots(...)`, because a global `fig` defined in two cells is an error) and make the figure the final expression.
 
 **Issue:** Converted notebook fails `marimo check`.
 **Solution:** Remove leftover `display(...)` calls, drop `%magic` lines that have no marimo equivalent, and rewrite ipywidget usage using `mo.ui.*` per `references/widgets.md`.
@@ -229,4 +228,4 @@ try:
 except Exception:
     pass
 ```
-With this fix, only the cell's final `fig` expression renders. For figures inside `if/else` blocks (where `fig` is not a top-level expression and therefore not captured as `execute_result`), use `display(fig)` explicitly instead of bare `fig`. Do not use `mpl.use("agg")` as a workaround — it disables `_repr_png_()` entirely and produces zero images.
+With this fix, only the cell's final `fig` expression renders. For figures inside `if/else` blocks (where `fig` is not a top-level expression and therefore not captured as `execute_result`), use `display(fig)` explicitly instead of bare `fig`. Do not use `mpl.use("agg")` as a workaround; it disables `_repr_png_()` entirely and produces zero images.

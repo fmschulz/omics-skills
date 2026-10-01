@@ -5,7 +5,7 @@ Tool version/release checked: Dash 4.4.0, Plotly 6.5.0
 Official docs/manual: https://dash.plotly.com/ and https://plotly.com/python/templates/
 Release/source: https://github.com/plotly/dash/releases
 
-Readability, hierarchy, and consistency: the things that make a dashboard feel designed. One template and one palette definition drive every chart, so nothing is styled twice.
+Dash-specific layout, typography, and template rules. The shared visual rules (greyscale first, chart choice, direct labels, accessibility) live in `/beautiful-data-viz`; this file applies them to Plotly. One template drives every chart, so nothing is styled twice.
 
 ## Layout
 
@@ -31,44 +31,20 @@ Web sizes: page title 24-28, section title 16-18 bold, body 13-14, small labels 
 
 ## Color
 
-Neutrals carry structure (background, borders, text). Color appears only when it encodes meaning or directs attention. Reserve green for good or increase, red for bad or decrease, gray for neutral or no data, and keep that meaning constant across the dashboard.
+Follow the greyscale-first rule from `/beautiful-data-viz` ([../../beautiful-data-viz/SKILL.md](../../beautiful-data-viz/SKILL.md)): neutrals carry structure (background, borders, text) and every chart starts grey. Add color only when it encodes a category the reader must tell apart, the one highlighted finding, or an ordered or signed quantity. Keep each color's meaning constant across the dashboard.
 
-Categorical palettes must be visually equidistant: avoid four near-identical blues. Aim for 6-8 distinct categorical colors in one view. Past 8 categories, switch to top-N plus "Other", small multiples, or a table.
-
-Never encode meaning by color alone. Add labels, shapes, or ordering, keep text contrast sufficient, and avoid red/green as the only distinguishing pair.
-
-### Palettes
+- One accent marks the finding or the current selection: Okabe-Ito vermillion `#D55E00` on light backgrounds, orange `#E69F00` on dark.
+- Categories that need color: at most three or four per view, from a colorblind-safe set (`px.colors.qualitative.Safe` or the Okabe-Ito list in [../../beautiful-data-viz/references/palettes.md](../../beautiful-data-viz/references/palettes.md)). Past that, show top-N plus a grey "Other", small multiples, or a table.
+- Good/bad or increase/decrease: use a colorblind-safe pair (blue `#0072B2` and vermillion `#D55E00`), never red/green, and also show the sign with an arrow, `+`/`-`, or the value.
+- Magnitude: a sequential scale such as `px.colors.sequential.Viridis`. Signed values: a diverging scale such as `RdBu` with `zmid=0`.
+- Never encode meaning by color alone. Add labels, marker symbols, line dashes, or ordering, and keep text contrast sufficient.
 
 ```python
-# Vibrant, high contrast. Source: ColorsWall "Flat UI Colors Codes".
-FLAT_UI_CLASSIC = [
-    "#1abc9c",  # Turquoise
-    "#2ecc71",  # Emerald
-    "#3498db",  # Peter River
-    "#9b59b6",  # Amethyst
-    "#34495e",  # Wet Asphalt
-    "#16a085",  # Green Sea
-    "#27ae60",  # Nephritis
-    "#2980b9",  # Belize Hole
-    "#8e44ad",  # Wisteria
-    "#2c3e50",  # Midnight Blue
-    "#f1c40f",  # Sunflower
-    "#e67e22",  # Carrot
-    "#e74c3c",  # Alizarin
-    "#95a5a6",  # Concrete
-    "#7f8c8d",  # Asbestos
-]
-
-# Muted and modern. Source: Color-Hex palette "Learnui Design".
-LEARNUI_DESIGN = ["#003f5c", "#7a5195", "#ef5675", "#ffa600", "#aaaaaa"]
-
-# Template default: six hues from FLAT_UI_CLASSIC picked for maximum separation.
-DASH_COLORWAY = ["#3498db", "#2ecc71", "#e67e22", "#9b59b6", "#e74c3c", "#1abc9c"]
+# Neutral colorway: series stay grey. On the trace that carries the finding, set
+# marker_color=ACCENT (markers, bars) or line_color=ACCENT (lines).
+DASH_COLORWAY = ["#333333", "#7a7a7a", "#a8a8a8", "#555555"]
+ACCENT = "#D55E00"
 ```
-
-Plotly Express also ships qualitative palettes under `px.colors.qualitative`. Prefer a built-in over shipping custom hex codes when either would do.
-
-Pick the palette type from the data: categorical for categories, sequential single-hue for magnitude, diverging two-hue for negative to positive.
 
 ## Figure template
 
@@ -98,7 +74,7 @@ pio.templates["dash_ui"] = dash_template
 pio.templates.default = "dash_ui"
 ```
 
-This is `plotly_white` plus overrides: white plot background, light y-grid only, no heavy borders, horizontal legend at the top.
+This is `plotly_white` plus overrides: grey colorway, white plot background, light y-grid only, no heavy borders, horizontal legend at the top. Where traces fit, label them directly (`mode="lines+text"` or an annotation at the last point) and hide the legend.
 
 ## Chart readability
 
@@ -117,11 +93,8 @@ def format_currency(fig, axis="y"):
 
 
 def add_subtitle(fig, subtitle: str):
-    """Plotly has no portable native subtitle; place an annotation above the plot."""
-    fig.add_annotation(
-        text=subtitle, xref="paper", yref="paper", x=0, y=1.08,
-        showarrow=False, align="left", font=dict(size=12, color="rgba(0,0,0,0.6)"),
-    )
+    """Use Plotly's native subtitle (layout.title.subtitle, Plotly 5.23 and later)."""
+    fig.update_layout(title_subtitle_text=subtitle, title_subtitle_font_color="rgba(0,0,0,0.6)")
     return fig
 ```
 
@@ -148,9 +121,8 @@ Add cross-filtering only when it stays predictable: selection highlighting, a cl
 ## References
 
 - Dash dashboard design principles: https://dash-resources.com/a-guide-to-beautiful-dashboards-basic-design-principles/ (2025)
-- Learn UI Design data color picker: https://www.learnui.design/tools/data-color-picker.html
-- Learn UI Design on palette types: https://www.learnui.design/blog/picking-colors-for-your-data-visualizations.html
-- Flat UI hex codes: https://colorswall.com/colors/flat-ui/
-- "Learnui Design" palette values: https://www.color-hex.com/color-palette/103612
+- Okabe-Ito colorblind-safe colors: https://jfly.uni-koeln.de/color/
+- Plotly built-in color scales: https://plotly.com/python/builtin-colorscales/
+- Plotly figure titles and subtitles: https://plotly.com/python/figure-labels/
 - Plotly templates and theming: https://plotly.com/python/templates/
 - Dash Graph component: https://dash.plotly.com/dash-core-components/graph

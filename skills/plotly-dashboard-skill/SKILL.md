@@ -1,16 +1,16 @@
 ---
 name: plotly-dashboard-skill
-description: Build production-ready Plotly Dash dashboards. Use when scientific data needs an interactive, consistently themed layout with clear and performant callbacks.
+description: Build Plotly Dash apps with one shared figure template and fast callbacks. Use when data needs an interactive multi-view dashboard.
 ---
 
 # Plotly Dashboard Skill
 
-Create interactive dashboards with a single source of truth for UI and figure styling.
+Build interactive Dash dashboards with a single source of truth for UI and figure styling. Visual rules (greyscale first, color only to encode information, direct labels, accessibility) come from `/beautiful-data-viz`; this skill applies them to Dash and adds app structure and performance.
 
 ## Instructions
 
 1. Capture audience, questions, and data constraints.
-2. Pick a layout pattern and component library. Layout, typography, color, and the shared figure template are in [references/style.md](references/style.md).
+2. Pick a layout pattern and component library. Layout, typography, color, and the shared figure template are in [references/style.md](references/style.md). Charts start grey; add color only for a category the reader must tell apart, the one highlighted finding or selection, or an ordered or signed quantity.
 3. Register the figure template once, before building any chart, so no figure is styled by hand.
 4. Build the layout skeleton before callbacks.
 5. Implement callbacks with clear inputs and outputs. Project structure, the data-callback-to-render-callback fan-out, and the advanced callback tools are in [references/architecture.md](references/architecture.md).
@@ -47,7 +47,7 @@ Visual and interaction:
 - [ ] Spacing, alignment, and legend placement are consistent; legends do not cover data
 - [ ] Charts carry readable titles and axis labels or units in the title
 - [ ] Tooltips include units and clean formatting
-- [ ] No chart is rainbow-colored without meaning, and no meaning is encoded by color alone
+- [ ] Marks are grey unless color encodes a category, the highlighted finding, or an ordered or signed quantity; colors are colorblind-safe and never the only encoding
 - [ ] Empty states are handled; no blank white cards
 - [ ] Mobile and tablet views are usable, with no unintended horizontal scroll
 - [ ] Click-to-filter is obvious and reversible, with a clear reset action
@@ -69,7 +69,7 @@ Code and documentation:
 
 ## Non-Goals
 
-- Static publication figures. Use `/beautiful-data-viz` for matplotlib or seaborn output.
+- Static publication figures. Use `/beautiful-data-viz`, which also sets the visual rules this skill follows.
 - Data analysis itself. This skill presents results; it does not compute them.
 
 ## Troubleshooting

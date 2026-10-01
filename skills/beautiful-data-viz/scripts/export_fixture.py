@@ -40,9 +40,12 @@ def main() -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     for suffix in ("png", "svg", "pdf"):
         fig.savefig(args.out.with_suffix(f".{suffix}"), facecolor=fig.get_facecolor())
-    args.out.with_suffix(".json").write_text(
-        json.dumps({"text_color": plt.rcParams["text.color"], "annotation_colors": [text.get_color() for text in ax.texts]}, indent=2) + "\n"
-    )
+    metadata = {
+        "text_color": plt.rcParams["text.color"],
+        "annotation_colors": [text.get_color() for text in ax.texts],
+        "line_colors": [line.get_color() for line in ax.lines],
+    }
+    args.out.with_suffix(".json").write_text(json.dumps(metadata, indent=2) + "\n")
     plt.close(fig)
     return 0
 

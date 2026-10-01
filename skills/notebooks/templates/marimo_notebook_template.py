@@ -81,15 +81,15 @@ def _(np, pd):
 
 @app.cell
 def _(OUTPUT_DIR, example, plt):
-    fig, ax = plt.subplots(figsize=(5.5, 3.2))
-    ax.plot(example["x"], example["y"], marker="o")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_title("Example Figure")
-    fig.tight_layout()
-    fig.savefig(OUTPUT_DIR / "example_figure.png", dpi=200)
-    fig
-    return (fig,)
+    _fig, _ax = plt.subplots(figsize=(5.5, 3.2))
+    _ax.plot(example["x"], example["y"], marker="o", color="#333333")
+    _ax.set_xlabel("x")
+    _ax.set_ylabel("y")
+    _ax.set_title("Example Figure")
+    _fig.tight_layout()
+    _fig.savefig(OUTPUT_DIR / "example_figure.png", dpi=200)
+    _fig  # noqa: B018 - marimo renders the final expression
+    return  # noqa: PLR1711 - marimo cells end with an explicit return
 
 
 @app.cell(hide_code=True)

@@ -13,6 +13,20 @@ import time
 from dash import Dash, Input, Output, callback, dcc, html
 import plotly.graph_objects as go
 
+# Greyscale-first template: series stay grey and differ by marker symbol.
+# Color only the trace that carries the finding: marker_color=ACCENT for markers,
+# line_color=ACCENT for lines.
+ACCENT = "#D55E00"
+TEMPLATE = go.layout.Template(
+    layout=go.Layout(
+        colorway=["#333333", "#a8a8a8"],
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        xaxis={"showgrid": False, "zeroline": False},
+        yaxis={"showgrid": True, "gridcolor": "rgba(0,0,0,0.06)", "zeroline": False},
+    )
+)
+SYMBOLS = {"A": "circle", "B": "square-open"}
 ROWS = [{"group": group, "x": x, "y": x * factor} for group, factor in (("A", 1), ("B", 2)) for x in range(1, 101)]
 
 
@@ -21,8 +35,14 @@ def filter_points(group: str):
     figure = go.Figure()
     for label in sorted({row["group"] for row in selected}):
         rows = [row for row in selected if row["group"] == label]
-        figure.add_scatter(x=[row["x"] for row in rows], y=[row["y"] for row in rows], mode="markers", name=label)
-    figure.update_layout(template="plotly_white")
+        figure.add_scatter(
+            x=[row["x"] for row in rows],
+            y=[row["y"] for row in rows],
+            mode="markers",
+            marker_symbol=SYMBOLS[label],
+            name=label,
+        )
+    figure.update_layout(template=TEMPLATE)
     return figure
 
 
