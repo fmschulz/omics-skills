@@ -47,7 +47,7 @@ Use this skill to measure the reach of a paper with citation, attention, and jou
   - `--doi <doi>`
   - `--openalex-id <id>`
 - Optional:
-  - `--mailto <email>` or `OPENALEX_MAILTO` for OpenAlex polite-pool identification
+  - `--mailto <email>` or `OPENALEX_MAILTO` for OpenAlex polite-pool identification, only with an address the user gave for this purpose
   - `ALTMETRIC_API_KEY` loaded from a private environment file
   - `--output <path>`
   - `--format json|text`

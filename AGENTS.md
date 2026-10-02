@@ -2,7 +2,7 @@
 
 Guidance for AI coding agents (Claude Code, Codex CLI, Cursor, Copilot) working in this repository.
 
-Related docs: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) (contributor workflow), [docs/development.md](docs/development.md) (validation commands), [docs/INSTALL.md](docs/INSTALL.md) (installation).
+Related docs: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) (contributor workflow and validation commands), [docs/INSTALL.md](docs/INSTALL.md) (installation).
 
 ---
 
@@ -88,6 +88,18 @@ Each axis must yield (a) a persisted comparison artifact (TSV/parquet) and (b) a
 
 ## Skill Conventions
 
+### Personal data
+
+Never write a person's email address into skills, scripts, tests, docs, or commits; examples use `you@example.org`. Contact options for public APIs (Crossref `--email`, OpenAlex `--mailto`, `NCBI_EMAIL`) stay unset unless the user gave an address for that purpose. `tests/test_no_personal_emails.py` fails on any other address in a tracked file.
+
+### Tool versions
+
+A version in a skill records what its commands were last checked against; it is not an install pin. A project takes the newest release at setup and locks it (see `/bioinformatics-project`, "Tool versions"):
+
+- Install commands add packages without a version (`pixi add <package>`); the project's `pixi.lock` records the exact build. Templates give each dependency a lower bound at the checked version, so setup takes the newest release.
+- Keep the `Tool version/release checked` and `Last verified` lines of every tool guide current. Pin a version in a skill only when newer releases are known to break its commands, and say why.
+- `python3 scripts/check_tool_versions.py` reports tool guides whose checked version is behind the newest GitHub release. It is a maintenance report, never a CI gate.
+
 ### Figures
 
 Every chart, figure, dashboard view, or web visual produced by a skill or agent follows `/beautiful-data-viz`: greyscale by default; color only to encode a category the reader must tell apart, the one highlighted finding, or an ordered or signed quantity; colorblind-safe; never color as the only encoding.
@@ -164,13 +176,11 @@ Agents also carry a `## Skill Lookup` section pointing at the installed router (
 
 1. Create or edit `skills/<name>/SKILL.md` (frontmatter `name` must match the directory) or `agents/<agent>.md`.
 2. For new skills, add the skill to the owning agent's `Mandatory Skill Usage`, `Workflow Decision Tree`, and `Task Recognition Patterns`.
-3. Rebuild the catalog and run the gates ([docs/development.md](docs/development.md) has the full list):
+3. Rebuild the catalog and run the gates ([docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) has the full list):
 
 ```bash
-python3 scripts/skill_index.py build
-python3 scripts/validate-skills.py
-uv run --no-project --with pytest --with requests pytest -q
-make benchmark
+make build-catalog
+make test
 ```
 
 4. Add a routing benchmark row in `tests/routing_benchmark.yaml` when the skill should be discoverable from natural language.

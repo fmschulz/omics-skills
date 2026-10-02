@@ -18,7 +18,7 @@ This directory contains practical usage guides for the core tools used in bio-fo
 ```bash
 pixi init myproject --channel conda-forge --channel bioconda
 cd myproject
-pixi add python=3.11 biopython pysam
+pixi add python biopython pysam
 pixi install
 ```
 

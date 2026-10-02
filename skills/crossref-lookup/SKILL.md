@@ -16,7 +16,7 @@ Validate DOIs, find DOIs from titles, and audit bibliographies against the Cross
    - `--validate-file` checks one DOI per line.
    - `--audit-bibliography` extracts DOIs from a `.bib` or plain-text file and checks each one.
 3. DOI inputs are normalized before lookup. `10.xxxx/...`, `doi:10.xxxx/...`, and `https://doi.org/10.xxxx/...` are all accepted, and trailing BibTeX punctuation is removed.
-4. Pass `--email` to identify the caller and use Crossref's polite pool. The CLI spaces requests to stay within the limits Crossref reported on 2026-10-01: single-DOI lookups at 5 per second (10 with `--email`), title searches at 1 per second (3 with `--email`).
+4. Pass `--email` only with an address the user gave for Crossref's polite pool. Never take an address from the conversation, git config, or system context; without one the CLI uses the public pool. The CLI spaces requests to stay within the limits Crossref reported on 2026-10-01: single-DOI lookups at 5 per second (10 with `--email`), title searches at 1 per second (3 with `--email`).
 5. When a title search returns several plausible records, show the candidates instead of choosing one silently.
 6. Crossref holds citation metadata, not full text. When exact wording, pagination, or publisher formatting matters, check the DOI landing page.
 7. Use `--strict` for audits that must fail on any invalid, missing, or unresolved record.
@@ -76,7 +76,7 @@ scripts/lookup --audit-bibliography refs.bib --strict --output crossref-audit.js
 **Solution**: Treat `potentially_missing_dois` as a coverage gap, not proof of invalid citations.
 
 **Issue**: Exit code 2.
-**Solution**: Crossref rate-limited the run or was unreachable. Wait, add `--email`, and rerun.
+**Solution**: Crossref rate-limited the run or was unreachable. Wait and rerun.
 
 ## Related Skills
 

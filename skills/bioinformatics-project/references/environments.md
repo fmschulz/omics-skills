@@ -18,7 +18,7 @@ Pixi resolves a conda environment from a `pixi.toml` manifest and writes a `pixi
 
 ```bash
 pixi init metagenome_mags_project          # create pixi.toml
-pixi add bwa=0.7.18 samtools=1.21 fastp seqkit   # add pinned tools
+pixi add bwa samtools fastp seqkit         # newest releases; pixi.lock records them
 pixi install                               # resolve + write pixi.lock
 pixi run bwa mem ...                        # run a tool from the env
 pixi shell                                  # drop into the env

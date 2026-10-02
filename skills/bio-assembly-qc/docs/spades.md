@@ -14,7 +14,7 @@ Release/source: https://github.com/ablab/spades/releases/tag/v4.2.0
 
 **Via Pixi:**
 ```bash
-pixi add "spades=4.2.0"
+pixi add spades   # newest release; pixi.lock records the exact build
 ```
 
 **Binary Download:**

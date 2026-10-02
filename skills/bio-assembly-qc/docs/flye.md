@@ -14,7 +14,7 @@ Release/source: https://github.com/mikolmogorov/Flye/releases/tag/2.9.6
 
 **Via Pixi:**
 ```bash
-pixi add "flye=2.9.6"
+pixi add flye   # newest release; pixi.lock records the exact build
 ```
 
 Install the pinned bioconda build through pixi; do not run `setup.py install` against a system Python.

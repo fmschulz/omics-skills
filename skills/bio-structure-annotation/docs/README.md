@@ -69,7 +69,7 @@ pixi add foldseek
 # See LocalColabFold: https://github.com/YoshitakaMo/localcolabfold
 
 # boltz
-pixi add --pypi "boltz[cuda]==2.2.1"
+pixi add --pypi "boltz[cuda]"
 ```
 
 ## Typical Workflow

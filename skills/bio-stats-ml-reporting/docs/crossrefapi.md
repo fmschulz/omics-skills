@@ -9,10 +9,10 @@ Release/source: https://github.com/fabiobatalha/crossrefapi/releases/tag/1.7.0
 
 ```bash
 # Pixi project (crossrefapi is on PyPI, not conda-forge)
-pixi add --pypi "crossrefapi==1.7.0"
+pixi add --pypi crossrefapi
 
 # uv project
-uv add "crossrefapi==1.7.0"
+uv add crossrefapi
 ```
 
 ## Key Features

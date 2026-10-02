@@ -4,20 +4,21 @@ channels = ["conda-forge"]
 platforms = ["osx-arm64", "osx-64", "linux-64", "win-64"]
 
 [dependencies]
-python = "3.12.*"
-jupyterlab = "4.2.*"
-pixi-kernel = "0.5.*"
-ipykernel = "6.29.*"
-pandas = "2.2.*"
-numpy = "2.1.*"
-matplotlib = "3.9.*"
-duckdb = "1.1.*"
-pyarrow = "17.*"
+# Lower bounds are the checked versions. Setup takes the newest release and pixi.lock pins the exact builds.
+python = ">=3.12"
+jupyterlab = ">=4.2"
+pixi-kernel = ">=0.5"
+ipykernel = ">=6.29"
+pandas = ">=2.2"
+numpy = ">=2.1"
+matplotlib = ">=3.9"
+duckdb = ">=1.1"
+pyarrow = ">=17"
 
 # Notebook automation dependencies
-jupytext = "1.19.*"
-nbclient = "0.10.*"
-papermill = "2.6.*"
+jupytext = ">=1.19"
+nbclient = ">=0.10"
+papermill = ">=2.6"
 
 [tasks]
 lab = "jupyter lab"

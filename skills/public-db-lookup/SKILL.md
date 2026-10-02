@@ -14,7 +14,7 @@ One bounded GET against a public life-science REST API. The bundled script picks
 3. Run the wrapper, `scripts/lookup` in this skill's directory (installed at `~/.agents/skills/public-db-lookup/scripts/lookup`).
 4. Keep `--max-items` small (default 5). Raise it only when the user needs more rows.
 5. When the full payload matters, add `--save-raw PATH` and work from the file; the envelope still carries the compacted view.
-6. For the two NCBI services, export `NCBI_API_KEY` and `NCBI_EMAIL` (and `NCBI_TOOL` if you have one). The script adds them as request parameters and redacts the key from its output.
+6. For the two NCBI services, the script reads `NCBI_API_KEY`, `NCBI_EMAIL` and `NCBI_TOOL` from the environment, adds them as request parameters, and redacts the key from its output. Use only values the user exported; never set `NCBI_EMAIL` to an address from the conversation or system context.
 7. Requests are paced across invocations, so calling the CLI in a loop stays inside each service's documented rate. The timestamps live under `$XDG_STATE_HOME/omics-skills/public-db-lookup`; override with `--state-dir`. Never pass a credential in `--path` or `--param`: the script refuses it, because it would be echoed back in the emitted URL and land in shell history.
 8. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.
 
@@ -78,7 +78,7 @@ One JSON object on stdout.
 
 **Issue**: NCBI rejects or throttles requests that carry no contact details.
 
-**Solution**: Export `NCBI_EMAIL` and `NCBI_TOOL`; NCBI asks for both on every E-utilities request.
+**Solution**: Ask the user to export `NCBI_EMAIL` and `NCBI_TOOL`; NCBI asks for both on every E-utilities request.
 
 ## Non-Goals
 

@@ -17,7 +17,7 @@ Python bindings and a command-line interface around Prodigal for fast prokaryoti
 
 ```bash
 # Pixi (bioconda)
-pixi add "pyrodigal==3.7.1"
+pixi add pyrodigal
 ```
 
 Use the version locked by the project's Pixi environment.

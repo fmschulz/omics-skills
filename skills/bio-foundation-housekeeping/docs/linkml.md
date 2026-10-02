@@ -9,13 +9,14 @@ Release/source: https://github.com/linkml/linkml/releases/tag/v1.11.1
 
 ### Project environment
 ```bash
-pixi add --pypi linkml==1.11.1 pydantic==2.13.4
+pixi add --pypi linkml pydantic
 pixi install
 ```
 
 ### One command with uv
 ```bash
-uv run --with linkml==1.11.1 linkml generate pydantic \
+# `--extra-fields` needs LinkML 1.11.1 or newer.
+uv run --with 'linkml>=1.11.1' linkml generate pydantic \
   --extra-fields forbid schema.yaml > models.py
 ```
 

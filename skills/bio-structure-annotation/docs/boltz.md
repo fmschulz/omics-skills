@@ -12,10 +12,10 @@ Release/source: https://github.com/jwohlwend/boltz/releases/tag/v2.2.1; https://
 ### Pixi (recommended)
 ```bash
 # With CUDA support (adds the cuEquivariance kernels)
-pixi add --pypi "boltz[cuda]==2.2.1"
+pixi add --pypi "boltz[cuda]"
 
 # CPU only or non-CUDA GPU
-pixi add --pypi "boltz==2.2.1"
+pixi add --pypi boltz
 ```
 
 **Important**: Keep Boltz in its own Pixi environment (or feature) to avoid dependency conflicts.

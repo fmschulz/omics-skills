@@ -19,7 +19,7 @@ Filtlong filters Nanopore or PacBio long-read FASTQ by read length and quality. 
 
 ```bash
 # Via Pixi
-pixi add "filtlong=0.3.1"
+pixi add filtlong
 
 # From source
 git clone https://github.com/rrwick/Filtlong.git

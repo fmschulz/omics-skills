@@ -16,7 +16,7 @@ Pyrodigal extension for viral gene calling, including giant viruses and viruses 
 
 ```bash
 # Pixi (bioconda)
-pixi add "pyrodigal-gv==0.3.2"
+pixi add pyrodigal-gv
 ```
 
 ## Key Features

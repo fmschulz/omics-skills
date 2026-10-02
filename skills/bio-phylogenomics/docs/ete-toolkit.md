@@ -15,10 +15,10 @@ Release/source: https://github.com/etetoolkit/ete/releases/tag/4.4.0
 ## Installation
 
 ```bash
-pixi add "ete4=4.4.0"
+pixi add ete4
 ```
 
-In a uv-managed Python project, `uv add "ete4==4.4.0"` works as well. The Qt tree renderer is optional; the web explorer (`ete4 explore`) needs no Qt.
+In a uv-managed Python project, `uv add ete4` works as well. The Qt tree renderer is optional; the web explorer (`ete4 explore`) needs no Qt.
 
 ### Dependencies
 Core: Cython, Bottle, Cheroot, Brotli, NumPy, SciPy

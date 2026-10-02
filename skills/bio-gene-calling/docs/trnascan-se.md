@@ -16,7 +16,7 @@ tRNA gene detection using covariance models and Infernal.
 Install tRNAscan-SE in the project's Pixi environment. The bioconda package pulls in Infernal.
 
 ```bash
-pixi add "trnascan-se>=2.0.12"
+pixi add "trnascan-se>=2.0.12"   # the options used here were checked from 2.0.12
 ```
 
 ## Key Command-Line Flags

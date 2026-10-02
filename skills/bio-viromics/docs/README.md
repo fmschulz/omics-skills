@@ -81,7 +81,7 @@ Add the tools to the project's Pixi environment. GVClass runs from its own Pixi 
 
 ```bash
 pixi add genomad checkv
-pixi add "python>=3.10,<3.12" vcontact3   # bioconda 3.1.6
+pixi add "python>=3.10,<3.12" vcontact3   # needs Python 3.10 or 3.11; bioconda ships 3.1.6
 
 # GVClass (Apptainer wrapper with the database built in)
 wget https://raw.githubusercontent.com/NeLLi-team/gvclass/main/gvclass-a

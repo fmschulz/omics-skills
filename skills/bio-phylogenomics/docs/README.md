@@ -81,7 +81,7 @@ Draw trees in greyscale by default. Use color only when it encodes information t
 ## Installation
 
 ```bash
-pixi add iqtree veryfasttree mafft trimal "ete4=4.4.0"
+pixi add iqtree veryfasttree mafft trimal ete4
 ```
 
 ## Key Differences

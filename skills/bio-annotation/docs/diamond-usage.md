@@ -28,7 +28,7 @@ tar xzf diamond-linux64.tar.gz
 
 ### Pixi
 ```bash
-pixi add "diamond=2.2.1"
+pixi add diamond   # newest release; pixi.lock records the exact build
 ```
 
 ### Other Methods

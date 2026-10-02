@@ -15,7 +15,7 @@ Release/source: https://github.com/ablab/quast/releases/tag/quast_5.3.0
 
 **Via Pixi:**
 ```bash
-pixi add "quast=5.3.0"
+pixi add quast   # newest release; pixi.lock records the exact build
 ```
 
 Install the pinned bioconda build through pixi; do not run `setup.py install` against a system Python.

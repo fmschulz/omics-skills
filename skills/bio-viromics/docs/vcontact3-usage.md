@@ -15,6 +15,7 @@ vConTACT3 clusters viral genomes with gene-sharing networks of protein clusters 
 ## Installation
 
 ```bash
+# vConTACT3 needs Python 3.10 or 3.11.
 pixi add "python>=3.10,<3.12" vcontact3
 ```
 

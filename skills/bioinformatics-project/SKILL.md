@@ -157,6 +157,16 @@ House rule: bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Py
 
 - Pin the stack in `pixi.toml` and commit `pixi.lock`; capture a container (Docker / Apptainer) for long-lived or shared analyses (Sandve 2013).
 - Record exact versions into each experiment's provenance file at run time (`samtools --version`, `bwa 2>&1 | head`, `metabat2 2>&1 | head`) and into `tasks/METHODS.md`.
+
+#### Tool versions
+
+Versions in the omics skills are the versions their commands were checked against, not install pins. At project setup, take the newest release of each tool and lock it:
+
+1. Add the tool without a version (`pixi add <package>`); for a container, take the newest tag and record its digest.
+2. When the major or minor version differs from the skill's checked version, read the release notes for changed options and output formats, and run `<tool> --version` and `<tool> --help` to confirm the options the skill uses.
+3. Commit `pixi.lock` (or the digest) and keep that version for the whole project. Upgrade only on purpose, rerun the affected steps, and record the upgrade.
+4. Databases are not in `pixi.lock`. Use the database release the tool version requires, and record its version, source, download date and checksum.
+5. Record one row per tool in `tasks/METHODS.md`: tool, version as reported by `--version`, source (conda channel and build, PyPI, GitHub tag or commit, or container digest), the database record from step 4, and the date checked.
 - Make dependencies machine-readable and explicit (Wilson 2017); never rely on "whatever is on PATH".
 
 Manifest example with lock-capture comment: [examples/environment.pixi.toml](examples/environment.pixi.toml). Full guidance on pixi, uv, conda-file export, and containers: [references/environments.md](references/environments.md) (read when setting up or capturing an environment).

@@ -35,7 +35,7 @@ pixi init --format pyproject        # Use pyproject.toml format
 
 ### Add Dependencies
 ```bash
-pixi add python=3.9                 # Add specific version
+pixi add "python=3.12"              # A specific version, only when a tool needs it
 pixi add python pytest numpy        # Add multiple packages
 pixi add --pypi boto3               # Add PyPI package
 pixi add python --platform linux-64 # Platform-specific dependency
@@ -84,7 +84,7 @@ cd myproject
 ### 2. Add Core Dependencies
 ```bash
 # Add common bioinformatics tools
-pixi add python=3.11 numpy pandas scipy
+pixi add python numpy pandas scipy
 pixi add biopython pysam bcftools samtools
 pixi add jupyter matplotlib seaborn
 pixi add --pypi duckdb linkml pydantic

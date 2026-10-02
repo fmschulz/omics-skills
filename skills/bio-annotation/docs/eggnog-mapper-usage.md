@@ -21,6 +21,7 @@ eggNOG-mapper is a tool for fast genome-wide functional annotation through ortho
 ### Pixi (recommended)
 
 ```bash
+# Stay on v2: these commands were checked with v2, and v3 is a beta with changes.
 pixi add "eggnog-mapper>=2.1.13,<3"
 ```
 
