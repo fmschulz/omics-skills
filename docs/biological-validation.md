@@ -1,62 +1,52 @@
-# Biological Validation Reference
+# Validation
 
-The biological validation program qualifies eight core omics skills against versioned truth sets and records scheduler evidence separately from scientific scores.
+The tests show that the pack's contracts hold on small fixtures. They do not show that the external tools produce correct biology. The validation program keeps these claims apart.
 
 ## Evidence levels
 
 | Level | Required evidence | Permitted claim |
 |---|---|---|
-| Fixture | Deterministic local inputs, schemas, command plans, normalized outputs, and failure tests | The repository contract works on the fixture. |
-| Scheduler integration | Pinned environment and databases, completed scheduler job, exit state, elapsed time, peak RSS, and checked outputs | The pinned external tools ran on the named scheduler profile. |
-| Biological validation | Versioned truth labels, stratified scientific metrics, controls, and documented limitations | The tested tool stack achieved the reported metrics on the named truth set. |
+| Fixture | Deterministic local inputs, schemas, command plans, normalized outputs and failure tests | The repository contract works on the fixture. |
+| Scheduler integration | Pinned environment and databases, a completed scheduler job, exit state, elapsed time, peak RSS and checked outputs | The pinned external tools ran on the named scheduler profile. |
+| Biological validation | Versioned truth labels, stratified scientific metrics, controls and documented limitations | The tested tool stack reached the reported metrics on the named truth set. |
 
-One level does not imply the next. A completed Slurm job is not biological validation until the result is scored against truth labels.
+One level does not imply the next. A completed Slurm job is not biological validation until its result is scored against truth labels.
 
-## Registry
+## What the tests cover
 
-[`validation/truth-sets.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/truth-sets.json) records the candidate truth sets, evidence tier, biological strata, metrics, limitations, source release, license, and artifacts for:
+`make test` runs the skill, supplementary-doc and citation validators, the unit and fixture tests, and the routing benchmark. For skills that ship a driver or an artifact builder, the fixture tests check command plans, restart and reuse decisions, output normalization, schema validation and failure paths. They do not run the heavy external tools or their databases. A production run still needs pinned databases and containers, a scheduler job, and the QC gates in each skill.
 
-- read QC and mapping;
-- assembly and assembly QC;
-- gene calling and ncRNA detection;
-- functional annotation;
-- phylogenomics;
-- protein clustering and pangenomes;
-- viromics;
-- interdomain horizontal gene transfer.
+## Truth-set registry
 
-Run the registry gate with:
+[`validation/truth-sets.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/truth-sets.json) records, for eight core skills, the candidate truth set, its evidence tier, biological strata, metrics, limitations, source release, license and artifacts. The skills are read QC and mapping, assembly, gene calling and ncRNA detection, functional annotation, phylogenomics, protein clustering and pangenomes, viromics, and interdomain horizontal gene transfer.
 
 ```bash
 uv run --script validation/scripts/validate_registry.py
 ```
 
-A truth set can move from `candidate` to `ready` only after every required artifact has an immutable URL and a locally verified SHA-256. Upstream MD5 values remain provenance; they do not replace the local SHA-256 gate.
+A truth set moves from `candidate` to `ready` only when every required artifact has an immutable URL and a locally verified SHA-256. Upstream MD5 values stay as provenance; they do not replace the SHA-256 check. All eight truth sets are `candidate`.
 
-## Execution surfaces
-
-| Skill | Current surface | Scheduler validation requirement |
+| Skill | Current surface | Needed for scheduler validation |
 |---|---|---|
-| `bio-reads-qc-mapping` | External-tool driver | Execute the driver, score retained reads and mapping truth, then test reuse. |
-| `bio-assembly-qc` | External-tool driver | Execute the driver and score MetaQUAST metrics against a gold assembly. |
-| `bio-gene-calling` | Restartable external-tool driver | Execute each domain route and compare CDS, protein, tRNA, and rRNA calls with truth records. |
+| `bio-reads-qc-mapping` | External-tool driver | Run the driver, score retained reads and mapping against truth, then test reuse. |
+| `bio-assembly-qc` | External-tool driver | Run the driver and score MetaQUAST metrics against a gold assembly. |
+| `bio-gene-calling` | Restartable external-tool driver | Run each domain route and compare CDS, protein, tRNA and rRNA calls with truth records. |
 | `bio-annotation` | Artifact builder | Add an upstream annotation adapter before scoring CAFA or curated labels. |
-| `bio-phylogenomics` | External-tool driver | Execute marker trees and compare supported splits with the reference tree. |
-| `bio-protein-clustering-pangenome` | Artifact builder | Run an orthology tool first, then submit its predictions to QfO-compatible scoring. |
-| `bio-viromics` | Artifact builder | Run geNomad and CheckV first, then score labeled contigs before building the evidence bundle. |
-| `bio-interdomain-hgt` | Artifact builder | Run homology, context, and tree stages first; score simulations separately from curated empirical controls. |
+| `bio-phylogenomics` | External-tool driver | Run marker trees and compare supported splits with the reference tree. |
+| `bio-protein-clustering-pangenome` | Artifact builder | Run an orthology tool, then submit its predictions to QfO-compatible scoring. |
+| `bio-viromics` | Artifact builder | Run geNomad and CheckV, then score labeled contigs before building the evidence bundle. |
+| `bio-interdomain-hgt` | Artifact builder | Run the homology, context and tree stages; score simulations apart from curated empirical controls. |
 
-## Slurm job contract
+## Slurm jobs
 
-[`validation/schemas/slurm-job.schema.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/schemas/slurm-job.schema.json) requires:
+A job manifest follows [`validation/schemas/slurm-job.schema.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/schemas/slurm-job.schema.json) and names:
 
-- validation, driver, and truth-set identifiers;
-- cluster, account, partition, QOS, CPU, memory, and time values;
-- checksummed Pixi lock or container record;
-- checksummed database files or directory trees;
-- version commands, the analysis command, and minimum output sizes.
+- the validation, driver and truth set
+- the cluster, account, partition, QOS, CPUs, memory and time
+- a checksummed Pixi lock or container, and checksummed databases
+- version commands, the analysis command and the expected outputs
 
-Render without submission:
+Render the job without submitting it:
 
 ```bash
 validation/scripts/submit_slurm_job.sh --dry-run \
@@ -64,36 +54,32 @@ validation/scripts/submit_slurm_job.sh --dry-run \
   tasks/biological-validation/runs/<validation-id>/job.sbatch
 ```
 
-The renderer rejects `draft` jobs and unresolved placeholders. A later `--submit` invocation re-renders the manifest and requires the result to match an existing dry-run script byte for byte. `--submit` also requires `OMICS_VALIDATION_SUBMIT_APPROVED=1`; set it only after the rendered script has been reviewed and approved. Submit from the login node named by `scheduler.cluster`; the generated Slurm log paths are absolute under `workdir`.
+The renderer rejects `draft` jobs and unresolved placeholders. Review the rendered script before you submit it with the same arguments and `--submit`:
 
-## Run evidence
+- `--submit` renders the manifest again. When the script path already holds the reviewed script, the two must match byte for byte; when it does not, the new render is written and submitted unreviewed, so always run `--dry-run` first.
+- `--submit` also requires `OMICS_VALIDATION_SUBMIT_APPROVED=1`. Set it only after the rendered script is approved.
+- The wrapper calls `sbatch` without `-M`, so the job runs on the cluster of the host you submit from. Submit from a login node of the cluster named in `scheduler.cluster`, the one that holds the data, never from another cluster.
 
-Collect scheduler accounting after the job reaches a terminal state:
+After the job ends, collect its evidence. `--fetch-sacct` queries `sacct -M` with the manifest's `scheduler.cluster`, because job IDs repeat across clusters.
 
 ```bash
-sacct -j "$JOB_ID" \
-  --format=JobIDRaw,State,ExitCode,ElapsedRaw,MaxRSS,AllocCPUS,ReqMem,NodeList \
-  --parsable2 > tasks/biological-validation/runs/<validation-id>/sacct.psv
-
 uv run --script validation/scripts/collect_slurm_evidence.py \
   validation/jobs/<ready-job>.json \
-  --job-id "$JOB_ID" \
-  --sacct-file tasks/biological-validation/runs/<validation-id>/sacct.psv \
+  --job-id "$JOB_ID" --fetch-sacct \
   --output tasks/biological-validation/runs/<validation-id>/run-evidence.json
 ```
 
-The run record stores Slurm state, exit code, elapsed seconds, peak RSS, requested resources, nodes, output sizes, and output SHA-256 values. Driver-specific scoring adds scientific metrics only after the scheduler and artifact checks pass.
+The run record stores the cluster, Slurm state, exit code, elapsed seconds, peak RSS, requested resources, nodes, and output sizes and SHA-256 values. Scientific metrics are added only after these scheduler and artifact checks pass.
 
 ## Current pilot
 
-[`validation/jobs/phylogenomics-qfo-pilot.draft.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/jobs/phylogenomics-qfo-pilot.draft.json) defines the first pilot. It remains `draft` until these values are known on a scheduler login node:
+The first pilot, [`validation/jobs/phylogenomics-qfo-pilot.draft.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/jobs/phylogenomics-qfo-pilot.draft.json), stays `draft` until these values are known on a scheduler login node:
 
-- the cluster name plus a small-job account, partition, and QOS on it;
-- the remote checkout and data paths;
-- the QfO subset and reference-tree artifact SHA-256 values;
-- the solved Pixi lock SHA-256.
+- the cluster, and a small-job account, partition and QOS on it
+- the remote checkout and data paths
+- the SHA-256 values of the QfO subset and the reference tree
+- the SHA-256 of the solved Pixi lock
 
-Pick the small-job partition of the cluster that holds the data, never a different
-cluster. Job IDs collide across clusters, so `scheduler.cluster` in the job manifest
-is required and is passed to `sacct -M` when evidence is collected; the run record
-keeps it so a result can never be attributed to the wrong scheduler.
+Phylogenomics goes first because it needs no large reference database.
+
+Comparative-discovery thresholds need separate prokaryote, eukaryote, phage and Nucleocytoviricota campaigns.

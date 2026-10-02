@@ -65,7 +65,8 @@ def test_project_gate_runs_pytest_style_driver_tests() -> None:
     assert "unittest discover -s tests" not in makefile
     assert "unittest discover -s tests" not in workflow
     assert "unittest discover -s tests" not in (ROOT / "README.md").read_text()
-    assert "unittest discover -s tests" not in (ROOT / "docs" / "development.md").read_text()
+    contributing = (ROOT / "docs" / "CONTRIBUTING.md").read_text()
+    assert "unittest discover -s tests" not in contributing
 
 
 def test_draft_scheduler_job_cannot_be_rendered(tmp_path: Path) -> None:

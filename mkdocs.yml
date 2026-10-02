@@ -43,21 +43,17 @@ theme:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Installation Guide: INSTALL.md
+  - Install: INSTALL.md
   - Agents: agents.md
   - Skills: skills.md
-  - Skill Quality: skill-quality.md
-  - Biological Validation: biological-validation.md
   - Routing: routing.md
-  - Development:
-      - Development: development.md
-      - Contributing: CONTRIBUTING.md
-      - Distribution: DISTRIBUTION.md
-  - GitHub Pages: github-pages.md
-  - Reference:
-      - Skill Graph: SKILL_GRAPH.md
-      - Tooling Survey 2026: tooling-survey-2026.md
+  - Validation: biological-validation.md
+  - Tooling: tooling-survey-2026.md
+  - Contributing: CONTRIBUTING.md
+
+# Session handoffs are working notes, not site pages.
+exclude_docs: |
+  handoffs/
 
 markdown_extensions:
   - admonition

@@ -1,52 +1,37 @@
 # omics-skills
 
-`omics-skills` is a set of agent prompts and reusable skills for scientific work with Claude Code and the Codex CLI. It covers omics workflows, literature discovery, scientific writing, peer review, notebooks, dashboards, and publication figures.
+omics-skills is a set of agent prompts and skills for scientific work in Claude Code and the Codex CLI. It covers omics workflows, literature search, scientific writing and review, notebooks, dashboards and figures.
 
-The repository is deliberately simple. Agents are Markdown system prompts. Skills are Markdown directories with a `SKILL.md` contract and optional references, examples, scripts, or templates. A small router reads those files and recommends the right agent and skill order for a task.
+Agents are Markdown system prompts. A skill is a directory with a `SKILL.md` file and optional references, examples, scripts and templates. A router reads both and recommends an agent and an order of skills for a task. The pack has four agents and 34 skills; the generated `catalog/catalog.json` is the authoritative list.
 
-## What Is Included
-
-| Area | What the repository provides |
+| Area | Skills cover |
 |---|---|
-| Omics analysis | Read QC, mapping, assembly, binning, annotation, taxonomy triage, phylogenomics, viromics, pangenomes, structure annotation, and reporting. |
-| Literature and metadata | PMC and bioRxiv search, arXiv search, DOI lookup, citation metadata, and impact checks. |
-| Writing and review | Manuscript drafting, response letters, proposal review, methods documentation, and rigorous review of AI scientist outputs. |
-| Visualization | Reproducible notebooks, matplotlib/seaborn figures, and Plotly Dash dashboards. |
+| Omics analysis | Read QC and mapping, assembly, binning, gene calling, annotation, taxonomy, phylogenomics, viromics, pangenomes, protein structure, statistics and reports. |
+| Literature and metadata | PMC and bioRxiv full-text search, arXiv and bioRxiv metadata search, DOI lookup, public database records and citation impact. |
+| Writing and review | Manuscripts, response letters, proposal review, methods sections and review of AI-scientist output. |
+| Visualization | Notebooks, figures and Plotly Dash dashboards, greyscale first. |
 
-The current package contains four agents and 35 skills. The generated catalog is the countable source of truth; this documentation explains how to find and use them.
-
-## Start Here
-
-| Goal | Go to |
-|---|---|
-| Install the pack for Claude Code or Codex | [Getting Started](getting-started.md) |
-| Pick the right agent | [Agents](agents.md) |
-| Browse every skill | [Skills](skills.md) |
-| Understand the router | [Routing](routing.md) |
-| Add or maintain skills | [Development](development.md) |
-| Review current skill quality and priorities | [Skill Quality](skill-quality.md) |
-| Contribute a change | [Contributing](CONTRIBUTING.md) |
-| Review distribution notes | [Distribution](DISTRIBUTION.md) |
-| Publish the documentation site | [GitHub Pages](github-pages.md) |
-
-## Quick Example
-
-Install the pack:
+## Quick start
 
 ```bash
 git clone https://github.com/fmschulz/omics-skills.git
 cd omics-skills
 make install
-```
-
-Ask the router which workflow fits a task:
-
-```bash
 python3 scripts/skill_index.py route "assemble a metagenome and recover MAGs"
 ```
 
-Use the suggested agent and skills as the starting point. For installed checkouts, the same router is available through `~/.agents/omics-skills/skill_index.py`.
+## Pages
 
-## Design Principles
+| Goal | Page |
+|---|---|
+| Install the pack and start an agent | [Install](INSTALL.md) |
+| Pick an agent | [Agents](agents.md) |
+| Find a skill | [Skills](skills.md) |
+| See how a task is routed | [Routing](routing.md) |
+| See what the tests and validation cover | [Validation](biological-validation.md) |
+| Look up default tools and versions | [Tooling](tooling-survey-2026.md) |
+| Change a skill or cut a release | [Contributing](CONTRIBUTING.md) |
 
-The skills are meant to keep scientific agents grounded. Bioinformatics work starts with explicit hypotheses, records QC reflections, searches the literature for the relevant clade or data type, compares like with like, and reports both candidate discoveries and credible negative findings. Writing and review skills favor evidence strength, reproducibility, and clear limits over polished but unsupported claims.
+## Design principles
+
+The skills tie agents to evidence. An analysis starts from an explicit hypothesis, records its QC decisions, checks the literature for the organism or data type, compares like with like, and reports negative results as well as candidates. The writing and review skills put evidence, reproducibility and stated limits ahead of fluent but unsupported claims.

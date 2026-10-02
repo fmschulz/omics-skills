@@ -141,10 +141,9 @@ tests/
   test_emit_routing_hint.py hook-script tests
   routing_benchmark.yaml    routing regression suite
 docs/
-  INSTALL.md                 detailed installation and troubleshooting guide
-  CONTRIBUTING.md            contribution workflow
-  DISTRIBUTION.md            distribution and discovery notes
-  SKILL_GRAPH.md            routing model and graph
+  INSTALL.md                 installation, updates and troubleshooting
+  CONTRIBUTING.md            contribution workflow, checks and releases
+  routing.md                 routing model and benchmark
   routing_baseline.json     benchmark baseline
   tooling-survey-2026.md    bioinformatics tooling survey
 Makefile                    install, catalog, hook, benchmark, uninstall targets
@@ -165,7 +164,7 @@ Adding or modifying a skill:
 3. Rebuild the catalog and run the test suite.
 4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is non-trivially discoverable by the router.
 
-See [AGENTS.md](AGENTS.md) for structural conventions, [docs/SKILL_GRAPH.md](docs/SKILL_GRAPH.md) for how the router scores and composes skills, [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for contribution flow, and [docs/skills.md](docs/skills.md) for the public skill catalog.
+See [AGENTS.md](AGENTS.md) for structural conventions, [docs/routing.md](docs/routing.md) for how the router scores and composes skills, [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for contribution flow, and [docs/skills.md](docs/skills.md) for the public skill catalog.
 
 ## Compatibility
 

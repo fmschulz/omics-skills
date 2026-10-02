@@ -1,50 +1,14 @@
-# Installation Guide
+# Install
 
-Omics Skills supports Claude Code and Codex through the same skill source tree, but the two runtimes use different agent formats. Claude Code reads the canonical Markdown agents. Codex reads TOML agent definitions rendered during installation.
+The pack installs from a checkout with `make`, or as a plugin for Claude Code or the Codex CLI. Claude Code reads the Markdown agents; Codex reads TOML agents rendered at install time.
 
 ## Requirements
 
-Install Git, Bash, GNU Make, Python 3.11 or newer (Codex agent rendering uses `tomllib`), and at least one supported runtime:
+- Git, GNU Make, and Python 3.11 or newer. The installer uses only the Python standard library.
+- Claude Code, the Codex CLI, or both.
+- [uv](https://docs.astral.sh/uv/) or Pixi for skill helper scripts, which declare their own dependencies.
 
-```bash
-git --version
-python3 --version
-claude --version   # if using Claude Code
-codex --version    # if using Codex
-```
-
-`make install` does not require a system Python environment. Development commands and skill-local Python helpers use [uv](https://docs.astral.sh/uv/).
-
-## Install from a Plugin Marketplace
-
-### Claude Code
-
-```bash
-claude plugin marketplace add fmschulz/omics-skills
-claude plugin install omics-skills@omics-skills
-```
-
-Test a local checkout before publishing it:
-
-```bash
-claude plugin validate .
-claude plugin marketplace add .
-claude plugin install omics-skills@omics-skills
-```
-
-### Codex
-
-```bash
-codex plugin marketplace add fmschulz/omics-skills
-codex plugin list --available --json
-codex plugin add omics-skills@omics-skills
-```
-
-For a local checkout, use `codex plugin marketplace add .`. The repository includes `.codex-plugin/plugin.json` and a repo marketplace at `.agents/plugins/marketplace.json`.
-
-## Install from a Checkout
-
-Clone the repository and install both runtime integrations:
+## Install from a checkout
 
 ```bash
 git clone https://github.com/fmschulz/omics-skills.git
@@ -52,196 +16,98 @@ cd omics-skills
 make install
 ```
 
-Install one runtime only:
+`make install` builds the routing catalog, links every skill into `~/.agents/skills`, links the Claude agents, and renders the Codex agents.
 
-```bash
-make install-claude
-make install-codex
-```
+| Command | Effect |
+|---|---|
+| `make install-claude` or `make install-codex` | Installs for one runtime. |
+| `make install INSTALL_METHOD=copy` | Copies instead of linking, for a checkout that will not stay on disk. |
+| `make install LINK_CLIENT_SKILLS=no` | Leaves `~/.claude/skills` and `~/.codex/skills` untouched, for hosts where another tool manages them. |
+| `make install-selected SELECTED_AGENT_FILES="omics-scientist.md" SELECTED_SKILL_DIRS="bio-logic bio-annotation"` | Installs a subset. A missing name fails the install, and the catalog lists only the selection. |
 
-The default install links skills and Claude agents to the checkout. Use copies when the checkout will not remain available:
+### Installed files
 
-```bash
-make install INSTALL_METHOD=copy
-```
-
-## Installed Files
-
-The checkout installer writes only runtime configuration and omics-skills-owned entries:
+A checkout install writes:
 
 ```text
-~/.agents/skills/<skill>/          shared skill links or copies
-~/.agents/omics-skills/           router and generated catalog
-~/.claude/agents/<agent>.md       Claude agent links or copies
-~/.claude/skills                  link to ~/.agents/skills
-~/.codex/agents/<agent>.toml      rendered Codex subagent definitions
-~/.codex/skills                   compatibility link to ~/.agents/skills
+~/.agents/skills/<skill>        skill links or copies
+~/.agents/omics-skills/         router (skill_index.py) and catalog.json
+~/.claude/agents/<agent>.md     Claude agent links or copies
+~/.claude/skills                link to ~/.agents/skills
+~/.codex/agents/<agent>.toml    rendered Codex agents
+~/.codex/skills                 link to ~/.agents/skills
 ```
 
-The canonical skill location for Codex is `~/.agents/skills`. The `~/.codex/skills` link is retained for compatibility. Because Codex agents are generated TOML rather than symlinks, rerun `make install-codex` after editing a Markdown agent source.
+- An existing directory with a pack skill's name is moved to `~/.agents/omics-skills/previous-skills/`. A link with that name is replaced.
+- An installed agent identical to the new one is left in place. A differing file is kept once as a timestamped `.bak` file.
+- If `~/.claude/skills` or `~/.codex/skills` is a real directory, the installer stops instead of hiding its contents. Merge it into `~/.agents/skills`, or install with `LINK_CLIENT_SKILLS=no`.
+- Files that do not belong to the pack are not touched.
 
-Existing files with an omics-skills agent or skill name are moved to timestamped backups. Unrelated files and backups in the shared directories are left alone.
+## Install as a plugin
 
-`~/.claude/skills` and `~/.codex/skills` become symlinks to `~/.agents/skills`. If either is already a real directory holding your own skills, installation stops and tells you to move or merge it first, because replacing it with a symlink would hide everything inside.
-
-## Manual Installation
-
-Install shared skills and Claude agents with symlinks:
+Claude Code:
 
 ```bash
-mkdir -p ~/.agents/skills ~/.claude/agents
-for skill in "$PWD"/skills/*; do
-    ln -sfn "$skill" "$HOME/.agents/skills/$(basename "$skill")"
-done
-for agent in "$PWD"/agents/*.md; do
-    ln -sfn "$agent" "$HOME/.claude/agents/$(basename "$agent")"
-done
-ln -sfn "$HOME/.agents/skills" "$HOME/.claude/skills"
+claude plugin marketplace add fmschulz/omics-skills
+claude plugin install omics-skills@omics-skills
 ```
 
-Render Codex agents instead of copying the Markdown files:
+Codex CLI:
 
 ```bash
-mkdir -p ~/.codex/agents
-for agent in "$PWD"/agents/*.md; do
-    name=$(basename "$agent" .md)
-    python3 scripts/render_codex_agent.py "$agent" "$HOME/.codex/agents/$name.toml"
-done
-ln -sfn "$HOME/.agents/skills" "$HOME/.codex/skills"
+codex plugin marketplace add fmschulz/omics-skills
+codex plugin add omics-skills@omics-skills
 ```
 
-## Verify the Installation
+To test a local checkout, pass `.` to `marketplace add` instead of the repository name.
 
-For a full checkout installation:
+The Claude Code plugin provides the agents and skills; the Codex plugin provides the skills. The router, the catalog, the routing hint hook and the Codex agents come only with a checkout install.
 
-```bash
-make status
-make validate
-make test
-```
+To update, refresh the marketplace and then the plugin. Claude Code: `claude plugin marketplace update omics-skills`, then `claude plugin update omics-skills@omics-skills` and a restart. Codex CLI: `codex plugin marketplace upgrade omics-skills`, then `codex plugin add omics-skills@omics-skills` again.
 
-Inspect the relevant files directly when only one runtime was installed:
+## Start an agent
 
-```bash
-ls -l ~/.claude/agents/omics-scientist.md
-python3 -c "import pathlib,tomllib; tomllib.loads(pathlib.Path.home().joinpath('.codex/agents/omics-scientist.toml').read_text())"
-ls -ld ~/.agents/skills/bio-annotation
-python3 ~/.agents/omics-skills/skill_index.py route "annotate these proteins"
-```
-
-## Use the Installation
-
-Start Claude Code with a named agent:
+Claude Code:
 
 ```bash
 claude --agent omics-scientist
 ```
 
-Start Codex normally, then ask it to delegate to `omics-scientist`, or mention a skill explicitly with `$bio-annotation`. Codex discovers custom TOML subagents in `~/.codex/agents/`.
+Codex CLI: start `codex`, then ask it to delegate to `omics-scientist`, or name a skill such as `$bio-annotation`.
 
-The router can be queried independently of either runtime:
+After a checkout install, the [router](routing.md) shows which agent and skills fit a task:
 
 ```bash
-python3 ~/.agents/omics-skills/skill_index.py route \
-  "assemble a metagenome and recover MAGs"
+python3 ~/.agents/omics-skills/skill_index.py route "annotate these proteins"
 ```
 
-## Optional Routing Hook
+## Routing hint hook
 
-Install a prompt hook that adds a router hint for both runtimes:
+The optional hook runs the router on each prompt and adds a short hint for Claude Code and Codex. When the router fails, the hook exits without blocking the prompt.
 
 ```bash
 make install-hook
 make hook-status
 ```
 
-Disable it for one shell session without uninstalling it:
+Turn it off for one shell with `export OMICS_SKILLS_AUTOROUTE=0`. Remove it with `make uninstall-hook`.
 
-```bash
-export OMICS_SKILLS_AUTOROUTE=0
-```
+## Check, update and remove
 
-Remove it with `make uninstall-hook`.
-
-## Python Dependencies
-
-Skill helpers declare their own environment through Pixi or PEP 723 metadata, so `uv run --script <helper>` resolves them on demand. Nothing needs a shared Python environment.
-
-## Update
-
-For linked installs, pull the checkout and rebuild generated artifacts:
-
-```bash
-git pull
-make install
-```
-
-For copied installs, the same command replaces only the selected omics-skills entries. Plugin installs are updated through their respective marketplace commands.
-
-## Select Components
-
-Pass explicit lists to install a subset:
-
-```bash
-make install-selected \
-  SELECTED_AGENT_FILES="omics-scientist.md" \
-  SELECTED_SKILL_DIRS="bio-logic bio-annotation"
-```
-
-Missing selected names fail the installation instead of reporting partial success. The generated catalog contains only the selected components.
+| Task | Command |
+|---|---|
+| Show what is installed | `make status` |
+| Check that every agent and skill is installed | `make validate` |
+| Update a checkout install | `git pull && make install` |
+| Apply an edited agent prompt to Codex | `make install-codex` |
+| Remove the pack (pack entries only) | `make uninstall`, `make uninstall-claude` or `make uninstall-codex` |
+| Delete agent backups and archived skill directories | `make clean` |
 
 ## Troubleshooting
 
-### Agent changes do not appear in Codex
-
-Codex agents are generated TOML files. Regenerate them:
-
-```bash
-make install-codex
-```
-
-### Skills disappeared after moving the checkout
-
-Linked installs retain the old absolute paths. Reinstall from the new location:
-
-```bash
-make install
-```
-
-### A skill is not selected
-
-Check the router result before changing prompts:
-
-```bash
-python3 scripts/skill_index.py route "<task>" --json
-make benchmark
-```
-
-Then inspect the skill description and the owning agent's `Task Recognition Patterns`.
-
-### A local plugin is not listed
-
-```bash
-codex plugin marketplace list
-codex plugin list --available --json
-claude plugin validate .
-```
-
-Confirm that the marketplace resolves to the checkout and that both plugin manifests use the same version.
-
-## Uninstall
-
-Use the Makefile for a complete non-interactive uninstall:
-
-```bash
-make uninstall
-```
-
-Remove one runtime only:
-
-```bash
-make uninstall-claude
-make uninstall-codex
-```
-
-Both uninstallers remove only known omics-skills entries. They preserve unrelated agents, skills, and backups in shared runtime directories.
+| Problem | Fix |
+|---|---|
+| Codex does not show an agent change | Run `make install-codex`. |
+| Skills are missing after the checkout moved | Run `make install` from the new location; links keep the old path. |
+| The router does not pick a skill | Run `python3 scripts/skill_index.py route "<task>" --json`, then check the skill description and the agent's `Task Recognition Patterns`. |
+| A local plugin is not listed | Run `codex plugin marketplace list`, `codex plugin list --available --json` and `claude plugin validate .`. |

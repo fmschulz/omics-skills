@@ -21,7 +21,7 @@ TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 # single-step query. 1 = direct prerequisites only.
 DEPENDENCY_MAX_DEPTH = 1
 
-# Routing score weights (see docs/SKILL_GRAPH.md). Lifted to named constants so
+# Routing score weights (see docs/routing.md). Lifted to named constants so
 # the scoring model lives in one place and can be tuned against the benchmark.
 SKILL_DESCRIPTION_WEIGHT = 2.0       # query overlap with a skill's name/description
 TASK_PATTERN_DIRECT_BONUS = 4.0      # query contains a skill's task-pattern phrase verbatim

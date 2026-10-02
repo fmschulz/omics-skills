@@ -1,37 +1,16 @@
 # Agents
 
-Agents are Markdown system prompts. They define the role, the skill lookup policy, and the workflow decision tree for a broad class of tasks. They do not execute anything by themselves; Claude Code or Codex loads the prompt, then uses the router and the referenced skills.
+An agent is a Markdown system prompt. It sets a role, the skills to use, and a workflow decision tree. Claude Code or Codex loads the prompt; the agent runs nothing by itself.
 
-## Agent Overview
-
-| Agent | Use it for | Typical first skills |
+| Agent | Use it for | Common first skills |
 |---|---|---|
-| `omics-scientist` | Project reproducibility, reads, assemblies, MAGs, annotations, taxonomy, phylogenomics, viral discovery, public database records, and final biological interpretation. | `bioinformatics-project`, `bio-reads-qc-mapping`, `bio-assembly-qc`, `tracking-taxonomy-updates`, `bio-annotation` |
-| `literature-expert` | Literature discovery, preprint scans, DOI lookup, citation metadata cleanup, impact checks, and structured claim/evidence extraction. | `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup`, `csag-extraction` |
-| `science-writer` | Manuscript drafting, section rewrites, rebuttals, proposal critique, methods documentation, multi-reviewer evaluation, and argument-graph extraction. | `scientific-writing`, `manuscript-review-council`, `proposal-review`, `bio-workflow-methods-docwriter`, `csag-extraction` |
-| `dataviz-artist` | Scientific data inspection, reproducible notebooks, exploratory plots, publication figures, and dashboards. | `exploratory-data-analysis`, `notebooks`, `beautiful-data-viz`, `plotly-dashboard-skill` |
+| [`omics-scientist`](https://github.com/fmschulz/omics-skills/blob/main/agents/omics-scientist.md) | Reads, assemblies, MAGs, annotation, taxonomy, phylogenomics, viral discovery, public database records, project setup and biological interpretation. | `bioinformatics-project`, `bio-reads-qc-mapping`, `bio-assembly-qc`, `tracking-taxonomy-updates`, `bio-annotation` |
+| [`literature-expert`](https://github.com/fmschulz/omics-skills/blob/main/agents/literature-expert.md) | Literature and preprint search, DOI and citation metadata, citation impact, and claim and evidence extraction. | `polars-dovmed`, `arxiv-search`, `biorxiv-search`, `crossref-lookup`, `csag-extraction` |
+| [`science-writer`](https://github.com/fmschulz/omics-skills/blob/main/agents/science-writer.md) | Manuscripts, revisions and response letters, proposal review, methods sections, multi-reviewer evaluation and argument graphs. | `scientific-writing`, `manuscript-review-council`, `proposal-review`, `bio-workflow-methods-docwriter`, `csag-extraction` |
+| [`dataviz-artist`](https://github.com/fmschulz/omics-skills/blob/main/agents/dataviz-artist.md) | Data inspection, notebooks, exploratory plots, figures and dashboards, greyscale first. | `exploratory-data-analysis`, `notebooks`, `beautiful-data-viz`, `plotly-dashboard-skill` |
 
-## Choosing an Agent
-
-Use the router first when the task is not obvious:
-
-```bash
-python3 scripts/skill_index.py route "<task>"
-```
-
-Constrain the router to one agent when you already know the domain:
+When the right agent is not obvious, ask the [router](routing.md). `--agent` limits the answer to one agent:
 
 ```bash
 python3 scripts/skill_index.py route --agent omics-scientist "annotate viral contigs and compare relatives"
 ```
-
-The output gives the selected agent, primary skills, supporting skills, suggested order, and file paths. Open the returned files before doing substantial work.
-
-## Source Files
-
-| Agent | Source |
-|---|---|
-| `omics-scientist` | [`agents/omics-scientist.md`](https://github.com/fmschulz/omics-skills/blob/main/agents/omics-scientist.md) |
-| `literature-expert` | [`agents/literature-expert.md`](https://github.com/fmschulz/omics-skills/blob/main/agents/literature-expert.md) |
-| `science-writer` | [`agents/science-writer.md`](https://github.com/fmschulz/omics-skills/blob/main/agents/science-writer.md) |
-| `dataviz-artist` | [`agents/dataviz-artist.md`](https://github.com/fmschulz/omics-skills/blob/main/agents/dataviz-artist.md) |

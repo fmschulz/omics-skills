@@ -1,57 +1,61 @@
-# Contributing to Omics Skills
+# Contributing
 
-This guide covers the contributor workflow. Structural conventions (skill layout, SKILL.md format, validator rules, router-parsed agent sections) live in [AGENTS.md](https://github.com/fmschulz/omics-skills/blob/main/AGENTS.md); validation commands live in [Development](development.md).
+[AGENTS.md](https://github.com/fmschulz/omics-skills/blob/main/AGENTS.md) holds the structural rules: skill layout, the `SKILL.md` format, validator limits and the agent sections the router parses. This page covers the workflow.
 
-## Setup
+## Set up
 
-You need Git, Python 3, [uv](https://docs.astral.sh/uv/), and Claude Code or the Codex CLI.
+Without push access, fork the repository, work on a branch of the fork, and open a pull request.
 
 ```bash
-git clone https://github.com/yourusername/omics-skills.git
+git clone https://github.com/<your-account>/omics-skills.git
 cd omics-skills
-git checkout -b feature/your-feature-name
-make install        # symlink install, so edits apply immediately
+make install
 ```
 
-## Adding a Skill
+The default linked install picks up edits at once. Codex agents are rendered files: run `make install-codex` after editing an agent prompt.
 
-1. Create `skills/your-skill-name/SKILL.md` following the format and naming rules in AGENTS.md. Put long tool notes, examples, and reference material in `docs/`, `examples/`, or `references/` subdirectories and link them from `SKILL.md` with relative paths.
-2. Register the skill in the owning agent file under `Mandatory Skill Usage`, the `Workflow Decision Tree`, and `Task Recognition Patterns`.
-3. Rebuild the catalog: `python3 scripts/skill_index.py build`. Commit the regenerated `catalog/catalog.json` — CI rejects a stale catalog.
-4. Add a routing case to `tests/routing_benchmark.yaml` when the skill should be discoverable from natural language, then refresh `docs/routing_baseline.json` only after reviewing the benchmark delta.
+## Add or change a skill
 
-## Modifying Skills or Agents
+1. Create or edit `skills/<name>/SKILL.md`. The frontmatter `name` must equal the directory name, and the description needs a trigger phrase (`Use when`, `Use for` or `Trigger when`). Put long tool notes, examples and references in `docs/`, `examples/` or `references/` inside the skill directory.
+2. Register a new skill in the owning agent file under `Mandatory Skill Usage`, `Workflow Decision Tree` and `Task Recognition Patterns`.
+3. Run `make build-catalog` and commit `catalog/catalog.json`. CI rejects a stale catalog.
+4. When the skill should be found from plain language, add a case to `tests/routing_benchmark.yaml` (see [Routing](routing.md#benchmark)).
 
-Edit the source file, keep the frontmatter and router-parsed sections intact, rebuild the catalog, and rerun the gates. Symlinked installs pick up edits immediately; Codex agent TOML must be re-rendered with `make install-codex` after agent prompt changes.
+Keep each skill to one purpose and compose workflows by referencing other skills. A supplementary tool guide starts with `Last verified`, `Tool version/release checked`, `Official docs/manual` and `Release/source` lines. A version in a skill is the version its commands were checked against, not an install pin: install commands add packages without a version, and projects lock what they install. To refresh checked versions, run `python3 scripts/check_tool_versions.py`, re-check the commands of each guide it flags, and update the guide. Examples use `you@example.org`. A real email address in a tracked file fails the tests.
 
-## Testing Your Changes
+## Run the checks
 
-Run the same gates CI runs:
+CI runs these on every push to `main`:
 
 ```bash
-python3 scripts/validate-skills.py
-python3 scripts/validate-supplementary-docs.py
-python3 scripts/skill_index.py build --repo . --out catalog && git diff --exit-code -- catalog/
-uv run --no-project --with pytest --with requests pytest -q
-make benchmark
+make test
+make build-catalog && git diff --exit-code -- catalog/
+find scripts skills validation -name '*.sh' -print0 | xargs -0 -r -n 1 bash -n
 uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict
 ```
 
-For installer-affecting changes, also run `make install`, `make status`, and `make validate`, and exercise the changed behavior in a live Claude Code or Codex session.
+`make test` runs the skill, supplementary-doc and citation validators, the unit tests and the routing benchmark. The skill validator also enforces 500 lines per `SKILL.md`, 400 characters per description, 6,500 characters across all descriptions, and working local links.
 
-## Submitting Changes
+When a plugin manifest changes, also run `claude plugin validate .`, `codex plugin marketplace add .` and `codex plugin list --available --json`. For installer changes, run `make install`, `make status` and `make validate`, and try the change in a Claude Code or Codex session.
 
-- Confirm the gates above pass and documentation (`README.md`, `docs/`) reflects any behavior change.
-- Commit with a conventional message, e.g. `feat(skills): add your-skill-name`.
-- Push the branch and open a pull request describing the change, why it is needed, and how it was tested.
+## Documentation site
 
-## Style
+MkDocs Material builds the site from `docs/` and leaves out `docs/handoffs/`. Preview it with:
 
-- Imperative, concise Markdown; fenced code blocks with language tags; tables for structured data.
-- Skill names: kebab-case with a category prefix (`bio-reads-qc-mapping`), descriptive, no abbreviations.
-- Skills stay single-purpose with explicit inputs, outputs, and quality gates; compose workflows by referencing other skills rather than widening one skill.
-- Record exact tool versions, parameters, and URLs whenever reproducibility depends on them.
+```bash
+uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs serve
+```
 
-## Getting Help
+A push to `main` that changes `docs/`, `mkdocs.yml` or `.github/workflows/pages.yml` builds the site with `--strict` and deploys it to <https://fmschulz.github.io/omics-skills/>. Deployment needs the repository's Pages source set to **GitHub Actions** (Settings, Pages), a one-time setting.
 
-Open a GitHub issue (include `make status` output and steps to reproduce) or use GitHub Discussions.
+## Release
+
+Release notes live in GitHub Releases. The repository has no `CHANGELOG.md`.
+
+1. Set the same version in `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`, and write `.github/releases/vX.Y.Z.md`.
+2. Push to `main` and wait for CI and the docs build to pass.
+3. Run `python3 scripts/check_release_sync.py --tag vX.Y.Z --main-ref origin/main`.
+4. Create an annotated tag on that `main` commit and push it. `.github/workflows/release.yml` checks the tag, both manifests, the release notes and `origin/main`, then publishes the release.
+5. Check the release page, the source archives, the version of an installed plugin, and the docs site.
+
+Questions and bug reports go to GitHub issues; include the `make status` output and the steps to reproduce.
