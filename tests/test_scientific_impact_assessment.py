@@ -6,13 +6,13 @@ import os
 import tempfile
 import unittest
 import unittest.mock
+import urllib.error
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SKILL_ROOT = REPO_ROOT / "skills" / "scientific-impact-assessment"
+SKILL_ROOT = REPO_ROOT / "skills" / "crossref-lookup"
 MODULE_PATH = SKILL_ROOT / "scripts" / "measure_impact.py"
 
 spec = importlib.util.spec_from_file_location("scientific_impact_assessment", MODULE_PATH)
@@ -51,11 +51,12 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
             doi=None,
             openalex_id="W1234567890",
             mailto=None,
-            altmetric_api_key="test-key",
+            altmetric=True,
             journal_metrics=str(SKILL_ROOT / "references" / "journal_metrics_2024.tsv"),
         )
 
         with (
+            patch.dict(os.environ, {"ALTMETRIC_API_KEY": "test-key"}),
             patch.object(
                 scientific_impact_assessment,
                 "fetch_openalex_work",
@@ -75,6 +76,129 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
             min_interval=unittest.mock.ANY,
         )
         self.assertEqual(report["openalex"]["doi"], "10.1038/s41586-024-00000-0")
+
+    def test_altmetric_key_and_mailto_are_not_command_line_defaults(self) -> None:
+        environ = {"ALTMETRIC_API_KEY": "env-key", "OPENALEX_MAILTO": "env@example.org"}
+        with patch.dict(os.environ, environ):
+            parser = scientific_impact_assessment.build_parser()
+            args = parser.parse_args(["--doi", "10.1038/nature12373"])
+        self.assertIsNone(args.mailto)
+        self.assertFalse(hasattr(args, "altmetric_api_key"))
+        self.assertNotIn("--altmetric-api-key", parser.format_help())
+
+        flagged = parser.parse_args(
+            ["--doi", "10.1038/nature12373", "--mailto", "flag@example.org"]
+        )
+        self.assertEqual(flagged.mailto, "flag@example.org")
+
+    def live_args(self, **overrides: object) -> SimpleNamespace:
+        values = {
+            "doi": "10.1038/s41586-024-00000-0",
+            "openalex_id": None,
+            "mailto": None,
+            "altmetric": False,
+            "journal_metrics": str(
+                SKILL_ROOT / "references" / "journal_metrics_2024.tsv"
+            ),
+        }
+        return SimpleNamespace(**(values | overrides))
+
+    def openalex_payload(self) -> dict:
+        return json.loads(
+            (SKILL_ROOT / "fixtures" / "openalex_work.json").read_text(encoding="utf-8")
+        )
+
+    def test_an_ambient_altmetric_key_does_not_trigger_a_request(self) -> None:
+        requested: list[str] = []
+
+        def record(request: object, timeout: float = 0) -> None:
+            requested.append(request.full_url)
+            raise urllib.error.URLError("offline")
+
+        with (
+            patch.dict(os.environ, {"ALTMETRIC_API_KEY": "ambient-key"}),
+            patch.object(
+                scientific_impact_assessment,
+                "fetch_openalex_work",
+                return_value=self.openalex_payload(),
+            ),
+            patch("urllib.request.urlopen", side_effect=record),
+        ):
+            report = scientific_impact_assessment.build_live_report(self.live_args())
+
+        self.assertEqual(requested, [])
+        self.assertEqual(report["altmetric"]["reason"], "not_requested")
+
+    def test_the_altmetric_flag_sends_the_environment_key_and_never_prints_it(
+        self,
+    ) -> None:
+        requested: list[str] = []
+
+        def record(request: object, timeout: float = 0) -> None:
+            requested.append(request.full_url)
+            raise urllib.error.HTTPError(request.full_url, 500, "boom", {}, None)
+
+        with (
+            patch.dict(os.environ, {"ALTMETRIC_API_KEY": "secret-key"}),
+            patch.object(
+                scientific_impact_assessment,
+                "fetch_openalex_work",
+                return_value=self.openalex_payload(),
+            ),
+            patch("urllib.request.urlopen", side_effect=record),
+            patch("time.sleep"),
+        ):
+            report = scientific_impact_assessment.build_live_report(
+                self.live_args(altmetric=True)
+            )
+
+        self.assertEqual(len(requested), 1)
+        self.assertTrue(requested[0].startswith("https://api.altmetric.com/v1/doi/"))
+        self.assertIn("key=secret-key", requested[0])
+        shown = json.dumps(report) + scientific_impact_assessment.format_text(report)
+        self.assertNotIn("secret-key", shown)
+        self.assertEqual(report["altmetric"]["reason"], "http_500")
+
+    def test_a_failure_message_never_carries_the_altmetric_key(self) -> None:
+        def explode(request: object, timeout: float = 0) -> None:
+            raise OSError(f"connection to {request.full_url} reset")
+
+        with (
+            patch.dict(os.environ, {"ALTMETRIC_API_KEY": "secret-key"}),
+            patch("urllib.request.urlopen", side_effect=explode),
+            patch("time.sleep"),
+        ):
+            summary = scientific_impact_assessment.fetch_altmetric_summary(
+                "10.1038/nature12373", "secret-key", min_interval=0
+            )
+
+        self.assertEqual(summary["status"], "unavailable")
+        self.assertNotIn("secret-key", json.dumps(summary))
+
+    def test_the_altmetric_flag_without_a_key_makes_no_request(self) -> None:
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch.object(
+                scientific_impact_assessment,
+                "fetch_openalex_work",
+                return_value=self.openalex_payload(),
+            ),
+            patch("urllib.request.urlopen") as urlopen,
+        ):
+            report = scientific_impact_assessment.build_live_report(
+                self.live_args(altmetric=True)
+            )
+
+        urlopen.assert_not_called()
+        self.assertEqual(report["altmetric"]["reason"], "no_api_key")
+
+    def test_the_command_line_takes_an_altmetric_flag_and_no_key(self) -> None:
+        parser = scientific_impact_assessment.build_parser()
+        self.assertFalse(parser.parse_args(["--doi", "10.1038/nature12373"]).altmetric)
+        self.assertTrue(
+            parser.parse_args(["--doi", "10.1038/nature12373", "--altmetric"]).altmetric
+        )
+        self.assertIn("ALTMETRIC_API_KEY", parser.format_help())
 
     def test_openalex_cache_reuses_fresh_and_refreshes_expired_response(self) -> None:
         payload = {"id": "https://openalex.org/W1"}

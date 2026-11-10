@@ -127,7 +127,7 @@ VeryFastTree -fastest -disk-computing -disk-computing-path /scratch/$USER/vft \
 
 ## Integration with Downstream Tools
 
-Post-process with ETE 4 ([ete-toolkit.md](ete-toolkit.md)) or inspect interactively with `ete4 explore -t tree.nwk`.
+Post-process with ETE 4 (see "Exploratory tree" in [README.md](README.md)) or inspect interactively with `ete4 explore -t tree.nwk`.
 
 ## Citation
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Binning QC"
+  short_description: "Bin contigs and score MAG quality"
+  default_prompt: "Read the omics-pipeline skill, then bin the assembly with QuickBin and build the bin QC tables."
+policy:
+  allow_implicit_invocation: false

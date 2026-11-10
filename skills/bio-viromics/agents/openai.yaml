@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bio Viromics"
+  short_description: "Detect, QC, and classify viral contigs"
+  default_prompt: "Use the bio-viromics stage to detect, QC, and classify viral contigs in these assemblies."
+policy:
+  allow_implicit_invocation: false

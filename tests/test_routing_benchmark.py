@@ -29,13 +29,15 @@ class RoutingBenchmarkTests(unittest.TestCase):
             "task": "quality-control Illumina short reads with fastp and trim adapters",
             "platform": "codex",
             "expected_agent": "omics-scientist",
-            "expected_primary_skills": ["bio-reads-qc-mapping"],
-            "expected_primary_exact": ["bio-reads-qc-mapping"],
+            "expected_primary_skills": ["omics-pipeline", "bio-reads-qc-mapping"],
+            "expected_primary_exact": ["omics-pipeline", "bio-reads-qc-mapping"],
         }
         result = routing_benchmark.evaluate_row(sample)
         self.assertTrue(result.passed, f"unexpected failures: {result.failures}")
         self.assertEqual(result.actual["agent"], "omics-scientist")
-        self.assertIn("bio-reads-qc-mapping", result.actual["primary_skills"])
+        self.assertEqual(
+            result.actual["primary_skills"], ["omics-pipeline", "bio-reads-qc-mapping"]
+        )
 
     def test_evaluate_row_flags_exact_primary_mismatch(self) -> None:
         sample = {

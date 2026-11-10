@@ -1,0 +1,6 @@
+interface:
+  display_name: "Omics Pipeline"
+  short_description: "Route genome, metagenome and virome analysis to its pipeline stage"
+  default_prompt: "Pick the pipeline stage skill for this omics task, read it, and follow the shared pipeline rules."
+policy:
+  allow_implicit_invocation: true

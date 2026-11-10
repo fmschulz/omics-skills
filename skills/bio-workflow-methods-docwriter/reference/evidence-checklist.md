@@ -1,6 +1,6 @@
 # Evidence checklist (what to collect)
 
-On an HPC login node, collect evidence only. Rerun or capture workflows through the scheduler (`sbatch`) with explicit thread limits. On Dori, submit with `-M perceus-00 -A grp-org-sc-mgs -p dori --qos=jgi_normal` and never to Lawrencium.
+On an HPC login node, collect evidence only. Rerun or capture workflows through the scheduler (`sbatch`) with explicit thread limits. Accounts, queues and login-node limits come from the `hpc-slurm` skill.
 
 ## Minimum viable evidence (any workflow system)
 - Pipeline repository URL + **commit SHA** (or release tag)
@@ -57,3 +57,8 @@ How to capture next time (example):
 cwltool --provenance provenance_ro/ workflow.cwl inputs.yml
 ```
 
+
+## Standards to align with
+- Provenance and packaging: RO-Crate (JSON-LD run packaging), W3C PROV (entities, activities, agents), CWLProv (CWL run provenance as a Research Object; for Nextflow the nf-prov plugin emits comparable provenance), BioCompute Objects (IEEE 2791-2020) for HTS workflows.
+- Reporting: state code and data availability and dataset accessions; report software versions and key parameters, or pin them through containers.
+- Documentation: Diátaxis (tutorial, how-to, reference, explanation); version the docs with the pipeline and update them with each change.

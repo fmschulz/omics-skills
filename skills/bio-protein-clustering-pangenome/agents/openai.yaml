@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bio Protein Clustering Pangenome"
+  short_description: "Cluster proteins and build pangenome matrices"
+  default_prompt: "Use the bio-protein-clustering-pangenome stage to cluster proteins and build pangenome matrices."
+policy:
+  allow_implicit_invocation: false

@@ -1,4 +1,4 @@
 interface:
   display_name: "Crossref Lookup"
-  short_description: "Validate DOIs and search Crossref metadata"
-  default_prompt: "Look up a DOI or paper title with Crossref, return validated citation metadata, and flag any ambiguous matches."
+  short_description: "Validate DOIs, search Crossref metadata, report citation counts"
+  default_prompt: "Look up a DOI or paper title with Crossref, return validated citation metadata, flag any ambiguous matches, and report OpenAlex citation counts when asked."

@@ -24,7 +24,7 @@ One card per `--service` value. Paths are relative to the base URL. All base URL
 - `esearch.fcgi` with `db`, `term`, `retmode=json`: `--record-path esearchresult.idlist` (inferred)
 - `esummary.fcgi` with `db`, `id`, `retmode=json`: `summary`; the records sit under `result.<uid>`
 - `efetch.fcgi` with `db`, `id`, `rettype`: usually XML or text, so add `--format text`
-- Rate limit: 3 requests per second without an API key, 10 with one. NCBI asks for `tool` and `email` on every request. The script reads NCBI_API_KEY, NCBI_EMAIL, and NCBI_TOOL from the environment.
+- Rate limit: 3 requests per second without an API key, 10 with one. NCBI asks for `tool` and `email` on every request. The script reads NCBI_API_KEY and NCBI_TOOL from the environment; it sends `email` only when you pass `--email`.
 - Example: `lookup --service ncbi-entrez --path esearch.fcgi --param db=taxonomy --param term=Escherichia --param retmode=json --max-items 3`
 
 ## ncbi-datasets

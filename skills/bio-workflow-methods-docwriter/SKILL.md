@@ -17,7 +17,7 @@ Write Methods text and run documentation from real workflow artifacts. Every com
 3. Fill the remaining fields from evidence only. While drafting, mark a missing value `NOT CAPTURED`; the final manifest must not contain it. If the value cannot be recovered, record the gap under `limitations` and do not call the manifest reproducible.
 4. Validate the manifest against [schemas/run-manifest.schema.json](schemas/run-manifest.schema.json) with `validate_run_manifest.py`.
 5. Draft `METHODS.md` from [templates/methods_report.md](templates/methods_report.md): workflow summary at the top, then inputs, exact rerun command, environment, steps as executed, QC, outputs, and limitations.
-6. For manuscript Methods prose, hand the manifest to `/scientific-writing`. Keep script names, internal flags, and runtime bookkeeping in Methods or the supplement, not in Results.
+6. For manuscript Methods prose, hand the manifest to `academic-writing` with `stop-slop`. Keep script names, internal flags, and runtime bookkeeping in Methods or the supplement, not in Results.
 
 Resolve the installed skill once:
 
@@ -32,9 +32,9 @@ Each script declares its dependencies inline (PEP 723), so `uv run --script` nee
 | Task | Action |
 |------|--------|
 | Evidence checklist | [reference/evidence-checklist.md](reference/evidence-checklist.md) |
-| Standards to align with | [reference/standards.md](reference/standards.md) |
+| Standards to align with | [reference/evidence-checklist.md](reference/evidence-checklist.md#standards-to-align-with) |
 | Manifest schema | [schemas/run-manifest.schema.json](schemas/run-manifest.schema.json) (LinkML source: [schemas/workflow-run-schema.yaml](schemas/workflow-run-schema.yaml)) |
-| Drafting templates | [METHODS.md template](templates/methods_report.md), [paper-summary YAML](templates/paper_summary.yaml) |
+| Drafting templates | [METHODS.md template](templates/methods_report.md) |
 | Extract a Nextflow draft | `uv run --script "$METHODS_SKILL/scripts/extract_nextflow_run.py" --help` |
 | Extract a Snakemake draft | `uv run --script "$METHODS_SKILL/scripts/extract_snakemake_run.py" --help` |
 | Extract a CWL draft | `uv run --script "$METHODS_SKILL/scripts/extract_cwl_run.py" --help` |
@@ -52,7 +52,6 @@ Each script declares its dependencies inline (PEP 723), so `uv run --script` nee
 - `METHODS.md` (agent-authored; workflow summary first, then detailed steps)
 - `run_manifest.yaml` (machine-readable run manifest)
 - Artifact contract: [schemas/run-manifest.schema.json](schemas/run-manifest.schema.json)
-- Paper-summary schema: [schemas/bio-paper-schema.yaml](schemas/bio-paper-schema.yaml)
 
 ## Quality Gates
 

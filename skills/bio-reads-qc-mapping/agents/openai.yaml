@@ -1,0 +1,6 @@
+interface:
+  display_name: "Reads QC and Mapping"
+  short_description: "QC, trim and map short or long reads"
+  default_prompt: "Read the omics-pipeline skill, then validate the sample sheet and run the reads QC and mapping driver."
+policy:
+  allow_implicit_invocation: false

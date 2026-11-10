@@ -31,6 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 DISABLED = {"0", "false", "no", "off"}
+PIPELINE_ROUTER = "omics-pipeline"
 
 
 def load_skill_index():
@@ -47,25 +48,42 @@ def format_hint(result: dict) -> str:
     primary = result.get("primary_skills") or []
     supporting = result.get("supporting_skills") or []
     ordered = result.get("ordered_skills") or []
+    hidden = result.get("hidden_skills") or []
     skill_paths = result.get("skill_paths") or {}
     if not primary:
         # No confident skill match. Suppress the hint entirely rather than
         # nudging the model toward whichever agent won by alphabetical
         # tiebreak on a zero-signal query.
         return ""
+
+    def name_of(skill: str) -> str:
+        # Hidden stage skills are not invocable by the model: no slash.
+        return f"`{skill}`" if skill in hidden else f"`/{skill}`"
+
     lines = ["## Routing hint (omics-skills)"]
     if agent:
         lines.append(f"- Agent: `{agent}`")
-    if primary:
-        lines.append(f"- Primary skills: {', '.join(f'`/{s}`' for s in primary)}")
-    if supporting:
-        lines.append(f"- Supporting skills: {', '.join(f'`/{s}`' for s in supporting)}")
+    visible_primary = [s for s in primary if s not in hidden]
+    if visible_primary:
+        lines.append(
+            f"- Primary skills: {', '.join(name_of(s) for s in visible_primary)}"
+        )
+    if hidden:
+        lines.append(
+            "- Stage skills (not in the skill list; read the file after "
+            f"`/{PIPELINE_ROUTER}`): {', '.join(name_of(s) for s in hidden)}"
+        )
+    visible_supporting = [s for s in supporting if s not in hidden]
+    if visible_supporting:
+        lines.append(
+            f"- Supporting skills: {', '.join(name_of(s) for s in visible_supporting)}"
+        )
     if ordered and ordered != primary:
-        lines.append(f"- Suggested order: {' → '.join(f'`/{s}`' for s in ordered)}")
+        lines.append(f"- Suggested order: {' → '.join(name_of(s) for s in ordered)}")
     if skill_paths:
         lines.append("- Skill files:")
         for name, path in skill_paths.items():
-            lines.append(f"  - `/{name}` → `{path}`")
+            lines.append(f"  - {name_of(name)} → `{path}`")
     lines.append(
         "- Override with `OMICS_SKILLS_AUTOROUTE=0` or ignore if a specialist "
         "skill is not called out above."

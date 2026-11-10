@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bio Stats ML Reporting"
+  short_description: "Run statistics or ML on results and validate predictions"
+  default_prompt: "Use the bio-stats-ml-reporting stage to run statistics or machine learning and validate the predictions."
+policy:
+  allow_implicit_invocation: false

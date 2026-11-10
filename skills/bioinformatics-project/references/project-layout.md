@@ -23,7 +23,7 @@ Place the whole project under one root with fixed subdirectories:
 
 ```
 metagenome_mags_project/
-├── tasks/     # METHODS.md (committed); todo, lessons, hypotheses (local)
+├── tasks/     # METHODS.md (committed); todo, hypotheses (local)
 ├── data/      # fixed datasets + metadata; treat as read-only inputs
 ├── results/   # computational experiments (regenerable outputs)
 ├── doc/       # manuscripts, notes, changelog — one subdir per manuscript
@@ -51,7 +51,6 @@ metagenome_mags_project/
 ├── tasks/
 │   ├── todo.md                     # active outcomes and their proof
 │   ├── METHODS.md                  # exact commands, versions, parameters, seeds
-│   ├── lessons.md                  # corrections and prevention rules
 │   └── hypotheses.md               # active and retired exploratory hypotheses
 │
 ├── data/

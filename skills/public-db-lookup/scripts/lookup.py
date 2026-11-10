@@ -32,7 +32,12 @@ BASE_URLS = {
     "ena": "https://www.ebi.ac.uk/ena/portal/api",
 }
 NCBI_SERVICES = {"ncbi-entrez", "ncbi-datasets"}
-NCBI_ENV_PARAMS = (("api_key", "NCBI_API_KEY"), ("email", "NCBI_EMAIL"), ("tool", "NCBI_TOOL"))
+# The key and the tool name come from the environment. A contact address never
+# does: it is sent only when the user passes --email.
+NCBI_ENV_PARAMS = (("api_key", "NCBI_API_KEY"), ("tool", "NCBI_TOOL"))
+# Values of these request parameters are removed from every printed URL, error
+# and response body.
+HIDDEN_PARAMS = frozenset({"api_key", "email"})
 # Never accept a credential from the command line or an embedded query string;
 # it would be echoed back in the emitted url and land in shell history.
 CREDENTIAL_PARAMS = frozenset({"api_key", "apikey", "key", "token", "access_token", "password", "secret"})
@@ -57,6 +62,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-depth", type=int, default=3)
     parser.add_argument("--format", choices=("auto", "json", "text"), default="auto")
     parser.add_argument("--save-raw", type=Path, help="write the full response body to this path")
+    parser.add_argument(
+        "--email",
+        help=(
+            "Contact address for NCBI (NCBI services only). Pass it only when the user "
+            "gave an address for this purpose; no environment variable supplies it."
+        ),
+    )
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument(
         "--state-dir",
@@ -93,13 +105,22 @@ def build_request(args: argparse.Namespace, env: dict[str, str]) -> tuple[str, l
             raise ValueError(f"--param expects KEY=VALUE, got {item!r}")
         params.append((key, value))
     for key, _value in params:
-        if key.lower().replace("-", "_") in CREDENTIAL_PARAMS:
+        name = key.lower().replace("-", "_")
+        if name in CREDENTIAL_PARAMS:
             raise ValueError(f"pass {key!r} through the environment, not the URL or --param")
+        if name == "email":
+            raise ValueError(
+                "pass a contact address with --email, not in the URL or --param"
+            )
     if args.service in NCBI_SERVICES:
         supplied = {key for key, _ in params}
         for key, env_name in NCBI_ENV_PARAMS:
             if env.get(env_name) and key not in supplied:
                 params.append((key, env[env_name]))
+        if args.email:
+            params.append(("email", args.email))
+    elif args.email:
+        raise ValueError("--email applies to the NCBI services only")
     headers = {"User-Agent": USER_AGENT}
     if args.format != "text":
         headers["Accept"] = "application/json"
@@ -119,7 +140,8 @@ def pace_across_processes(service: str, min_interval: float, state_dir: Path) ->
     This script performs one lookup per run, so an in-process pacer would only
     space retries while an agent calling it in a loop still hammers the service.
     The last-request timestamp therefore lives on disk, under a lock, the same
-    way scientific-impact-assessment paces OpenAlex."""
+    way crossref-lookup's measure_impact.py paces OpenAlex.
+    """
     if min_interval <= 0:
         return
     try:
@@ -206,21 +228,27 @@ def find_records(payload: Any, record_path: str | None) -> tuple[str | None, lis
     return None, None, []
 
 
-def redact(text: str, secret: str | None) -> str:
-    return text.replace(secret, "REDACTED") if secret else text
+def redact(text: str, secrets: list[str]) -> str:
+    """Replace every secret value in ``text``."""
+    for secret in secrets:
+        text = text.replace(secret, "REDACTED")
+    return text
 
 
-def redact_payload(value: Any, secret: str | None) -> Any:
+def redact_payload(value: Any, secrets: list[str]) -> Any:  # noqa: ANN401  # decoded JSON of any shape
     """Redact decoded strings. A raw-text pass misses an escaped secret such as
     "\u0053YNTHETIC", which json.loads turns back into the real value."""
-    if not secret:
+    if not secrets:
         return value
     if isinstance(value, str):
-        return value.replace(secret, "REDACTED")
+        return redact(value, secrets)
     if isinstance(value, dict):
-        return {redact_payload(k, secret): redact_payload(v, secret) for k, v in value.items()}
+        return {
+            redact_payload(k, secrets): redact_payload(v, secrets)
+            for k, v in value.items()
+        }
     if isinstance(value, list):
-        return [redact_payload(item, secret) for item in value]
+        return [redact_payload(item, secrets) for item in value]
     return value
 
 
@@ -242,8 +270,8 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
         url, params, headers = build_request(args, env)
     except ValueError as error:
         return fail(args.service, "invalid_input", str(error))
-    secret = next((value for key, value in params if key == "api_key"), None)
-    shown = [(key, value) for key, value in params if key != "api_key"]
+    secrets = [value for key, value in params if key in HIDDEN_PARAMS and value]
+    shown = [(key, value) for key, value in params if key not in HIDDEN_PARAMS]
     display_url = str(requests.Request("GET", url, params=shown).prepare().url)
 
     try:
@@ -253,10 +281,10 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
             pace=lambda: pace_across_processes(args.service, min_interval, args.state_dir),
         )
     except requests.RequestException as error:
-        return fail(args.service, "network_error", redact(str(error), secret))
+        return fail(args.service, "network_error", redact(str(error), secrets))
     # Redact before anything is parsed or printed: a service that echoes the
     # request (NCBI error bodies do) would otherwise leak the key on success too.
-    text = redact(response.text, secret)
+    text = redact(response.text, secrets)
     if not 200 <= response.status_code < 300:
         head = text[:200]
         return fail(args.service, "http_error", f"HTTP {response.status_code} from {display_url}: {head}")
@@ -287,7 +315,7 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
         except ValueError as error:
             return fail(args.service, "invalid_response", f"response is not valid JSON: {error}")
         # Redact again after decoding: "\u0053YNTHETIC" survives a raw-text pass.
-        payload = redact_payload(payload, secret)
+        payload = redact_payload(payload, secrets)
         # Several services report failures as HTTP 200 with an error envelope.
         # Reporting ok:true for those turned a rejected query into an empty
         # but confident answer.

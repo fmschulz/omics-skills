@@ -11,7 +11,7 @@
   </a>
 </p>
 
-A skill and agent pack for omics data analysis, literature discovery, scientific writing, and data visualization. Works with Claude Code and the Codex CLI.
+A skill and agent pack for omics pipelines, literature discovery, project evaluation, and data visualization. Works with Claude Code and the Codex CLI.
 
 ## Documentation
 
@@ -20,19 +20,21 @@ Release notes are published on the [GitHub Releases page](https://github.com/fms
 
 ## Scope
 
-Four agent personas — `omics-scientist`, `literature-expert`, `science-writer`, `dataviz-artist` — compose a set of small, single-purpose skills (`SKILL.md` files) for tasks ranging from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, interdomain HGT, statistics, manuscript drafting, and figure generation.
+Three agent personas — `omics-scientist`, `literature-expert`, `science-writer` — compose a set of small, single-purpose skills (`SKILL.md` files). The omics pipeline runs from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, interdomain HGT and statistics. Literature search, proposal and AI-output evaluation, notebooks and figures have their own skills.
+
+The pipeline stage skills are hidden from the skill list, so their descriptions cost no prompt space. One model-visible skill, `omics-pipeline`, names the stage to read and holds the rules every stage shares. Manuscript prose (`academic-writing` with `stop-slop`), manuscript review (`nelli-paper-review`), PDF conversion (`pdf-to-md`) and claim-graph extraction (`csag-extraction`) come from other repositories.
 
 The canonical agent sources are Markdown prompts. Installation keeps those files for Claude Code and renders native TOML agent definitions for Codex. Skills are Markdown directories with defined input/output contracts. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a task.
 
 ## How Analyses Are Run
 
-Every skill can be used on its own. The bio-* skills also share a few habits that make exploratory analyses easier to audit and reproduce:
+The pipeline stages share a few habits, stated once in `skills/omics-pipeline/SKILL.md`, that make exploratory analyses easier to audit and reproduce:
 
 - **Hypothesis register.** Exploratory work starts with at least five working hypotheses (biological mechanism, technical artifact, null, sampling or batch effect, database artifact). Each is revised as supported, weakened, ruled out, or unresolved, with the evidence that changed its status.
 - **Reflection after each step.** After each major result or QC gate, the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
 - **Literature-derived analysis plan.** Before deciding what is "interesting" the agent reads the literature for the inferred group and summarises which markers, comparison sets, plots, and outliers are diagnostic.
 - **Comparative axes against close relatives.** When relatives are available, the query is run through five axes — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, and non-coding RNA census — each producing a side-by-side comparison file.
-- **Literature search with fallbacks.** When users provide API access or local corpora, `polars-dovmed` queries PMC and bioRxiv through the hosted API or a local parquet `dovmed scan`, then falls back to targeted `WebFetch` / `WebSearch` so endpoint outages do not silently skip the literature step.
+- **Literature search.** `polars-dovmed` queries PMC and bioRxiv through the connector, the hosted API, or a local parquet `dovmed scan`. An outage is reported, never skipped silently.
 
 ## Tooling baseline
 
@@ -97,7 +99,7 @@ claude --agent omics-scientist
 codex
 ```
 
-In Codex, ask the primary agent to delegate to `omics-scientist`, or invoke a skill explicitly with `$bio-annotation`. The installed TOML definitions under `~/.codex/agents/` are available to Codex as custom subagents.
+In Codex, ask the primary agent to delegate to `omics-scientist`, or invoke a skill explicitly with `$omics-pipeline`. The installed TOML definitions under `~/.codex/agents/` are available to Codex as custom subagents.
 
 Query the router directly:
 
@@ -106,16 +108,15 @@ python3 scripts/skill_index.py route \
   "assemble a metagenome and recover MAGs"
 ```
 
-Skills are also invocable individually as `/<skill-name>` in Claude Code or `$<skill-name>` in Codex. Agent files list the skills each agent exposes and how they compose.
+Skills are also invocable individually as `/<skill-name>` in Claude Code or `$<skill-name>` in Codex, hidden stages included. Agent files list the skills each agent exposes and how they compose.
 
 ## Agents
 
 | Agent | Focus | Skills |
 |---|---|---:|
-| `omics-scientist` | Project reproducibility, sequencing reads, assembly, binning, annotation, phylogenomics, interdomain HGT, MAG recovery, public database records | 21 |
-| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, and citation impact | 8 |
-| `science-writer` | Manuscript drafting, multi-reviewer critique, proposal review, and AI-output evaluation | 8 |
-| `dataviz-artist` | marimo and Jupyter notebooks, scientific data inspection, matplotlib/seaborn figures, and Plotly Dash dashboards | 4 |
+| `omics-scientist` | Pipeline stages from reads to reports, project reproducibility, public database records, notebooks and figures | 23 |
+| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, and citation impact | 4 |
+| `science-writer` | Proposal review, AI-output evaluation, methods sections, and evidence checks | 4 |
 
 Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a specific agent routes a given task.
 
@@ -160,7 +161,7 @@ python3 scripts/skill_index.py build            # rebuild catalog artifacts
 Adding or modifying a skill:
 
 1. Create or edit `skills/<name>/SKILL.md`. The YAML `name` field must match the directory name.
-2. Add the skill to the relevant agent's `Mandatory Skill Usage` and `Task Recognition Patterns`.
+2. Add the skill as a row in the `## Skills` table of the relevant agent.
 3. Rebuild the catalog and run the test suite.
 4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is non-trivially discoverable by the router.
 

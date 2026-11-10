@@ -66,24 +66,12 @@ class SkillIndexTests(unittest.TestCase):
                     name: omics
                     description: omics agent
                     ---
-                    ## Mandatory Skill Usage
+                    ## Skills
 
-                    ### Reads
-                    - `/read-qc` - quality control
-                    - `/assembly` - assembly
-
-                    ## Workflow Decision Tree
-
-                    ```
-                    START
-                      └─> /read-qc
-                          └─> /assembly
-                    ```
-
-                    ## Task Recognition Patterns
-
-                    - **"reads", "qc"** → `/read-qc`
-                    - **"assembly", "contigs"** → `/assembly`
+                    | Skill | Use for | Phrases | After |
+                    | --- | --- | --- | --- |
+                    | `read-qc` | Reads | "reads", "qc" | |
+                    | `assembly` | Assembly | "assembly", "contigs" | `read-qc` |
                     """
                 ),
                 encoding="utf-8",
@@ -95,27 +83,82 @@ class SkillIndexTests(unittest.TestCase):
                 for edge in payload["catalog"]["edges"]
                 if edge["source_type"] == "skill" and edge["target_type"] == "skill"
             }
+            self.assertIn(("read-qc", "assembly", "workflow_next"), relationships)
             self.assertIn(("assembly", "read-qc", "depend_on"), relationships)
             self.assertIn(("assembly", "read-qc", "compose_with"), relationships)
+            agent_edges = {
+                (edge["source"], edge["target"], edge["type"])
+                for edge in payload["catalog"]["edges"]
+                if edge["source_type"] == "agent"
+            }
+            self.assertEqual(
+                agent_edges,
+                {("omics", "read-qc", "uses"), ("omics", "assembly", "uses")},
+            )
+            agent = payload["catalog"]["agents"][0]
+            self.assertEqual(
+                agent["skill_sections"],
+                {"Assembly": ["assembly"], "Reads": ["read-qc"]},
+            )
+            self.assertEqual(
+                agent["task_patterns"],
+                [
+                    {"skill_name": "read-qc", "phrases": ["reads", "qc"]},
+                    {"skill_name": "assembly", "phrases": ["assembly", "contigs"]},
+                ],
+            )
 
-    def test_parse_workflow_edges_skips_sibling_branches(self) -> None:
+    def test_parse_agent_table_reads_label_phrases_and_prerequisites(self) -> None:
         markdown = textwrap.dedent(
             """\
-            ## Workflow Decision Tree
+            ## Skills
 
-            ```
-            START
-              ├─ Need Notebook? → /notebook
-              │   └─ Validation? → /notebook
-              ├─ Need Figure? → /figure
-              └─ Need Dashboard? → /dashboard
-            ```
+            | Skill | Use for | Phrases | After |
+            | --- | --- | --- | --- |
+            | `notebooks` | Notebook authoring | "marimo", "notebook" | |
+            | `dashboard` | Dashboards | "dashboard" | `notebooks`, `figure` |
             """
         )
-        edges = skill_index.parse_workflow_edges(markdown)
-        edge_set = {(edge.source, edge.target) for edge in edges}
-        self.assertNotIn(("figure", "dashboard"), edge_set)
-        self.assertNotIn(("notebook", "notebook"), edge_set)
+        rows = skill_index.parse_agent_table(markdown)
+        self.assertEqual(
+            rows,
+            [
+                skill_index.AgentSkillRow(
+                    "notebooks", "Notebook authoring", ["marimo", "notebook"], []
+                ),
+                skill_index.AgentSkillRow(
+                    "dashboard", "Dashboards", ["dashboard"], ["notebooks", "figure"]
+                ),
+            ],
+        )
+
+    def test_parse_agent_table_ignores_prose_and_other_sections(self) -> None:
+        markdown = textwrap.dedent(
+            """\
+            Send prose to `academic-writing` with `stop-slop`.
+
+            ## Prose
+
+            | Skill | Use for | Phrases | After |
+            | --- | --- | --- | --- |
+            | `not-a-skill-row` | Prose | "prose" | |
+
+            ## Skills
+
+            | Skill | Use for |
+            | --- | --- |
+            | `bio-logic` | Evidence checks |
+
+            Review goes to `nelli-paper-review`.
+            """
+        )
+        rows = skill_index.parse_agent_table(markdown)
+        self.assertEqual(
+            rows, [skill_index.AgentSkillRow("bio-logic", "Evidence checks", [], [])]
+        )
+
+    def test_parse_agent_table_without_a_skills_section_is_empty(self) -> None:
+        self.assertEqual(skill_index.parse_agent_table("## Principles\n\ntext\n"), [])
 
     def test_route_request_prefers_expected_agent_and_skills(self) -> None:
         result = skill_index.route_request(
@@ -127,9 +170,13 @@ class SkillIndexTests(unittest.TestCase):
             index_root=None,
         )
         self.assertEqual(result["agent"], "omics-scientist")
+        self.assertEqual(result["primary_skills"][0], "omics-pipeline")
         self.assertIn("bio-assembly-qc", result["primary_skills"])
         self.assertIn("bio-binning-qc", result["primary_skills"])
         self.assertIn("bio-reads-qc-mapping", result["ordered_skills"])
+        self.assertEqual(result["ordered_skills"][0], "omics-pipeline")
+        self.assertIn("bio-assembly-qc", result["hidden_skills"])
+        self.assertNotIn("omics-pipeline", result["hidden_skills"])
 
     def test_pull_reads_from_data_repository_routes_to_read_qc(self) -> None:
         result = skill_index.route_request(
@@ -255,22 +302,12 @@ class SkillIndexTests(unittest.TestCase):
                     name: omics-scientist
                     description: omics
                     ---
-                    ## Mandatory Skill Usage
+                    ## Skills
 
-                    ### Reads
-                    - `/read-qc` - qc
-                    - `/assembly` - assembly
-
-                    ## Workflow Decision Tree
-
-                    ```
-                    START
-                      └─> /read-qc
-                          └─> /assembly
-                    ```
-
-                    ## Task Recognition Patterns
-                    - **"assemble", "reads"** → `/assembly`
+                    | Skill | Use for | Phrases | After |
+                    | --- | --- | --- | --- |
+                    | `read-qc` | Reads | "qc" | |
+                    | `assembly` | Assembly | "assemble", "reads" | `read-qc` |
                     """
                 ),
                 encoding="utf-8",
@@ -309,37 +346,41 @@ class SkillIndexTests(unittest.TestCase):
         filtered = skill_index.filter_catalog_payload(
             payload,
             include_agents=["science-writer.md"],
-            include_skills=["bio-logic", "scientific-writing"],
+            include_skills=["bio-logic", "proposal-review"],
         )
         catalog = filtered["catalog"]
         self.assertEqual([agent["name"] for agent in catalog["agents"]], ["science-writer"])
         self.assertEqual(
             [skill["name"] for skill in catalog["skills"]],
-            ["bio-logic", "scientific-writing"],
+            ["bio-logic", "proposal-review"],
         )
         for agent in catalog["agents"]:
             for section_skills in agent["skill_sections"].values():
-                self.assertLessEqual(set(section_skills), {"bio-logic", "scientific-writing"})
+                self.assertLessEqual(
+                    set(section_skills), {"bio-logic", "proposal-review"}
+                )
             for pattern in agent["task_patterns"]:
-                self.assertIn(pattern["skill_name"], {"bio-logic", "scientific-writing"})
+                self.assertIn(pattern["skill_name"], {"bio-logic", "proposal-review"})
         for edge in catalog["edges"]:
             if edge["source_type"] == "agent":
                 self.assertEqual(edge["source"], "science-writer")
-                self.assertIn(edge["target"], {"bio-logic", "scientific-writing"})
+                self.assertIn(edge["target"], {"bio-logic", "proposal-review"})
             if edge["source_type"] == "skill":
-                self.assertIn(edge["source"], {"bio-logic", "scientific-writing"})
-                self.assertIn(edge["target"], {"bio-logic", "scientific-writing"})
+                self.assertIn(edge["source"], {"bio-logic", "proposal-review"})
+                self.assertIn(edge["target"], {"bio-logic", "proposal-review"})
 
     def test_filter_catalog_payload_supports_skills_only_install(self) -> None:
         payload = skill_index.build_outputs(REPO_ROOT)
         filtered = skill_index.filter_catalog_payload(
             payload,
             include_agents=["__none__"],
-            include_skills=["scientific-writing"],
+            include_skills=["proposal-review"],
         )
         catalog = filtered["catalog"]
         self.assertEqual(catalog["agents"], [])
-        self.assertEqual([skill["name"] for skill in catalog["skills"]], ["scientific-writing"])
+        self.assertEqual(
+            [skill["name"] for skill in catalog["skills"]], ["proposal-review"]
+        )
         self.assertEqual(catalog["metadata"]["agent_count"], 0)
         self.assertEqual(catalog["metadata"]["skill_count"], 1)
         self.assertFalse(
@@ -354,13 +395,14 @@ class SkillIndexTests(unittest.TestCase):
             "omics-scientist.md",
             "literature-expert.md",
             "science-writer.md",
-            "dataviz-artist.md",
         ):
             text = (REPO_ROOT / "agents" / agent_name).read_text(encoding="utf-8")
             self.assertIn("## Skill Lookup", text)
             self.assertIn("skill_index.py route", text)
 
-    def test_literature_expert_routes_biology_preprints_to_biorxiv(self) -> None:
+    def test_literature_expert_routes_biology_preprints_to_preprint_search(
+        self,
+    ) -> None:
         result = skill_index.route_request(
             task="recent biology preprints about single cell atlases",
             agent=None,
@@ -370,7 +412,7 @@ class SkillIndexTests(unittest.TestCase):
             index_root=None,
         )
         self.assertEqual(result["agent"], "literature-expert")
-        self.assertIn("biorxiv-search", result["primary_skills"])
+        self.assertIn("preprint-search", result["primary_skills"])
 
     def test_literature_expert_routes_crossref_queries_to_crossref_lookup(self) -> None:
         result = skill_index.route_request(
@@ -383,7 +425,7 @@ class SkillIndexTests(unittest.TestCase):
         )
         self.assertIn("crossref-lookup", result["primary_skills"])
 
-    def test_literature_expert_routes_impact_queries_to_scientific_impact_assessment(self) -> None:
+    def test_literature_expert_routes_impact_queries_to_crossref_lookup(self) -> None:
         result = skill_index.route_request(
             task="compare papers by citation count altmetric and impact factor",
             agent=None,
@@ -393,7 +435,7 @@ class SkillIndexTests(unittest.TestCase):
             index_root=None,
         )
         self.assertEqual(result["agent"], "literature-expert")
-        self.assertIn("scientific-impact-assessment", result["primary_skills"])
+        self.assertIn("crossref-lookup", result["primary_skills"])
 
 
 class SkillRefPatternTests(unittest.TestCase):
@@ -419,7 +461,9 @@ class SkillRefPatternTests(unittest.TestCase):
 
     def test_matches_valid_skill_refs(self) -> None:
         self.assertEqual(self._find("Use /bio-annotation after QC"), ["bio-annotation"])
-        self.assertEqual(self._find("- `/scientific-writing` - manuscript drafting"), ["scientific-writing"])
+        self.assertEqual(
+            self._find("- `/proposal-review` - funding review"), ["proposal-review"]
+        )
         self.assertEqual(self._find("(/bio-annotation)"), ["bio-annotation"])
         self.assertEqual(self._find("/notebooks at line start"), ["notebooks"])
 
@@ -471,10 +515,9 @@ class CatalogConsistencyTests(unittest.TestCase):
         )
 
     def test_agent_skill_references_all_resolve(self) -> None:
-        """Every /skill-name in an agent's Mandatory Skill Usage, Workflow
-        Decision Tree, or Task Recognition Patterns must resolve to a real
-        skill. Phantoms here mean the routing layer will propose a skill
-        that doesn't exist."""
+        """Every skill in an agent's `## Skills` table, in its Phrases and in its
+        After column, must resolve to a real skill. Phantoms here mean the
+        routing layer will propose a skill that doesn't exist."""
         unresolved = [
             item
             for item in skill_index.collect_unresolved_references(REPO_ROOT)
@@ -509,6 +552,243 @@ class CatalogConsistencyTests(unittest.TestCase):
                     f"{pattern['skill_name']!r}, which is not in catalog.skills",
                 )
 
+    def test_every_shipped_agent_has_a_skill_table(self) -> None:
+        payload = skill_index.build_outputs(REPO_ROOT)
+        for agent in payload["catalog"]["agents"]:
+            self.assertTrue(
+                agent["skill_sections"],
+                f"agents/{agent['name']}.md has no rows in its `## Skills` table",
+            )
+
+    def test_no_agent_phrase_is_a_bare_generic_word(self) -> None:
+        """A bare "write" or "review" phrase would pull unrelated requests (a
+        README, a pull request) into a science skill."""
+        payload = skill_index.build_outputs(REPO_ROOT)
+        for agent in payload["catalog"]["agents"]:
+            for pattern in agent["task_patterns"]:
+                generic = set(pattern["phrases"]) & skill_index.WEAK_PATTERN_TOKENS
+                self.assertEqual(
+                    generic,
+                    set(),
+                    f"{agent['name']}: {pattern['skill_name']} has generic phrases",
+                )
+
+    def test_every_skill_is_owned_by_an_agent(self) -> None:
+        """A skill that no agent lists cannot be routed to, hidden stages included."""
+        payload = skill_index.build_outputs(REPO_ROOT)
+        unowned = [
+            skill["name"]
+            for skill in payload["catalog"]["skills"]
+            if not skill["agents"]
+        ]
+        self.assertEqual(
+            unowned, [], f"skills in no agent's `## Skills` table: {unowned}"
+        )
+
+    def test_catalog_hidden_flag_matches_the_frontmatter(self) -> None:
+        payload = skill_index.build_outputs(REPO_ROOT)
+        for skill in payload["catalog"]["skills"]:
+            text = (REPO_ROOT / skill["path"]).read_text(encoding="utf-8")
+            frontmatter, _ = skill_index.split_frontmatter(text)
+            self.assertEqual(
+                skill["hidden"],
+                frontmatter.get("disable-model-invocation") == "true",
+                skill["name"],
+            )
+
+
+class HiddenStageRoutingTests(unittest.TestCase):
+    """Hidden stage skills are not listed to the model, so a route to one must
+    name the `omics-pipeline` router first and mark the stage as hidden."""
+
+    def _write_repo(self, root: Path) -> None:
+        skills = {
+            "omics-pipeline": ("Route omics pipeline work to its stage skill.", ""),
+            "stage-qc": (
+                "Quality control for sequencing reads.",
+                "disable-model-invocation: true\n",
+            ),
+            "stage-map": (
+                "Align contigs onto assemblies.",
+                "disable-model-invocation: true\n",
+            ),
+            "plain-skill": ("Convert notebooks between formats.", ""),
+        }
+        for name, (description, extra) in skills.items():
+            (root / "skills" / name).mkdir(parents=True)
+            (root / "skills" / name / "SKILL.md").write_text(
+                f"---\nname: {name}\ndescription: {description}\n{extra}---\n"
+                f"# {name}\n",
+                encoding="utf-8",
+            )
+        (root / "agents").mkdir()
+        (root / "agents" / "omics-scientist.md").write_text(
+            textwrap.dedent(
+                """\
+                ---
+                name: omics-scientist
+                description: omics
+                ---
+                ## Skills
+
+                | Skill | Use for | Phrases | After |
+                | --- | --- | --- | --- |
+                | `omics-pipeline` | Pipeline entry | "omics pipeline" | |
+                | `stage-qc` | Reads | "sequencing reads" | |
+                | `stage-map` | Mapping | "align contigs" | |
+                | `plain-skill` | Notebooks | "convert notebooks" | |
+                """
+            ),
+            encoding="utf-8",
+        )
+
+    def _route(self, root: Path, task: str, **kwargs: object) -> dict:
+        return skill_index.route_request(
+            task=task,
+            agent=kwargs.get("agent"),
+            platform="codex",
+            top_k=4,
+            repo=str(root),
+            index_root=None,
+        )
+
+    def test_catalog_marks_hidden_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            skills = {
+                s["name"]: s
+                for s in skill_index.build_outputs(root)["catalog"]["skills"]
+            }
+            self.assertEqual(
+                {name: skill["hidden"] for name, skill in skills.items()},
+                {
+                    "omics-pipeline": False,
+                    "stage-qc": True,
+                    "stage-map": True,
+                    "plain-skill": False,
+                },
+            )
+
+    def test_hidden_stage_route_names_the_router_first(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            result = self._route(root, "quality control for sequencing reads")
+            self.assertEqual(result["primary_skills"], ["omics-pipeline", "stage-qc"])
+            self.assertEqual(result["ordered_skills"][0], "omics-pipeline")
+            self.assertEqual(result["hidden_skills"], ["stage-qc"])
+
+    def test_visible_only_route_does_not_add_the_router(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            result = self._route(root, "convert notebooks between formats")
+            self.assertEqual(result["primary_skills"], ["plain-skill"])
+            self.assertEqual(result["hidden_skills"], [])
+
+    def _skills(self, root: Path) -> dict:
+        catalog = skill_index.build_outputs(root)["catalog"]
+        return {skill["name"]: skill for skill in catalog["skills"]}
+
+    def test_selecting_a_stage_adds_the_router_and_the_other_stages(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            names, message = skill_index.expand_skill_selection(
+                self._skills(root), ["stage-qc"]
+            )
+            self.assertEqual(names, ["stage-qc", "omics-pipeline", "stage-map"])
+            self.assertIn("omics-pipeline", message)
+            self.assertNotIn("stage-qc,", message)
+
+    def test_expanding_an_expanded_selection_changes_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            skills = self._skills(root)
+            once, _ = skill_index.expand_skill_selection(
+                skills, ["plain-skill", "stage-qc"]
+            )
+            twice, message = skill_index.expand_skill_selection(skills, once)
+            self.assertEqual(twice, once)
+            self.assertEqual(message, "")
+
+    def test_selecting_the_router_adds_every_stage(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            names, message = skill_index.expand_skill_selection(
+                self._skills(root), ["omics-pipeline"]
+            )
+            self.assertEqual(names, ["omics-pipeline", "stage-map", "stage-qc"])
+            self.assertIn("stage-map", message)
+            self.assertIn("stage-qc", message)
+
+    def test_a_visible_or_complete_selection_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            skills = self._skills(root)
+            self.assertEqual(
+                skill_index.expand_skill_selection(skills, ["plain-skill"]),
+                (["plain-skill"], ""),
+            )
+            everything = ["omics-pipeline", "stage-qc", "stage-map"]
+            self.assertEqual(
+                skill_index.expand_skill_selection(skills, everything), (everything, "")
+            )
+
+    def test_expand_selection_command_prints_the_names_and_one_line_of_notice(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = skill_index.main(
+                    ["expand-selection", "--repo", str(root), "plain-skill", "stage-qc"]
+                )
+            self.assertEqual(rc, 0)
+            self.assertEqual(
+                out.getvalue().split(),
+                ["plain-skill", "stage-qc", "omics-pipeline", "stage-map"],
+            )
+            self.assertEqual(len(err.getvalue().strip().splitlines()), 1)
+
+    def test_selected_build_includes_the_required_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            out_dir = root / "subset"
+            argv = ["build", "--repo", str(root), "--out", str(out_dir)]
+            with (
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                skill_index.main([*argv, "--include-skill", "stage-qc"])
+            catalog = json.loads((out_dir / "catalog.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                [skill["name"] for skill in catalog["skills"]],
+                ["omics-pipeline", "stage-map", "stage-qc"],
+            )
+
+    def test_router_is_not_added_when_the_pinned_agent_does_not_own_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self._write_repo(root)
+            (root / "agents" / "reader.md").write_text(
+                "---\nname: reader\ndescription: reads\n---\n"
+                "## Skills\n\n| Skill | Use for |\n| --- | --- |\n"
+                "| `stage-qc` | Reads |\n",
+                encoding="utf-8",
+            )
+            result = self._route(
+                root, "quality control for sequencing reads", agent="reader"
+            )
+            self.assertEqual(result["primary_skills"], ["stage-qc"])
+
 
 class AgentSectionHeadingScoringTests(unittest.TestCase):
     """When a skill is co-owned by multiple agents, the section heading
@@ -516,11 +796,10 @@ class AgentSectionHeadingScoringTests(unittest.TestCase):
     regressing to a pure-alphabetical-tiebreak on shared skills."""
 
     def test_section_heading_wins_over_alphabetical_tiebreak(self) -> None:
-        # bio-logic is listed by both omics-scientist (under "Scientific
-        # Reasoning & Hypothesis Formation") and science-writer (under
-        # "Scientific Reasoning & Evaluation"). A "hypothesis" query must
-        # route to omics-scientist even though science-writer wins
-        # alphabetically.
+        # bio-logic is listed by omics-scientist (Use for: "Scientific reasoning
+        # and hypothesis formation") and by other agents under their own
+        # labels. A "hypothesis" query must route to omics-scientist even when
+        # another agent wins alphabetically.
         result = skill_index.route_request(
             task="formulate a hypothesis for why certain strains outperform others",
             agent=None,
@@ -589,6 +868,76 @@ class SoftwareRepoVetoTests(unittest.TestCase):
             self.assertFalse(
                 skill_index.is_software_repo_review(skill_index.tokenize(task)), task
             )
+
+
+class ManuscriptProseVetoTests(unittest.TestCase):
+    """The pack ships no manuscript-prose skill (academic-writing is another
+    repository's), so a drafting request must route to nothing. Generating a
+    Methods section from workflow run artifacts is a different request that
+    bio-workflow-methods-docwriter owns."""
+
+    def _route(self, task: str) -> dict:
+        return skill_index.route_request(
+            task=task,
+            agent=None,
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+
+    def test_manuscript_drafting_routes_to_nothing(self) -> None:
+        for task in (
+            "draft the methods section of a manuscript on metagenomic binning",
+            "write the methods section of my paper",
+            "revise the abstract of my paper on viral genomes",
+            "rewrite this Discussion for clarity, keeping every claim",
+        ):
+            with self.subTest(task=task):
+                result = self._route(task)
+                self.assertEqual(result["primary_skills"], [])
+                self.assertEqual(result["ordered_skills"], [])
+
+    def test_methods_from_workflow_artifacts_still_route_to_the_docwriter(self) -> None:
+        for task in (
+            "generate reproducible methods documentation from a Nextflow pipeline run",
+            "write the methods section from these Snakemake run artifacts",
+        ):
+            with self.subTest(task=task):
+                result = self._route(task)
+                self.assertIn(
+                    "bio-workflow-methods-docwriter", result["primary_skills"]
+                )
+
+    def test_a_pinned_agent_is_not_silenced(self) -> None:
+        result = skill_index.route_request(
+            task="write the methods section of my paper",
+            agent="omics-scientist",
+            platform="codex",
+            top_k=4,
+            repo=str(REPO_ROOT),
+            index_root=None,
+        )
+        self.assertIn("bio-workflow-methods-docwriter", result["primary_skills"])
+
+    def test_prose_detection_needs_an_action_and_a_manuscript_noun(self) -> None:
+        tokens = skill_index.tokenize
+        self.assertTrue(
+            skill_index.is_manuscript_prose_request(tokens("draft my manuscript"))
+        )
+        self.assertFalse(
+            skill_index.is_manuscript_prose_request(tokens("edit the config section"))
+        )
+        self.assertFalse(
+            skill_index.is_manuscript_prose_request(
+                tokens("the manuscript figure data")
+            )
+        )
+        self.assertFalse(
+            skill_index.is_manuscript_prose_request(
+                tokens("write the paper methods from a Nextflow run")
+            )
+        )
 
 
 class CatalogPathPortabilityTests(unittest.TestCase):
@@ -682,7 +1031,9 @@ class CatalogPathPortabilityTests(unittest.TestCase):
                 )
                 (root / "agents" / "omics-scientist.md").write_text(
                     "---\nname: omics-scientist\ndescription: omics\n---\n"
-                    "## Mandatory Skill Usage\n\n### Pipeline\n- `/bio-reads-qc-mapping`\n- `/bio-assembly-qc`\n",
+                    "## Skills\n\n| Skill | Use for |\n| --- | --- |\n"
+                    "| `bio-reads-qc-mapping` | Pipeline |\n"
+                    "| `bio-assembly-qc` | Pipeline |\n",
                     encoding="utf-8",
                 )
 
@@ -749,13 +1100,15 @@ class CliTests(unittest.TestCase):
                         "--include-agent",
                         "science-writer.md",
                         "--include-skill",
-                        "scientific-writing",
+                        "proposal-review",
                     ]
                 )
             self.assertEqual(rc, 0)
             catalog = json.loads((out / "catalog.json").read_text(encoding="utf-8"))
             self.assertEqual([agent["name"] for agent in catalog["agents"]], ["science-writer"])
-            self.assertEqual([skill["name"] for skill in catalog["skills"]], ["scientific-writing"])
+            self.assertEqual(
+                [skill["name"] for skill in catalog["skills"]], ["proposal-review"]
+            )
 
     def test_route_command_text_output(self) -> None:
         buffer = io.StringIO()
@@ -777,7 +1130,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         payload = json.loads(buffer.getvalue())
         self.assertEqual(payload["agent"], "literature-expert")
-        self.assertIn("arxiv-search", payload["primary_skills"])
+        self.assertIn("preprint-search", payload["primary_skills"])
 
 
 if __name__ == "__main__":

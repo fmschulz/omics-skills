@@ -37,9 +37,9 @@ class CrossrefLookupTests(unittest.TestCase):
         self.assertEqual(crossref_lookup.exit_code([missing], strict=True), 1)
         self.assertEqual(crossref_lookup.exit_code([transient], strict=True), 2)
 
-    def test_wrapper_has_no_scientific_writing_dependency(self) -> None:
+    def test_wrapper_runs_its_own_script_and_no_other_skill(self) -> None:
         wrapper = (MODULE_PATH.parent / "lookup").read_text(encoding="utf-8")
-        self.assertNotIn("scientific-writing", wrapper)
+        self.assertNotIn("skills/", wrapper)
         self.assertIn("lookup.py", wrapper)
 
 

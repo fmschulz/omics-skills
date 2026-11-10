@@ -19,7 +19,7 @@ Derived from Wilson G, Bryan J, Cranston K, Kitzes J, Nederbragt L, Teal TK, "Go
 - **Back up raw data in more than one location.** At least two physically separate places. Raw BAM/FASTQ live on HPC scratch, are rsynced nightly to institutional object storage, and the run is archived at SRA/ENA: `rsync -av --checksum data/raw/ /backup/seqcenter_run42/`.
 - **Create open, readable formats.** Convert proprietary/binary outputs to open, documented, future-proof formats with explicit metadata. Export vendor format to CSV/TSV and bgzipped VCF; store sample metadata as a UTF-8 `sample_metadata.csv`, not a multi-tab `.xlsx`.
 - **Create tidy data.** One variable per column, one observation per row. A tidy `samples.tsv` with columns `sample_id, condition, replicate, fastq_r1, fastq_r2` (one row per sample), not a wide spreadsheet with merged cells.
-- **Record all processing steps.** Capture every step as scripts/workflows, not GUI edits — a Snakemake/Nextflow pipeline running `fastp -> metaspades -> bwa-mem -> metabat2`.
+- **Record all processing steps.** Capture every step as scripts/workflows, not GUI edits — a Snakemake/Nextflow pipeline running `fastp -> metaspades -> bwa-mem -> quickbin`.
 - **Anticipate multiple tables; use a unique identifier for every record.** Give every record a stable key. Use a canonical `sample_id` (e.g. `BIOSAMPLE_0001`) shared by `samples.tsv`, `qc_metrics.tsv`, and `bin_stats.tsv`; pair gene tables on stable Ensembl gene IDs, not display names.
 - **Submit data to a DOI-issuing repository.** Reads at SRA/ENA, MAGs at GenBank, processed count matrix/derived tables to Zenodo for a citable DOI.
 
@@ -62,7 +62,7 @@ Two acceptable tiers: a manual/low-tech workflow and a version-control workflow.
 Common to both:
 
 - **Back up (almost) everything created by a human as soon as it is created.** Commit/track code, notes, configs, sample sheets immediately; large regenerable outputs (multi-GB BAMs/FASTQs) can be excluded.
-- **Keep changes small** and logically coherent — "add adapter-trimming rule" separate from "raise MetaBAT2 min-contig length".
+- **Keep changes small** and logically coherent — "add adapter-trimming rule" separate from "raise QuickBin minseed".
 - **Share changes frequently** so collaborators stay in sync and divergence stays small.
 - **Maintain and use a checklist for saving/sharing changes** — e.g. rerun `snakemake -n` dry run, update `doc/changelog.txt`, commit code, tag if results changed, push.
 

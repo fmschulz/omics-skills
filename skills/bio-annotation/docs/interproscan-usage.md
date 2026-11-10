@@ -180,31 +180,16 @@ If a packaged install still fails on helper binaries after this, prefer fixing
 the environment first and rerunning the smoke test rather than launching the
 full cluster job blind.
 
-### 4. Validate the exact installation with a debug-queue smoke test
+### 4. Validate the exact installation with a short smoke test
 
-Before launching a large cluster run, submit 1-2 proteins to the site's debug
-queue with the exact CLI intended for the full job. Do not run the computation on
-the login node:
+Before launching a large cluster run, submit 1-2 proteins as a short batch job with the exact CLI intended for the full job. Login-node limits, cluster, account, partition and QOS follow the `hpc-slurm` skill and the pipeline rules in `omics-pipeline`; use a debug queue only where the site's rules allow it.
 
 ```bash
 sbatch \
-  --qos="${DEBUG_QOS:?set DEBUG_QOS to the site's debug QOS}" \
   --job-name=interpro-smoke \
   --cpus-per-task=1 \
   --mem=16G \
   --time=00:15:00 \
-  --wrap='set -euo pipefail
-work_tmp="${TMPDIR:-${SLURM_TMPDIR:-/tmp}}/interproscan"
-mkdir -p "${work_tmp}"
-./interproscan.sh -i smoke_input.faa -b smoke_run -f TSV -cpu 1 -dp -iprlookup -goterms -T "${work_tmp}"
-test -s smoke_run.tsv'
-```
-
-On Dori, use the required cluster, project account, partition and normal QOS (never a debug partition or QOS):
-
-```bash
-sbatch -M perceus-00 -A grp-org-sc-mgs -p dori --qos=jgi_normal \
-  --job-name=interpro-smoke --cpus-per-task=1 --mem=16G --time=00:15:00 \
   --wrap='set -euo pipefail
 work_tmp="${TMPDIR:-${SLURM_TMPDIR:-/tmp}}/interproscan"
 mkdir -p "${work_tmp}"

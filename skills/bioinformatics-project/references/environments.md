@@ -87,7 +87,7 @@ Pinning is not enough — write the actual versions used into each experiment's 
   echo "host: $(uname -a)"
   echo "git: $(git rev-parse HEAD 2>/dev/null || echo 'not a repo')"
   echo "seed: ${SEED}"
-  for tool in fastqc fastp metaspades.py bwa minimap2 samtools metabat2; do
+  for tool in fastqc fastp metaspades.py bwa minimap2 samtools; do
     command -v "$tool" >/dev/null 2>&1 && printf '%s: ' "$tool" && "$tool" --version 2>&1 | head -n1
   done
 } > provenance.txt

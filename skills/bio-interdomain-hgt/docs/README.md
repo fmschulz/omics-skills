@@ -18,13 +18,13 @@ Pin all tools in the project's Pixi environment. Check the exact CLI with
 | geNomad | "is this contig viral" context cross-check | needs `genomad_db` under `$BIO_DB_ROOT` |
 | TaxonKit (>=0.20) | resolve lineages from the labels table / taxdump | 2025 NCBI rank update: `domain` replaces `superkingdom`, adds `realm` for viruses |
 | seqkit | FASTA stats / extraction | |
-| ETE 4 (`ete4`) | tree parsing and nesting/monophyly tests (`check_monophyly`) | load IQ-TREE `SH-aLRT/UFBoot` labels with `parser=1`; see the bio-phylogenomics ETE guide; no Qt needed |
+| ETE 4 (`ete4`) | tree parsing and nesting/monophyly tests (`check_monophyly`) | load IQ-TREE `SH-aLRT/UFBoot` labels with `parser=1`; see `~/.agents/skills/bio-phylogenomics/docs/README.md`; no Qt needed |
 
 ## Environment
 - `BIO_DB_ROOT`: site or project reference-DB root. The skill NEVER hardcodes absolute
   paths; everything is resolved relative to this.
 - Heavy steps run on Slurm as size-balanced task arrays with an array throttle
-  (`%N`) and explicit thread counts; the login node is for smoke tests only.
+  (`%N`) and explicit thread counts, following the `hpc-slurm` skill.
 
 ## Reciprocal-arbiter database
 See `database-availability.md`. Minimum: one protein search DB spanning eukaryotes +

@@ -16,14 +16,14 @@ cd omics-skills
 make install
 ```
 
-`make install` builds the routing catalog, links every skill into `~/.agents/skills`, links the Claude agents, and renders the Codex agents.
+`make install` builds the routing catalog, links every skill into `~/.agents/skills`, links the Claude agents, and renders the Codex agents. It also retires what left the pack, and only what it can tie to this pack. A link into the checkout, whether a skill or the `dataviz-artist` agent, is removed. A copied skill directory, a copied agent file or a rendered Codex agent is archived (under `~/.agents/omics-skills/retired-skills/` or `retired-agents/`) only when the installed `catalog.json` is a real file, which a copy install writes, and lists it. A default symlink install leaves its catalog as a link, so it records nothing; then an old rendered `~/.codex/agents/dataviz-artist.toml` stays until you delete it. An independent skill or agent with a retired name, a `.bak` link to another repository, and the `pdf-to-md` and `csag-extraction` skills that another repository now owns are never touched.
 
 | Command | Effect |
 |---|---|
 | `make install-claude` or `make install-codex` | Installs for one runtime. |
 | `make install INSTALL_METHOD=copy` | Copies instead of linking, for a checkout that will not stay on disk. |
 | `make install LINK_CLIENT_SKILLS=no` | Leaves `~/.claude/skills` and `~/.codex/skills` untouched, for hosts where another tool manages them. |
-| `make install-selected SELECTED_AGENT_FILES="omics-scientist.md" SELECTED_SKILL_DIRS="bio-logic bio-annotation"` | Installs a subset. A missing name fails the install, and the catalog lists only the selection. |
+| `make install-selected SELECTED_AGENT_FILES="omics-scientist.md" SELECTED_SKILL_DIRS="bio-logic polars-dovmed"` | Installs a subset. A missing name fails the install, and the catalog lists only the selection. Selecting `omics-pipeline` or any pipeline stage installs the whole pipeline group, because the stages are reached only through the router and the router names every stage. `make` prints one line that names what it added. |
 
 ### Installed files
 
@@ -61,7 +61,7 @@ codex plugin add omics-skills@omics-skills
 
 To test a local checkout, pass `.` to `marketplace add` instead of the repository name.
 
-The Claude Code plugin provides the agents and skills; the Codex plugin provides the skills. The router, the catalog, the routing hint hook and the Codex agents come only with a checkout install.
+The Claude Code plugin provides the agents and skills; the Codex plugin provides the skills. The router, the catalog, the routing hint hook and the Codex agents come only with a checkout install. The pipeline stage skills are sibling directories of `omics-pipeline`, so the plugin layout resolves them as `../<name>/SKILL.md` without any `~/.agents/skills` link.
 
 To update, refresh the marketplace and then the plugin. Claude Code: `claude plugin marketplace update omics-skills`, then `claude plugin update omics-skills@omics-skills` and a restart. Codex CLI: `codex plugin marketplace upgrade omics-skills`, then `codex plugin add omics-skills@omics-skills` again.
 
@@ -73,7 +73,7 @@ Claude Code:
 claude --agent omics-scientist
 ```
 
-Codex CLI: start `codex`, then ask it to delegate to `omics-scientist`, or name a skill such as `$bio-annotation`.
+Codex CLI: start `codex`, then ask it to delegate to `omics-scientist`, or name a skill such as `$omics-pipeline`. Pipeline stage skills such as `$bio-annotation` are hidden from implicit use; name one only when you want it directly.
 
 After a checkout install, the [router](routing.md) shows which agent and skills fit a task:
 
@@ -101,7 +101,7 @@ Turn it off for one shell with `export OMICS_SKILLS_AUTOROUTE=0`. Remove it with
 | Update a checkout install | `git pull && make install` |
 | Apply an edited agent prompt to Codex | `make install-codex` |
 | Remove the pack (pack entries only) | `make uninstall`, `make uninstall-claude` or `make uninstall-codex` |
-| Delete agent backups and archived skill directories | `make clean` |
+| Delete agent backups and archived skill and agent files | `make clean` |
 
 ## Troubleshooting
 
@@ -109,5 +109,5 @@ Turn it off for one shell with `export OMICS_SKILLS_AUTOROUTE=0`. Remove it with
 |---|---|
 | Codex does not show an agent change | Run `make install-codex`. |
 | Skills are missing after the checkout moved | Run `make install` from the new location; links keep the old path. |
-| The router does not pick a skill | Run `python3 scripts/skill_index.py route "<task>" --json`, then check the skill description and the agent's `Task Recognition Patterns`. |
+| The router does not pick a skill | Run `python3 scripts/skill_index.py route "<task>" --json`, then check the skill description and the agent's `## Skills` table. |
 | A local plugin is not listed | Run `codex plugin marketplace list`, `codex plugin list --available --json` and `claude plugin validate .`. |

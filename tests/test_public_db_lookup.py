@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
+import requests
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = REPO_ROOT / "skills" / "public-db-lookup" / "scripts" / "lookup.py"
@@ -91,6 +92,98 @@ class PublicDbLookupTests(unittest.TestCase):
 
 
 
+class ContactAddressTests(unittest.TestCase):
+    """A contact address is sent only when the user passes --email, and it never
+    comes back out in the envelope, the displayed URL or an error."""
+
+    ADDRESS = "you@example.org"
+
+    def ncbi(self, session: Mock, *extra: str, env: dict[str, str] | None = None):
+        argv = ["--service", "ncbi-entrez", "--path", "esearch.fcgi", *extra]
+        return run(argv, session, env if env is not None else {})
+
+    def test_an_ambient_ncbi_email_is_not_sent(self) -> None:
+        session = Mock()
+        session.get = Mock(return_value=response(200, []))
+        env = {"NCBI_EMAIL": self.ADDRESS, "NCBI_API_KEY": "k", "NCBI_TOOL": "my-tool"}
+        _, envelope = self.ncbi(session, env=env)
+        sent = dict(session.get.call_args.kwargs["params"])
+        self.assertNotIn("email", sent)
+        self.assertEqual(sent["api_key"], "k")
+        self.assertEqual(sent["tool"], "my-tool")
+        self.assertNotIn(self.ADDRESS, json.dumps(envelope))
+
+    def test_the_email_flag_is_sent_and_kept_out_of_the_output(self) -> None:
+        session = Mock()
+        echo = {"results": [{"echo": f"contact {self.ADDRESS}"}]}
+        session.get = Mock(return_value=response(200, echo))
+        code, envelope = self.ncbi(session, "--email", self.ADDRESS)
+        self.assertEqual(code, 0)
+        self.assertIn(("email", self.ADDRESS), session.get.call_args.kwargs["params"])
+        self.assertNotIn(self.ADDRESS, json.dumps(envelope))
+        self.assertNotIn("email=", envelope["url"])
+
+    def test_http_errors_do_not_echo_the_address(self) -> None:
+        session = Mock()
+        session.get = Mock(
+            return_value=response(400, f"bad request from {self.ADDRESS}")
+        )
+        code, envelope = self.ncbi(session, "--email", self.ADDRESS)
+        self.assertEqual((code, envelope["error"]["code"]), (1, "http_error"))
+        self.assertNotIn(self.ADDRESS, json.dumps(envelope))
+
+    def test_network_errors_do_not_echo_the_address(self) -> None:
+        session = Mock()
+        session.get = Mock(
+            side_effect=requests.ConnectionError(f"failed: email={self.ADDRESS}")
+        )
+        code, envelope = self.ncbi(session, "--email", self.ADDRESS)
+        self.assertEqual((code, envelope["error"]["code"]), (1, "network_error"))
+        self.assertNotIn(self.ADDRESS, json.dumps(envelope))
+
+    def test_the_address_and_the_key_stay_out_of_a_service_error(self) -> None:
+        session = Mock()
+        body = {"esearchresult": {"ERROR": f"unknown {self.ADDRESS} and topsecretkey"}}
+        session.get = Mock(return_value=response(200, body))
+        _, envelope = self.ncbi(
+            session, "--email", self.ADDRESS, env={"NCBI_API_KEY": "topsecretkey"}
+        )
+        self.assertEqual(envelope["error"]["code"], "service_error")
+        self.assertNotIn(self.ADDRESS, json.dumps(envelope))
+        self.assertNotIn("topsecretkey", json.dumps(envelope))
+
+    def test_the_email_flag_is_for_ncbi_only(self) -> None:
+        session = Mock()
+        code, envelope = run(
+            [
+                "--service",
+                "uniprot",
+                "--path",
+                "uniprotkb/P04637",
+                "--email",
+                self.ADDRESS,
+            ],
+            session,
+        )
+        self.assertEqual((code, envelope["error"]["code"]), (2, "invalid_input"))
+        session.get.assert_not_called()
+
+    def test_an_address_in_param_or_path_points_to_the_flag(self) -> None:
+        session = Mock()
+        for argv in (
+            ["--param", f"email={self.ADDRESS}"],
+            ["--path", f"esearch.fcgi?email={self.ADDRESS}"],
+        ):
+            with self.subTest(argv=argv):
+                full = ["--service", "ncbi-entrez", "--path", "esearch.fcgi", *argv]
+                code, envelope = run(full, session)
+                self.assertEqual(
+                    (code, envelope["error"]["code"]), (2, "invalid_input")
+                )
+                self.assertIn("--email", envelope["error"]["message"])
+        session.get.assert_not_called()
+
+
 class CredentialHandlingTests(unittest.TestCase):
     """A key embedded in --path bypassed the --param filter and rode straight
     into the emitted `url` field; successful bodies were never redacted."""
@@ -106,8 +199,13 @@ class CredentialHandlingTests(unittest.TestCase):
         ):
             with self.subTest(path=path, param=param):
                 args = argparse.Namespace(
-                    service="ncbi-entrez", path=path, param=list(param),
-                    max_items=5, max_depth=3, format="auto",
+                    service="ncbi-entrez",
+                    path=path,
+                    param=list(param),
+                    max_items=5,
+                    max_depth=3,
+                    format="auto",
+                    email=None,
                 )
                 with self.assertRaisesRegex(ValueError, "through the environment"):
                     public_db_lookup.build_request(args, {})
@@ -116,8 +214,13 @@ class CredentialHandlingTests(unittest.TestCase):
         import argparse
 
         args = argparse.Namespace(
-            service="ncbi-entrez", path="esearch.fcgi?db=protein&term=p53", param=[],
-            max_items=5, max_depth=3, format="auto",
+            service="ncbi-entrez",
+            path="esearch.fcgi?db=protein&term=p53",
+            param=[],
+            max_items=5,
+            max_depth=3,
+            format="auto",
+            email=None,
         )
         url, params, _ = public_db_lookup.build_request(args, {})
         self.assertTrue(url.endswith("/esearch.fcgi"))
@@ -157,7 +260,11 @@ class CredentialHandlingTests(unittest.TestCase):
         args = argparse.Namespace(
             service="ncbi-entrez",
             path="elink.fcgi?dbfrom=protein&db=gene&id=15718680&id=157427902",
-            param=[], max_items=5, max_depth=3, format="auto",
+            param=[],
+            max_items=5,
+            max_depth=3,
+            format="auto",
+            email=None,
         )
         _, params, _ = public_db_lookup.build_request(args, {})
         self.assertEqual(

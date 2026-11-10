@@ -1,0 +1,6 @@
+interface:
+  display_name: "Annotation"
+  short_description: "Annotate proteins and infer homology taxonomy"
+  default_prompt: "Read the omics-pipeline skill, then annotate the proteins and build the comparison bundle."
+policy:
+  allow_implicit_invocation: false

@@ -17,12 +17,12 @@ This directory contains practical documentation for the tools used in the bio-bi
 ## Documentation Files
 
 ### Coverage Computation
-- [coverm.md](coverm.md) - CoverM v0.7.0: Read alignment statistics and coverage computation
+- [other-tools.md](other-tools.md) - CoverM v0.7.0 coverage, plus SemiBin2, MetaBAT2 and GUNC pinned flags
 
 ### Binning tools (in recommended order)
 - [quickbin.md](quickbin.md) - **QuickBin (BBTools) v39.85 via `bryce911/bbtools`)**: high-fidelity neural-network binner; default for both short-read and long-read assemblies
-- [semibin2.md](semibin2.md) - **SemiBin2 v2.3.0**: deep-learning binner with pre-trained models; use as the GPU alternative to QuickBin on CUDA-equipped nodes
-- [metabat2.md](metabat2.md) - MetaBAT2 v2.18: legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
+- SemiBin2 v2.3.0 ([other-tools.md](other-tools.md)): deep-learning binner with pre-trained models; use as the GPU alternative to QuickBin on CUDA-equipped nodes
+- MetaBAT2 v2.18 ([other-tools.md](other-tools.md)): legacy coverage-based binner; keep as fallback only for reproducing prior pipelines
 
 ### Quality-control tools
 
@@ -31,7 +31,7 @@ This directory contains practical documentation for the tools used in the bio-bi
 - [eukcc.md](eukcc.md) - EukCC v2.1.3: quality assessment for eukaryotic MAGs
 
 #### Contamination detection
-- [gunc.md](gunc.md) - GUNC v1.1.1: chimerism and contamination detection for prokaryotic genomes
+- GUNC v1.1.1 ([other-tools.md](other-tools.md)): chimerism and contamination detection for prokaryotic genomes
 
 ## Quick Reference
 

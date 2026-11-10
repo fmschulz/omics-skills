@@ -14,6 +14,17 @@ from typing import Any
 SKILL_REF_PATTERN = re.compile(r"(?<![\w:/.])/([a-z0-9][a-z0-9-]+)")
 QUOTED_PATTERN = re.compile(r'"([^"]+)"')
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+BACKTICKED_SKILL_PATTERN = re.compile(r"`/?([a-z0-9][a-z0-9-]*)`")
+
+# The one `## Skills` table of an agent file feeds the router. Columns are
+# matched by header: Skill and Use for are required; Phrases (quoted trigger
+# phrases) and After (skills that normally run first) are optional.
+AGENT_TABLE_HEADING = "Skills"
+
+# Skills with `disable-model-invocation: true` are not listed to the model. The
+# pipeline router is the model-visible entry to them.
+HIDDEN_KEY = "disable-model-invocation"
+PIPELINE_ROUTER = "omics-pipeline"
 
 # How many hops of `depend_on` edges to follow out from each primary skill when
 # building the "supporting skills" list. depend_on is the reverse of the
@@ -71,6 +82,34 @@ SOFTWARE_REPO_TOKENS = {
     "script",
     "scripts",
 }
+# Manuscript prose belongs to skills outside this pack (academic-writing), so a
+# drafting request routes to nothing. Naming a workflow engine or its run
+# artifacts marks the other request: Methods generated for the docwriter skill.
+PROSE_ACTION_TOKENS = {
+    "draft",
+    "write",
+    "rewrite",
+    "revise",
+    "polish",
+    "edit",
+    "proofread",
+}
+MANUSCRIPT_TOKENS = {
+    "manuscript",
+    "paper",
+    "abstract",
+    "discussion",
+    "introduction",
+    "rebuttal",
+}
+WORKFLOW_ARTIFACT_TOKENS = {
+    "nextflow",
+    "snakemake",
+    "cwl",
+    "pipeline",
+    "workflow",
+    "artifacts",
+}
 SCIENTIFIC_CONTEXT_TOKENS = {
     "abstract",
     "annotation",
@@ -99,6 +138,16 @@ class WorkflowEdge:
     evidence: str
 
 
+@dataclass(frozen=True)
+class AgentSkillRow:
+    """One row of an agent's `## Skills` table."""
+
+    skill: str
+    use_for: str
+    phrases: list[str]
+    after: list[str]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -106,16 +155,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build":
         repo_root = resolve_repo_root(args.repo)
         payload = build_outputs(repo_root)
-        if args.include_agent is not None or args.include_skill is not None:
+        include_skills = args.include_skill
+        if include_skills is not None:
+            include_skills = announce_expanded_selection(payload, include_skills)
+        if args.include_agent is not None or include_skills is not None:
             payload = filter_catalog_payload(
                 payload,
                 include_agents=args.include_agent,
-                include_skills=args.include_skill,
+                include_skills=include_skills,
             )
         out_dir = Path(args.out).expanduser().resolve() if args.out else default_output_dir(repo_root)
         out_dir.mkdir(parents=True, exist_ok=True)
         write_outputs(payload, out_dir)
         print(json.dumps({"catalog": str(out_dir / "catalog.json")}, indent=2))
+        return 0
+
+    if args.command == "expand-selection":
+        payload = build_outputs(resolve_repo_root(args.repo))
+        print(" ".join(announce_expanded_selection(payload, args.skills)))
         return 0
 
     if args.command == "route":
@@ -155,6 +212,19 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=None,
         help="Skill directory/name to include. Repeat for selected installs.",
+    )
+
+    expand_cmd = subparsers.add_parser(
+        "expand-selection",
+        help="Print a skill selection plus the skills it needs to work.",
+    )
+    expand_cmd.add_argument(
+        "skills", nargs="+", help="Skill directories/names selected."
+    )
+    expand_cmd.add_argument(
+        "--repo",
+        default=None,
+        help="Repository root. Defaults to the parent of this script.",
     )
 
     route_cmd = subparsers.add_parser("route", help="Recommend an agent and ordered skills for a task.")
@@ -228,13 +298,12 @@ def parse_frontmatter(block: str) -> dict[str, str]:
 
 
 def extract_section(markdown: str, heading: str) -> str:
-    marker = f"## {heading}"
-    start = markdown.find(marker)
-    if start == -1:
+    match = re.search(rf"^## {re.escape(heading)}[ \t]*$", markdown, re.MULTILINE)
+    if match is None:
         return ""
-    tail = markdown[start + len(marker) :]
-    match = re.search(r"\n##\s+", tail)
-    return tail if not match else tail[: match.start()]
+    tail = markdown[match.end() :]
+    following = re.search(r"^##\s", tail, re.MULTILINE)
+    return tail if following is None else tail[: following.start()]
 
 
 def extract_first_heading(markdown: str) -> str | None:
@@ -264,78 +333,43 @@ def extract_skill_references(markdown: str, exclude: str) -> tuple[list[str], di
     return sorted(set(references)), contexts
 
 
-def parse_skill_sections(markdown: str) -> dict[str, list[str]]:
-    content = extract_section(markdown, "Mandatory Skill Usage")
-    sections: dict[str, list[str]] = {}
-    current_section = "General"
-    for raw_line in content.splitlines():
-        line = raw_line.strip()
-        if line.startswith("### "):
-            current_section = line[4:].strip()
-            continue
-        matches = SKILL_REF_PATTERN.findall(line)
-        if matches:
-            sections.setdefault(current_section, []).extend(matches)
-    return sections
+def split_table_row(line: str) -> list[str]:
+    """Split a Markdown table row into its stripped cells."""
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def arrow_depth(line: str) -> int:
-    positions = [index for index in (line.find("├"), line.find("└")) if index >= 0]
-    return min(positions) if positions else -1
+def parse_agent_table(markdown: str) -> list[AgentSkillRow]:
+    """Read the `## Skills` table of an agent file, one row per skill.
 
-
-def dedupe_workflow_edges(edges: list[WorkflowEdge]) -> list[WorkflowEdge]:
-    seen: set[tuple[str, str]] = set()
-    deduped: list[WorkflowEdge] = []
-    for edge in edges:
-        key = (edge.source, edge.target)
-        if key in seen:
-            continue
-        seen.add(key)
-        deduped.append(edge)
-    return deduped
-
-
-def parse_workflow_edges(markdown: str) -> list[WorkflowEdge]:
-    content = extract_section(markdown, "Workflow Decision Tree")
-    code_blocks = re.findall(r"```(.*?)```", content, flags=re.DOTALL)
-    if not code_blocks:
+    Rows without a backticked skill name (the separator row) are skipped, and so
+    is every table outside the `## Skills` section. A section without the
+    required `Skill` and `Use for` columns yields no rows.
+    """
+    table = [
+        line
+        for line in extract_section(markdown, AGENT_TABLE_HEADING).splitlines()
+        if line.strip().startswith("|")
+    ]
+    if not table:
         return []
-    tree = code_blocks[0]
-    edges: list[WorkflowEdge] = []
-    stack: list[tuple[int, str]] = []
-    for raw_line in tree.splitlines():
-        branch_depth = arrow_depth(raw_line)
-        names = SKILL_REF_PATTERN.findall(raw_line)
-        if not names:
-            if branch_depth >= 0:
-                stack = [(level, skill) for level, skill in stack if level < branch_depth]
+    header = [cell.lower() for cell in split_table_row(table[0])]
+    if "skill" not in header or "use for" not in header:
+        return []
+    rows: list[AgentSkillRow] = []
+    for line in table[1:]:
+        cells = dict(zip(header, split_table_row(line), strict=False))
+        skill = BACKTICKED_SKILL_PATTERN.search(cells.get("skill", ""))
+        if skill is None:
             continue
-        depth = branch_depth if branch_depth >= 0 else raw_line.find("/")
-        parent = next((skill for level, skill in reversed(stack) if level < depth), None)
-        previous = parent
-        for name in names:
-            if previous and previous != name:
-                edges.append(WorkflowEdge(source=previous, target=name, evidence=raw_line.strip()))
-            previous = name
-        stack = [(level, skill) for level, skill in stack if level < depth]
-        stack.append((depth, names[-1]))
-    return dedupe_workflow_edges(edges)
-
-
-def parse_task_patterns(markdown: str) -> list[dict[str, Any]]:
-    content = extract_section(markdown, "Task Recognition Patterns")
-    patterns: list[dict[str, Any]] = []
-    for raw_line in content.splitlines():
-        line = raw_line.strip()
-        if "→" not in line:
-            continue
-        skills = SKILL_REF_PATTERN.findall(line)
-        if not skills:
-            continue
-        phrases = QUOTED_PATTERN.findall(line.split("→", 1)[0])
-        patterns.append({"skill_name": skills[0], "phrases": phrases})
-    return patterns
+        rows.append(
+            AgentSkillRow(
+                skill=skill.group(1),
+                use_for=cells.get("use for", ""),
+                phrases=QUOTED_PATTERN.findall(cells.get("phrases", "")),
+                after=BACKTICKED_SKILL_PATTERN.findall(cells.get("after", "")),
+            )
+        )
+    return rows
 
 
 def tokenize(text: str) -> set[str]:
@@ -410,6 +444,21 @@ def is_software_repo_review(query_tokens: set[str]) -> bool:
     return has_repo_subject and has_review_action and not has_scientific_subject
 
 
+def is_manuscript_prose_request(query_tokens: set[str]) -> bool:
+    """Detect a request to write or revise manuscript prose.
+
+    The router has no prose skill, so such a request stays silent instead of
+    matching a skill that shares one of its topic words (binning, viral genome,
+    methods). A workflow engine or run artifacts in the request mean the user
+    wants Methods generated from a run, which the docwriter skill owns.
+    """
+    return (
+        bool(query_tokens & PROSE_ACTION_TOKENS)
+        and bool(query_tokens & MANUSCRIPT_TOKENS)
+        and not query_tokens & WORKFLOW_ARTIFACT_TOKENS
+    )
+
+
 def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     skills: dict[str, dict[str, Any]] = {}
     for skill_file in sorted((repo_root / "skills").glob("*/SKILL.md")):
@@ -421,6 +470,7 @@ def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, di
             "name": name,
             "title": extract_first_heading(body) or name,
             "description": frontmatter.get("description", "").strip(),
+            "hidden": frontmatter.get(HIDDEN_KEY, "").strip().lower() == "true",
             "path": str(skill_file.relative_to(repo_root)),
             "platforms": extract_platforms(frontmatter.get("platforms", "")),
             "agents": [],
@@ -435,13 +485,29 @@ def parse_repo(repo_root: Path) -> tuple[dict[str, dict[str, Any]], dict[str, di
         raw_text = agent_file.read_text(encoding="utf-8")
         frontmatter, body = split_frontmatter(raw_text)
         name = frontmatter.get("name", agent_file.stem).strip()
+        rows = parse_agent_table(body)
+        skill_sections: dict[str, list[str]] = {}
+        for row in rows:
+            skill_sections.setdefault(row.use_for, []).append(row.skill)
         agent = {
             "name": name,
             "description": frontmatter.get("description", "").strip(),
             "path": str(agent_file.relative_to(repo_root)),
-            "skill_sections": parse_skill_sections(body),
-            "workflow_edges": parse_workflow_edges(body),
-            "task_patterns": parse_task_patterns(body),
+            "skill_sections": skill_sections,
+            "workflow_edges": [
+                WorkflowEdge(
+                    source=before,
+                    target=row.skill,
+                    evidence=f"{row.skill} after {before}",
+                )
+                for row in rows
+                for before in dict.fromkeys(row.after)
+            ],
+            "task_patterns": [
+                {"skill_name": row.skill, "phrases": row.phrases}
+                for row in rows
+                if row.phrases
+            ],
         }
         agents[name] = agent
         for section, section_skills in agent["skill_sections"].items():
@@ -544,7 +610,7 @@ def _build_catalog(repo_root: Path) -> dict[str, Any]:
                         "source_type": "agent",
                         "target_type": "skill",
                         "confidence": 1.0,
-                        "provenance": ["mandatory_skill_usage"],
+                        "provenance": ["agent_skill_table"],
                         "evidence": [agent["path"]],
                     }
                 )
@@ -559,7 +625,7 @@ def _build_catalog(repo_root: Path) -> dict[str, Any]:
                     "source_type": "skill",
                     "target_type": "skill",
                     "confidence": 0.95,
-                    "provenance": ["workflow_decision_tree"],
+                    "provenance": ["agent_skill_table"],
                     "evidence": [workflow_edge.evidence],
                 }
             )
@@ -571,7 +637,7 @@ def _build_catalog(repo_root: Path) -> dict[str, Any]:
                     "source_type": "skill",
                     "target_type": "skill",
                     "confidence": 0.95,
-                    "provenance": ["workflow_decision_tree"],
+                    "provenance": ["agent_skill_table"],
                     "evidence": [workflow_edge.evidence],
                 }
             )
@@ -730,6 +796,51 @@ def filter_catalog_payload(
         "edge_count": len(catalog["edges"]),
     }
     return filtered
+
+
+def expand_skill_selection(
+    skills: dict[str, dict[str, Any]], selected: list[str]
+) -> tuple[list[str], str]:
+    """Add the skills a selection needs to work.
+
+    The pipeline router and its hidden stages need each other: a stage is
+    reached only through the router, and the router names every stage. Selecting
+    the router or any stage therefore selects the whole group. Expanding an
+    expanded selection changes nothing.
+
+    Args:
+        skills: Catalog skills by name, each with its ``hidden`` flag.
+        selected: Skill names or directories the user selected.
+
+    Returns:
+        The expanded names, and one line that says what was added ("" if none).
+    """
+    names = [_skill_filter_name(value) for value in selected]
+    if PIPELINE_ROUTER not in skills:
+        return names, ""
+    stages = sorted(name for name, skill in skills.items() if skill.get("hidden"))
+    group = [PIPELINE_ROUTER, *stages]
+    if not set(group) & set(names):
+        return names, ""
+    added = [name for name in group if name not in names]
+    if not added:
+        return names, ""
+    message = (
+        f"Selection expanded, added {', '.join(added)} "
+        f"({PIPELINE_ROUTER} and its stage skills install together)"
+    )
+    return [*names, *added], message
+
+
+def announce_expanded_selection(
+    payload: dict[str, Any], selected: list[str]
+) -> list[str]:
+    """Expand a skill selection and print what was added to stderr."""
+    skills = {skill["name"]: skill for skill in payload["catalog"]["skills"]}
+    names, message = expand_skill_selection(skills, selected)
+    if message:
+        print(message, file=sys.stderr)
+    return names
 
 
 def write_outputs(payload: dict[str, Any], out_dir: Path) -> None:
@@ -1047,6 +1158,30 @@ def _result_paths(
     return agent_path, skill_paths
 
 
+def _router_first(
+    primary_skills: list[str],
+    skills: dict[str, dict[str, Any]],
+    allowed_skills: set[str] | None,
+    platform: str,
+) -> list[str]:
+    """Put the pipeline router first when a hidden stage skill is primary.
+
+    The model does not see hidden skills, so the router is its only way in.
+    Skip it when the pinned agent or the platform cannot use the router.
+    """
+    router = skills.get(PIPELINE_ROUTER)
+    if router is None or not any(skills[name].get("hidden") for name in primary_skills):
+        return primary_skills
+    if allowed_skills is not None and PIPELINE_ROUTER not in allowed_skills:
+        return primary_skills
+    if platform in ("claude", "codex") and platform not in router["platforms"]:
+        return primary_skills
+    return [
+        PIPELINE_ROUTER,
+        *(name for name in primary_skills if name != PIPELINE_ROUTER),
+    ]
+
+
 def route_request(
     task: str,
     agent: str | None,
@@ -1065,7 +1200,10 @@ def route_request(
     query_tokens = tokenize(task)
     allowed_skills = _allowed_skills_for_agent(agent, agents)
 
-    if agent is None and is_software_repo_review(query_tokens):
+    if agent is None and (
+        is_software_repo_review(query_tokens)
+        or is_manuscript_prose_request(query_tokens)
+    ):
         return {
             "task": task,
             "platform": platform,
@@ -1073,6 +1211,7 @@ def route_request(
             "primary_skills": [],
             "supporting_skills": [],
             "ordered_skills": [],
+            "hidden_skills": [],
             "skill_scores": {},
             "reasons": {},
             "agent_path": None,
@@ -1093,12 +1232,17 @@ def route_request(
         else None
     )
 
+    primary_skills = _router_first(primary_skills, skills, allowed_skills, platform)
     dep_skills = ordered_dependencies(primary_skills, edges, allowed_skills=allowed_skills)
     primary_set = set(primary_skills)
     # Order only the primary + strict-dependency set through the workflow
     # topological sort — pulling compose_with neighbours through it produces
     # huge "also consider" tails of unrelated skills.
     ordered_skills = ordered_workflow(dep_skills, edges)
+    if PIPELINE_ROUTER in ordered_skills:
+        ordered_skills = [PIPELINE_ROUTER] + [
+            n for n in ordered_skills if n != PIPELINE_ROUTER
+        ]
     compose_extras = _compose_extras(primary_set, dep_skills, edges, allowed_skills, platform, skills)
     supporting_only = [name for name in dep_skills if name not in primary_set] + compose_extras
 
@@ -1113,8 +1257,17 @@ def route_request(
         "primary_skills": primary_skills,
         "supporting_skills": supporting_only,
         "ordered_skills": ordered_skills,
+        "hidden_skills": [
+            name
+            for name in dict.fromkeys([*ordered_skills, *supporting_only])
+            if skills.get(name, {}).get("hidden")
+        ],
         "skill_scores": {name: round(score, 3) for name, score in ranked_pairs},
-        "reasons": {name: sorted(set(values)) for name, values in reasons.items() if name in ranked_names},
+        "reasons": {
+            name: sorted(set(values))
+            for name, values in reasons.items()
+            if name in ranked_names
+        },
         "agent_path": agent_path,
         "skill_paths": skill_paths,
     }
@@ -1220,6 +1373,11 @@ def format_route_result(result: dict[str, Any]) -> str:
         f"Supporting skills: {', '.join(result['supporting_skills']) or 'none'}",
         f"Suggested order: {' -> '.join(result['ordered_skills']) or 'none'}",
     ]
+    if result["hidden_skills"]:
+        lines.append(
+            f"Hidden stage skills (read the file after {PIPELINE_ROUTER}): "
+            f"{', '.join(result['hidden_skills'])}"
+        )
     if result["agent_path"]:
         lines.append(f"Agent file: {result['agent_path']}")
     for name, path in result["skill_paths"].items():

@@ -67,8 +67,31 @@ class HookScriptTests(unittest.TestCase):
     def test_prompt_flag_bypasses_stdin(self) -> None:
         result = run_hook("", "--text", "--prompt", "find recent arxiv preprints on protein language models")
         self.assertEqual(result.returncode, 0)
-        self.assertIn("arxiv-search", result.stdout)
+        self.assertIn("preprint-search", result.stdout)
         self.assertIn("literature-expert", result.stdout)
+
+    def test_pipeline_hint_names_the_router_and_marks_stage_skills_hidden(self) -> None:
+        result = run_hook(
+            "", "--text", "--prompt", "assemble a metagenome and recover MAGs"
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        lines = result.stdout.splitlines()
+        primary = next(line for line in lines if line.startswith("- Primary skills:"))
+        stages = next(line for line in lines if line.startswith("- Stage skills"))
+        self.assertIn("`/omics-pipeline`", primary)
+        self.assertNotIn("bio-assembly-qc", primary)
+        self.assertIn("`bio-assembly-qc`", stages)
+        self.assertNotIn("`/bio-assembly-qc`", result.stdout)
+
+    def test_visible_skill_hint_has_no_stage_line(self) -> None:
+        result = run_hook(
+            "",
+            "--text",
+            "--prompt",
+            "find recent arxiv preprints on protein language models",
+        )
+        self.assertNotIn("Stage skills", result.stdout)
+        self.assertNotIn("omics-pipeline", result.stdout)
 
     def test_bare_prompt_input_not_json(self) -> None:
         # Some harnesses pass the prompt as plain text on stdin.

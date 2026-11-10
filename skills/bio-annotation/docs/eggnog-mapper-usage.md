@@ -456,7 +456,7 @@ export PATH="/path/to/pixi/envs/default/bin:${PATH}"
 8. **Save all outputs**: Keep seed orthologs and hits files for troubleshooting
 9. **Use resume feature**: Enable `--resume` for large datasets
 10. **Never use `--dbmem` with <128 GB RAM**: It will OOM-kill; see resource guidelines above
-11. **Use a debug-queue smoke job**: Submit 2-3 proteins with a short `sbatch` job to verify PATH, database access, and the exact CLI before submitting arrays; do not compute on the login node
+11. **Use a short smoke job**: Submit 2-3 proteins with a short `sbatch` job to verify PATH, database access, and the exact CLI before submitting arrays; queue and QOS choice (a debug queue only where the site's rules allow it) and login-node limits follow `hpc-slurm` and the `omics-pipeline` rules
 
 ## Integration with Other Tools
 

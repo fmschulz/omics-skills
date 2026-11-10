@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bio Interdomain HGT"
+  short_description: "Detect and polarize interdomain horizontal gene transfer"
+  default_prompt: "Use the bio-interdomain-hgt stage to detect and polarize horizontal gene transfer for this query genome."
+policy:
+  allow_implicit_invocation: false

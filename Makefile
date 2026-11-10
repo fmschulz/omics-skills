@@ -10,6 +10,7 @@
 
 .PHONY: help install install-claude install-codex install-selected \
         install-skills install-catalog build-catalog prune-removed-skills \
+        prune-removed-agents \
         link-claude-skills link-codex-skills \
         install-hook uninstall-hook hook-status benchmark check-deps \
         uninstall uninstall-selected uninstall-claude uninstall-codex \
@@ -22,7 +23,7 @@ SCRIPTS_DIR := $(CURDIR)/scripts
 CATALOG_DIR := $(CURDIR)/catalog
 CATALOG_SRC_DIR ?= $(CATALOG_DIR)
 
-AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md dataviz-artist.md
+AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md
 AGENT_COUNT := $(words $(AGENT_FILES))
 SKILL_DIRS := $(notdir $(wildcard $(SKILLS_DIR)/*))
 
@@ -91,15 +92,17 @@ install-codex: build-catalog install-skills install-catalog $(CODEX_LINK_TARGET)
 
 # Build a catalog containing only the selected components, install just those,
 # and point both runtimes at the result.
-install-selected: ## Install only SELECTED_AGENT_FILES / SELECTED_SKILL_DIRS
+install-selected: prune-removed-agents ## Install only SELECTED_AGENT_FILES / SELECTED_SKILL_DIRS
 	@set -e; \
 	if [ -n "$(strip $(SELECTED_SKILL_DIRS))" ]; then \
+		selected=$$(python3 $(SCRIPTS_DIR)/skill_index.py expand-selection --repo $(CURDIR) $(SELECTED_SKILL_DIRS)); \
 		tmp_catalog=$$(mktemp -d); \
 		trap 'rm -rf "$$tmp_catalog"' EXIT; \
+		include=""; for s in $$selected; do include="$$include --include-skill $$s"; done; \
 		python3 $(SCRIPTS_DIR)/skill_index.py build --repo $(CURDIR) --out "$$tmp_catalog" \
 			$(if $(strip $(SELECTED_AGENT_FILES)),$(foreach a,$(SELECTED_AGENT_FILES),--include-agent $(a)),--include-agent __none__) \
-			$(foreach s,$(SELECTED_SKILL_DIRS),--include-skill $(s)) >/dev/null; \
-		$(MAKE) --no-print-directory install-skills SELECTED_SKILL_DIRS="$(SELECTED_SKILL_DIRS)"; \
+			$$include >/dev/null; \
+		$(MAKE) --no-print-directory install-skills SELECTED_SKILL_DIRS="$$selected"; \
 		$(MAKE) --no-print-directory install-catalog CATALOG_SRC_DIR="$$tmp_catalog"; \
 		$(if $(strip $(CLAUDE_LINK_TARGET) $(CODEX_LINK_TARGET)),$(MAKE) --no-print-directory $(CLAUDE_LINK_TARGET) $(CODEX_LINK_TARGET);,:;) \
 	else \
@@ -185,9 +188,20 @@ prune-removed-skills: ## Retire skills present in the installed catalog but abse
 		--installed-skills-dir $(AGENTS_SKILLS_DIR) \
 		--backup-dir $(AGENTS_CATALOG_DIR)/retired-skills
 
+# Retire installed agents that left the pack. It runs before the catalog is
+# replaced, because a copied catalog is the record of what this pack installed.
+prune-removed-agents: ## Retire installed agents absent from this checkout
+	@for dir in $(CLAUDE_AGENTS_DIR) $(CODEX_AGENTS_DIR); do \
+		python3 $(SCRIPTS_DIR)/prune_removed_agents.py \
+			--agents-dir $(AGENTS_DIR) \
+			--installed-catalog $(AGENTS_CATALOG_DIR)/catalog.json \
+			--installed-agents-dir $$dir \
+			--backup-dir $(AGENTS_CATALOG_DIR)/retired-agents; \
+	done
+
 # Replaced entries are archived under ~/.agents/omics-skills/previous-skills so a
 # stale copy never stays discoverable as a skill. `make clean` clears that archive.
-install-skills: prune-removed-skills ## Install skills to ~/.agents/skills
+install-skills: prune-removed-skills prune-removed-agents ## Install skills to ~/.agents/skills
 	@echo "$(BLUE)Installing skills to $(AGENTS_SKILLS_DIR)...$(NC)"
 	@mkdir -p $(AGENTS_SKILLS_DIR)
 	@set -e; for name in $(SELECTED_SKILL_DIRS); do \
@@ -359,15 +373,15 @@ validate: ## Validate installation
 	if [ $$errors -eq 0 ]; then echo "  $(GREEN)OK$(NC) installation valid"; \
 	else echo "  $(RED)ERROR$(NC) found $$errors problem(s)"; exit 1; fi
 
-clean: ## Remove agent backups and the previous-skills / retired-skills archives
+clean: ## Remove agent backups and the previous-skills / retired-skills / retired-agents archives
 	@for agent in $(AGENT_FILES); do \
 		name=$${agent%.md}; \
 		rm -f $(CLAUDE_AGENTS_DIR)/$$agent.bak* \
 			$(CODEX_AGENTS_DIR)/$$name.toml.bak* \
 			$(CODEX_AGENTS_DIR)/$$name.md.legacy.bak* 2>/dev/null || true; \
 	done
-	@rm -rf $(AGENTS_CATALOG_DIR)/previous-skills $(AGENTS_CATALOG_DIR)/retired-skills 2>/dev/null || true
-	@echo "$(GREEN)OK Removed agent backups and the previous-skills and retired-skills archives$(NC)"
+	@rm -rf $(AGENTS_CATALOG_DIR)/previous-skills $(AGENTS_CATALOG_DIR)/retired-skills $(AGENTS_CATALOG_DIR)/retired-agents 2>/dev/null || true
+	@echo "$(GREEN)OK Removed agent backups and the previous-skills, retired-skills and retired-agents archives$(NC)"
 
 ##@ Testing
 

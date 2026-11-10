@@ -5,16 +5,14 @@ description: Author, run and convert marimo or Jupyter notebooks. Use when deliv
 
 # Notebooks
 
-A single skill for authoring, validating, and delivering reproducible analysis notebooks. Marimo is the default format; Jupyter is supported for existing `.ipynb` files and when a downstream tool requires JSON. Conversion between the two formats is part of this skill.
+Author, validate and deliver reproducible analysis notebooks in marimo or Jupyter, and convert between the two. Installed at `~/.agents/skills/notebooks`; set `NOTEBOOKS_SKILL="${NOTEBOOKS_SKILL:-$HOME/.agents/skills/notebooks}"` for the helper scripts.
 
-A notebook is not "done" until it has been executed end-to-end on a fresh kernel and every figure is embedded in the delivered file.
+A notebook is not "done" until it has been executed end to end on a fresh kernel and every figure is embedded in the delivered file.
 
 ## Instructions
 
-1. **Pick the format.**
-   - New notebook: write a marimo `.py` notebook. Use the canonical cell layout (one concept per cell, final expression renders, no `if` guards around outputs, no `try/except` for control flow).
-   - Existing `.ipynb` to extend or polish: keep it as Jupyter unless the user asks to convert.
-   - Conversion: see "Convert between marimo and Jupyter" below.
+1. **Pick the format.** Marimo is the default for a new standalone notebook. Use Jupyter when the project's record format is Jupyter (for example a bester project record) or the project already uses `.ipynb`; keep an existing `.ipynb` as Jupyter unless the user asks to convert.
+   - Marimo layout: one concept per cell, final expression renders, no `if` guards around outputs, no `try/except` for control flow.
 
 2. **Outline before coding.** Write the notebook plan (purpose, data sources, analysis steps, expected outputs/plots) as the first markdown cell, then implement against that plan.
 
@@ -48,29 +46,24 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
      ```
      Add every import used in the notebook to `pixi.toml` so the kernel can resolve it from a clean install.
 
+
 5. **Load data with project-relative paths.** Prefer DuckDB for TSV/Parquet (`duckdb.read_csv`, `duckdb.read_parquet`). Avoid absolute paths and `~`. Avoid hidden state from the runtime working directory.
 
 6. **Run checks and all cells to generate plots.** Execute the notebook headlessly on a fresh kernel before delivery:
    - Marimo: run `uvx marimo check --strict <notebook.py>` before export. Then run `uvx marimo export ipynb <notebook.py> -o <notebook.executed.ipynb> --include-outputs --sandbox -f`. For a deterministic HTML artifact, use `uvx marimo export html <notebook.py> -o <notebook.html> --sandbox -f`. Run the strict check again after the final edit/export cycle.
-   - Jupyter: resolve the installed skill root, then run its self-provisioning helper (or use the equivalent repo path while developing this skill):
+   - Jupyter: run the self-provisioning helper:
      ```bash
-     NOTEBOOKS_SKILL="${NOTEBOOKS_SKILL:-$HOME/.agents/skills/notebooks}"
      uv run --script "$NOTEBOOKS_SKILL/scripts/execute_notebook.py" \
        <notebook.ipynb> --kernel <project>
      ```
      The helper writes `<notebook>.executed.ipynb`. `pixi run jupyter nbconvert --to notebook --execute --inplace <notebook.ipynb>` is also valid when Jupyter is declared in the project environment.
 
-7. **Evaluate the plots, then refine.** This step is required. Figures follow `/beautiful-data-viz` (greyscale first, color only to encode information, colorblind-safe, no in-plot titles on manuscript figures); [references/plot_style.md](references/plot_style.md) has the notebook style cell. After the run-all execution:
-   - Open the executed notebook (or exported HTML) and visually inspect every figure.
-   - Check for: empty axes, mis-scaled axes (log when linear was intended or vice versa), missing labels or legends, overlapping ticks, illegible font sizes at target output size, color that encodes nothing, colorbars without units, NaN-driven gaps, axis ranges clipping data, broken layouts.
-   - Place each caption below its figure: the figure cell comes first and the caption markdown cell follows it.
-   - If a figure is wrong or unclear, edit the source cell and re-run end-to-end. Repeat until each figure communicates what the surrounding markdown says it communicates.
-   - Record what changed between revisions in a brief "Figure revision log" markdown cell or in the run log.
+7. **Evaluate the plots, then refine.** This step is required. Figures follow `/beautiful-data-viz`; [references/plot_style.md](references/plot_style.md) has the notebook style cell. After the run-all execution:
+   - Open the executed notebook (or exported HTML) and inspect every figure.
+   - Check for: empty axes, mis-scaled axes (log versus linear), missing labels or legends, overlapping ticks, illegible fonts at target size, colour that encodes nothing, colourbars without units, NaN-driven gaps, ranges that clip data, broken layouts.
+   - If a figure is wrong or unclear, edit the source cell and re-run end to end. Record revisions in a brief "Figure revision log" markdown cell or in the run log.
 
-8. **Deliver pre-executed notebooks.** The artifact handed back to the user must:
-   - Have every cell executed against the registered kernel.
-   - Embed every figure (PNG / SVG cell outputs) directly in the `.ipynb` (or in the marimo HTML export).
-   - Be reproducible from a clean clone: a new environment built from the PEP 723 header (marimo) or `pixi install` + `jupyter nbconvert --to notebook --execute` (Jupyter) must reproduce the same notebook end-to-end.
+8. **Deliver pre-executed notebooks.** The delivered artifact has every cell executed against the registered kernel, every figure embedded (PNG or SVG cell outputs in the `.ipynb`, or the marimo HTML export), re-run instructions in the header or README, and seeds set where results are random. It must reproduce end to end from a clean clone: a new environment built from the PEP 723 header (marimo) or `pixi install` plus `jupyter nbconvert --to notebook --execute` (Jupyter). No delivered notebook keeps the literal `<PIXI_PROJECT_KERNEL>` placeholder.
 
 9. **Convert between marimo and Jupyter** when the user asks for it:
    - Use `scripts/convert_notebook.py` for a pinned conversion path. The fixtures under `fixtures/` exercise both directions. Replace `<PROJECT_NAME>` and `<PIXI_PROJECT_KERNEL>` in copied Jupyter templates with the actual Pixi kernel before execution.
@@ -78,131 +71,22 @@ A notebook is not "done" until it has been executed end-to-end on a fresh kernel
    - marimo `.py` → `.ipynb`: `uvx marimo export ipynb <notebook.py> -o <notebook.ipynb> --include-outputs --sandbox -f`.
    - After conversion, re-run step 6 (check/execute), step 7 (inspect plots), and step 8 (deliver pre-executed).
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| Resolve bundled helpers | `NOTEBOOKS_SKILL="${NOTEBOOKS_SKILL:-$HOME/.agents/skills/notebooks}"` |
-| Author marimo notebook | Edit `.py`, run `uvx marimo edit --sandbox <notebook.py>` |
-| Author Jupyter notebook | Register pixi kernel, set notebook `kernelspec`, edit `.ipynb` |
-| Lint marimo notebook | `uvx marimo check --strict <notebook.py>` |
-| Execute marimo headlessly | `uvx marimo export ipynb <notebook.py> -o <executed.ipynb> --include-outputs --sandbox -f` |
-| Execute Jupyter headlessly | `uv run --script "$NOTEBOOKS_SKILL/scripts/execute_notebook.py" <notebook.ipynb> --kernel <project>` |
-| Convert `.ipynb` → marimo | `uvx marimo convert <notebook.ipynb> -o <notebook.py>` |
-| Convert marimo → `.ipynb` | `uvx marimo export ipynb <notebook.py> -o <notebook.ipynb> --include-outputs --sandbox -f` |
-| Marimo references | `references/notebook_structure.md`, `references/UI.md`, `references/SQL.md`, `references/STATE.md`, `references/EXPORTS.md`, `references/PYTEST.md`, `references/TOP-LEVEL-IMPORTS.md`, `references/DEPLOYMENT.md` |
-| Conversion references | `references/widgets.md`, `references/latex.md` |
-| Pixi + Jupyter | `references/pixi_jupyter.md` |
-| Plot style | `references/plot_style.md` |
-| Data loading (DuckDB/TSV/Parquet) | `references/data_loading_duckdb.md` |
-| Definition-of-done checklist | `references/verification.md` |
-| Templates | `templates/marimo_notebook_template.py`, `templates/jupyter_kiss_template.py` |
-| Headless executor | `scripts/execute_notebook.py` |
-| Jupyter structure linter | `uv run --script "$NOTEBOOKS_SKILL/scripts/lint_notebook_structure.py" <notebook.ipynb>` |
-| Pinned converter | `uv run --script "$NOTEBOOKS_SKILL/scripts/convert_notebook.py" --help` |
+10. **References.** Marimo: `references/notebook_structure.md`, `UI.md`, `SQL.md`, `STATE.md`, `EXPORTS.md`, `PYTEST.md`, `TOP-LEVEL-IMPORTS.md`, `DEPLOYMENT.md`. Conversion: `references/widgets.md`, `references/latex.md`. Pixi and Jupyter: `references/pixi_jupyter.md`. DuckDB loading: `references/data_loading_duckdb.md`. Templates (start a new notebook from one): `templates/marimo_notebook_template.py`, `templates/jupyter_kiss_template.py`. Jupyter structure linter: `uv run --script "$NOTEBOOKS_SKILL/scripts/lint_notebook_structure.py" <notebook.ipynb>`.
 
 ## Input Requirements
 
-- Notebook scope and goals (what question, what data, what output).
-- Data file paths (TSV/Parquet preferred for DuckDB ingestion).
-- For marimo: `uv` available on PATH, or `marimo` installed in the environment.
-- For Jupyter: `pixi` available and a `pixi.toml` (or equivalent env spec) for the project.
+Notebook scope (question, data, outputs) and data paths (TSV or Parquet preferred). Marimo needs `uv`; Jupyter needs `pixi` and a `pixi.toml`.
 
 ## Output
 
-- A reproducible notebook (`.py` for marimo, `.ipynb` for Jupyter) with narrative markdown cells, code cells, and embedded figures.
-- A pre-executed copy (`<notebook>.executed.ipynb` or an `.html` export) where every cell has been run on a fresh kernel.
-- A short "Figure revision log" recording any plot-revision rounds.
+A notebook (`.py` for marimo, `.ipynb` for Jupyter) with narrative cells, code and embedded figures, plus a pre-executed copy (`<notebook>.executed.ipynb` or an `.html` export).
 
 ## Quality Gates
 
-- [ ] Notebook format chosen explicitly (marimo by default; Jupyter only when justified or when the input is `.ipynb`).
-- [ ] Kernel registered and pinned: marimo PEP 723 header complete, or Jupyter `kernelspec` set to a named pixi kernel.
-- [ ] Every Python import used in the notebook is declared in the dependency spec (PEP 723 header or `pixi.toml`).
-- [ ] Data paths are project-relative and verified to exist.
-- [ ] Headless run-all succeeds on a fresh kernel: marimo export uses `--include-outputs --sandbox`, or Jupyter execution exits zero.
-- [ ] Every figure is inspected after execution; any figure that fails the visual checks above triggers a code revision and re-run.
-- [ ] Figures pass the `/beautiful-data-viz` quality gates: grey unless color encodes information, no in-plot titles on manuscript figures, caption cell below the figure.
-- [ ] Delivered notebook has every cell pre-executed with figures embedded; users do not have to run the notebook to see the plots.
-- [ ] For marimo: `uvx marimo check --strict <notebook.py>` passes before and after export.
-- [ ] For marimo: no malformed markdown cells, quoted-string fragments inside `mo.md(...)`, trailing empty cells, or `return`-only placeholder cells remain.
-- [ ] Template dependencies use bounded versions and no delivered notebook retains the literal `<PIXI_PROJECT_KERNEL>` placeholder.
-- [ ] Jupyter-to-marimo and marimo-to-Jupyter conversions both pass the fixture gate.
-
-## Examples
-
-### Example 1: New marimo notebook
-
-```python
-# /// script
-# requires-python = ">=3.12"
-# dependencies = ["marimo", "polars", "duckdb", "matplotlib"]
-# ///
-
-import marimo
-app = marimo.App(width="medium")
-
-@app.cell
-def _():
-    import marimo as mo
-    import polars as pl
-    import duckdb
-    import matplotlib.pyplot as plt
-    return mo, pl, duckdb, plt
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    # Analysis notebook
-
-    This notebook loads project data, validates it, and renders the requested figures.
-    """)
-    return
-
-@app.cell
-def _(duckdb):
-    df = duckdb.read_parquet("data/measurements.parquet").pl()
-    df.head()
-    return (df,)
-
-@app.cell
-def _(df, plt):
-    _fig, _ax = plt.subplots(figsize=(5, 3.2))
-    _ax.scatter(df["x"], df["y"], s=10)
-    _ax.set_xlabel("x (units)"); _ax.set_ylabel("y (units)")
-    _fig
-    return
-```
-
-Then:
-```bash
-uvx marimo check --strict notebook.py
-uvx marimo export ipynb notebook.py -o notebook.executed.ipynb \
-  --include-outputs --sandbox -f
-uvx marimo check --strict notebook.py
-```
-
-### Example 2: Jupyter notebook with a named pixi kernel
-
-```bash
-# One-time kernel registration in the project root:
-pixi run python -m ipykernel install --user --name myproject --display-name "myproject (pixi)"
-
-# After authoring, run end-to-end on a fresh kernel:
-NOTEBOOKS_SKILL="${NOTEBOOKS_SKILL:-$HOME/.agents/skills/notebooks}"
-uv run --script "$NOTEBOOKS_SKILL/scripts/execute_notebook.py" notebooks/analysis.ipynb \
-  --kernel myproject \
-  --out notebooks/analysis.executed.ipynb
-```
-
-### Example 3: Convert `.ipynb` to marimo
-
-```bash
-uvx marimo convert notebooks/legacy.ipynb -o notebooks/legacy.py
-uvx marimo check --strict notebooks/legacy.py
-uvx marimo export ipynb notebooks/legacy.py -o notebooks/legacy.executed.ipynb \
-  --include-outputs --sandbox -f
-```
+- `uvx marimo check --strict <notebook.py>` passes before and after export, and no malformed markdown cells, quoted-string fragments inside `mo.md(...)`, or `return`-only placeholder cells remain.
+- Every import is declared in the PEP 723 header or `pixi.toml`; template dependencies use bounded versions.
+- Data paths are project-relative and verified to exist.
+- Both conversion directions pass the fixture gate.
 
 ## Troubleshooting
 

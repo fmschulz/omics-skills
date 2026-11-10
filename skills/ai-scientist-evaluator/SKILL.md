@@ -26,14 +26,19 @@ outputs, not plans.
    matching weights from
    [`assets/default_weight_profiles.yaml`](assets/default_weight_profiles.yaml).
    Use the primary scientific profile first for composite tasks, then add
-   manuscript comments as a secondary layer.
+   manuscript comments as a secondary layer. Worked profile choices for real
+   benchmark tasks: [`examples/bio_task_mappings.md`](examples/bio_task_mappings.md).
 5. Review with a four-person panel and synthesize a consensus:
    - scientific validity reviewer
    - computational and reproducibility reviewer
    - domain biology reviewer
-   - writing and editorial reviewer, who also checks the `/scientific-writing`
-     Manuscript Rules (each limitation stated once, no results restated in
-     legends, no unchecked explanations of results)
+   - writing and editorial reviewer, who scores `prose_quality` against these
+     rules: each supported claim stated once, plainly; each limitation stated
+     once, where it applies; no stacked qualifiers on a comparative claim that
+     the numbers support; no explanation of a result that was not checked;
+     legends describe what is shown and do not restate results; no script
+     names, internal flags or runtime bookkeeping in Results. For rewriting
+     prose, point the user to `academic-writing` with `stop-slop`.
 6. Apply hard gates before generous scoring. A submission is not
    publication-ready if required deliverables are missing, claims are not
    supported by visible outputs, provenance is untraceable, the core method is
@@ -75,52 +80,18 @@ outputs, not plans.
     reports. For completed JSON reviews, aggregate rankings with
     `uv run --script "$HOME/.agents/skills/ai-scientist-evaluator/scripts/aggregate_reviews.py" review1.json review2.json --out_md leaderboard.md`.
 
-## Quick Reference
-
-| Task | Action |
-|------|--------|
-| General scientific audit | Use profile `scientific-analysis` |
-| Worked profile-selection examples | Read [`examples/bio_task_mappings.md`](examples/bio_task_mappings.md) |
-| Phylogenomics or comparative genomics review | Use profile `phylogenomics-comparative-genomics` |
-| Viral functional genomics review | Use profile `viral-functional-genomics` |
-| Methods or software benchmark review | Use profile `methods-software` |
-| Manuscript or short communication review | Use profile `manuscript-packaging` |
-| Rank finished JSON reviews | Run `uv run --script "$HOME/.agents/skills/ai-scientist-evaluator/scripts/aggregate_reviews.py" review1.json review2.json --out_md leaderboard.md` |
-
 ## Input Requirements
 
-- The original task statement, success criteria, and any explicit constraints
-- One or more completed submissions or artifacts to review
-- Enough evidence to audit claims when available:
-  - notebooks, code, scripts, workflows, or repositories
-  - figures, tables, and manuscript drafts
-  - environment files, runtime notes, and benchmark context
-  - accession lists, database versions, citations, and provenance notes
-- Submission names or IDs when comparing multiple AI scientists
+- The original task statement, success criteria and constraints
+- One or more completed submissions, with the artifacts listed in step 3
+- Submission names or IDs when comparing several
 
-If key artifacts are missing, continue the review and mark the evidence gap
-explicitly instead of pretending certainty.
+If key artifacts are missing, continue and mark the evidence gap explicitly.
 
 ## Output
 
-For a single submission, produce:
-
-- a verdict paragraph
-- a gate-check table
-- a weighted score table
-- reviewer panel comments by category
-- answers to the most important critical questions
-- required revisions
-- a final recommendation label
-
-For multiple submissions, produce:
-
-- a consensus ranking table
-- per-submission totals and category scores
-- pairwise comparison notes
-- best-in-class awards for science, reproducibility, writing, and engineering
-- a winner with justification
-- a merge recommendation when combining strengths would outperform any one entry
+- One submission: verdict paragraph, gate-check table, weighted score table, panel comments by category, answers to the key questions, required revisions, recommendation label.
+- Several submissions: consensus ranking table, per-submission totals and category scores, pairwise notes, best-in-class awards (science, reproducibility, writing, engineering), a winner with justification, and a merge recommendation when combining strengths would beat any one entry.
 
 Use these recommendation labels:
 
@@ -132,60 +103,14 @@ Use these recommendation labels:
 
 ## Quality Gates
 
-- [ ] The review is anchored to the exact task rather than an easier adjacent one
-- [ ] Artifact inventory and missing evidence are stated explicitly
-- [ ] A task profile and weight set were chosen deliberately
-- [ ] Hard gates were checked before final scoring
-- [ ] Questions and red flags were grounded in the provided artifacts
+- [ ] The review is anchored to the exact task, not an easier adjacent one
+- [ ] Artifact inventory, missing evidence, task profile and hard gates are stated
 - [ ] Scores follow the anchored 0 to 5 scale and sum to a weighted total out of 100
-- [ ] Multi-submission rankings were done only after independent scoring
-- [ ] Final recommendations distinguish absent, flawed, weakly validated, and well-supported work
-
-## Examples
-
-### Example 1: Compare five AI scientist submissions
-
-```text
-Use $ai-scientist-evaluator to review five AI scientist submissions for the
-same task. Inspect notebooks, code, figures, runtime notes, and manuscripts.
-Score each submission with the appropriate weight profile, answer the critical
-questions, identify red flags, and produce a ranked consensus table with
-best-in-class awards.
-```
-
-### Example 2: Audit one submission for publication readiness
-
-```text
-Use $ai-scientist-evaluator to review this AI scientist submission as if you are
-a skeptical reviewer panel. Tell me whether the notebook and manuscript really
-support the main claims, score the work, and list the revisions required before
-I would trust it.
-```
-
-### Example 3: Rank finished JSON evaluations
-
-```bash
-uv run --script \
-  "$HOME/.agents/skills/ai-scientist-evaluator/scripts/aggregate_reviews.py" \
-  review_a.json review_b.json --out_md leaderboard.md
-```
-
-## Troubleshooting
-
-**Issue**: The submission includes only a polished manuscript and no underlying artifacts.
-**Solution**: Continue the review, but mark reproducibility and claim-evidence gaps explicitly and do not award publication-ready status.
-
-**Issue**: The task spans more than one domain profile.
-**Solution**: Score with the closest primary scientific profile first, then add manuscript or secondary-domain comments without inventing a new weight set unless the user asks for one.
-
-**Issue**: Multiple submissions look close in total score.
-**Solution**: Break ties with integrity, task completion, validation strength, and limitation handling before writing quality.
-
-**Issue**: A claim looks impressive but evidence is thin or missing.
-**Solution**: Penalize unsupported claims, cite the missing evidence directly, and keep the verdict skeptical.
+- [ ] Rankings come only after independent scoring
+- [ ] Recommendations distinguish absent, flawed, weakly validated and well-supported work
 
 ## Related Skills
 
-- `/bio-logic`: general scientific reasoning beyond AI evaluation
-- `/manuscript-review-council`: equivalent review for human-authored manuscripts
-- `/scientific-writing`: draft the evaluation writeup
+- `bio-logic`: general scientific reasoning beyond AI evaluation
+- `nelli-paper-review`: equivalent review for human-authored manuscripts
+- `academic-writing` with `stop-slop`: draft the evaluation writeup

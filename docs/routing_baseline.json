@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 66,
-    "passed": 66,
+    "total": 74,
+    "passed": 74,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -19,10 +19,12 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping"
         ],
         "supporting_skills": [],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping"
         ]
       }
@@ -33,17 +35,16 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-assembly-qc",
           "bio-binning-qc"
         ],
         "supporting_skills": [
           "bio-reads-qc-mapping",
-          "tracking-taxonomy-updates",
-          "bio-annotation",
-          "bio-gene-calling",
-          "bio-viromics"
+          "tracking-taxonomy-updates"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "tracking-taxonomy-updates",
@@ -57,17 +58,16 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-binning-qc",
           "bio-assembly-qc"
         ],
         "supporting_skills": [
           "tracking-taxonomy-updates",
-          "bio-reads-qc-mapping",
-          "bio-annotation",
-          "bio-gene-calling",
-          "bio-viromics"
+          "bio-reads-qc-mapping"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "tracking-taxonomy-updates",
@@ -81,16 +81,15 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-gene-calling"
         ],
         "supporting_skills": [
-          "bio-viromics",
-          "tracking-taxonomy-updates",
-          "bio-reads-qc-mapping"
+          "tracking-taxonomy-updates"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "tracking-taxonomy-updates",
-          "bio-viromics",
           "bio-gene-calling"
         ]
       }
@@ -101,18 +100,15 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-annotation"
         ],
         "supporting_skills": [
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-structure-annotation",
-          "bio-viromics",
-          "tracking-taxonomy-updates"
+          "bio-gene-calling"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-gene-calling",
-          "polars-dovmed",
           "bio-annotation"
         ]
       }
@@ -123,18 +119,15 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-annotation"
         ],
         "supporting_skills": [
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-structure-annotation",
-          "bio-viromics",
-          "tracking-taxonomy-updates"
+          "bio-gene-calling"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-gene-calling",
-          "polars-dovmed",
           "bio-annotation"
         ]
       }
@@ -145,6 +138,7 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-structure-annotation"
         ],
         "supporting_skills": [
@@ -153,6 +147,7 @@
           "bio-protein-clustering-pangenome"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-gene-calling",
           "bio-structure-annotation"
         ]
@@ -164,18 +159,18 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-phylogenomics"
         ],
         "supporting_skills": [
           "bio-annotation",
           "bio-gene-calling",
-          "polars-dovmed",
           "bio-protein-clustering-pangenome"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-gene-calling",
           "bio-annotation",
-          "polars-dovmed",
           "bio-phylogenomics"
         ]
       }
@@ -186,6 +181,7 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-assembly-qc",
           "bio-viromics"
         ],
@@ -193,9 +189,11 @@
           "bio-reads-qc-mapping",
           "tracking-taxonomy-updates",
           "bio-annotation",
-          "bio-gene-calling"
+          "bio-gene-calling",
+          "bio-phylogenomics"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "tracking-taxonomy-updates",
@@ -209,18 +207,18 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-protein-clustering-pangenome"
         ],
         "supporting_skills": [
           "bio-gene-calling",
           "bio-phylogenomics",
-          "polars-dovmed",
           "bio-annotation",
           "bio-structure-annotation"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-gene-calling",
-          "polars-dovmed",
           "bio-phylogenomics",
           "bio-protein-clustering-pangenome"
         ]
@@ -232,23 +230,22 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-structure-annotation",
           "bio-annotation",
           "public-db-lookup"
         ],
         "supporting_skills": [
           "bio-gene-calling",
-          "polars-dovmed",
-          "bio-viromics",
-          "tracking-taxonomy-updates",
-          "bio-protein-clustering-pangenome"
+          "bio-protein-clustering-pangenome",
+          "polars-dovmed"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-gene-calling",
+          "bio-annotation",
           "bio-structure-annotation",
-          "public-db-lookup",
-          "polars-dovmed",
-          "bio-annotation"
+          "public-db-lookup"
         ]
       }
     },
@@ -284,13 +281,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "arxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "arxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -300,13 +295,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "biorxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "biorxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -332,23 +325,21 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "tracking-taxonomy-updates",
           "bio-annotation",
           "bio-binning-qc"
         ],
         "supporting_skills": [
           "bio-assembly-qc",
-          "bio-gene-calling",
-          "polars-dovmed",
-          "bio-structure-annotation",
-          "bio-viromics"
+          "bio-gene-calling"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-assembly-qc",
           "tracking-taxonomy-updates",
           "bio-binning-qc",
           "bio-gene-calling",
-          "polars-dovmed",
           "bio-annotation"
         ]
       }
@@ -359,13 +350,14 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "tracking-taxonomy-updates"
         ],
         "supporting_skills": [
-          "bio-assembly-qc",
-          "bio-viromics"
+          "bio-assembly-qc"
         ],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-assembly-qc",
           "tracking-taxonomy-updates"
         ]
@@ -405,10 +397,12 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-foundation-housekeeping"
         ],
         "supporting_skills": [],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-foundation-housekeeping"
         ]
       }
@@ -419,13 +413,12 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-fasta-database-curator"
         ],
-        "supporting_skills": [
-          "bio-interdomain-hgt"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "bio-interdomain-hgt",
+          "omics-pipeline",
           "bio-fasta-database-curator"
         ]
       }
@@ -434,11 +427,13 @@
       "task": "inspect this unknown scientific data file and summarize its structure before plotting",
       "passed": true,
       "actual": {
-        "agent": "dataviz-artist",
+        "agent": "omics-scientist",
         "primary_skills": [
           "exploratory-data-analysis"
         ],
-        "supporting_skills": [],
+        "supporting_skills": [
+          "beautiful-data-viz"
+        ],
         "ordered_skills": [
           "exploratory-data-analysis"
         ]
@@ -450,19 +445,15 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
-          "bio-prefect-dask-nextflow",
+          "omics-pipeline",
           "bio-assembly-qc",
           "bio-workflow-methods-docwriter"
         ],
         "supporting_skills": [
-          "bio-reads-qc-mapping",
-          "bio-annotation",
-          "bio-gene-calling",
-          "bio-viromics",
-          "tracking-taxonomy-updates"
+          "bio-reads-qc-mapping"
         ],
         "ordered_skills": [
-          "bio-prefect-dask-nextflow",
+          "omics-pipeline",
           "bio-reads-qc-mapping",
           "bio-assembly-qc",
           "bio-workflow-methods-docwriter"
@@ -477,18 +468,8 @@
         "primary_skills": [
           "bio-logic"
         ],
-        "supporting_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "ai-scientist-evaluator",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -499,13 +480,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "arxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "arxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -515,13 +494,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "biorxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "biorxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -534,13 +511,9 @@
           "polars-dovmed"
         ],
         "supporting_skills": [
-          "bio-annotation",
-          "bio-logic",
           "crossref-lookup"
         ],
         "ordered_skills": [
-          "bio-annotation",
-          "bio-logic",
           "polars-dovmed"
         ]
       }
@@ -553,12 +526,7 @@
         "primary_skills": [
           "crossref-lookup"
         ],
-        "supporting_skills": [
-          "arxiv-search",
-          "biorxiv-search",
-          "polars-dovmed",
-          "scientific-impact-assessment"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
           "crossref-lookup"
         ]
@@ -570,14 +538,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "scientific-impact-assessment"
+          "crossref-lookup"
         ],
-        "supporting_skills": [
-          "crossref-lookup",
-          "polars-dovmed"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "scientific-impact-assessment"
+          "crossref-lookup"
         ]
       }
     },
@@ -585,47 +550,70 @@
       "task": "draft the methods section of a manuscript on metagenomic binning",
       "passed": true,
       "actual": {
-        "agent": "science-writer",
-        "primary_skills": [
-          "scientific-writing",
-          "bio-binning-qc",
-          "bio-workflow-methods-docwriter"
-        ],
-        "supporting_skills": [
-          "tracking-taxonomy-updates",
-          "bio-logic",
-          "crossref-lookup",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
-        "ordered_skills": [
-          "bio-workflow-methods-docwriter",
-          "scientific-writing",
-          "tracking-taxonomy-updates",
-          "bio-binning-qc"
-        ]
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
       }
     },
     {
       "task": "run a multi-reviewer critique on a submitted manuscript draft",
       "passed": true,
       "actual": {
-        "agent": "science-writer",
-        "primary_skills": [
-          "scientific-writing",
-          "manuscript-review-council"
-        ],
-        "supporting_skills": [
-          "ai-scientist-evaluator",
-          "bio-logic",
-          "polars-dovmed",
-          "crossref-lookup",
-          "proposal-review"
-        ],
-        "ordered_skills": [
-          "manuscript-review-council",
-          "scientific-writing"
-        ]
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "rewrite this Discussion for clarity while preserving every scientific claim and number",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "draft a polished author rebuttal and response letter to these reviewer comments",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "assess whether this author rebuttal resolves each decision-driving manuscript concern",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "extract a CSAG claim evidence argument graph from this manuscript",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "convert this PDF paper to Markdown with a section audit",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
       }
     },
     {
@@ -636,11 +624,7 @@
         "primary_skills": [
           "proposal-review"
         ],
-        "supporting_skills": [
-          "bio-logic",
-          "manuscript-review-council",
-          "scientific-writing"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
           "proposal-review"
         ]
@@ -655,19 +639,9 @@
           "bio-logic",
           "ai-scientist-evaluator"
         ],
-        "supporting_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "manuscript-review-council",
-          "scientific-writing",
-          "proposal-review"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
           "ai-scientist-evaluator",
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -682,73 +656,11 @@
           "notebooks"
         ],
         "supporting_skills": [
-          "bio-logic",
-          "manuscript-review-council",
-          "scientific-writing"
+          "beautiful-data-viz"
         ],
         "ordered_skills": [
           "ai-scientist-evaluator",
           "notebooks"
-        ]
-      }
-    },
-    {
-      "task": "rewrite this Discussion for clarity while preserving every scientific claim and number",
-      "passed": true,
-      "actual": {
-        "agent": "science-writer",
-        "primary_skills": [
-          "scientific-writing"
-        ],
-        "supporting_skills": [
-          "bio-logic",
-          "crossref-lookup",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
-        "ordered_skills": [
-          "scientific-writing"
-        ]
-      }
-    },
-    {
-      "task": "draft a polished author rebuttal and response letter to these reviewer comments",
-      "passed": true,
-      "actual": {
-        "agent": "science-writer",
-        "primary_skills": [
-          "scientific-writing"
-        ],
-        "supporting_skills": [
-          "bio-logic",
-          "crossref-lookup",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
-        "ordered_skills": [
-          "scientific-writing"
-        ]
-      }
-    },
-    {
-      "task": "assess whether this author rebuttal resolves each decision-driving manuscript concern",
-      "passed": true,
-      "actual": {
-        "agent": "science-writer",
-        "primary_skills": [
-          "scientific-writing",
-          "manuscript-review-council"
-        ],
-        "supporting_skills": [
-          "ai-scientist-evaluator",
-          "bio-logic",
-          "polars-dovmed",
-          "crossref-lookup",
-          "proposal-review"
-        ],
-        "ordered_skills": [
-          "manuscript-review-council",
-          "scientific-writing"
         ]
       }
     },
@@ -760,18 +672,8 @@
         "primary_skills": [
           "bio-logic"
         ],
-        "supporting_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "ai-scientist-evaluator",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -783,29 +685,26 @@
         "agent": "omics-scientist",
         "primary_skills": [
           "bio-workflow-methods-docwriter",
-          "bio-prefect-dask-nextflow"
+          "omics-pipeline"
         ],
         "supporting_skills": [],
         "ordered_skills": [
-          "bio-prefect-dask-nextflow",
+          "omics-pipeline",
           "bio-workflow-methods-docwriter"
         ]
       }
     },
     {
-      "task": "extract a CSAG claim evidence argument graph from this manuscript",
+      "task": "write the methods section from these Snakemake run artifacts",
       "passed": true,
       "actual": {
-        "agent": "science-writer",
+        "agent": "omics-scientist",
         "primary_skills": [
-          "csag-extraction"
+          "bio-workflow-methods-docwriter"
         ],
-        "supporting_skills": [
-          "pdf-to-md"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "pdf-to-md",
-          "csag-extraction"
+          "bio-workflow-methods-docwriter"
         ]
       }
     },
@@ -813,11 +712,13 @@
       "task": "create a publication-quality matplotlib figure of assembly statistics",
       "passed": true,
       "actual": {
-        "agent": "dataviz-artist",
+        "agent": "omics-scientist",
         "primary_skills": [
           "beautiful-data-viz"
         ],
-        "supporting_skills": [],
+        "supporting_skills": [
+          "notebooks"
+        ],
         "ordered_skills": [
           "beautiful-data-viz"
         ]
@@ -827,15 +728,15 @@
       "task": "build an interactive Plotly Dash dashboard of pipeline run metrics",
       "passed": true,
       "actual": {
-        "agent": "dataviz-artist",
+        "agent": "omics-scientist",
         "primary_skills": [
-          "plotly-dashboard-skill"
-        ],
-        "supporting_skills": [
           "beautiful-data-viz"
         ],
+        "supporting_skills": [
+          "notebooks"
+        ],
         "ordered_skills": [
-          "plotly-dashboard-skill"
+          "beautiful-data-viz"
         ]
       }
     },
@@ -843,11 +744,13 @@
       "task": "write a reproducible marimo notebook loading DuckDB data",
       "passed": true,
       "actual": {
-        "agent": "dataviz-artist",
+        "agent": "omics-scientist",
         "primary_skills": [
           "notebooks"
         ],
-        "supporting_skills": [],
+        "supporting_skills": [
+          "beautiful-data-viz"
+        ],
         "ordered_skills": [
           "notebooks"
         ]
@@ -857,11 +760,13 @@
       "task": "convert a Jupyter notebook to a marimo notebook",
       "passed": true,
       "actual": {
-        "agent": "dataviz-artist",
+        "agent": "omics-scientist",
         "primary_skills": [
           "notebooks"
         ],
-        "supporting_skills": [],
+        "supporting_skills": [
+          "beautiful-data-viz"
+        ],
         "ordered_skills": [
           "notebooks"
         ]
@@ -883,10 +788,12 @@
       "actual": {
         "agent": "omics-scientist",
         "primary_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping"
         ],
         "supporting_skills": [],
         "ordered_skills": [
+          "omics-pipeline",
           "bio-reads-qc-mapping"
         ]
       }
@@ -897,13 +804,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "arxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "arxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -913,15 +818,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "arxiv-search",
-          "biorxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "arxiv-search",
-          "biorxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -931,13 +832,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "arxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "arxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -947,13 +846,11 @@
       "actual": {
         "agent": "literature-expert",
         "primary_skills": [
-          "arxiv-search"
+          "preprint-search"
         ],
-        "supporting_skills": [
-          "crossref-lookup"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "arxiv-search"
+          "preprint-search"
         ]
       }
     },
@@ -965,12 +862,7 @@
         "primary_skills": [
           "crossref-lookup"
         ],
-        "supporting_skills": [
-          "arxiv-search",
-          "biorxiv-search",
-          "polars-dovmed",
-          "scientific-impact-assessment"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
           "crossref-lookup"
         ]
@@ -984,11 +876,7 @@
         "primary_skills": [
           "ai-scientist-evaluator"
         ],
-        "supporting_skills": [
-          "bio-logic",
-          "manuscript-review-council",
-          "scientific-writing"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
           "ai-scientist-evaluator"
         ]
@@ -1002,18 +890,8 @@
         "primary_skills": [
           "bio-logic"
         ],
-        "supporting_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
-          "ai-scientist-evaluator",
-          "manuscript-review-council",
-          "proposal-review"
-        ],
+        "supporting_skills": [],
         "ordered_skills": [
-          "bio-interdomain-hgt",
-          "bio-protein-clustering-pangenome",
-          "polars-dovmed",
           "bio-logic"
         ]
       }
@@ -1136,6 +1014,106 @@
         "primary_skills": [],
         "supporting_skills": [],
         "ordered_skills": []
+      }
+    },
+    {
+      "task": "Make a plot showing classifier calibration and cross-validation scores",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "beautiful-data-viz"
+        ],
+        "supporting_skills": [
+          "notebooks"
+        ],
+        "ordered_skills": [
+          "beautiful-data-viz"
+        ]
+      }
+    },
+    {
+      "task": "train a model on genome features and report calibration",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "omics-pipeline",
+          "bio-stats-ml-reporting"
+        ],
+        "supporting_skills": [
+          "beautiful-data-viz"
+        ],
+        "ordered_skills": [
+          "omics-pipeline",
+          "bio-stats-ml-reporting"
+        ]
+      }
+    },
+    {
+      "task": "plot random forest calibration",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "beautiful-data-viz"
+        ],
+        "supporting_skills": [
+          "notebooks"
+        ],
+        "ordered_skills": [
+          "beautiful-data-viz"
+        ]
+      }
+    },
+    {
+      "task": "review a manuscript on random forest calibration",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "count tRNA and rRNA genes in my assemblies",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "omics-pipeline",
+          "bio-gene-calling"
+        ],
+        "supporting_skills": [
+          "tracking-taxonomy-updates"
+        ],
+        "ordered_skills": [
+          "omics-pipeline",
+          "tracking-taxonomy-updates",
+          "bio-gene-calling"
+        ]
+      }
+    },
+    {
+      "task": "find structural homologs for proteins with no blast hits",
+      "passed": true,
+      "actual": {
+        "agent": "omics-scientist",
+        "primary_skills": [
+          "omics-pipeline",
+          "bio-structure-annotation"
+        ],
+        "supporting_skills": [
+          "bio-gene-calling",
+          "bio-annotation",
+          "bio-protein-clustering-pangenome"
+        ],
+        "ordered_skills": [
+          "omics-pipeline",
+          "bio-gene-calling",
+          "bio-structure-annotation"
+        ]
       }
     }
   ]

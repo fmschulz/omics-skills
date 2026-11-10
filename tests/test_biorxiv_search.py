@@ -10,7 +10,7 @@ from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills" / "biorxiv-search" / "scripts" / "search.py"
+SCRIPT = ROOT / "skills" / "preprint-search" / "scripts" / "biorxiv_search.py"
 
 
 def load_search_module():

@@ -3,12 +3,17 @@
 # requires-python = ">=3.11"
 # dependencies = ["PyYAML==6.0.3"]
 # ///
-"""Validate every skills/<name>/SKILL.md: frontmatter name matches the
-directory, name is a valid slug, required sections are present, and the file
-stays within the length budget.
+"""Validate every skills/<name>/SKILL.md and the skill set as a whole.
+
+Per skill: the frontmatter name matches the directory, the name is a valid slug,
+required sections are present, and the file stays within the length budget.
+Hidden stage skills (frontmatter `disable-model-invocation: true`) must be named
+in the `omics-pipeline` router and carry a Codex policy file that agrees.
 
 Importable (validate_skill / validate_all) so the checks are unit-testable, and
-runnable as a CLI for CI and the install smoke test."""
+runnable as a CLI for CI and the install smoke test.
+"""
+
 from __future__ import annotations
 
 import re
@@ -28,10 +33,23 @@ REQUIRED_SECTIONS = [
 MAX_LINES = 500
 MAX_NAME_LENGTH = 64
 MAX_DESCRIPTION_LENGTH = 400
-MAX_TOTAL_DESCRIPTION_LENGTH = 6500
+# Only model-visible skills count: a hidden skill's description is not in the prompt.
+MAX_TOTAL_DESCRIPTION_LENGTH = 3500
+HIDDEN_KEY = "disable-model-invocation"
+ROUTER_SKILL = "omics-pipeline"
+# A plugin install has no ~/.agents/skills links, so stages and router find each
+# other as sibling directories.
+ROUTER_POINTER = f"../{ROUTER_SKILL}/SKILL.md"
+SIBLING_RULE = "../<name>/SKILL.md"
 SLUG_PATTERN = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 TRIGGER_PATTERN = re.compile(r"\b(?:use when|use for|trigger when)\b", re.IGNORECASE)
 MARKDOWN_LINK_PATTERN = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+ROUTER_STAGE_ROW_PATTERN = re.compile(
+    r"^\|.*\|\s*`([a-z0-9]+(?:-[a-z0-9]+)*)`\s*\|\s*$", re.MULTILINE
+)
+INSTALLED_SKILL_PATH_PATTERN = re.compile(
+    r"~/\.agents/skills/([a-z0-9]+(?:-[a-z0-9]+)*)/"
+)
 CODE_FENCE_PATTERN = re.compile(r"```(?:bash|sh|shell)?\s*\n(.*?)```", re.DOTALL)
 INLINE_CODE_PATTERN = re.compile(r"`([^`\n]+)`")
 OUTPUT_EXTENSIONS = {
@@ -261,6 +279,10 @@ def validate_skill(skill_dir: Path) -> list[str]:
         errors.append(f"{name}: frontmatter name invalid ({fm_name})")
     if len(fm_name) > MAX_NAME_LENGTH:
         errors.append(f"{name}: frontmatter name too long ({len(fm_name)})")
+    if HIDDEN_KEY in frontmatter and not isinstance(frontmatter[HIDDEN_KEY], bool):
+        errors.append(
+            f"{name}: {HIDDEN_KEY} must be true or false ({frontmatter[HIDDEN_KEY]!r})"
+        )
     description = str(frontmatter.get("description") or "").strip()
     if not description:
         errors.append(f"{name}: missing frontmatter description")
@@ -286,29 +308,107 @@ def validate_skill(skill_dir: Path) -> list[str]:
     return errors
 
 
+def codex_policy_errors(skill_dir: Path) -> list[str]:
+    """Check that Codex also refuses to invoke a hidden skill on its own."""
+    name = skill_dir.name
+    policy_file = skill_dir / "agents" / "openai.yaml"
+    wanted = (
+        f"{name}: hidden skill needs agents/openai.yaml "
+        "with policy.allow_implicit_invocation: false"
+    )
+    if not policy_file.is_file():
+        return [wanted]
+    try:
+        parsed = yaml.safe_load(policy_file.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as error:
+        return [f"{name}: agents/openai.yaml is not valid YAML ({error})"]
+    policy = parsed.get("policy") if isinstance(parsed, dict) else None
+    allowed = (
+        policy.get("allow_implicit_invocation") if isinstance(policy, dict) else None
+    )
+    return [] if allowed is False else [wanted]
+
+
+def router_pointer_errors(skill_dir: Path) -> list[str]:
+    """Check that a hidden skill points to the router by its sibling path."""
+    text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    if ROUTER_POINTER in text:
+        return []
+    message = (
+        f"{skill_dir.name}: hidden skill must point to the router as {ROUTER_POINTER}, "
+        "which resolves in a plugin install"
+    )
+    return [message]
+
+
+def validate_stage_router(skills_dir: Path, hidden: list[str]) -> list[str]:
+    """Check the router and the hidden stage skills against each other.
+
+    Every hidden skill must have a row in the router's stage table and point to
+    the router by its sibling path, every stage file the router names must
+    exist, the router must state the sibling rule, and every hidden skill must
+    carry the Codex policy file.
+    """
+    errors: list[str] = []
+    for name in hidden:
+        errors.extend(codex_policy_errors(skills_dir / name))
+        errors.extend(router_pointer_errors(skills_dir / name))
+    router = skills_dir / ROUTER_SKILL / "SKILL.md"
+    if not router.is_file():
+        errors.extend(
+            f"{name}: hidden skill needs the {ROUTER_SKILL} router to name it"
+            for name in hidden
+        )
+        return errors
+    router_text = router.read_text(encoding="utf-8")
+    if SIBLING_RULE not in router_text:
+        errors.append(
+            f"{ROUTER_SKILL}: must say that stage skills are sibling directories "
+            f"({SIBLING_RULE}), so a plugin install resolves them"
+        )
+    stage_rows = set(ROUTER_STAGE_ROW_PATTERN.findall(router_text))
+    errors.extend(
+        f"{name}: hidden skill has no row in the stage table of {ROUTER_SKILL}/SKILL.md"
+        for name in hidden
+        if name not in stage_rows
+    )
+    named = stage_rows | set(INSTALLED_SKILL_PATH_PATTERN.findall(router_text))
+    errors.extend(
+        f"{ROUTER_SKILL}: names skills/{stage}/SKILL.md, which does not exist"
+        for stage in sorted(named)
+        if not (skills_dir / stage / "SKILL.md").is_file()
+    )
+    return errors
+
+
 def validate_all(skills_dir: Path) -> list[str]:
     """Validate every skill directory under ``skills_dir``."""
     errors: list[str] = []
-    total_description_length = 0
+    visible_description_length = 0
+    hidden: list[str] = []
     for entry in sorted(skills_dir.iterdir()):
-        if entry.is_dir():
-            errors.extend(validate_skill(entry))
-            skill_md = entry / "SKILL.md"
-            if skill_md.exists():
-                try:
-                    frontmatter, _ = split_frontmatter(
-                        skill_md.read_text(encoding="utf-8")
-                    )
-                except yaml.YAMLError:
-                    continue
-                total_description_length += len(
-                    str(frontmatter.get("description") or "").strip()
-                )
-    if total_description_length > MAX_TOTAL_DESCRIPTION_LENGTH:
-        errors.append(
-            "skill descriptions exceed the repository discovery budget "
-            f"({total_description_length}/{MAX_TOTAL_DESCRIPTION_LENGTH} characters)"
+        if not entry.is_dir():
+            continue
+        errors.extend(validate_skill(entry))
+        skill_md = entry / "SKILL.md"
+        if not skill_md.exists():
+            continue
+        try:
+            frontmatter, _ = split_frontmatter(skill_md.read_text(encoding="utf-8"))
+        except yaml.YAMLError:
+            continue
+        if frontmatter.get(HIDDEN_KEY) is True:
+            hidden.append(entry.name)
+            continue
+        visible_description_length += len(
+            str(frontmatter.get("description") or "").strip()
         )
+    if visible_description_length > MAX_TOTAL_DESCRIPTION_LENGTH:
+        errors.append(
+            "model-visible skill descriptions exceed the repository discovery budget "
+            f"({visible_description_length}/{MAX_TOTAL_DESCRIPTION_LENGTH} characters)"
+        )
+    errors.extend(validate_stage_router(skills_dir, hidden))
     return errors
 
 

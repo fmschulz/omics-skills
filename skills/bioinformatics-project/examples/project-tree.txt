@@ -12,7 +12,6 @@ arctic_metagenome_2026/                  # one self-contained, project-named dir
 ├── tasks/                               # working records; facts have one home
 │   ├── todo.md                          # active, verifiable outcomes
 │   ├── METHODS.md                       # commands, versions, parameters, databases, seeds
-│   ├── lessons.md                       # corrections and prevention rules
 │   └── hypotheses.md                    # >=5 active hypotheses during exploration
 │
 ├── data/                                # fixed inputs + metadata; read-only
@@ -36,7 +35,7 @@ arctic_metagenome_2026/                  # one self-contained, project-named dir
 │   │   │   ├── fastp.log
 │   │   │   ├── metaspades.log
 │   │   │   ├── map.log
-│   │   │   └── metabat2.log
+│   │   │   └── quickbin.log
 │   │   ├── qc/                          # FastQC + MultiQC outputs   [gitignored]
 │   │   │   └── multiqc_report.html      # top-level summary, drills down per sample
 │   │   ├── trimmed/                     # fastp outputs              [gitignored]
@@ -46,11 +45,9 @@ arctic_metagenome_2026/                  # one self-contained, project-named dir
 │   │   ├── aligned/                     # standard-format intermediates [gitignored]
 │   │   │   ├── stationA.sorted.bam
 │   │   │   └── stationA.sorted.bam.bai
-│   │   ├── depth/                       # per-contig coverage for binning
-│   │   │   └── contig_depth.tsv         # [gitignored]
-│   │   ├── bins/                        # MetaBAT2 bins, seed in provenance.txt
-│   │   │   ├── bin.1.fa                 # metabat2 --seed 42        [gitignored]
-│   │   │   └── bin.2.fa
+│   │   ├── bins/                        # QuickBin bins, container digest in provenance.txt
+│   │   │   ├── bin1.fa                  # quickbin.sh out=bins/bin%.fa  [gitignored]
+│   │   │   └── bin2.fa
 │   │   └── figures/
 │   │       ├── bin_sizes.png
 │   │       └── bin_sizes_data.tsv       # RAW DATA behind the plot (Sandve rule 7)

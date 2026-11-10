@@ -2,6 +2,9 @@
 #
 # Runner: python3 scripts/routing_benchmark.py [--json]
 #
+# A task that reaches a hidden pipeline stage lists the router first: its
+# expected_primary_skills hold omics-pipeline and the stage.
+#
 # Fields:
 #   task                       — natural-language task description
 #   platform                   — claude | codex | generic
@@ -11,8 +14,8 @@
 #   expected_ordered_includes  — skills that MUST appear anywhere in result.ordered_skills
 #                                (use this for dependencies the router should surface)
 #   forbidden_skills           — skills that MUST NOT appear in any result list
-#                                (use for mutual-exclusion cases, e.g. an arxiv query
-#                                must not surface biorxiv-search as primary)
+#                                (use for mutual-exclusion cases, e.g. a UniProt record
+#                                lookup must not surface the omics-pipeline router)
 #   max_supporting_skills      — upper bound on len(result.supporting_skills); guards
 #                                against the dependency/compose tail snowballing
 #   max_primary_skills         — upper bound on len(result.primary_skills); guards
@@ -27,63 +30,64 @@
 - task: "quality-control Illumina short reads with fastp and trim adapters"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-reads-qc-mapping]
+  expected_primary_skills: [omics-pipeline, bio-reads-qc-mapping]
+  expected_primary_exact: [omics-pipeline, bio-reads-qc-mapping]
 
 - task: "assemble a metagenome from short reads and recover MAGs"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-assembly-qc]
+  expected_primary_skills: [omics-pipeline, bio-assembly-qc]
   expected_ordered_includes: [bio-reads-qc-mapping, bio-assembly-qc, bio-binning-qc]
   max_supporting_skills: 6
 
 - task: "bin contigs with QuickBin using the Bryce BBTools Docker container"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-binning-qc]
+  expected_primary_skills: [omics-pipeline, bio-binning-qc]
 
 - task: "predict genes in a newly assembled bacterial genome"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-gene-calling]
+  expected_primary_skills: [omics-pipeline, bio-gene-calling]
 
 - task: "functional annotation with eggnog-mapper on predicted proteins"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-annotation]
+  expected_primary_skills: [omics-pipeline, bio-annotation]
 
 - task: "annotate Pfam domains and InterPro families in these proteins"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-annotation]
+  expected_primary_skills: [omics-pipeline, bio-annotation]
 
 - task: "search these protein structures against Foldseek"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-structure-annotation]
+  expected_primary_skills: [omics-pipeline, bio-structure-annotation]
 
 - task: "build a phylogenetic tree from marker gene alignments"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-phylogenomics]
+  expected_primary_skills: [omics-pipeline, bio-phylogenomics]
   forbidden_skills: [bio-interdomain-hgt]
   max_supporting_skills: 6
 
 - task: "detect viral contigs in a metagenomic assembly and classify them"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-viromics]
+  expected_primary_skills: [omics-pipeline, bio-viromics]
   max_supporting_skills: 6
 
 - task: "cluster proteins into orthogroups and derive a pangenome matrix"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-protein-clustering-pangenome]
+  expected_primary_skills: [omics-pipeline, bio-protein-clustering-pangenome]
   max_supporting_skills: 6
 
 - task: "predict protein structure with AlphaFold and run structure-based annotation"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-structure-annotation]
+  expected_primary_skills: [omics-pipeline, bio-structure-annotation]
 
 # jgi-lakehouse was removed; a JGI-specific query must stay an intentional
 # no-match rather than silently routing to a public-database skill.
@@ -95,20 +99,21 @@
   platform: codex
   expected_agent: omics-scientist
   expected_primary_skills: [public-db-lookup]
+  forbidden_skills: [omics-pipeline]
 
 # public-db-lookup is the newest retrieval skill and its generic patterns used to
-# steal "fetch record" queries from the three literature skills. These rows pin
-# the boundary.
+# steal "fetch record" queries from the literature skills. These rows pin the
+# boundary.
 - task: "fetch arxiv record"
   platform: codex
   expected_agent: literature-expert
-  expected_primary_skills: [arxiv-search]
+  expected_primary_skills: [preprint-search]
   forbidden_skills: [public-db-lookup]
 
 - task: "fetch bioRxiv record for DOI 10.1101/example"
   platform: codex
   expected_agent: literature-expert
-  expected_primary_skills: [biorxiv-search]
+  expected_primary_skills: [preprint-search]
   forbidden_skills: [public-db-lookup]
 
 - task: "look up MGnify biomes and studies for a soil metagenome accession"
@@ -119,12 +124,12 @@
 - task: "reconcile NCBI and GTDB taxonomy for a list of MAGs"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [tracking-taxonomy-updates]
+  expected_primary_skills: [omics-pipeline, tracking-taxonomy-updates]
 
 - task: "run QuickClade first on an assembly and route bacteria archaea viral giant-virus and eukaryotic contigs to GTDB-Tk vConTACT3 GVClass or EukCC"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [tracking-taxonomy-updates]
+  expected_primary_skills: [omics-pipeline, tracking-taxonomy-updates]
   expected_ordered_includes: [bio-assembly-qc]
 
 - task: "scaffold a new bioinformatics project with reproducible environments"
@@ -142,23 +147,23 @@
 - task: "define LinkML and Pydantic metadata schemas write normalized Parquet and register the validated tables in a DuckDB catalog"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-foundation-housekeeping]
+  expected_primary_skills: [omics-pipeline, bio-foundation-housekeeping]
   max_supporting_skills: 0
 
 - task: "curate a FASTA database for MMseqs2 by standardizing headers and removing duplicate sequences"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-fasta-database-curator]
+  expected_primary_skills: [omics-pipeline, bio-fasta-database-curator]
 
 - task: "inspect this unknown scientific data file and summarize its structure before plotting"
   platform: codex
-  expected_agent: dataviz-artist
+  expected_agent: omics-scientist
   expected_primary_skills: [exploratory-data-analysis]
 
 - task: "design a Nextflow pipeline for metagenomic assembly on HPC"
   platform: codex
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-prefect-dask-nextflow]
+  expected_primary_skills: [omics-pipeline]
 
 - task: "formulate a hypothesis for why certain strains outperform others and plan the experimental design"
   platform: codex
@@ -172,14 +177,13 @@
 - task: "find recent arxiv preprints on protein language models"
   platform: codex
   expected_agent: literature-expert
-  expected_primary_skills: [arxiv-search]
-  forbidden_skills: [biorxiv-search]
+  expected_primary_skills: [preprint-search]
+  forbidden_skills: [omics-pipeline]
 
 - task: "find recent biorxiv preprints on single-cell atlases"
   platform: codex
   expected_agent: literature-expert
-  expected_primary_skills: [biorxiv-search]
-  forbidden_skills: [arxiv-search]
+  expected_primary_skills: [preprint-search]
 
 - task: "search PubMed Central Open Access full text for CRISPR in Archaea"
   platform: codex
@@ -194,21 +198,44 @@
 - task: "compare the impact of two journals using citation counts and altmetric data"
   platform: codex
   expected_agent: literature-expert
-  expected_primary_skills: [scientific-impact-assessment]
+  expected_primary_skills: [crossref-lookup]
 
 # ============================================================================
 # Writing and review (science-writer)
 # ============================================================================
 
+# Manuscript prose, manuscript review, PDF conversion and CSAG extraction left
+# this pack: academic-writing, nelli-paper-review, pdf-to-md and csag-extraction
+# come from other repositories. The router must stay silent on these tasks so
+# that those skills win, and must not hand them to an omics skill.
 - task: "draft the methods section of a manuscript on metagenomic binning"
   platform: codex
-  expected_agent: science-writer
-  expected_primary_skills: [scientific-writing]
+  expect_no_primary: true
+  max_primary_skills: 0
 
 - task: "run a multi-reviewer critique on a submitted manuscript draft"
   platform: codex
-  expected_agent: science-writer
-  expected_primary_skills: [manuscript-review-council]
+  expect_no_primary: true
+
+- task: "rewrite this Discussion for clarity while preserving every scientific claim and number"
+  platform: codex
+  expect_no_primary: true
+
+- task: "draft a polished author rebuttal and response letter to these reviewer comments"
+  platform: codex
+  expect_no_primary: true
+
+- task: "assess whether this author rebuttal resolves each decision-driving manuscript concern"
+  platform: codex
+  expect_no_primary: true
+
+- task: "extract a CSAG claim evidence argument graph from this manuscript"
+  platform: codex
+  expect_no_primary: true
+
+- task: "convert this PDF paper to Markdown with a section audit"
+  platform: codex
+  expect_no_primary: true
 
 - task: "review a research proposal for methodological rigor and feasibility"
   platform: codex
@@ -225,22 +252,6 @@
   expected_agent: science-writer
   expected_primary_skills: [ai-scientist-evaluator]
 
-- task: "rewrite this Discussion for clarity while preserving every scientific claim and number"
-  platform: codex
-  expected_agent: science-writer
-  expected_primary_skills: [scientific-writing]
-
-- task: "draft a polished author rebuttal and response letter to these reviewer comments"
-  platform: codex
-  expected_agent: science-writer
-  expected_primary_skills: [scientific-writing]
-  forbidden_skills: [manuscript-review-council]
-
-- task: "assess whether this author rebuttal resolves each decision-driving manuscript concern"
-  platform: codex
-  expected_agent: science-writer
-  expected_primary_skills: [manuscript-review-council]
-
 - task: "critique whether this observational study design supports its causal conclusions"
   platform: codex
   expected_agent: science-writer
@@ -251,33 +262,36 @@
   expected_agent: omics-scientist
   expected_primary_skills: [bio-workflow-methods-docwriter]
 
-- task: "extract a CSAG claim evidence argument graph from this manuscript"
+# Generating Methods from run artifacts is the docwriter's job; drafting the
+# manuscript's prose is not (see the silent rows above).
+- task: "write the methods section from these Snakemake run artifacts"
   platform: codex
-  expected_agent: science-writer
-  expected_primary_skills: [csag-extraction]
+  expected_agent: omics-scientist
+  expected_primary_skills: [bio-workflow-methods-docwriter]
 
 # ============================================================================
-# Visualization and notebooks (dataviz-artist)
+# Visualization and notebooks (omics-scientist)
 # ============================================================================
 
 - task: "create a publication-quality matplotlib figure of assembly statistics"
   platform: codex
-  expected_agent: dataviz-artist
+  expected_agent: omics-scientist
   expected_primary_skills: [beautiful-data-viz]
+  forbidden_skills: [omics-pipeline]
 
 - task: "build an interactive Plotly Dash dashboard of pipeline run metrics"
   platform: codex
-  expected_agent: dataviz-artist
-  expected_primary_skills: [plotly-dashboard-skill]
+  expected_agent: omics-scientist
+  expected_primary_skills: [beautiful-data-viz]
 
 - task: "write a reproducible marimo notebook loading DuckDB data"
   platform: codex
-  expected_agent: dataviz-artist
+  expected_agent: omics-scientist
   expected_primary_skills: [notebooks]
 
 - task: "convert a Jupyter notebook to a marimo notebook"
   platform: codex
-  expected_agent: dataviz-artist
+  expected_agent: omics-scientist
   expected_primary_skills: [notebooks]
 
 - task: "fetch up-to-date Anthropic SDK API documentation before writing client code"
@@ -292,27 +306,27 @@
 - task: "quality-control Illumina short reads with fastp and trim adapters"
   platform: claude
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-reads-qc-mapping]
+  expected_primary_skills: [omics-pipeline, bio-reads-qc-mapping]
 
 - task: "find recent arxiv preprints on protein language models"
   platform: generic
   expected_agent: literature-expert
-  expected_primary_skills: [arxiv-search]
+  expected_primary_skills: [preprint-search]
 
 - task: "find recent physics preprints about quantum sensing"
   platform: generic
   expected_agent: literature-expert
-  expected_primary_skills: [arxiv-search]
+  expected_primary_skills: [preprint-search]
 
 - task: "search arxiv for recent computer science preprints on distributed systems"
   platform: generic
   expected_agent: literature-expert
-  expected_primary_skills: [arxiv-search]
+  expected_primary_skills: [preprint-search]
 
 - task: "resolve arxiv IDs 2501.01234 and 2406.00001 and summarize their metadata"
   platform: codex
   expected_agent: literature-expert
-  expected_primary_skills: [arxiv-search]
+  expected_primary_skills: [preprint-search]
 
 - task: "audit this bibliography for missing DOI metadata"
   platform: codex
@@ -395,32 +409,32 @@
 
 - task: "Make a plot showing classifier calibration and cross-validation scores"
   platform: generic
-  expected_agent: dataviz-artist
+  expected_agent: omics-scientist
   expected_primary_skills: [beautiful-data-viz]
   forbidden_skills: [bio-reads-qc-mapping]
 
 - task: "train a model on genome features and report calibration"
   platform: generic
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-stats-ml-reporting]
+  expected_primary_skills: [omics-pipeline, bio-stats-ml-reporting]
 
 - task: "plot random forest calibration"
   platform: generic
-  expected_agent: dataviz-artist
+  expected_agent: omics-scientist
   expected_primary_skills: [beautiful-data-viz]
   forbidden_skills: [bio-stats-ml-reporting, bio-reads-qc-mapping]
 
 - task: "review a manuscript on random forest calibration"
   platform: generic
-  expected_primary_skills: [manuscript-review-council]
+  expect_no_primary: true
   forbidden_skills: [bio-stats-ml-reporting, bio-reads-qc-mapping]
 
 - task: "count tRNA and rRNA genes in my assemblies"
   platform: generic
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-gene-calling]
+  expected_primary_skills: [omics-pipeline, bio-gene-calling]
 
 - task: "find structural homologs for proteins with no blast hits"
   platform: generic
   expected_agent: omics-scientist
-  expected_primary_skills: [bio-structure-annotation]
+  expected_primary_skills: [omics-pipeline, bio-structure-annotation]

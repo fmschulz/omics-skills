@@ -274,6 +274,23 @@ class PolarsDovmedLocalTests(unittest.TestCase):
             )
         )
 
+    def test_crossref_email_comes_only_from_the_flag(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            env_dir = Path(tmp) / ".config" / "polars-dovmed"
+            env_dir.mkdir(parents=True)
+            (env_dir / ".env").write_text("CROSSREF_EMAIL=from-file@example.org\n", encoding="utf-8")
+            environ = {"HOME": tmp, "CROSSREF_EMAIL": "from-env@example.org"}
+            with patch.dict("os.environ", environ), patch.object(
+                sys, "argv", ["query_literature.py", "--queries-file", "q.json"]
+            ):
+                self.assertEqual(query_literature.parse_args().crossref_email, "")
+            with patch.dict("os.environ", environ), patch.object(
+                sys,
+                "argv",
+                ["query_literature.py", "--queries-file", "q.json", "--crossref-email", "flag@example.org"],
+            ):
+                self.assertEqual(query_literature.parse_args().crossref_email, "flag@example.org")
+
     def test_crossref_metadata_enrichment_fills_missing_fields(self) -> None:
         papers = [
             {

@@ -12,7 +12,7 @@ from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_DIR = REPO_ROOT / "skills" / "arxiv-search" / "scripts"
+SCRIPT_DIR = REPO_ROOT / "skills" / "preprint-search" / "scripts"
 
 
 def load_module(name: str, path: Path):
@@ -25,8 +25,8 @@ def load_module(name: str, path: Path):
     return module
 
 
-arxiv_search = load_module("search", SCRIPT_DIR / "search.py")
-arxiv_summarize = load_module("arxiv_summarize", SCRIPT_DIR / "summarize.py")
+arxiv_search = load_module("arxiv_search", SCRIPT_DIR / "arxiv_search.py")
+arxiv_summarize = load_module("arxiv_summarize", SCRIPT_DIR / "arxiv_summarize.py")
 
 
 class ArxivQueryDetectionTests(unittest.TestCase):
@@ -82,7 +82,7 @@ class ArxivSummarizeTests(unittest.TestCase):
             output_dir = Path(tmp) / "summaries"
             cache_dir = Path(tmp) / "cache"
             argv = [
-                "summarize.py",
+                "arxiv_summarize.py",
                 "1706.03762",
                 "--output-dir",
                 str(output_dir),

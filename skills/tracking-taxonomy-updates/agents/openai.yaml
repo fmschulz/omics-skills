@@ -1,0 +1,6 @@
+interface:
+  display_name: "Taxonomy Routing and Releases"
+  short_description: "QuickClade domain routing and taxonomy release tracking"
+  default_prompt: "Read the omics-pipeline skill, then route the contigs by domain or compare taxonomy releases."
+policy:
+  allow_implicit_invocation: false

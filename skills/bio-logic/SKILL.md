@@ -1,6 +1,6 @@
 ---
 name: bio-logic
-description: Assess a scientific claim, study design, or interpretation against its evidence. Use when testing causal reasoning, finding bias, weighing alternative explanations, or revising hypotheses.
+description: Assess a scientific claim, study design, or interpretation of project results against its evidence, and keep a hypothesis register. Use when testing causal reasoning, finding bias, weighing alternative explanations, or revising hypotheses.
 ---
 
 # Bio-Logic: Scientific Reasoning Evaluation
@@ -9,14 +9,10 @@ Use structured frameworks to evaluate scientific claims, methodology, and eviden
 
 ## Instructions
 
-1. Identify the task (claim assessment, paper critique, study design review, project interpretation, or hypothesis revision).
-2. For project work, maintain a hypothesis register with at least 5 distinct active hypotheses until the project is no longer exploratory.
-3. After each major intermediate result, reflect on what changed, revise hypothesis status, and identify the next discriminating check.
-4. When findings need context, pair this reasoning with a literature-search skill such as `/polars-dovmed`, then revise hypotheses against the literature.
-5. Select the study-type profile before applying a checklist. Do not grade a
-   computational benchmark, phylogenetic analysis, or evolutionary inference
-   as if it were an intervention trial.
-6. Structure output using the provided format.
+1. Identify the task: claim assessment, study design review, project interpretation, or hypothesis revision. Review of a whole manuscript belongs to `nelli-paper-review`.
+2. Select the study-type profile before applying a checklist. Do not grade a computational benchmark, phylogenetic analysis, or evolutionary inference as if it were an intervention trial.
+3. For interpretation of project results, run the Project Hypothesis Loop below. A small single-question request does not need the register: answer it and name the strongest alternative explanation.
+4. Structure output using the formats below.
 
 ### Study-Type Profiles
 
@@ -30,24 +26,23 @@ Use structured frameworks to evaluate scientific claims, methodology, and eviden
 
 ### Project Hypothesis Loop
 
-Use this loop for omics projects, unexpected results, exploratory analyses, and any request that asks what results mean.
+Use this loop when interpreting the results of an omics project or exploratory analysis, or when a result is unexpected. Keep the register until the project is no longer exploratory.
 
 1. **Initialize**: create at least 5 working hypotheses. Include biological mechanisms, technical artifacts, null explanations, sampling/batch effects, and annotation/database artifacts where relevant.
-2. **Build an analysis playbook**: search the literature for the inferred organism, virus group, data type, or closest lineage. Summarize typical analyses, comparison baselines, markers/features, plots, and outlier criteria used by scientists in that literature.
+2. **Build an analysis playbook**: search the literature (`polars-dovmed`) for the inferred organism, virus group, data type, or closest lineage. Summarize typical analyses, comparison baselines, markers/features, plots, and outlier criteria used by scientists in that literature.
 3. **Reflect**: for every major intermediate result or QC gate, state the observation, QC status, strongest interpretation, remaining alternatives, and what evidence would separate them.
-4. **Contextualize**: compare findings against the playbook and run additional literature searches for central or unexpected findings. Use broad synonym-aware queries and cite DOI/PMCID when available.
+4. **Contextualize**: compare findings against the playbook and search again for central or unexpected findings with broad synonym-aware queries, and cite DOI/PMCID when available.
 5. **Revise**: update each hypothesis as supported, weakened, ruled out, or unresolved. Keep ruled-out hypotheses visible with the evidence that changed their status.
 6. **Replace**: if fewer than 5 active hypotheses remain during exploratory work, add plausible replacements or explicitly state why no additional plausible alternatives exist.
 
 ### Critique Checklist
 
-Use relevant sections based on the review scope. Skip items not applicable to the study type.
+Use the sections that fit the study-type profile. Skip items that do not apply to it.
 
 ```
 ## Methodology
-- [ ] Design identifies the causal estimand through randomization or a justified quasi-experimental or natural-experiment strategy
-- [ ] Sample size justified (power analysis reported)
-- [ ] Randomization/blinding implemented where feasible
+- [ ] Design fits the claim type (descriptive, associational, causal)
+- [ ] Sampling depth or sample size supports the claim
 - [ ] Confounders identified and controlled
 - [ ] Measurements validated and reliable
 
@@ -75,10 +70,7 @@ Use relevant sections based on the review scope. Skip items not applicable to th
 
 ### Claim Assessment
 
-1. Identify claim type (causal, associational, descriptive).
-2. Match evidence to claim type.
-3. Check logical connection between data and conclusion.
-4. Ensure confidence matches evidence strength.
+Identify the claim type (causal, associational, descriptive), match the evidence to it, check the logical link from data to conclusion, and make the confidence match the evidence strength.
 
 **Claim strength ladder**:
 | Language | Requires |
@@ -92,10 +84,10 @@ Use relevant sections based on the review scope. Skip items not applicable to th
 
 ```markdown
 ## Summary
-[1-2 sentences: What was studied and main finding]
+[1-2 sentences: what was studied, main finding]
 
 ## Strengths
-- [Specific methodological strengths]
+[Specific methodological strengths]
 
 ## Concerns
 ### Critical (threaten main conclusions)
@@ -108,11 +100,10 @@ Use relevant sections based on the review scope. Skip items not applicable to th
 - [Issue]
 
 ## Evidence Rating
-[Framework appropriate to the study profile, rating, and justification. Use
-GRADE only when it applies to the review question.]
+[Framework for the study profile, rating, justification. GRADE only when it applies.]
 
 ## Bottom Line
-[What can/cannot be concluded from this evidence]
+[What can and cannot be concluded]
 ```
 
 ### Project Reasoning Output Format
@@ -125,16 +116,13 @@ GRADE only when it applies to the review question.]
 | Rank | Hypothesis | Status | Evidence For | Evidence Against | Next Discriminating Check |
 |------|------------|--------|--------------|------------------|---------------------------|
 | 1 | [Hypothesis] | supported/weakened/ruled out/unresolved | [Evidence] | [Evidence] | [Test] |
-| 2 | [Hypothesis] | ... | ... | ... | ... |
-| 3 | [Hypothesis] | ... | ... | ... | ... |
-| 4 | [Hypothesis] | ... | ... | ... | ... |
-| 5 | [Hypothesis] | ... | ... | ... | ... |
+| 2-5+ | [Hypothesis] | ... | ... | ... | ... |
 
 ## Literature Context
-- [Paper or search result, DOI/PMCID if available]: supports/contradicts/narrows [hypothesis] because [reason].
+- [Paper, DOI/PMCID]: supports/contradicts/narrows [hypothesis] because [reason].
 
 ## Analysis Playbook
-- [Literature-derived analysis/comparison/outlier check and why it applies]
+- [Literature-derived check and why it applies]
 
 ## Revision
 [What changed since the previous register and why]
@@ -143,88 +131,29 @@ GRADE only when it applies to the review question.]
 [Most informative analysis, control, or experiment]
 ```
 
-## Quick Reference
+## References
 
-| Task | Action |
-|------|--------|
-| Review a paper | Use the Critique Checklist above |
-| Evaluate a claim | Use the Claim Assessment steps above |
-| Assess evidence strength | See [references/evidence.md](references/evidence.md) |
-| Identify biases | See [references/biases.md](references/biases.md) |
-| Statistical errors | See [references/stats.md](references/stats.md) |
-| Logical fallacies | See [references/fallacies.md](references/fallacies.md) |
-| Study design review | See [references/design.md](references/design.md) |
+Read the one that matches the question: [evidence strength](references/evidence.md), [biases](references/biases.md), [statistical errors](references/stats.md), [logical fallacies](references/fallacies.md), [study design](references/design.md).
 
 ## Input Requirements
 
-- Manuscript or study summary
-- Claim statements to evaluate
-- Methods and results (as available)
+- The claim or study summary, with methods and results as available. If methods or statistics are missing, request them before rating evidence.
 
 ## Output
 
-- Structured critique with strengths, concerns, and evidence rating
-- Clear recommendation on claim strength and limitations
+- A structured assessment (strengths, concerns, evidence rating) or a hypothesis register, ending with what can and cannot be concluded.
 
 ## Quality Gates
 
-- [ ] Claim type matches evidence type
-- [ ] Key methodological risks are identified
-- [ ] Evidence rating is justified with concrete issues
-- [ ] The evidence framework matches the study type; computational and
-      evolutionary work is not forced into intervention-centric GRADE rules
-- [ ] Exploratory project work includes at least 5 active hypotheses or explains why fewer are plausible
-- [ ] Discovery work includes a literature-derived analysis playbook before selecting analyses
-- [ ] Intermediate results update hypothesis status before the next workflow step
-- [ ] Central or unexpected findings are checked against the literature before final interpretation
-
-## Examples
-
-### Example 1: Quick Paper Critique
-
-**Input**: "Review this RCT on vitamin D and depression"
-
-**Output**:
-```
-## Summary
-RCT of 200 adults testing vitamin D supplementation for depression over 12 weeks.
-
-## Strengths
-- Randomized, double-blind, placebo-controlled
-- Validated depression scale (PHQ-9)
-- Adequate power analysis
-
-## Concerns
-### Critical
-- 35% dropout, differential by group (attrition bias)
-- ITT analysis not performed
-
-### Important
-- Single-site limits generalizability
-
-## Evidence Rating
-Moderate (downgraded from high due to attrition bias)
-
-## Bottom Line
-Suggestive but not conclusive due to differential attrition.
-```
-
-### Example 2: Claim Assessment
-
-**Input**: "This study proves that coffee prevents Alzheimer's"
-
-**Assessment**: If based only on an association with no identified causal design, this is a correlation→causation error. Appropriate language: "Coffee consumption is associated with lower Alzheimer's risk." Observational data with a justified quasi-experimental or natural-experiment strategy, its assumptions stated and tested, can support a causal claim; the design is what decides, not whether the data were observational.
-
-## Troubleshooting
-
-**Issue**: Insufficient methods details
-**Solution**: Request missing design/statistics information before rating evidence.
-
-**Issue**: Conflicting results across studies
-**Solution**: Report uncertainty and suggest stronger study designs for resolution.
+- [ ] Claim type matches evidence type, and the evidence framework matches the study type (no intervention-centric GRADE rules for computational or evolutionary work)
+- [ ] Each rating names the concrete issues behind it
+- [ ] Interpretation of exploratory project results keeps at least 5 active hypotheses, or explains why fewer are plausible
+- [ ] Discovery work has a literature-derived analysis playbook before analyses are chosen
+- [ ] Intermediate results update hypothesis status before the next workflow step, and central or unexpected findings are checked against the literature before final interpretation
 
 ## Related Skills
 
-- `/ai-scientist-evaluator`: rubric-scored evaluation of AI scientist outputs
-- `/manuscript-review-council`: multi-reviewer critique of peer-reviewed manuscripts
-- `/proposal-review`: structured critique of funding proposals
+- `ai-scientist-evaluator`: rubric-scored evaluation of AI scientist outputs
+- `nelli-paper-review`: multi-reviewer critique of manuscripts
+- `proposal-review`: structured critique of funding proposals
+- `polars-dovmed`: literature search

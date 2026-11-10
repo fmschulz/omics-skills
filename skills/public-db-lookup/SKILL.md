@@ -5,84 +5,41 @@ description: Fetch compact JSON records from UniProt, NCBI, MGnify, InterPro, Al
 
 # Public Database Lookup
 
-One bounded GET against a public life-science REST API. The bundled script picks the base URL, adds a User-Agent, retries on 429 and 5xx, and prints a compact JSON envelope instead of the full payload.
+One bounded GET against a public life-science REST API. The bundled script picks the base URL, adds a User-Agent, retries on 429 and 5xx, and prints a compact JSON envelope instead of the full payload. Flags: `~/.agents/skills/public-db-lookup/scripts/lookup --help`.
 
 ## Instructions
 
 1. Pick the service that owns the record: `uniprot`, `ncbi-entrez`, `ncbi-datasets`, `mgnify`, `interpro`, `alphafold`, `string`, or `ena`.
-2. Read the card for that service in [references/services.md](references/services.md) for the path, parameters, and the right `--record-path`.
-3. Run the wrapper, `scripts/lookup` in this skill's directory (installed at `~/.agents/skills/public-db-lookup/scripts/lookup`).
+2. Read the card for that service in [references/services.md](references/services.md) for the path, parameters, and the right `--record-path`. When `records` is empty or the envelope falls back to `summary` with a warning, read `top_keys` and pass the card's `--record-path`.
+3. Run `~/.agents/skills/public-db-lookup/scripts/lookup --service NAME --path PATH [--param KEY=VALUE ...]`.
 4. Keep `--max-items` small (default 5). Raise it only when the user needs more rows.
-5. When the full payload matters, add `--save-raw PATH` and work from the file; the envelope still carries the compacted view.
-6. For the two NCBI services, the script reads `NCBI_API_KEY`, `NCBI_EMAIL` and `NCBI_TOOL` from the environment, adds them as request parameters, and redacts the key from its output. Use only values the user exported; never set `NCBI_EMAIL` to an address from the conversation or system context.
-7. Requests are paced across invocations, so calling the CLI in a loop stays inside each service's documented rate. The timestamps live under `$XDG_STATE_HOME/omics-skills/public-db-lookup`; override with `--state-dir`. Never pass a credential in `--path` or `--param`: the script refuses it, because it would be echoed back in the emitted URL and land in shell history.
+5. When the full payload matters, add `--save-raw PATH` and work from the file; the envelope still carries the compacted view. Report the path instead of pasting a large payload.
+6. For the two NCBI services, the script reads `NCBI_API_KEY` and `NCBI_TOOL` from the environment and adds them as request parameters. A contact address is sent only when you pass `--email ADDRESS`, and only with an address the user gave for this purpose, never one from the conversation, git config or system context. The script removes the key and the address from the printed URL, errors and response text.
+7. Requests are paced across invocations, so calling the CLI in a loop stays inside each service's documented rate. The timestamps live under `$XDG_STATE_HOME/omics-skills/public-db-lookup`; override with `--state-dir`. On HTTP 429 after retries, wait and lower the request rate; for NCBI set `NCBI_API_KEY`. Never pass a credential in `--path` or `--param`: the script refuses it, because it would be echoed back in the emitted URL and land in shell history.
 8. Route PubMed and PMC literature searches to `/polars-dovmed`; this skill does not cover them.
-
-### Execution behavior
-
-- Summarize the JSON envelope in Markdown by default.
-- Return raw JSON only when the user asks for machine-readable output.
-- When the payload is large, use `--save-raw` and report the path instead of pasting the content.
-- Re-run the lookup rather than trust tool output from earlier in a long conversation.
-
-## Quick Reference
-
-| Flag | Meaning |
-|------|---------|
-| `--service NAME` | One of the eight services (required) |
-| `--path PATH` | Endpoint path relative to the service base URL, or a full URL under that base (required) |
-| `--param KEY=VALUE` | Query parameter; repeat as needed |
-| `--record-path a.b.c` | Dotted path to the record list; inferred from common keys when omitted |
-| `--max-items N` | Records, list items, and dict keys kept per level (default 5) |
-| `--max-depth N` | Nesting depth kept before containers collapse (default 3) |
-| `--format auto\|json\|text` | Parse as JSON, or keep the first 800 characters of text (default auto) |
-| `--save-raw PATH` | Write the full response body to PATH |
-| `--timeout SEC` | Request timeout (default 30) |
 
 ## Input Requirements
 
-- `uv` and network access; the PEP 723 script installs its pinned HTTP dependency
-- A service name and an endpoint path from the service card
-- Optional query parameters, one `--param` each
-- Optional `NCBI_API_KEY`, `NCBI_EMAIL`, `NCBI_TOOL` in the environment for NCBI services
+- `uv` and network access; the PEP 723 script installs its pinned HTTP dependency.
+- A service name and an endpoint path from the service card.
 
 ## Output
 
-One JSON object on stdout.
+One JSON object on stdout. Exit code 0 on success, 2 for `invalid_input`, 1 for the other errors.
 
-- Success: `ok`, `source`, `url` (api_key value removed), `status_code`, `warnings`, `raw_output_path` (the path given to `--save-raw`, else null), plus one of:
-  - list results: `record_path`, `record_count_returned`, `record_count_available`, `truncated`, `records`
-  - other JSON: `summary`, `top_keys`
-  - text: `text_head`, `text_head_truncated`
-- Failure: `ok: false`, `source`, and `error` with `code` (`invalid_input`, `network_error`, `http_error`, `invalid_response`) and `message`
-- Exit code 0 on success, 2 for `invalid_input`, 1 for the other errors
-- Compaction: strings cut at 240 characters, lists at `--max-items` with a trailing count marker, dicts at `--max-items` keys with a `_truncated_keys` count, deeper containers replaced by an ellipsis
+- Success: `ok`, `source`, `url` (api_key and email values removed), `status_code`, `warnings`, `raw_output_path`, plus `records` with `record_path`, `record_count_returned`, `record_count_available` and `truncated` for list results, `summary` and `top_keys` for other JSON, or `text_head` for text (first 800 characters with `--format text`).
+- Failure: `ok: false`, `source`, and `error` with `code` (`invalid_input`, `network_error`, `http_error`, `invalid_response`) and `message`.
+- Compaction: strings are cut at 240 characters; lists and dicts at `--max-items`; containers deeper than `--max-depth` (default 3) collapse.
 
 ## Quality Gates
 
-- [ ] `--max-items` is the smallest count that answers the question
-- [ ] `--record-path` matches the service card, or the inferred path in the envelope is the intended list
-- [ ] NCBI credentials come from the environment, never from the command line
-- [ ] `warnings` and `truncated` from the envelope reach the user
-- [ ] Every accession or identifier in the reply came from the response, not from memory
-
-## Troubleshooting
-
-**Issue**: `http_error` with HTTP 429 after retries.
-
-**Solution**: The service is rate limiting you. Wait, lower the request rate, and for NCBI set `NCBI_API_KEY` to raise the allowed rate.
-
-**Issue**: `records` is empty or the envelope falls back to `summary` with a warning.
-
-**Solution**: The record list is not under an inferred key. Read `top_keys` and pass the right `--record-path` from the service card.
-
-**Issue**: NCBI rejects or throttles requests that carry no contact details.
-
-**Solution**: Ask the user to export `NCBI_EMAIL` and `NCBI_TOOL`; NCBI asks for both on every E-utilities request.
+- [ ] `--max-items` is the smallest count that answers the question.
+- [ ] `--record-path` matches the service card, or the inferred path in the envelope is the intended list.
+- [ ] `warnings` and `truncated` from the envelope reach the user.
+- [ ] Every accession or identifier in the reply came from the response, not from memory.
 
 ## Non-Goals
 
-- No POST requests, ID-mapping jobs, or other asynchronous job APIs
-- No bulk downloads of sequence or structure files
-- No literature search; use `/polars-dovmed`
-- No JGI-internal data access (GOLD, IMG, JAMO); this skill covers public endpoints only
+- No POST requests, ID-mapping jobs, or other asynchronous job APIs.
+- No bulk downloads of sequence or structure files.
+- No JGI-internal data access (GOLD, IMG, JAMO); this skill covers public endpoints only.

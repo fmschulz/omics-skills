@@ -47,11 +47,12 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
             after = tree_digest(project)
             checked = self.run_scaffold(project, "--check")
 
-            self.assertIn("15 created, 0 unchanged", first.stdout)
-            self.assertIn("0 created, 15 unchanged", second.stdout)
+            self.assertIn("14 created, 0 unchanged", first.stdout)
+            self.assertIn("0 created, 14 unchanged", second.stdout)
             self.assertIn("Scaffold valid", checked.stdout)
             self.assertEqual(before, after)
             self.assertTrue((project / "results" / "runall.example").stat().st_mode & 0o111)
+            self.assertFalse((project / "tasks" / "lessons.md").exists())
             self.assertIn('[workspace]', (project / "pixi.toml").read_text(encoding="utf-8"))
             project_text = "\n".join(
                 path.read_text(encoding="utf-8")
@@ -104,8 +105,8 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
                 / "00_read-qc"
                 / "00_2026-07-11_read-qc"
             )
-            self.assertIn("20 created, 0 unchanged", first.stdout)
-            self.assertIn("0 created, 20 unchanged", second.stdout)
+            self.assertIn("19 created, 0 unchanged", first.stdout)
+            self.assertIn("0 created, 19 unchanged", second.stdout)
             self.assertIn("Scaffold valid", checked.stdout)
             self.assertEqual(before, tree_digest(project))
             self.assertTrue((experiment / "runall").stat().st_mode & 0o111)
@@ -127,7 +128,7 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
             )
 
             experiment = project / "results" / "2026-07-11_assembly"
-            self.assertIn("17 created, 0 unchanged", result.stdout)
+            self.assertIn("16 created, 0 unchanged", result.stdout)
             self.assertTrue((experiment / "README.md").is_file())
             self.assertTrue((experiment / "runall").stat().st_mode & 0o111)
 
@@ -183,7 +184,7 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
                 "--author", "Coastal Genomics Team",
                 "--copyright-year", "2026",
             )
-            self.assertIn("17 created, 0 unchanged", result.stdout)
+            self.assertIn("16 created, 0 unchanged", result.stdout)
             self.assertIn("Copyright (c) 2026 Coastal Genomics Team", (project / "LICENSE").read_text())
             citation = (project / "CITATION.cff").read_text()
             self.assertIn('name: "Coastal Genomics Team"', citation)

@@ -16,8 +16,8 @@
 #   ./runall.sh --help          # print this usage
 #
 # Real metagenomics tools are referenced (fastqc, fastp, metaspades.py, bwa/minimap2,
-# samtools, jgi_summarize_bam_contig_depths, metabat2). A missing tool, input, or
-# expected intermediate exits non-zero so an incomplete run cannot look successful.
+# samtools, and QuickBin from the bryce911/bbtools container). A missing tool, input,
+# or expected intermediate exits non-zero so an incomplete run cannot look successful.
 #
 # --- END USAGE ---
 
@@ -51,7 +51,6 @@ QC_DIR="qc"
 TRIM_DIR="trimmed"
 ASM_DIR="assembly"
 ALN_DIR="aligned"
-DEPTH_DIR="depth"
 BINS_DIR="bins"
 LOG_DIR="logs"
 FIG_DIR="figures"
@@ -60,21 +59,32 @@ TRIM_R1="${TRIM_DIR}/${SAMPLE}_R1.trim.fastq.gz"
 TRIM_R2="${TRIM_DIR}/${SAMPLE}_R2.trim.fastq.gz"
 CONTIGS="${ASM_DIR}/contigs.fasta"
 SORTED_BAM="${ALN_DIR}/${SAMPLE}.sorted.bam"
-DEPTH_TSV="${DEPTH_DIR}/contig_depth.tsv"
-BIN_PREFIX="${BINS_DIR}/bin"            # MetaBAT2 writes ${BIN_PREFIX}.1.fa, .2.fa, ...
+BBTOOLS_IMAGE="bryce911/bbtools:39.85"  # QuickBin container; record the pulled digest
+BIN_PATTERN="${BINS_DIR}/bin%.fa"       # QuickBin writes bin1.fa, bin2.fa, ... for the % pattern
 BIN_TSV="${FIG_DIR}/bin_sizes_data.tsv"
 PROV="provenance.txt"
 
 # --- Rule 6 (Sandve rule 6): one fixed RANDOM SEED for every stochastic step.
-SEED=42                                 # passed to MetaBAT2 (--seed) below
+SEED=42                                 # for any stochastic tool that has a seed flag (QuickBin lists none)
 
 # --- Generate the below-the-date structure automatically (Noble 2009).
-for d in "$QC_DIR" "$TRIM_DIR" "$ASM_DIR" "$ALN_DIR" "$DEPTH_DIR" "$BINS_DIR" "$LOG_DIR" "$FIG_DIR"; do
+for d in "$QC_DIR" "$TRIM_DIR" "$ASM_DIR" "$ALN_DIR" "$BINS_DIR" "$LOG_DIR" "$FIG_DIR"; do
   [ -d "$d" ] || mkdir -p "$d"
 done
 
 # --- have <tool>: true if the tool is on PATH (used by fail-fast stage checks).
 have() { command -v "$1" >/dev/null 2>&1; }
+
+# --- quickbin <args>: run quickbin.sh from the BBTools container (docker or apptainer).
+quickbin() {
+  if have docker; then
+    docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/work -w /work "$BBTOOLS_IMAGE" quickbin.sh "$@"
+  elif have apptainer; then
+    apptainer exec "docker://${BBTOOLS_IMAGE}" quickbin.sh "$@"
+  else
+    return 127
+  fi
+}
 
 # --- log <msg>: timestamped message to stderr (Noble: errors/status to stderr).
 log() { printf '[%s] %s\n' "$(date -u +%H:%M:%S)" "$*" >&2; }
@@ -89,7 +99,8 @@ if [ ! -s "$PROV" ]; then
     echo "git:  $(git rev-parse HEAD 2>/dev/null || echo 'not a git repo')"
     echo "seed: ${SEED}"
     echo "# tool versions:"
-    for tool in fastqc fastp metaspades.py bwa minimap2 samtools metabat2; do
+    echo "bbtools image: ${BBTOOLS_IMAGE}"
+    for tool in fastqc fastp metaspades.py bwa minimap2 samtools; do
       if have "$tool"; then
         printf '%s: ' "$tool"; "$tool" --version 2>&1 | head -n1
       else
@@ -170,53 +181,39 @@ else
   exit 1
 fi
 
-# === Stage 5: DEPTH — per-contig coverage table for binning ===================
-# jgi_summarize_bam_contig_depths ships with MetaBAT2; standard TSV format.
-if [ -s "$DEPTH_TSV" ]; then
-  log "stage 5: depth table exists, skipping"
-elif have jgi_summarize_bam_contig_depths && [ -s "$SORTED_BAM" ]; then
-  log "stage 5: summarizing contig depth -> $DEPTH_TSV"
-  jgi_summarize_bam_contig_depths --outputDepth "${DEPTH_TSV}.tmp" "$SORTED_BAM" \
-    > "${LOG_DIR}/depth.log" 2>&1
-  mv "${DEPTH_TSV}.tmp" "$DEPTH_TSV"
+# === Stage 5: BIN — QuickBin (default binner) on the sorted BAM ===============
+# QuickBin reads coverage straight from the BAMs, so no separate depth table is needed.
+if ls "${BINS_DIR}"/bin*.fa >/dev/null 2>&1; then
+  log "stage 5: bins exist, skipping"
+elif { have docker || have apptainer; } && [ -s "$CONTIGS" ] && [ -s "$SORTED_BAM" ]; then
+  log "stage 5: QuickBin binning (${BBTOOLS_IMAGE})"
+  quickbin in="$CONTIGS" out="$BIN_PATTERN" reads="$SORTED_BAM" \
+    > "${LOG_DIR}/quickbin.log" 2>&1
 else
-  log "ERROR stage 5: depth tool missing or sorted BAM absent"
+  log "ERROR stage 5: docker/apptainer, contigs, or sorted BAM missing"
   exit 1
 fi
 
-# === Stage 6: BIN — MetaBAT2 binning, the stochastic step with the FIXED SEED ==
-# MetaBAT2 clustering is stochastic; --seed makes it reproducible (Sandve rule 6).
-if ls "${BIN_PREFIX}".*.fa >/dev/null 2>&1; then
-  log "stage 6: bins exist, skipping"
-elif have metabat2 && [ -s "$CONTIGS" ] && [ -s "$DEPTH_TSV" ]; then
-  log "stage 6: MetaBAT2 binning with seed ${SEED}"
-  metabat2 -i "$CONTIGS" -a "$DEPTH_TSV" -o "$BIN_PREFIX" --seed "$SEED" \
-    > "${LOG_DIR}/metabat2.log" 2>&1
-else
-  log "ERROR stage 6: metabat2, contigs, or depth table missing"
-  exit 1
-fi
-
-# === Stage 7: SUMMARIZE — store RAW DATA behind the plot (Sandve rule 7) =======
+# === Stage 6: SUMMARIZE — store RAW DATA behind the plot (Sandve rule 7) =======
 # Build a per-bin size table from the binning output; a plotting script reads this
 # table, not live state, so the figure re-renders without rerunning the analysis.
 if [ -s "$BIN_TSV" ]; then
-  log "stage 7: bin-size table exists, skipping"
-elif ls "${BIN_PREFIX}".*.fa >/dev/null 2>&1 && have seqkit; then
-  log "stage 7: writing bin-size table -> $BIN_TSV"
+  log "stage 6: bin-size table exists, skipping"
+elif ls "${BINS_DIR}"/bin*.fa >/dev/null 2>&1 && have seqkit; then
+  log "stage 6: writing bin-size table -> $BIN_TSV"
   {
     printf 'bin\tcontigs\ttotal_bp\n'
     # seqkit stats -T columns: file format type num_seqs sum_len ...
-    for bin in "${BIN_PREFIX}".*.fa; do
+    for bin in "${BINS_DIR}"/bin*.fa; do
       seqkit stats -T "$bin" | awk -v b="$bin" 'NR==2 {print b"\t"$4"\t"$5}'
     done
   } > "${BIN_TSV}.tmp" && mv "${BIN_TSV}.tmp" "$BIN_TSV"
 else
-  log "ERROR stage 7: bins missing or seqkit unavailable"
+  log "ERROR stage 6: bins missing or seqkit unavailable"
   exit 1
 fi
 
-for output in "$TRIM_R1" "$TRIM_R2" "$CONTIGS" "$SORTED_BAM" "${SORTED_BAM}.bai" "$DEPTH_TSV" "$BIN_TSV"; do
+for output in "$TRIM_R1" "$TRIM_R2" "$CONTIGS" "$SORTED_BAM" "${SORTED_BAM}.bai" "$BIN_TSV"; do
   if [ ! -s "$output" ]; then
     log "ERROR final validation: missing or empty output $output"
     exit 1

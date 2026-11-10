@@ -43,7 +43,7 @@ Pin and archive the exact versions of all third-party tools so a rerun uses the 
 - [ ] Container image built for long-lived analyses.
 - [ ] Tool versions recorded into `tasks/METHODS.md` and the experiment's provenance file.
 
-How-to: `pixi add bwa samtools metabat2`, then commit `pixi.lock`; build a Docker/Apptainer image `FROM` that locked env so the MetaBAT2 version that produced the bins is preserved; record `samtools --version` and `metabat2 2>&1 | head`. See `references/environments.md`.
+How-to: `pixi add bwa samtools`, then commit `pixi.lock`; build a Docker/Apptainer image `FROM` that locked env so the versions that produced the result are preserved; record `samtools --version` and the digest of any container tool (QuickBin runs from the `bryce911/bbtools` image). See `references/environments.md`.
 
 ## Rule 4 — Version-control all custom scripts
 
@@ -70,7 +70,7 @@ Set and record an explicit seed for any stochastic step so the analysis reproduc
 - [ ] Every subsample, bootstrap, and clustering step takes an explicit seed.
 - [ ] The seed is written into the provenance file / METHODS.md.
 
-How-to: bin contigs with a fixed, logged seed — `metabat2 -i contigs.fasta -a depth.tsv -o bins/bin --seed 42` — and subsample reads with a fixed seed where needed — `samtools view -s 42.1 in.bam -b -o sub10pct.bam` (42 = seed, .1 = 10%) or `seqtk sample -s100 reads.fq.gz 1000000 > sub.fq`. Set seeds for bootstrapping too: `numpy.random.default_rng(42)`, `set.seed(42)` in R.
+How-to: run each stochastic tool with a fixed, logged seed where it has one — `iqtree3 -s aln.faa -B 1000 --seed 42` — and subsample reads with a fixed seed where needed — `samtools view -s 42.1 in.bam -b -o sub10pct.bam` (42 = seed, .1 = 10%) or `seqtk sample -s100 reads.fq.gz 1000000 > sub.fq`. Set seeds for bootstrapping too: `numpy.random.default_rng(42)`, `set.seed(42)` in R.
 
 ## Rule 7 — Always store raw data behind plots
 

@@ -1,7 +1,7 @@
 {
   "name": "omics-skills",
   "version": "1.7.1",
-  "description": "Reproducible bioinformatics, literature, scientific writing, and visualization skills.",
+  "description": "Reproducible bioinformatics, literature, evaluation, and visualization skills.",
   "author": {
     "name": "Frederik Schulz",
     "url": "https://github.com/fmschulz"
@@ -14,20 +14,20 @@
     "omics",
     "genomics",
     "literature",
-    "scientific-writing",
+    "evaluation",
     "data-visualization"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Omics Skills",
     "shortDescription": "Reproducible omics research workflows",
-    "longDescription": "Use focused skills for bioinformatics analysis, literature discovery, scientific writing, and data visualization.",
+    "longDescription": "Use focused skills for bioinformatics analysis, literature discovery, project evaluation, and data visualization.",
     "developerName": "Frederik Schulz",
     "category": "Science",
     "capabilities": [
       "Scientific analysis",
       "Literature discovery",
-      "Scientific writing",
+      "Project evaluation",
       "Data visualization"
     ],
     "websiteURL": "https://fmschulz.github.io/omics-skills/",

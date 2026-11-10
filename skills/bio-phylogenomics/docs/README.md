@@ -24,10 +24,7 @@ The skill driver was run end to end with these versions (MAFFT, trimAl, then Ver
 
 ### Tree post-processing
 
-- **[ete-toolkit.md](ete-toolkit.md)**: ETE v4.4.0 (`ete4`, https://github.com/etetoolkit/ete/releases/tag/4.4.0)
-  - Python API for rooting, pruning, support filtering, distances, annotation, and topology comparison
-  - `ete4` replaces `ete3`; use `from ete4 import Tree`
-  - IQ-TREE `SH-aLRT/UFBoot` labels need `parser=1`
+ETE Toolkit 4.4.0 (`ete4`, https://github.com/etetoolkit/ete/releases/tag/4.4.0, docs https://etetoolkit.github.io/ete/) roots, prunes, filters support, measures distances, annotates, and compares topologies. `ete4` replaces `ete3`; use `from ete4 import Tree`. IQ-TREE `SH-aLRT/UFBoot` labels need `parser=1` (see "Final tree" below).
 
 ## Tool Selection
 
@@ -76,7 +73,7 @@ t.write(outfile='tree.filtered.nwk')
 
 ## Figures
 
-Draw trees in greyscale by default. Use color only when it encodes information the reader must tell apart, such as the query versus references or a few named clades, choose a colorblind-safe palette, and repeat the encoding in label text, shape, or line style.
+Follow the `beautiful-data-viz` skill.
 
 ## Installation
 

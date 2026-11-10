@@ -1,13 +1,13 @@
 ---
 name: bioinformatics-project
-description: Structure reproducible bioinformatics projects with canonical layouts, restartable drivers, pinned environments, provenance, and lab notebooks. Use when starting or reorganizing a genomics project or making a sequencing analysis rerunnable.
+description: Structure reproducible bioinformatics projects with a canonical layout, restartable drivers, pinned environments, provenance, and lab notebook. Use when starting or reorganizing a genomics project or making a sequencing analysis rerunnable.
 metadata:
   short-description: Organize and reproducibly structure bioinformatics projects
 ---
 
 # Bioinformatics Project Organization
 
-Set up a computational-biology project so a stranger can understand what was done and why, and so every analysis can be rerun end-to-end from a script. Apply this when creating, restructuring, or reproducibility-hardening any genomics, metagenomics, sequencing, or computational-biology project.
+Set up a computational-biology project so a stranger can understand what was done and why, and so every analysis can be rerun end-to-end from a script. Apply this when creating, restructuring, or reproducibility-hardening any genomics, metagenomics, sequencing, or computational-biology project. The omics stage skills (`omics-pipeline`) assume a project made this way.
 
 Two assumptions drive every rule below (Noble 2009): a stranger must be able to reconstruct the analysis from the files alone, and everything will be rerun (with new data, new parameters, or a fixed bug), so build each experiment to re-execute from a script, never from memory.
 
@@ -15,34 +15,17 @@ Two assumptions drive every rule below (Noble 2009): a stranger must be able to 
 
 ### New project startup workflow
 
-Before creating directories or running the first command, turn the project into
-a small written contract:
+Turn the project into a small written contract before creating directories or running the first command:
 
 1. Name the project with a durable, specific directory name.
-2. Write the objective, analysis tracks, expected deliverables, input data
-   types, compute environment, and known reference databases in `README.md`.
-3. Create `tasks/METHODS.md` immediately and record every setup command, software
-   version, database path, option, seed, and SLURM job ID as work proceeds.
-4. Create `SUMMARY.md` for current status and high-level counts.
-5. Create `tasks/todo.md` for active work and `tasks/lessons.md` for corrections
-   and prevention rules. When memd is available, initialize its project scope and
-   let `memd memory-md` maintain the root `memory.md`; do not hand-edit that file.
-6. Initialize dependency management before analysis: use `pixi.toml` for
-   bioinformatics stacks, `uv` only for Python-only projects, and never rely on
-   system Python or ad hoc conda environments.
-7. Check existing shared database locations before downloading references; if a
-   new reference is needed, put it in a named database directory and document
-   source URL, version, date, checksum, and command.
-8. Put raw inputs and metadata in read-only data directories; never write
-   cleaned, mapped, filtered, or derived outputs back into raw data.
-9. Before exploratory analysis, create a hypothesis register with at least five
-   biological, technical, null, sampling, and database explanations. Keep ruled-out
-   hypotheses visible with the evidence that changed their status.
-10. For each analysis stage, create a restartable driver script plus a README
-   before launching compute, then update methods and summaries after the run.
-11. Keep root-level directories intuitive from day one; do not let raw data,
-    generated batch outputs, publication figures, logs, and scratch files become
-    peers at the project root.
+2. Write the objective, analysis tracks, expected deliverables, input data types, compute environment, and known reference databases in `README.md`.
+3. Create `tasks/METHODS.md` immediately and record every setup command, software version, database path, option, seed, and SLURM job ID as work proceeds. Create `SUMMARY.md` for current status and high-level counts, and `tasks/todo.md` for active work (records follow `session-records`).
+4. Initialize dependency management before analysis: `pixi.toml` for bioinformatics stacks, `uv` only for Python-only projects.
+5. Check existing shared database locations before downloading references. For a new reference, use a named database directory and document source URL, version, date, checksum, and command.
+6. Put raw inputs and metadata in read-only data directories; never write cleaned, mapped, filtered, or derived outputs back into raw data.
+7. Before exploratory analysis, create a hypothesis register with at least five biological, technical, null, sampling, and database explanations. Keep ruled-out hypotheses visible with the evidence that changed their status.
+8. For each analysis stage, create a restartable driver script plus a README before launching compute, then update methods and summaries after the run.
+9. Keep root-level directories intuitive from day one: raw data, generated batch outputs, publication figures, logs, and scratch files are not peers at the project root.
 
 ### Canonical project layout
 
@@ -61,80 +44,19 @@ project_name/              # one self-contained, meaningfully named dir
 ├── src/                   # your own analysis code (importable, tested)
 ├── bin/                   # third-party / compiled tools, project wrappers
 ├── doc/                   # one subdir per manuscript + notes + changelog
-├── tasks/                 # METHODS.md (committed); todo, lessons, hypotheses (local)
+├── tasks/                 # METHODS.md (committed); todo, hypotheses (local)
 ├── pixi.toml / pixi.lock  # pinned bioinformatics tool stack (committed)
 ├── README.md  LICENSE  CITATION.cff
 └── .gitignore             # excludes data blobs and all results/ outputs
 ```
 
-Date every experiment dir `YYYY-MM-DD` (optionally `_topic`) so they sort in time order; never use names like `final/` or `binning_v2_really_final/`. Full annotated tree, script categories, and the lab-notebook practice: [references/project-layout.md](references/project-layout.md) (read when laying out or auditing a project). Concrete worked example: [examples/project-tree.txt](examples/project-tree.txt).
+Date every experiment dir `YYYY-MM-DD` (optionally `_topic`) so they sort in time order; never use names like `final/` or `binning_v2_really_final/`. Full annotated tree, script categories, and the lab-notebook practice: [references/project-layout.md](references/project-layout.md). Worked example: [examples/project-tree.txt](examples/project-tree.txt).
 
-### Numbered layout for multi-track projects
-
-When one repository contains shared data plus multiple analyses, manuscripts,
-or reusable preprocessing stages, prefer a numbered root layout. This keeps
-shared inputs above project-specific tracks and prevents generated outputs from
-accumulating at the root:
-
-```
-project_name/
-|-- README.md
-|-- SUMMARY.md
-|-- pixi.toml
-|-- pixi.lock
-|-- tasks/
-|   |-- METHODS.md
-|   |-- todo.md
-|   |-- lessons.md
-|   `-- hypotheses.md
-|
-|-- 00_data/
-|   |-- 00_raw/
-|   |-- 01_metadata/
-|   `-- README.md
-|-- 01_shared_preprocessing/
-|   |-- 00_manifests/
-|   |-- 01_mapping_or_qc/
-|   `-- 02_project_duckdb/
-|-- 02_analyses/
-|   |-- 00_analysis-track-a/
-|   |   |-- 00_stage-name/
-|   |   |-- 01_stage-name/
-|   |   `-- README.md
-|   `-- 01_analysis-track-b/
-|       |-- 00_stage-name/
-|       |-- 01_stage-name/
-|       `-- README.md
-|-- 03_publication_outputs/
-|   |-- 00_analysis-track-a/
-|   `-- 01_analysis-track-b/
-|-- 04_code/
-|   |-- 00_shared/
-|   |-- 01_analysis-track-a/
-|   `-- 02_analysis-track-b/
-|-- 05_tests/
-|-- 90_logs/
-`-- 99_scratch/
-```
-
-Use numbered directories for ordering, not as a substitute for names. Each
-numbered directory still needs a short descriptive suffix. Put cross-track
-inputs, sample manifests, read mappings, shared QC, and shared DuckDB databases
-under `01_shared_preprocessing/`. Put project-specific batch outputs and final
-tables under the appropriate `02_analyses/<track>/` stage. Put manuscript
-drafts, final figures, reports, and review packets under
-`03_publication_outputs/`. Put SLURM stdout/stderr and temporary failed-tool
-work directories under `90_logs/` or `99_scratch/`, not beside final evidence.
-
-For already-messy projects, do not one-shot move large output directories until
-you have a path map. First inventory hard-coded paths, create the target
-scaffold and README files, move data with temporary compatibility symlinks,
-update scripts, then validate DuckDB builders, notebooks, and driver scripts
-before removing old paths.
+For a repository with shared data plus several analyses or manuscripts, use the numbered root layout in [references/numbered-layout.md](references/numbered-layout.md). The same file explains how to migrate an already-messy project: build a path map first, never move large output directories in one step.
 
 ### Reproducibility rules
 
-Harden every analysis against Sandve 2013's ten rules: record provenance, script all steps (no manual edits), pin and archive exact tool versions, version-control all custom code, persist standard-format intermediates per stage, fix and record random seeds, store the raw data behind every plot, emit hierarchical drill-down output, tie every claim to its result in a literate document, and, when sharing is in scope, provide public access (deposit reads, assemblies, derived tables; push the repo with its lockfile). Each rule has a bioinformatics how-to with concrete commands in [references/reproducibility-checklist.md](references/reproducibility-checklist.md); read it when hardening an analysis for reproducibility.
+Harden every analysis against Sandve 2013's ten rules: record provenance, script all steps (no manual edits), pin and archive exact tool versions, version-control all custom code, persist standard-format intermediates per stage, fix and record random seeds, store the raw data behind every plot, emit hierarchical drill-down output, tie every claim to its result in a literate document, and, when sharing is in scope, provide public access (deposit reads, assemblies, derived tables; push the repo with its lockfile). Each rule has a how-to with concrete commands in [references/reproducibility-checklist.md](references/reproducibility-checklist.md).
 
 ### Driver-script discipline
 
@@ -147,67 +69,54 @@ Capture each experiment as one executable driver script, conventionally `runall`
 5. **Use relative paths** (`../../data/...`) from the experiment directory so the project runs after checkout elsewhere. Under Slurm, submit from the project root (`--chdir=PROJECT_ROOT`) and export the absolute `EXPERIMENT_DIR`; the spooled batch script's own path is not the experiment directory.
 6. **Make it restartable**: guard each step with "skip if output exists"; write outputs to a temp name then `mv` to the final name so a partial result is never mistaken for a complete one.
 
-Pass an explicit thread count to every tool, and run heavy stages through the scheduler (`sbatch`), not on a login node.
-
-Pair `runall` with a `summarize` script (its final step) that produces a plot/table/HTML and can interpret a partially completed experiment. Plots are greyscale by default; use color only when it encodes information (a category the reader must tell apart, the highlighted finding, or an ordered or signed quantity), with a colorblind-safe palette and never as the only encoding. Abort on error (`set -euo pipefail`, check return codes, message to stderr, non-zero exit) and give every script a usage statement (Noble 2009). Runnable, idempotent template with version capture, fixed seed, and temp-then-rename: [examples/runall.sh](examples/runall.sh) (copy and adapt when writing a pipeline).
+Pass an explicit thread count to every tool; scheduler and login-node rules follow `hpc-slurm`. Pair `runall` with a `summarize` script (its final step) that produces a plot, table or HTML (style: `beautiful-data-viz`) and can interpret a partially completed experiment. Abort on error (`set -euo pipefail`, check return codes, message to stderr, non-zero exit) and give every script a usage statement (Noble 2009). Runnable, idempotent template with version capture, fixed seed, and temp-then-rename: [examples/runall.sh](examples/runall.sh).
 
 ### Environment pinning
 
-House rule: bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Python-only deps use **uv**; never use system Python or conda directly.
-
-- Pin the stack in `pixi.toml` and commit `pixi.lock`; capture a container (Docker / Apptainer) for long-lived or shared analyses (Sandve 2013).
-- Record exact versions into each experiment's provenance file at run time (`samtools --version`, `bwa 2>&1 | head`, `metabat2 2>&1 | head`) and into `tasks/METHODS.md`.
-
-#### Tool versions
-
-Versions in the omics skills are the versions their commands were checked against, not install pins. At project setup, take the newest release of each tool and lock it:
-
-1. Add the tool without a version (`pixi add <package>`); for a container, take the newest tag and record its digest.
-2. When the major or minor version differs from the skill's checked version, read the release notes for changed options and output formats, and run `<tool> --version` and `<tool> --help` to confirm the options the skill uses.
-3. Commit `pixi.lock` (or the digest) and keep that version for the whole project. Upgrade only on purpose, rerun the affected steps, and record the upgrade.
-4. Databases are not in `pixi.lock`. Use the database release the tool version requires, and record its version, source, download date and checksum.
-5. Record one row per tool in `tasks/METHODS.md`: tool, version as reported by `--version`, source (conda channel and build, PyPI, GitHub tag or commit, or container digest), the database record from step 4, and the date checked.
+- Pin the stack in `pixi.toml` and commit `pixi.lock`; capture a container (Docker / Apptainer) for long-lived or shared analyses (Sandve 2013). Version choice, locking and the database record follow `tool-versions`.
+- Record exact versions into each experiment's provenance file at run time (`samtools --version`, `bwa 2>&1 | head`) and into `tasks/METHODS.md`.
 - Make dependencies machine-readable and explicit (Wilson 2017); never rely on "whatever is on PATH".
 
-Manifest example with lock-capture comment: [examples/environment.pixi.toml](examples/environment.pixi.toml). Full guidance on pixi, uv, conda-file export, and containers: [references/environments.md](references/environments.md) (read when setting up or capturing an environment).
+Manifest example: [examples/environment.pixi.toml](examples/environment.pixi.toml). Guidance on pixi, uv, conda-file export, and containers: [references/environments.md](references/environments.md).
 
 ### Version control
 
-- Put the project under Git for backup, history, and collaboration (Noble 2009); commit at least daily, keep changes small and focused (Wilson 2017).
-- Track only hand-edited files: code, configs, `runall`, notebook, sample sheets, and `tasks/METHODS.md` as analysis provenance; the other `tasks/` notes stay local. **Never** commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
+- Track only hand-edited files: code, configs, `runall`, notebook, sample sheets, and `tasks/METHODS.md` as analysis provenance; the other `tasks/` notes stay local. Never commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
 - Use a `.gitignore` that ignores everything under `results/` (including `provenance.txt`, which `runall` regenerates) and allow-lists the hand-edited files that live there: the driver, its README, the lab notebook. Tested pattern: [examples/gitignore.example](examples/gitignore.example).
-- Work directly on `main`; do not create feature branches for experiments. Give each experiment its own dated `results/` directory and lab-notebook entry, commit in small steps, and revert what does not work.
-- Tag the commit behind each published figure or release; archive the release for a DOI (Zenodo) (Sandve 2013, Wilson 2017).
+- Give each experiment its own dated `results/` directory and lab-notebook entry. Tag the commit behind each published figure or release; archive the release for a DOI (Zenodo) (Sandve 2013, Wilson 2017).
 
-### Sharing & collaboration
+### Sharing and collaboration
 
-Every project carries a `README.md` (study description, setup, how to reproduce), an explicit `LICENSE`, and a `CITATION.cff`; use tidy data (one variable per column, one observation per row) keyed by a stable unique ID (Wilson 2017). Detail: [references/good-enough-practices.md](references/good-enough-practices.md) (read for data management, software, collaboration, and manuscript practices).
+Every project carries a `README.md` (study description, setup, how to reproduce), an explicit `LICENSE`, and a `CITATION.cff`; use tidy data (one variable per column, one observation per row) keyed by a stable unique ID (Wilson 2017). Detail: [references/good-enough-practices.md](references/good-enough-practices.md).
 
-## Quick Reference
+### Scaffold script
 
-| Need | Action |
+```bash
+uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
+  ./coastal-metagenomes --name "Coastal metagenomes" \
+  --objective "Recover and compare metagenome-assembled genomes."
+```
+
+| Need | Flags |
 |---|---|
-| Start a simple project | Run `scripts/scaffold_project.py` with the default canonical layout, resolve `pixi.lock`, then replace the hypothesis placeholders. |
-| Start a multi-track project | Add `--layout numbered`; use numbered, named roots for shared preprocessing, analyses, publication outputs, code, tests, logs, and scratch. |
-| Add the first experiment | Add `--first-experiment YYYY-MM-DD_topic` to create a README and a `runall` template that exits non-zero until adapted, without overwriting project-owned files. |
-| Add publication metadata | Opt in with `--license MIT --author "Name or organization" --copyright-year YYYY`; all three explicit values are required. |
-| Repair a messy project | Inventory paths first, create the target scaffold, migrate with temporary compatibility links, and verify consumers before removing old paths. |
-| Run an experiment | Copy `examples/runall.sh`, pin inputs and parameters, write atomically, and record versions and seeds. |
-| Add structured metadata | When schemas or a catalog are requested and the `bio-foundation-housekeeping` skill is installed, use it as a separate follow-up. |
-| Prepare a release or deposition | Verify README, license, citation metadata, lockfiles, provenance, checksums, and regenerability. |
+| Simple project | none (default canonical layout); resolve `pixi.lock`, then replace the hypothesis placeholders |
+| Multi-track project | `--layout numbered` |
+| First experiment | `--first-experiment YYYY-MM-DD_topic`: creates a README and a `runall` template that exits non-zero until adapted, without overwriting project-owned files |
+| Publication metadata | `--license MIT --author "Name or organization" --copyright-year YYYY`; all three explicit values are required |
+| Verify | `--check` |
+
+Other examples: [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md), [examples/samples.tsv](examples/samples.tsv). Metadata schemas and a queryable catalog are a separate follow-up (`bio-foundation-housekeeping`, when installed).
 
 ## Input Requirements
 
-- A project objective and expected deliverables.
-- Input data types, source locations, and available sample metadata.
-- Target compute environment, including scheduler constraints when applicable.
-- Known reference databases and their versions, or a plan to select and record them.
+- A project objective and expected deliverables; input data types, source locations and sample metadata.
+- The compute environment, including scheduler constraints; known reference databases and versions, or a plan to select them.
 - Existing path consumers when reorganizing a project.
 
 ## Output
 
 - A documented project layout with immutable raw inputs and regenerable outputs.
-- `tasks/todo.md`, `tasks/METHODS.md`, `tasks/lessons.md`, and an exploratory hypothesis register.
+- `tasks/todo.md`, `tasks/METHODS.md`, and an exploratory hypothesis register.
 - A pinned `pixi.toml` and `pixi.lock`, or a uv lock for a Python-only project.
 - One restartable driver and README per analysis stage, with provenance, logs, and QC checks.
 - README, license, citation metadata, and deposition-ready provenance where sharing is in scope.
@@ -218,76 +127,21 @@ Every project carries a `README.md` (study description, setup, how to reproduce)
 - [ ] Raw inputs remain unchanged; derived data are written outside raw-data directories.
 - [ ] Tool and database versions, parameters, checksums, seeds, and scheduler job IDs are recorded.
 - [ ] Drivers fail on errors, write final outputs atomically, and resume without masking corrupt outputs.
-- [ ] Exploratory work starts with at least five hypotheses and records a reflection after each major QC gate.
-- [ ] A fresh checkout plus documented external inputs can reproduce the analysis.
+- [ ] A fresh checkout plus documented external inputs reproduces the analysis.
 - [ ] No secrets, credentials, large generated outputs, or private data are staged for Git.
 - [ ] `scripts/scaffold_project.py <project> --objective "..." --check` passes, and a second identical scaffold run reports no created files.
-- [ ] When `--first-experiment` is used, its ISO date is valid and the generated `runall` exits non-zero until adapted.
-- [ ] Scaffolding never guesses a license or author; LICENSE/CITATION generation occurs only when license, author, and year are supplied together.
-
-## Examples
-
-Use the bundled templates instead of recreating them:
-
-```bash
-uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
-  ./coastal-metagenomes \
-  --name "Coastal metagenomes" \
-  --objective "Recover and compare metagenome-assembled genomes."
-
-pixi install --manifest-path ./coastal-metagenomes/pixi.toml
-uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
-  ./coastal-metagenomes \
-  --name "Coastal metagenomes" \
-  --objective "Recover and compare metagenome-assembled genomes." \
-  --check
-```
-
-For a multi-track project with an initial experiment:
-
-```bash
-uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project.py \
-  ./coastal-metagenomes \
-  --name "Coastal metagenomes" \
-  --objective "Recover and compare metagenome-assembled genomes." \
-  --layout numbered \
-  --first-experiment 2026-07-11_read-qc
-```
-
-The bundled templates are annotated under "Example artifacts" below.
+- [ ] With `--first-experiment`, the ISO date is valid and the generated `runall` exits non-zero until adapted.
+- [ ] Scaffolding never guesses a license or author; LICENSE and CITATION are generated only when license, author, and year are supplied together.
 
 ## Troubleshooting
 
-**Existing paths are embedded in scripts or notebooks:** Inventory every consumer before moving data. Add temporary compatibility symlinks, update consumers, and remove the links only after end-to-end validation.
-
-**A resume guard skips a corrupt output:** Validate more than existence. Check nonzero size, parseability, expected record counts, checksums, or tool-specific completion markers; rerun corrupt stages with an explicit force option.
+**A resume guard skips a corrupt output:** Validate more than existence: nonzero size, parseability, expected record counts, checksums, or tool-specific completion markers. Rerun corrupt stages with an explicit force option.
 
 **The environment cannot resolve:** Confirm channel order and platform support in `pixi.toml`. Record the failed solve, then constrain the conflicting package or use a pinned container for that stage.
-
-**The repository needs schemas and a queryable catalog:** If the `bio-foundation-housekeeping` skill is installed, use it after this skill establishes the project structure.
 
 **A scaffold file already contains different content:** The command exits before writing anything and lists the conflicting paths. Reconcile those files manually; the scaffold does not overwrite project-owned content.
 
 **A first-experiment value is rejected:** Use a real ISO calendar date plus a lowercase topic, for example `2026-07-11_read-qc`. Slashes, `..`, uppercase topics, and impossible dates are rejected before the project directory is created.
-
-## Reference files
-
-Load progressively as the task narrows:
-
-- [references/project-layout.md](references/project-layout.md): full annotated directory tree, dated `results/` dirs, lab-notebook practice, script categories (Noble 2009). Read when laying out or auditing structure.
-- [references/reproducibility-checklist.md](references/reproducibility-checklist.md): Sandve 2013's ten rules operationalized, each with a bioinformatics how-to. Read when making an analysis reproducible.
-- [references/good-enough-practices.md](references/good-enough-practices.md): Wilson 2017 data/software/collaboration/org/tracking/manuscript practices. Read for sharing, licensing, tidy data, deposition.
-- [references/environments.md](references/environments.md): pinning and capturing environments with pixi, uv, and containers, plus conda-file export for collaborators. Read when setting up or recording the software stack.
-
-## Example artifacts
-
-- [scripts/scaffold_project.py](scripts/scaffold_project.py): create or verify the minimal project scaffold without overwriting changed files.
-- [examples/project-tree.txt](examples/project-tree.txt): concrete annotated tree for an arctic metagenome / MAG-recovery study.
-- [examples/runall.sh](examples/runall.sh): runnable, restartable driver script (versions, seed, idempotency, temp-then-rename).
-- [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md): dated lab-notebook entry template.
-- [examples/environment.pixi.toml](examples/environment.pixi.toml): pinned pixi manifest with lock-capture comment.
-- [examples/gitignore.example](examples/gitignore.example): `.gitignore` that tracks only hand-edited files (ignores `results/` outputs, allow-lists the driver/README/notebook).
-- [examples/samples.tsv](examples/samples.tsv): tidy sample sheet keyed by `sample_id` (one observation per row).
 
 ## Sources
 

@@ -18,7 +18,7 @@ Chronological, dated decision log kept at the root of `results/` (Noble 2009). E
 
 **Goal.** Get a QC'd co-assembly and a first set of MAGs from the two arctic stations, with adapter trimming re-enabled after the 2026-03-20 failure.
 
-**What I ran.** `results/2026-03-30_qc_trim_assemble_bin/runall` (commit `a1b2c3d`). Stages: FastQC -> fastp (adapter trimming ON) -> metaSPAdes -> bwa mem (reads mapped back to the assembly) -> samtools sort/index -> per-contig depth -> MetaBAT2 binning (seed 42).
+**What I ran.** `results/2026-03-30_qc_trim_assemble_bin/runall` (commit `a1b2c3d`). Stages: FastQC -> fastp (adapter trimming ON) -> metaSPAdes -> bwa mem (reads mapped back to the assembly) -> samtools sort/index -> QuickBin binning (container `bryce911/bbtools:39.85`, digest in provenance).
 
 **Decisions.**
 - Confirmed adapter trimming was on this time; N50 recovered to 14.2 kbp (vs 412 bp on 2026-03-20).

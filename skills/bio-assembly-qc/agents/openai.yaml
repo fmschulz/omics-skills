@@ -1,0 +1,6 @@
+interface:
+  display_name: "Assembly QC"
+  short_description: "Assemble reads and run QUAST"
+  default_prompt: "Read the omics-pipeline skill, then plan and run the assembly driver for QC-passed reads."
+policy:
+  allow_implicit_invocation: false

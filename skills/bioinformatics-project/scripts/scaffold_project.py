@@ -81,7 +81,6 @@ def canonical_scaffold_files(project_name: str, objective: str) -> dict[Path, tu
             "# Methods\n\nRecord exact commands, versions, parameters, seeds, databases, checksums, and job IDs.\n",
             False,
         ),
-        Path("tasks/lessons.md"): ("# Lessons\n\n", False),
         Path("tasks/hypotheses.md"): (
             "# Hypothesis register\n\n"
             "Replace each placeholder before exploratory analysis and keep ruled-out entries visible.\n\n"
@@ -184,7 +183,6 @@ def numbered_scaffold_files(project_name: str, objective: str) -> dict[Path, tup
             "# Methods\n\nRecord exact commands, versions, parameters, seeds, databases, checksums, and job IDs.\n",
             False,
         ),
-        Path("tasks/lessons.md"): ("# Lessons\n\n", False),
         Path("tasks/hypotheses.md"): (
             "# Hypothesis register\n\n"
             "Replace each placeholder before exploratory analysis and keep ruled-out entries visible.\n\n"

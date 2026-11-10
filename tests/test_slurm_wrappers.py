@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # wrapper script -> (arguments, the template name that must reach sbatch)
 WRAPPERS = {
-    "bio-prefect-dask-nextflow/scripts/submit_nextflow.sh": (
+    "omics-pipeline/scripts/submit_nextflow.sh": (
         lambda root: [str(root / "main.nf"), "data/*.fastq.gz", str(root / "results")],
         "nextflow-run.sbatch",
     ),
@@ -65,6 +65,9 @@ class SlurmWrapperTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn("test-account", result.stdout)
                 self.assertIn(template, result.stdout)
+                # Slurm spools the batch script, so the job must name its
+                # project root instead of deriving it from the script path.
+                self.assertIn(f"--chdir={REPO_ROOT}", result.stdout.splitlines())
 
     def test_a_wrapper_refuses_to_submit_without_an_account(self) -> None:
         """The account is what binds a job to the right scheduler; submitting

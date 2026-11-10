@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bio Phylogenomics"
+  short_description: "Build marker-gene trees and find closest relatives"
+  default_prompt: "Use the bio-phylogenomics stage to build marker-gene alignments and trees and find closest relatives."
+policy:
+  allow_implicit_invocation: false

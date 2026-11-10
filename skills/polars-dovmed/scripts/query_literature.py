@@ -295,8 +295,11 @@ def parse_args():
     )
     parser.add_argument(
         "--crossref-email",
-        default=os.environ.get("CROSSREF_EMAIL", ""),
-        help="Optional email for the Crossref polite-pool User-Agent",
+        default="",
+        help=(
+            "Contact address for the Crossref polite pool. Pass it only when the user "
+            "gave one for this purpose; no environment variable supplies it."
+        ),
     )
     parser.add_argument(
         "--auto-advanced-refinement",

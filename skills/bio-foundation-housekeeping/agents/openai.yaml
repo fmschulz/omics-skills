@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bio Foundation Housekeeping"
+  short_description: "Validate project metadata and build a DuckDB catalog"
+  default_prompt: "Use the bio-foundation-housekeeping stage to validate metadata records and build the catalog."
+policy:
+  allow_implicit_invocation: false

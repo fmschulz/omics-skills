@@ -3,8 +3,8 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
-SKILL = ROOT / "skills" / "plotly-dashboard-skill"
-APP = SKILL / "examples" / "app.py"
+SKILL = ROOT / "skills" / "beautiful-data-viz"
+APP = SKILL / "examples" / "dash_app.py"
 
 
 def test_runnable_app_starts_and_meets_callback_latency_budget():
@@ -15,8 +15,9 @@ def test_runnable_app_starts_and_meets_callback_latency_budget():
     assert payload["callback_p95_ms"] <= payload["latency_budget_ms"]
 
 
-def test_skill_links_runnable_example_and_both_references():
+def test_skill_links_dash_reference_and_reference_links_runnable_example():
     text = (SKILL / "SKILL.md").read_text()
-    assert "[examples/app.py](examples/app.py)" in text
-    assert "[references/style.md](references/style.md)" in text
-    assert "[references/architecture.md](references/architecture.md)" in text
+    assert "[references/dash.md](references/dash.md)" in text
+    dash = (SKILL / "references" / "dash.md").read_text()
+    assert "[../examples/dash_app.py](../examples/dash_app.py)" in dash
+    assert "examples/dash_app.py --smoke" in dash
