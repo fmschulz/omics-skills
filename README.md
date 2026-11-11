@@ -11,34 +11,44 @@
   </a>
 </p>
 
-A skill and agent pack for omics pipelines, literature discovery, project evaluation, and data visualization. Works with Claude Code and the Codex CLI.
+A small skill pack for omics pipelines, literature discovery, notebooks, and data visualization. Works with Claude Code and the Codex CLI.
 
 ## Documentation
 
-Read the docs at <https://fmschulz.github.io/omics-skills/>. They cover installation, the agent set, the skill catalog, routing, and development.
+Read the docs at <https://fmschulz.github.io/omics-skills/>. They cover installation, the skills, the agent, and development.
 Release notes are published on the [GitHub Releases page](https://github.com/fmschulz/omics-skills/releases).
 
 ## Scope
 
-Three agent personas — `omics-scientist`, `literature-expert`, `science-writer` — compose a set of small, single-purpose skills (`SKILL.md` files). The omics pipeline runs from read QC through assembly, gene calling, annotation, phylogenomics, comparative genomics, structure prediction, viromics, interdomain HGT and statistics. Literature search, proposal and AI-output evaluation, notebooks and figures have their own skills.
+The pack holds twelve skills and one agent. It keeps what a current model cannot derive: house rules for running and reporting an analysis, tools the pack maintains, a hosted full-text literature corpus, and small tested helpers. It leaves out manuals for standard tools.
 
-The pipeline stage skills are hidden from the skill list, so their descriptions cost no prompt space. One model-visible skill, `omics-pipeline`, names the stage to read and holds the rules every stage shares. Manuscript prose (`academic-writing` with `stop-slop`), manuscript review (`nelli-paper-review`), PDF conversion (`pdf-to-md`) and claim-graph extraction (`csag-extraction`) come from other repositories.
+| Skill | Purpose |
+|---|---|
+| `omics-pipeline` | Entry for pipeline work: the shared rules, and one decision page each for read QC and mapping, assembly, binning, gene calling, phylogenomics and structure |
+| `tracking-taxonomy-updates`, `bio-annotation`, `bio-viromics`, `bio-interdomain-hgt` | Stage skills with scripts: domain routing and taxonomy, annotation, viromics, interdomain HGT |
+| `bioinformatics-project` | Project layout, pinned environment, restartable drivers, provenance |
+| `polars-dovmed`, `crossref-lookup`, `public-db-lookup` | Full-text literature search, DOI and citation metadata, public database records |
+| `bio-logic` | Hypothesis register and claim-against-evidence checks |
+| `notebooks`, `beautiful-data-viz` | Executed notebooks and figures |
 
-The canonical agent sources are Markdown prompts. Installation keeps those files for Claude Code and renders native TOML agent definitions for Codex. Skills are Markdown directories with defined input/output contracts. A deterministic router (`scripts/skill_index.py`) picks an agent and an ordered set of skills for a task.
+The four stage skills are hidden from the skill list, so their descriptions cost no prompt space; `omics-pipeline` names them. Manuscript prose (`academic-writing` with `stop-slop`), manuscript review (`nelli-paper-review`), PDF conversion (`pdf-to-md`) and claim-graph extraction (`csag-extraction`) come from other repositories.
+
+The agent, `literature-expert`, is a Markdown prompt. Installation links that file for Claude Code and renders a TOML agent definition for Codex.
 
 ## How Analyses Are Run
 
-The pipeline stages share a few habits, stated once in `skills/omics-pipeline/SKILL.md`, that make exploratory analyses easier to audit and reproduce:
+The pipeline stages share a few rules, stated once in `skills/omics-pipeline/SKILL.md`, that make exploratory analyses easier to audit and reproduce:
 
 - **Hypothesis register.** Exploratory work starts with at least five working hypotheses (biological mechanism, technical artifact, null, sampling or batch effect, database artifact). Each is revised as supported, weakened, ruled out, or unresolved, with the evidence that changed its status.
 - **Reflection after each step.** After each major result or QC gate, the agent records what was observed, which hypotheses gained or lost support, and the next discriminating check.
 - **Literature-derived analysis plan.** Before deciding what is "interesting" the agent reads the literature for the inferred group and summarises which markers, comparison sets, plots, and outliers are diagnostic.
-- **Comparative axes against close relatives.** When relatives are available, the query is run through five axes — genome-property frontier, marker-gene census, per-family copy-number, synteny and conserved neighborhoods, and non-coding RNA census — each producing a side-by-side comparison file.
+- **Comparative axes against close relatives.** When relatives are available, the query is run through five axes (genome-property frontier, marker-gene census, per-family copy number, conserved neighborhoods, and non-coding RNA census), and each axis gets a comparison table.
 - **Literature search.** `polars-dovmed` queries PMC and bioRxiv through the connector, the hosted API, or a local parquet `dovmed scan`. An outage is reported, never skipped silently.
+- **Findings table.** A report ends with a table of candidates, each with its evidence, confidence, comparison baseline, literature context and follow-up test. Negative findings are stated.
 
 ## Tooling baseline
 
-Skills target current stable releases as of 2026 and document GPU alternatives where they exist. The per-step table of pinned versions lives in [`docs/tooling-survey-2026.md`](docs/tooling-survey-2026.md); each skill's `docs/` directory carries the provenance-checked release notes for its own tools.
+The default tool per pipeline step and the version each command was checked against are in [`docs/tooling-survey-2026.md`](docs/tooling-survey-2026.md). A version in a skill records what was checked; it is not an install pin.
 
 ## Installation
 
@@ -80,95 +90,60 @@ cd omics-skills
 make install
 ```
 
-`make install` builds the routing catalog, installs skills under `~/.agents/skills`, symlinks the Claude agent sources, and renders Codex agents as TOML. Use `make install-claude` or `make install-codex` for one runtime, `make install INSTALL_METHOD=copy` for copied skills, and `make status` to inspect the result. Re-run the installer after changing an agent prompt because generated Codex TOML files cannot track Markdown changes through a symlink. See [docs/INSTALL.md](docs/INSTALL.md) for troubleshooting.
-
-The routing hook attaches the router to every user prompt:
-
-```bash
-make install-hook        # Claude Code + Codex CLI
-make hook-status
-make uninstall-hook
-```
-
-Set `OMICS_SKILLS_AUTOROUTE=0` to suppress the hint for a session without uninstalling.
+`make install` installs skills under `~/.agents/skills`, links the Claude agent, and renders the Codex agent as TOML. Use `make install-claude` or `make install-codex` for one runtime, `make install INSTALL_METHOD=copy` for copied skills, and `make status` to inspect the result. Re-run the installer after changing the agent prompt, because a rendered TOML file does not follow the Markdown source. See [docs/INSTALL.md](docs/INSTALL.md) for troubleshooting and for the upgrade from 1.x.
 
 ## Usage
 
-```bash
-claude --agent omics-scientist
-codex
-```
+A session needs no agent: the model loads a skill when its description fits the task. Name a skill to load it directly, as `/<skill-name>` in Claude Code or `$<skill-name>` in Codex, hidden stage skills included. For pipeline work, start with `omics-pipeline`.
 
-In Codex, ask the primary agent to delegate to `omics-scientist`, or invoke a skill explicitly with `$omics-pipeline`. The installed TOML definitions under `~/.codex/agents/` are available to Codex as custom subagents.
-
-Query the router directly:
+For a literature task in its own context, start the agent:
 
 ```bash
-python3 scripts/skill_index.py route \
-  "assemble a metagenome and recover MAGs"
+claude --agent literature-expert
 ```
 
-Skills are also invocable individually as `/<skill-name>` in Claude Code or `$<skill-name>` in Codex, hidden stages included. Agent files list the skills each agent exposes and how they compose.
-
-## Agents
-
-| Agent | Focus | Skills |
-|---|---|---:|
-| `omics-scientist` | Pipeline stages from reads to reports, project reproducibility, public database records, notebooks and figures | 23 |
-| `literature-expert` | PMC full text, arXiv and bioRxiv preprints, DOI metadata, and citation impact | 4 |
-| `science-writer` | Proposal review, AI-output evaluation, methods sections, and evidence checks | 4 |
-
-Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a specific agent routes a given task.
+In Codex, ask the primary agent to delegate to `literature-expert`; the rendered definition under `~/.codex/agents/` is available as a custom subagent.
 
 ## Repository layout
 
 ```
-agents/                     agent definitions
+agents/                     the agent definition
 skills/                     skill directories; each has a SKILL.md
-catalog/                    generated router artifact (catalog.json)
-Makefile                    the installer: install, catalog, hook, benchmark, uninstall, status, validate, test
+Makefile                    the installer: install, uninstall, status, validate, test
 scripts/
-  skill_index.py            router and catalog builder
-  routing_benchmark.py      regression harness
-  emit_routing_hint.py      hook payload generator
-  install_hook.py           idempotent hook installer
   render_codex_agent.py     Markdown agent -> Codex TOML
   prune_removed_skills.py, prune_removed_agents.py
                             retire skills and agents dropped from the checkout
   validate-skills.py, validate-supplementary-docs.py, validate-citations.py
+  citation-cache.json       registered Crossref records that validate-citations.py checks
   check_tool_versions.py    report of tool guides behind the newest release
   check_release_sync.py     tag, manifest and release-note check before a release
 tests/                      unit and fixture tests, one file per script or skill
-  routing_benchmark.yaml    routing regression suite
 validation/                 truth-set registry and Slurm job harness for biological validation
-docs/                       MkDocs site sources (install, agents, skills, routing, validation, tooling, contributing)
-  routing_baseline.json     benchmark baseline
+docs/                       MkDocs site sources (install, skills, agent, validation, tooling, contributing)
 ```
 
 ## Development
 
 ```bash
 uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
-make benchmark                                  # routing regression vs baseline
-python3 scripts/skill_index.py build            # rebuild catalog artifacts
 ```
 
 Adding or modifying a skill:
 
 1. Create or edit `skills/<name>/SKILL.md`. The YAML `name` field must match the directory name.
-2. Add the skill as a row in the `## Skills` table of the relevant agent.
-3. Rebuild the catalog and run the test suite.
-4. Add a benchmark row in `tests/routing_benchmark.yaml` if the skill is non-trivially discoverable by the router.
+2. For a pipeline stage, add its page or stage skill to the tables in `skills/omics-pipeline/SKILL.md`.
+3. Run `make test`.
 
-See [AGENTS.md](AGENTS.md) for structural conventions, [docs/routing.md](docs/routing.md) for how the router scores and composes skills, [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for contribution flow, and [docs/skills.md](docs/skills.md) for the public skill catalog.
+See [AGENTS.md](AGENTS.md) for structural conventions, [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for contribution flow, and [docs/skills.md](docs/skills.md) for the public skill catalog.
 
 ## Compatibility
 
 | Platform | Notes |
 |---|---|
-| Claude Code | Agents in `~/.claude/agents/`; skills in `~/.claude/skills/`. |
-| Codex CLI | TOML subagents in `~/.codex/agents/`; canonical skills in `~/.agents/skills/` with a legacy `~/.codex/skills` link; native plugin metadata in `.codex-plugin/`. |
-| Claude API | Agent markdown files load directly as system prompts; skill files are readable as reference. |
+| Claude Code | Agent in `~/.claude/agents/`; skills in `~/.claude/skills/`. |
+| Codex CLI | TOML subagent in `~/.codex/agents/`; canonical skills in `~/.agents/skills/` with a legacy `~/.codex/skills` link; native plugin metadata in `.codex-plugin/`. |
+| Claude API | The agent Markdown file loads directly as a system prompt; skill files are readable as reference. |
 
 ## License
 

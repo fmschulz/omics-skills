@@ -3,19 +3,18 @@
   "owner": {
     "name": "Frederik Schulz"
   },
-  "description": "Omics-focused agents and skills for Claude Code and Cowork.",
+  "description": "Omics-focused skills for Claude Code and Cowork.",
   "plugins": [
     {
       "name": "omics-skills",
       "source": "./",
-      "description": "Bioinformatics pipelines, literature discovery, project evaluation, and data visualization agents and skills.",
+      "description": "Skills for omics pipelines, literature discovery, and data visualization.",
       "category": "Science",
       "tags": [
         "bioinformatics",
         "omics",
         "genomics",
         "literature",
-        "evaluation",
         "data-visualization"
       ]
     }

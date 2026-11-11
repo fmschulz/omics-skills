@@ -14,26 +14,21 @@ One level does not imply the next. A completed Slurm job is not biological valid
 
 ## What the tests cover
 
-`make test` runs the skill, supplementary-doc and citation validators, the unit and fixture tests, and the routing benchmark. For skills that ship a driver or an artifact builder, the fixture tests check command plans, restart and reuse decisions, output normalization, schema validation and failure paths. They do not run the heavy external tools or their databases. A production run still needs pinned databases and containers, a scheduler job, and the QC gates in each skill.
+`make test` runs the skill, supplementary-doc and citation validators, and the unit and fixture tests. For skills that ship a driver or an artifact builder, the fixture tests check command plans, restart and reuse decisions, output normalization, schema validation and failure paths. They do not run the heavy external tools or their databases. A production run still needs pinned databases and containers, a scheduler job, and the QC gates in each skill.
 
 ## Truth-set registry
 
-[`validation/truth-sets.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/truth-sets.json) records, for eight core skills, the candidate truth set, its evidence tier, biological strata, metrics, limitations, source release, license and artifacts. The skills are read QC and mapping, assembly, gene calling and ncRNA detection, functional annotation, phylogenomics, protein clustering and pangenomes, viromics, and interdomain horizontal gene transfer.
+[`validation/truth-sets.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/truth-sets.json) records, for three core skills, the candidate truth set, its evidence tier, biological strata, metrics, limitations, source release, license and artifacts. The skills are functional annotation, viromics, and interdomain horizontal gene transfer.
 
 ```bash
 uv run --script validation/scripts/validate_registry.py
 ```
 
-A truth set moves from `candidate` to `ready` only when every required artifact has an immutable URL and a locally verified SHA-256. Upstream MD5 values stay as provenance; they do not replace the SHA-256 check. All eight truth sets are `candidate`.
+A truth set moves from `candidate` to `ready` only when every required artifact has an immutable URL and a locally verified SHA-256. Upstream MD5 values stay as provenance; they do not replace the SHA-256 check. All three truth sets are `candidate`.
 
 | Skill | Current surface | Needed for scheduler validation |
 |---|---|---|
-| `bio-reads-qc-mapping` | External-tool driver | Run the driver, score retained reads and mapping against truth, then test reuse. |
-| `bio-assembly-qc` | External-tool driver | Run the driver and score MetaQUAST metrics against a gold assembly. |
-| `bio-gene-calling` | Restartable external-tool driver | Run each domain route and compare CDS, protein, tRNA and rRNA calls with truth records. |
 | `bio-annotation` | Artifact builder | Add an upstream annotation adapter before scoring CAFA or curated labels. |
-| `bio-phylogenomics` | External-tool driver | Run marker trees and compare supported splits with the reference tree. |
-| `bio-protein-clustering-pangenome` | Artifact builder | Run an orthology tool, then submit its predictions to QfO-compatible scoring. |
 | `bio-viromics` | Artifact builder | Run geNomad and CheckV, then score labeled contigs before building the evidence bundle. |
 | `bio-interdomain-hgt` | Artifact builder | Run the homology, context and tree stages; score simulations apart from curated empirical controls. |
 
@@ -73,13 +68,6 @@ The run record stores the cluster, Slurm state, exit code, elapsed seconds, peak
 
 ## Current pilot
 
-The first pilot, [`validation/jobs/phylogenomics-qfo-pilot.draft.json`](https://github.com/fmschulz/omics-skills/blob/main/validation/jobs/phylogenomics-qfo-pilot.draft.json), stays `draft` until these values are known on a scheduler login node:
-
-- the cluster, and a small-job account, partition and QOS on it
-- the remote checkout and data paths
-- the SHA-256 values of the QfO subset and the reference tree
-- the SHA-256 of the solved Pixi lock
-
-Phylogenomics goes first because it needs no large reference database.
+No pilot job is defined.
 
 Comparative-discovery thresholds need separate prokaryote, eukaryote, phage and Nucleocytoviricota campaigns.

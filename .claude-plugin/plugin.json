@@ -1,8 +1,8 @@
 {
   "name": "omics-skills",
   "displayName": "Omics Skills",
-  "description": "Bioinformatics pipelines, literature discovery, project evaluation, and data visualization agents and skills for Claude Code and Cowork.",
-  "version": "1.7.1",
+  "description": "Skills for omics pipelines, literature discovery, and data visualization in Claude Code and Cowork.",
+  "version": "2.0.0",
   "author": {
     "name": "Frederik Schulz"
   },
@@ -14,7 +14,6 @@
     "omics",
     "genomics",
     "literature",
-    "evaluation",
     "data-visualization"
   ]
 }

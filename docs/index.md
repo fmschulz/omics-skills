@@ -1,14 +1,15 @@
 # omics-skills
 
-omics-skills is a set of agent prompts and skills for scientific work in Claude Code and the Codex CLI. It covers omics pipelines, literature search, project evaluation, notebooks, dashboards and figures.
+omics-skills is a small skill pack for scientific work in Claude Code and the Codex CLI. It covers omics pipelines, literature search, public database records, notebooks and figures.
 
-Agents are Markdown system prompts. A skill is a directory with a `SKILL.md` file and optional references, examples, scripts and templates. A router reads both and recommends an agent and an order of skills for a task. The generated `catalog/catalog.json` is the authoritative list of agents and skills. The omics pipeline stages are hidden from the skill list and reached through the `omics-pipeline` router skill.
+A skill is a directory with a `SKILL.md` file and optional references, scripts and templates. The pack holds twelve skills and one agent. It keeps what a current model cannot derive: house rules for running and reporting an analysis, tools the pack maintains, a hosted full-text literature corpus, and small tested helpers.
 
 | Area | Skills cover |
 |---|---|
-| Omics pipeline | `omics-pipeline` routes to the stages: read QC and mapping, assembly, binning, gene calling, annotation, taxonomy, phylogenomics, viromics, pangenomes, protein structure, statistics and reports. |
-| Literature and metadata | PMC and bioRxiv full-text search, arXiv and bioRxiv preprint search, DOI lookup, citation impact and public database records. |
-| Evaluation | Proposal review, review of AI-scientist output, methods sections and evidence checks. Manuscript prose and review come from other repositories. |
+| Omics pipeline | `omics-pipeline` holds the shared rules and one decision page each for read QC and mapping, assembly, binning, gene calling, phylogenomics and structure. Four stage skills add scripts for domain routing and taxonomy, annotation, viromics and interdomain HGT. |
+| Project | Project layout, pinned environment, restartable drivers and provenance. |
+| Literature and metadata | PMC and bioRxiv full-text search, DOI lookup, citation counts and public database records. |
+| Reasoning | Hypothesis register and claim-against-evidence checks. |
 | Visualization | Notebooks, figures and Plotly Dash dashboards, greyscale first. |
 
 ## Quick start
@@ -17,21 +18,19 @@ Agents are Markdown system prompts. A skill is a directory with a `SKILL.md` fil
 git clone https://github.com/fmschulz/omics-skills.git
 cd omics-skills
 make install
-python3 scripts/skill_index.py route "assemble a metagenome and recover MAGs"
 ```
 
 ## Pages
 
 | Goal | Page |
 |---|---|
-| Install the pack and start an agent | [Install](INSTALL.md) |
-| Pick an agent | [Agents](agents.md) |
+| Install the pack, or upgrade from 1.x | [Install](INSTALL.md) |
 | Find a skill | [Skills](skills.md) |
-| See how a task is routed | [Routing](routing.md) |
+| Use the literature agent | [Agent](agents.md) |
 | See what the tests and validation cover | [Validation](biological-validation.md) |
 | Look up default tools and versions | [Tooling](tooling-survey-2026.md) |
 | Change a skill or cut a release | [Contributing](CONTRIBUTING.md) |
 
 ## Design principles
 
-The skills tie agents to evidence. An analysis starts from an explicit hypothesis, records its QC decisions, checks the literature for the organism or data type, compares like with like, and reports negative results as well as candidates. The evaluation skills put evidence, reproducibility and stated limits ahead of fluent but unsupported claims.
+The skills tie a model to evidence. An analysis starts from an explicit hypothesis register, records its QC decisions, checks the literature for the organism or data type, compares like with like, and reports negative results as well as candidates.
