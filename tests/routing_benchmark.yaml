@@ -383,6 +383,17 @@
   expect_no_primary: true
   max_primary_skills: 0
 
+# A question word is not a trigger phrase: "how" and "why" open most prompts.
+- task: "how do I rename a git branch"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0
+
+- task: "why is my docker build slow"
+  platform: codex
+  expect_no_primary: true
+  max_primary_skills: 0
+
 - task: "I need a treemap of storage usage"
   platform: codex
   expect_no_primary: true

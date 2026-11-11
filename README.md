@@ -126,28 +126,23 @@ Run `python3 scripts/skill_index.py route --agent <agent> "<task>"` to see how a
 agents/                     agent definitions
 skills/                     skill directories; each has a SKILL.md
 catalog/                    generated router artifact (catalog.json)
-Makefile                    the installer: install, uninstall, status, validate
+Makefile                    the installer: install, catalog, hook, benchmark, uninstall, status, validate, test
 scripts/
   skill_index.py            router and catalog builder
   routing_benchmark.py      regression harness
   emit_routing_hint.py      hook payload generator
   install_hook.py           idempotent hook installer
   render_codex_agent.py     Markdown agent -> Codex TOML
-  prune_removed_skills.py   retire skills dropped from the checkout
+  prune_removed_skills.py, prune_removed_agents.py
+                            retire skills and agents dropped from the checkout
   validate-skills.py, validate-supplementary-docs.py, validate-citations.py
-tests/
-  test_skill_index.py       unit tests for catalog and router
-  test_install_selected.py  selected-install and uninstall integration tests
-  test_routing_benchmark.py harness sanity tests
-  test_emit_routing_hint.py hook-script tests
+  check_tool_versions.py    report of tool guides behind the newest release
+  check_release_sync.py     tag, manifest and release-note check before a release
+tests/                      unit and fixture tests, one file per script or skill
   routing_benchmark.yaml    routing regression suite
-docs/
-  INSTALL.md                 installation, updates and troubleshooting
-  CONTRIBUTING.md            contribution workflow, checks and releases
-  routing.md                 routing model and benchmark
+validation/                 truth-set registry and Slurm job harness for biological validation
+docs/                       MkDocs site sources (install, agents, skills, routing, validation, tooling, contributing)
   routing_baseline.json     benchmark baseline
-  tooling-survey-2026.md    bioinformatics tooling survey
-Makefile                    install, catalog, hook, benchmark, uninstall targets
 ```
 
 ## Development

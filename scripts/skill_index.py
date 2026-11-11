@@ -994,8 +994,11 @@ def _absolutize_paths(payload: dict[str, Any], catalog_dir: Path | None = None) 
 def _allowed_skills_for_agent(
     agent: str | None, agents: dict[str, dict[str, Any]]
 ) -> set[str] | None:
-    """The set of skills an agent is allowed to recommend (its Mandatory Skill
-    Usage entries), or None when no agent constraint is given."""
+    """Return the set of skills an agent is allowed to recommend.
+
+    These are the rows of its `## Skills` table, or None when no agent
+    constraint is given.
+    """
     if not agent:
         return None
     agent_record = agents.get(agent)
@@ -1045,10 +1048,13 @@ def _score_skills(
     return scores
 
 
-def _rank_primary_skills(skill_scores: dict[str, float], top_k: int) -> list[tuple[str, float]]:
-    """Sort skills by score (desc, then name) and drop anything below the
-    confidence cutoff. Returns all surviving (name, score) pairs; the caller
-    takes the first ``top_k`` as primary skills."""
+def _rank_primary_skills(skill_scores: dict[str, float]) -> list[tuple[str, float]]:
+    """Sort skills by score (desc, then name) and drop low-confidence ones.
+
+    Anything below the confidence cutoff is dropped. Returns all surviving
+    (name, score) pairs; the caller takes the first ``top_k`` of them as
+    primary skills.
+    """
     ranked = sorted(skill_scores.items(), key=lambda item: (-item[1], item[0]))
     if ranked:
         cutoff = max(PRIMARY_CUTOFF_FLOOR, ranked[0][1] * PRIMARY_CUTOFF_RATIO)
@@ -1220,7 +1226,7 @@ def route_request(
 
     reasons: dict[str, list[str]] = defaultdict(list)
     skill_scores = _score_skills(skills, query, query_tokens, allowed_skills, platform, reasons)
-    ranked_pairs = _rank_primary_skills(skill_scores, top_k)
+    ranked_pairs = _rank_primary_skills(skill_scores)
     primary_skills = [name for name, _ in ranked_pairs[:top_k]]
 
     agent_scores = _score_agents(
