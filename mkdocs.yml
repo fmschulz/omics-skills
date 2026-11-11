@@ -1,5 +1,5 @@
 site_name: omics-skills
-site_description: Agent prompts and reusable skills for omics pipelines, literature discovery, project evaluation, and data visualization.
+site_description: A small skill pack for omics pipelines, literature discovery, notebooks, and data visualization.
 site_url: https://fmschulz.github.io/omics-skills/
 repo_url: https://github.com/fmschulz/omics-skills
 repo_name: fmschulz/omics-skills
@@ -44,9 +44,8 @@ theme:
 nav:
   - Home: index.md
   - Install: INSTALL.md
-  - Agents: agents.md
   - Skills: skills.md
-  - Routing: routing.md
+  - Agent: agents.md
   - Validation: biological-validation.md
   - Tooling: tooling-survey-2026.md
   - Contributing: CONTRIBUTING.md

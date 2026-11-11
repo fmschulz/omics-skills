@@ -3,29 +3,28 @@
 #
 # Layout of an install:
 #   ~/.agents/skills/<skill>/     shared skills (links or copies)
-#   ~/.agents/omics-skills/       router + generated catalog
+#   ~/.agents/omics-skills/       archives of replaced and retired entries
 #   ~/.claude/agents/<name>.md    Claude agents (links or copies)
 #   ~/.codex/agents/<name>.toml   Codex agents (always rendered, never linked)
 #   ~/.claude/skills, ~/.codex/skills -> ~/.agents/skills
 
 .PHONY: help install install-claude install-codex install-selected \
-        install-skills install-catalog build-catalog prune-removed-skills \
-        prune-removed-agents \
-        link-claude-skills link-codex-skills \
-        install-hook uninstall-hook hook-status benchmark check-deps \
+        install-skills prune-removed-skills prune-removed-agents \
+        link-claude-skills link-codex-skills check-deps \
         uninstall uninstall-selected uninstall-claude uninstall-codex \
-        uninstall-skills uninstall-catalog status clean validate test \
+        uninstall-skills uninstall-state status clean validate test \
         _install-agents _link-skills _uninstall-agents
 
 AGENTS_DIR := $(CURDIR)/agents
 SKILLS_DIR := $(CURDIR)/skills
 SCRIPTS_DIR := $(CURDIR)/scripts
-CATALOG_DIR := $(CURDIR)/catalog
-CATALOG_SRC_DIR ?= $(CATALOG_DIR)
 
-AGENT_FILES := omics-scientist.md literature-expert.md science-writer.md
+AGENT_FILES := literature-expert.md
 AGENT_COUNT := $(words $(AGENT_FILES))
-SKILL_DIRS := $(notdir $(wildcard $(SKILLS_DIR)/*))
+# A skill is a directory that holds a SKILL.md. Ignored files such as __pycache__
+# keep the directory of a deleted skill alive in an updated checkout; such a
+# leftover is not a skill.
+SKILL_DIRS := $(patsubst $(SKILLS_DIR)/%/SKILL.md,%,$(wildcard $(SKILLS_DIR)/*/SKILL.md))
 
 CLAUDE_HOME := $(HOME)/.claude
 CLAUDE_AGENTS_DIR := $(CLAUDE_HOME)/agents
@@ -35,7 +34,7 @@ CODEX_AGENTS_DIR := $(CODEX_HOME)/agents
 CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
 AGENTS_HOME := $(HOME)/.agents
 AGENTS_SKILLS_DIR := $(AGENTS_HOME)/skills
-AGENTS_CATALOG_DIR := $(AGENTS_HOME)/omics-skills
+AGENTS_STATE_DIR := $(AGENTS_HOME)/omics-skills
 
 # symlink (default) keeps the install tracking this checkout; copy detaches it.
 INSTALL_METHOD ?= symlink
@@ -67,8 +66,8 @@ help: ## Display this help
 	@echo "  make <target> [INSTALL_METHOD=copy] [NO_COLOR=1]"
 	@echo ""
 	@echo "  Install a subset:"
-	@echo "    make install-selected SELECTED_AGENT_FILES=\"omics-scientist.md\" \\"
-	@echo "                          SELECTED_SKILL_DIRS=\"bio-logic bio-annotation\""
+	@echo "    make install-selected SELECTED_AGENT_FILES=\"literature-expert.md\" \\"
+	@echo "                          SELECTED_SKILL_DIRS=\"polars-dovmed crossref-lookup\""
 	@awk 'BEGIN {FS = ":.*##"; printf "\n"} \
 		/^[a-zA-Z_-]+:.*?##/ { printf "  $(GREEN)%-22s$(NC) %s\n", $$1, $$2 } \
 		/^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -80,33 +79,25 @@ install: check-deps install-claude install-codex ## Install agents and skills fo
 	@echo ""
 	@$(MAKE) --no-print-directory status
 
-install-claude: build-catalog install-skills install-catalog $(CLAUDE_LINK_TARGET) ## Install for Claude Code only
+install-claude: install-skills $(CLAUDE_LINK_TARGET) ## Install for Claude Code only
 	@$(MAKE) --no-print-directory _install-agents \
 		AGENT_TARGET_DIR=$(CLAUDE_AGENTS_DIR) AGENT_PLATFORM="Claude Code" AGENT_FORMAT=md
 	@echo "$(GREEN)OK Claude Code installation complete$(NC)"
 
-install-codex: build-catalog install-skills install-catalog $(CODEX_LINK_TARGET) ## Install for Codex CLI only
+install-codex: install-skills $(CODEX_LINK_TARGET) ## Install for Codex CLI only
 	@$(MAKE) --no-print-directory _install-agents \
 		AGENT_TARGET_DIR=$(CODEX_AGENTS_DIR) AGENT_PLATFORM="Codex CLI" AGENT_FORMAT=toml
 	@echo "$(GREEN)OK Codex CLI installation complete$(NC)"
 
-# Build a catalog containing only the selected components, install just those,
-# and point both runtimes at the result.
+# Install exactly the selected agents and skills. install-skills adds the
+# pipeline group when the selection touches it.
 install-selected: prune-removed-agents ## Install only SELECTED_AGENT_FILES / SELECTED_SKILL_DIRS
 	@set -e; \
 	if [ -n "$(strip $(SELECTED_SKILL_DIRS))" ]; then \
-		selected=$$(python3 $(SCRIPTS_DIR)/skill_index.py expand-selection --repo $(CURDIR) $(SELECTED_SKILL_DIRS)); \
-		tmp_catalog=$$(mktemp -d); \
-		trap 'rm -rf "$$tmp_catalog"' EXIT; \
-		include=""; for s in $$selected; do include="$$include --include-skill $$s"; done; \
-		python3 $(SCRIPTS_DIR)/skill_index.py build --repo $(CURDIR) --out "$$tmp_catalog" \
-			$(if $(strip $(SELECTED_AGENT_FILES)),$(foreach a,$(SELECTED_AGENT_FILES),--include-agent $(a)),--include-agent __none__) \
-			$$include >/dev/null; \
-		$(MAKE) --no-print-directory install-skills SELECTED_SKILL_DIRS="$$selected"; \
-		$(MAKE) --no-print-directory install-catalog CATALOG_SRC_DIR="$$tmp_catalog"; \
+		$(MAKE) --no-print-directory install-skills; \
 		$(if $(strip $(CLAUDE_LINK_TARGET) $(CODEX_LINK_TARGET)),$(MAKE) --no-print-directory $(CLAUDE_LINK_TARGET) $(CODEX_LINK_TARGET);,:;) \
 	else \
-		echo "$(YELLOW)Skipping shared skills and catalog$(NC)"; \
+		echo "$(YELLOW)Skipping shared skills$(NC)"; \
 	fi
 	@if [ -n "$(strip $(SELECTED_AGENT_FILES))" ]; then \
 		$(MAKE) --no-print-directory _install-agents AGENT_TARGET_DIR=$(CLAUDE_AGENTS_DIR) AGENT_PLATFORM="Claude Code" AGENT_FORMAT=md; \
@@ -117,31 +108,6 @@ install-selected: prune-removed-agents ## Install only SELECTED_AGENT_FILES / SE
 	@echo "$(GREEN)OK Installation complete$(NC)"
 	@echo ""
 	@$(MAKE) --no-print-directory status
-
-build-catalog: ## Build the shared skill catalog files
-	@echo "$(BLUE)Building skill catalog...$(NC)"
-	@mkdir -p $(CATALOG_DIR)
-	@python3 $(SCRIPTS_DIR)/skill_index.py build --repo $(CURDIR) --out $(CATALOG_DIR) >/dev/null
-	@echo "  $(GREEN)OK$(NC) $(CATALOG_DIR)/catalog.json"
-
-install-catalog: ## Install the shared skill catalog to ~/.agents/omics-skills
-	@echo "$(BLUE)Installing skill catalog to $(AGENTS_CATALOG_DIR)...$(NC)"
-	@mkdir -p $(AGENTS_CATALOG_DIR)
-	@set -e; for item in skill_index.py README.md catalog.json; do \
-		case $$item in \
-			skill_index.py) src=$(SCRIPTS_DIR)/$$item ;; \
-			catalog.json)   src=$(CATALOG_SRC_DIR)/$$item ;; \
-			*)              src=$(CATALOG_DIR)/$$item ;; \
-		esac; \
-		target="$(AGENTS_CATALOG_DIR)/$$item"; \
-		rm -rf "$$target"; \
-		if [ "$(INSTALL_METHOD)" = "symlink" ] && { [ "$$item" != "catalog.json" ] || [ "$(CATALOG_SRC_DIR)" = "$(CATALOG_DIR)" ]; }; then \
-			ln -sf "$$src" "$$target"; \
-		else \
-			cp "$$src" "$$target"; \
-		fi; \
-		echo "  $(GREEN)OK$(NC) $$item"; \
-	done
 
 # One agent installer for both runtimes. Claude reads the Markdown source, so it
 # can be linked; Codex needs generated TOML, so it is rendered on every run and
@@ -181,38 +147,67 @@ _install-agents:
 		echo "  $(GREEN)OK$(NC) $$name.$(AGENT_FORMAT)"; \
 	done
 
-prune-removed-skills: ## Retire skills present in the installed catalog but absent from this checkout
+prune-removed-skills: ## Remove links to retired skills that point into this checkout
 	@python3 $(SCRIPTS_DIR)/prune_removed_skills.py \
 		--skills-dir $(SKILLS_DIR) \
-		--installed-catalog $(AGENTS_CATALOG_DIR)/catalog.json \
 		--installed-skills-dir $(AGENTS_SKILLS_DIR) \
-		--backup-dir $(AGENTS_CATALOG_DIR)/retired-skills
+		--archive-dir $(AGENTS_STATE_DIR)/previous-skills
 
-# Retire installed agents that left the pack. It runs before the catalog is
-# replaced, because a copied catalog is the record of what this pack installed.
-prune-removed-agents: ## Retire installed agents absent from this checkout
+prune-removed-agents: ## Remove links to retired agents that point into this checkout
 	@for dir in $(CLAUDE_AGENTS_DIR) $(CODEX_AGENTS_DIR); do \
 		python3 $(SCRIPTS_DIR)/prune_removed_agents.py \
 			--agents-dir $(AGENTS_DIR) \
-			--installed-catalog $(AGENTS_CATALOG_DIR)/catalog.json \
-			--installed-agents-dir $$dir \
-			--backup-dir $(AGENTS_CATALOG_DIR)/retired-agents; \
+			--installed-agents-dir $$dir; \
 	done
 
 # Replaced entries are archived under ~/.agents/omics-skills/previous-skills so a
 # stale copy never stays discoverable as a skill. `make clean` clears that archive.
+# Earlier versions also installed the router there (skill_index.py, catalog.json,
+# README.md): delete those files so no dangling link stays behind.
+#
+# omics-pipeline and its hidden stage skills (frontmatter
+# disable-model-invocation: true) work only together, so a selection that holds
+# one of them gets the rest, and one line on stderr says so. A selected name
+# without a SKILL.md is a leftover directory and is skipped; a name with no
+# directory at all fails the install.
 install-skills: prune-removed-skills prune-removed-agents ## Install skills to ~/.agents/skills
 	@echo "$(BLUE)Installing skills to $(AGENTS_SKILLS_DIR)...$(NC)"
+	@rm -f $(AGENTS_STATE_DIR)/skill_index.py $(AGENTS_STATE_DIR)/catalog.json $(AGENTS_STATE_DIR)/README.md
 	@mkdir -p $(AGENTS_SKILLS_DIR)
-	@set -e; for name in $(SELECTED_SKILL_DIRS); do \
-		[ -d "$(SKILLS_DIR)/$$name" ] || { echo "  $(RED)ERROR$(NC) $$name not found"; exit 1; }; \
-	done; \
+	@set -e; selected=" "; \
 	for name in $(SELECTED_SKILL_DIRS); do \
+		if [ -f "$(SKILLS_DIR)/$$name/SKILL.md" ]; then \
+			selected="$$selected$$name "; \
+		elif [ -d "$(SKILLS_DIR)/$$name" ]; then \
+			echo "  $(YELLOW)INFO$(NC) skipped $$name (leftover directory without SKILL.md)"; \
+		else \
+			echo "  $(RED)ERROR$(NC) $$name not found"; exit 1; \
+		fi; \
+	done; \
+	group="omics-pipeline"; \
+	for dir in $(SKILL_DIRS); do \
+		if [ -n "$$(awk 'NR == 1 && $$0 != "---" {exit} NR > 1 && $$0 == "---" {exit} /^disable-model-invocation:[ \t]*true/ {print "hidden"; exit}' "$(SKILLS_DIR)/$$dir/SKILL.md" 2>/dev/null)" ]; then \
+			group="$$group $$dir"; \
+		fi; \
+	done; \
+	wanted=no; added=""; \
+	for name in $$group; do case "$$selected" in *" $$name "*) wanted=yes ;; esac; done; \
+	if [ "$$wanted" = yes ]; then \
+		for name in $$group; do \
+			case "$$selected" in *" $$name "*) ;; *) added="$$added $$name"; selected="$$selected$$name " ;; esac; \
+		done; \
+		if [ -n "$$added" ]; then \
+			echo "Selection expanded, added$$added (omics-pipeline and its stage skills install together)" >&2; \
+		fi; \
+	fi; \
+	count=0; \
+	for name in $$selected; do \
+		count=$$((count + 1)); \
 		target="$(AGENTS_SKILLS_DIR)/$$name"; \
 		if [ -L "$$target" ]; then \
 			rm "$$target"; \
 		elif [ -e "$$target" ]; then \
-			archive="$(AGENTS_CATALOG_DIR)/previous-skills"; \
+			archive="$(AGENTS_STATE_DIR)/previous-skills"; \
 			mkdir -p "$$archive"; \
 			mv "$$target" "$$archive/$$name.$$(date +%s%N)"; \
 		fi; \
@@ -222,7 +217,7 @@ install-skills: prune-removed-skills prune-removed-agents ## Install skills to ~
 			cp -r "$(SKILLS_DIR)/$$name" "$$target"; \
 		fi; \
 	done; \
-	echo "  $(GREEN)OK$(NC) $(words $(SELECTED_SKILL_DIRS)) skills"
+	echo "  $(GREEN)OK$(NC) $$count skills"
 
 link-claude-skills: ## Link ~/.claude/skills to ~/.agents/skills
 	@$(MAKE) --no-print-directory _link-skills LINK_TARGET=$(CLAUDE_SKILLS_DIR) LINK_HOME=$(CLAUDE_HOME)
@@ -242,23 +237,9 @@ _link-skills:
 	@ln -sfn $(AGENTS_SKILLS_DIR) $(LINK_TARGET)
 	@echo "  $(GREEN)OK$(NC) $(LINK_TARGET) -> $(AGENTS_SKILLS_DIR)"
 
-##@ Hook and benchmark
-
-install-hook: ## Install the routing-hint hook for Claude Code + Codex CLI
-	@python3 $(SCRIPTS_DIR)/install_hook.py install
-
-uninstall-hook: ## Remove the routing-hint hook from Claude Code + Codex CLI
-	@python3 $(SCRIPTS_DIR)/install_hook.py uninstall
-
-hook-status: ## Show whether the routing-hint hook is installed per runtime
-	@python3 $(SCRIPTS_DIR)/install_hook.py status
-
-benchmark: ## Run the routing benchmark and diff against docs/routing_baseline.json
-	@python3 $(SCRIPTS_DIR)/routing_benchmark.py --compare docs/routing_baseline.json
-
 ##@ Uninstallation
 
-uninstall: uninstall-hook uninstall-claude uninstall-codex uninstall-skills uninstall-catalog ## Uninstall everything
+uninstall: uninstall-claude uninstall-codex uninstall-skills uninstall-state ## Uninstall everything
 	@echo "$(GREEN)OK Uninstallation complete$(NC)"
 
 uninstall-selected: ## Uninstall only SELECTED_AGENT_FILES / SELECTED_SKILL_DIRS
@@ -309,10 +290,10 @@ uninstall-skills: ## Remove omics-skills from ~/.agents/skills
 	done; \
 	echo "  $(GREEN)OK$(NC) removed $$removed/$(words $(SKILL_DIRS)) skills"
 
-uninstall-catalog: ## Remove the shared skill catalog from ~/.agents/omics-skills
-	@if [ -d $(AGENTS_CATALOG_DIR) ]; then \
-		rm -rf $(AGENTS_CATALOG_DIR); \
-		echo "  $(GREEN)OK$(NC) removed $(AGENTS_CATALOG_DIR)"; \
+uninstall-state: ## Remove the archive directory ~/.agents/omics-skills
+	@if [ -d $(AGENTS_STATE_DIR) ]; then \
+		rm -rf $(AGENTS_STATE_DIR); \
+		echo "  $(GREEN)OK$(NC) removed $(AGENTS_STATE_DIR)"; \
 	else \
 		echo "  $(YELLOW)INFO$(NC) nothing to remove"; \
 	fi
@@ -334,10 +315,6 @@ status: ## Show installation status
 	installed=0; for name in $(SKILL_DIRS); do \
 		[ -e "$(AGENTS_SKILLS_DIR)/$$name" ] && installed=$$((installed + 1)) || true; done; \
 	echo "$$installed/$(words $(SKILL_DIRS))"
-	@printf "  catalog  $(AGENTS_CATALOG_DIR): "; \
-	installed=0; for item in skill_index.py README.md catalog.json; do \
-		[ -e "$(AGENTS_CATALOG_DIR)/$$item" ] && installed=$$((installed + 1)) || true; done; \
-	echo "$$installed/3"
 	@printf "  Claude   $(CLAUDE_AGENTS_DIR): "; \
 	installed=0; for agent in $(AGENT_FILES); do \
 		[ -e "$(CLAUDE_AGENTS_DIR)/$$agent" ] && installed=$$((installed + 1)) || true; done; \
@@ -380,7 +357,7 @@ clean: ## Remove agent backups and the previous-skills / retired-skills / retire
 			$(CODEX_AGENTS_DIR)/$$name.toml.bak* \
 			$(CODEX_AGENTS_DIR)/$$name.md.legacy.bak* 2>/dev/null || true; \
 	done
-	@rm -rf $(AGENTS_CATALOG_DIR)/previous-skills $(AGENTS_CATALOG_DIR)/retired-skills $(AGENTS_CATALOG_DIR)/retired-agents 2>/dev/null || true
+	@rm -rf $(AGENTS_STATE_DIR)/previous-skills $(AGENTS_STATE_DIR)/retired-skills $(AGENTS_STATE_DIR)/retired-agents 2>/dev/null || true
 	@echo "$(GREEN)OK Removed agent backups and the previous-skills, retired-skills and retired-agents archives$(NC)"
 
 ##@ Testing
@@ -390,4 +367,3 @@ test: ## Run the repository gates
 	@python3 $(SCRIPTS_DIR)/validate-supplementary-docs.py
 	@python3 $(SCRIPTS_DIR)/validate-citations.py
 	@uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
-	@$(MAKE) --no-print-directory benchmark

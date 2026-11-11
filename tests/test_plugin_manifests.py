@@ -53,26 +53,6 @@ class PluginManifestTests(unittest.TestCase):
         self.assertEqual(plugin["policy"]["installation"], "AVAILABLE")
         self.assertEqual(plugin["policy"]["authentication"], "ON_INSTALL")
 
-    def test_readme_agent_skill_counts_match_generated_catalog(self) -> None:
-        catalog = self.load_json("catalog/catalog.json")
-        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        agents = catalog["agents"]
-        self.assertIsInstance(agents, list)
-        for agent in agents:
-            skill_sections = agent["skill_sections"]
-            skill_names = {
-                skill_name
-                for section_skills in skill_sections.values()
-                for skill_name in section_skills
-            }
-            row_prefix = f"| `{agent['name']}` |"
-            matching = [line for line in readme.splitlines() if line.startswith(row_prefix)]
-            self.assertEqual(len(matching), 1, f"missing README row for {agent['name']}")
-            self.assertTrue(
-                matching[0].endswith(f"| {len(skill_names)} |"),
-                f"stale README skill count for {agent['name']}",
-            )
-
 
 if __name__ == "__main__":
     unittest.main()

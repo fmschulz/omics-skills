@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import json
 import os
 import subprocess
-import sys
 import tempfile
 import tomllib
 import unittest
@@ -11,10 +9,31 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+AGENT = "literature-expert"
+
+
+def is_hidden_stage(skill_md: Path) -> bool:
+    """Tell whether the SKILL.md frontmatter sets ``disable-model-invocation: true``."""
+    lines = skill_md.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0] != "---":
+        return False
+    for line in lines[1:]:
+        if line == "---":
+            return False
+        if line.replace(" ", "") == "disable-model-invocation:true":
+            return True
+    return False
+
+
+def installed_names(directory: Path) -> list[str]:
+    """Return the sorted entry names of ``directory``."""
+    return sorted(path.name for path in directory.iterdir())
 
 
 class InstallSelectedIntegrationTests(unittest.TestCase):
-    def run_make(self, home: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    def run_make(
+        self, home: Path, *args: str, check: bool = True
+    ) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env["HOME"] = str(home)
         env["NO_COLOR"] = "1"
@@ -24,126 +43,123 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             env=env,
             text=True,
             capture_output=True,
-            check=True,
+            check=check,
         )
 
-    def run_installed_route(self, home: Path, task: str) -> dict[str, object]:
-        env = os.environ.copy()
-        env["HOME"] = str(home)
-        route = subprocess.run(
-            [
-                sys.executable,
-                str(home / ".agents" / "omics-skills" / "skill_index.py"),
-                "route",
-                task,
-                "--platform",
-                "codex",
-                "--json",
-            ],
-            cwd=REPO_ROOT,
-            env=env,
-            text=True,
-            capture_output=True,
-            check=True,
+    def stage_skill_names(self) -> list[str]:
+        return sorted(
+            path.parent.name
+            for path in (REPO_ROOT / "skills").glob("*/SKILL.md")
+            if is_hidden_stage(path)
         )
-        return json.loads(route.stdout)
 
-    def assert_selected_install_routes_only_selected_components(self, install_method: str) -> None:
+    def assert_selected_install_holds_only_selected_components(
+        self, install_method: str
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             self.run_make(
                 home,
                 "install-selected",
                 f"INSTALL_METHOD={install_method}",
-                "SELECTED_AGENT_FILES=science-writer.md",
-                "SELECTED_SKILL_DIRS=bio-logic proposal-review",
+                f"SELECTED_AGENT_FILES={AGENT}.md",
+                "SELECTED_SKILL_DIRS=bio-logic polars-dovmed",
             )
 
-            index_root = home / ".agents" / "omics-skills"
-            catalog = json.loads((index_root / "catalog.json").read_text(encoding="utf-8"))
-            self.assertEqual(catalog["metadata"]["agent_count"], 1)
-            self.assertEqual(catalog["metadata"]["skill_count"], 2)
-            self.assertEqual([agent["name"] for agent in catalog["agents"]], ["science-writer"])
+            skills_dir = home / ".agents" / "skills"
             self.assertEqual(
-                [skill["name"] for skill in catalog["skills"]],
-                ["bio-logic", "proposal-review"],
+                installed_names(skills_dir), ["bio-logic", "polars-dovmed"]
             )
-            if install_method == "symlink":
-                self.assertFalse(
-                    (index_root / "catalog.json").is_symlink(),
-                    "selected symlink installs must copy the temporary subset catalog",
-                )
+            for name in ("bio-logic", "polars-dovmed"):
+                installed = skills_dir / name
+                source = REPO_ROOT / "skills" / name
+                if install_method == "symlink":
+                    self.assertEqual(installed.resolve(), source)
+                else:
+                    self.assertFalse(installed.is_symlink(), name)
+                    self.assertEqual(
+                        (installed / "SKILL.md").read_text(encoding="utf-8"),
+                        (source / "SKILL.md").read_text(encoding="utf-8"),
+                    )
 
-            claude_agent = home / ".claude" / "agents" / "science-writer.md"
-            codex_agent = home / ".codex" / "agents" / "science-writer.toml"
-            self.assertTrue(claude_agent.exists())
-            self.assertTrue(codex_agent.exists())
-            self.assertFalse((home / ".codex" / "agents" / "science-writer.md").exists())
-            parsed_agent = tomllib.loads(codex_agent.read_text(encoding="utf-8"))
-            self.assertEqual(parsed_agent["name"], "science-writer")
+            claude_agents = home / ".claude" / "agents"
+            codex_agents = home / ".codex" / "agents"
+            self.assertEqual(installed_names(claude_agents), [f"{AGENT}.md"])
+            self.assertEqual(installed_names(codex_agents), [f"{AGENT}.toml"])
+            claude_agent = claude_agents / f"{AGENT}.md"
+            source_agent = REPO_ROOT / "agents" / f"{AGENT}.md"
+            if install_method == "symlink":
+                self.assertEqual(claude_agent.resolve(), source_agent)
+            else:
+                self.assertFalse(claude_agent.is_symlink())
+                self.assertEqual(
+                    claude_agent.read_text(encoding="utf-8"),
+                    source_agent.read_text(encoding="utf-8"),
+                )
+            parsed_agent = tomllib.loads(
+                (codex_agents / f"{AGENT}.toml").read_text(encoding="utf-8")
+            )
+            self.assertEqual(parsed_agent["name"], AGENT)
             self.assertIn("developer_instructions", parsed_agent)
 
-            off_subset = self.run_installed_route(home, "assemble a metagenome and recover MAGs")
-            self.assertEqual(off_subset["primary_skills"], [])
-            self.assertNotIn("bio-assembly-qc", off_subset["ordered_skills"])
-            self.assertNotEqual(off_subset["agent"], "omics-scientist")
+            state_dir = home / ".agents" / "omics-skills"
+            for stale in ("skill_index.py", "catalog.json", "README.md"):
+                self.assertFalse(os.path.lexists(state_dir / stale), stale)
 
-            review = self.run_installed_route(
-                home,
-                "review a research proposal for methodological rigor and feasibility",
-            )
-            self.assertEqual(review["agent"], "science-writer")
-            self.assertIn("proposal-review", review["primary_skills"])
-            self.assertLessEqual(
-                set(review["ordered_skills"]), {"bio-logic", "proposal-review"}
-            )
-            for path in review["skill_paths"].values():
-                self.assertTrue(str(path).startswith(str(home)))
-                self.assertTrue(Path(str(path)).exists())
+    def test_selected_symlink_install_holds_only_selected_components(self) -> None:
+        self.assert_selected_install_holds_only_selected_components("symlink")
 
-    def test_selected_symlink_install_uses_subset_catalog(self) -> None:
-        self.assert_selected_install_routes_only_selected_components("symlink")
+    def test_selected_copy_install_holds_only_selected_components(self) -> None:
+        self.assert_selected_install_holds_only_selected_components("copy")
 
-    def test_selected_copy_install_uses_subset_catalog(self) -> None:
-        self.assert_selected_install_routes_only_selected_components("copy")
-
-    def test_selected_skills_only_install_uses_agentless_subset_catalog(self) -> None:
+    def test_selected_skills_only_install_installs_no_agents(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
-            self.run_make(
+            result = self.run_make(
                 home,
                 "install-selected",
                 "INSTALL_METHOD=symlink",
                 "SELECTED_AGENT_FILES=",
-                "SELECTED_SKILL_DIRS=proposal-review",
+                "SELECTED_SKILL_DIRS=beautiful-data-viz",
             )
 
-            index_root = home / ".agents" / "omics-skills"
-            catalog = json.loads((index_root / "catalog.json").read_text(encoding="utf-8"))
-            self.assertEqual(catalog["metadata"]["agent_count"], 0)
-            self.assertEqual(catalog["metadata"]["skill_count"], 1)
-            self.assertEqual(catalog["agents"], [])
             self.assertEqual(
-                [skill["name"] for skill in catalog["skills"]], ["proposal-review"]
+                installed_names(home / ".agents" / "skills"), ["beautiful-data-viz"]
+            )
+            self.assertIn("Skipping agents", result.stdout)
+            self.assertFalse((home / ".claude" / "agents").exists())
+            self.assertFalse((home / ".codex" / "agents").exists())
+
+    def test_install_without_a_skill_selection_installs_the_selected_agent_only(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            result = self.run_make(
+                home,
+                "install-selected",
+                f"SELECTED_AGENT_FILES={AGENT}.md",
+                "SELECTED_SKILL_DIRS=",
             )
 
-            route = self.run_installed_route(
-                home, "review a research proposal for funding"
+            self.assertIn("Skipping shared skills", result.stdout)
+            self.assertFalse((home / ".agents" / "skills").exists())
+            self.assertEqual(
+                installed_names(home / ".claude" / "agents"), [f"{AGENT}.md"]
             )
-            self.assertIsNone(route["agent"])
-            self.assertLessEqual(set(route["ordered_skills"]), {"proposal-review"})
-            self.assertNotIn("bio-assembly-qc", route["ordered_skills"])
 
-    def test_uninstall_all_removes_runtime_skills_links(self) -> None:
+    def test_uninstall_removes_skill_links_agents_and_the_state_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             self.run_make(
                 home,
                 "install-selected",
                 "INSTALL_METHOD=symlink",
-                "SELECTED_AGENT_FILES=science-writer.md",
-                "SELECTED_SKILL_DIRS=proposal-review",
+                f"SELECTED_AGENT_FILES={AGENT}.md",
+                "SELECTED_SKILL_DIRS=beautiful-data-viz",
             )
+            archive = home / ".agents" / "omics-skills" / "previous-skills"
+            archive.mkdir(parents=True)
             self.assertTrue((home / ".claude" / "skills").is_symlink())
             self.assertTrue((home / ".codex" / "skills").is_symlink())
 
@@ -151,48 +167,91 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
 
             self.assertFalse((home / ".claude" / "skills").is_symlink())
             self.assertFalse((home / ".codex" / "skills").is_symlink())
+            self.assertFalse((home / ".claude" / "agents" / f"{AGENT}.md").exists())
+            self.assertFalse((home / ".codex" / "agents" / f"{AGENT}.toml").exists())
+            self.assertEqual(installed_names(home / ".agents" / "skills"), [])
             self.assertFalse((home / ".agents" / "omics-skills").exists())
 
-    def stage_skill_names(self) -> list[str]:
-        return sorted(
-            path.parent.name
-            for path in (REPO_ROOT / "skills").glob("*/SKILL.md")
-            if "disable-model-invocation: true" in path.read_text(encoding="utf-8")
-        )
+    def test_install_matches_the_machine_setup_script_call(self) -> None:
+        """The machine setup script installs a skill subset with client links off
+        and the Claude agents in ~/.agents/agents."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            agents_dir = home / ".agents" / "agents"
 
-    def test_selecting_a_stage_installs_the_router_and_says_so(self) -> None:
+            self.run_make(
+                home,
+                "install",
+                "LINK_CLIENT_SKILLS=no",
+                f"CLAUDE_AGENTS_DIR={agents_dir}",
+                "SELECTED_SKILL_DIRS=bio-logic polars-dovmed",
+            )
+
+            skills_dir = home / ".agents" / "skills"
+            self.assertEqual(
+                installed_names(skills_dir), ["bio-logic", "polars-dovmed"]
+            )
+            for name in ("bio-logic", "polars-dovmed"):
+                self.assertEqual(
+                    (skills_dir / name).resolve(), REPO_ROOT / "skills" / name
+                )
+            shipped = sorted(path.name for path in (REPO_ROOT / "agents").glob("*.md"))
+            self.assertEqual(installed_names(agents_dir), shipped)
+            for name in shipped:
+                self.assertEqual(
+                    (agents_dir / name).resolve(), REPO_ROOT / "agents" / name
+                )
+            self.assertFalse(os.path.lexists(home / ".claude" / "skills"))
+            self.assertFalse(os.path.lexists(home / ".codex" / "skills"))
+
+    def test_install_removes_the_router_files_an_older_version_installed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            state_dir = home / ".agents" / "omics-skills"
+            state_dir.mkdir(parents=True)
+            (state_dir / "skill_index.py").symlink_to(
+                REPO_ROOT / "scripts" / "skill_index.py"
+            )
+            (state_dir / "catalog.json").write_text("{}\n", encoding="utf-8")
+            (state_dir / "README.md").symlink_to(REPO_ROOT / "catalog" / "README.md")
+            archive = state_dir / "previous-skills"
+            archive.mkdir()
+
+            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
+
+            for stale in ("skill_index.py", "catalog.json", "README.md"):
+                self.assertFalse(os.path.lexists(state_dir / stale), stale)
+            self.assertTrue(archive.is_dir())
+
+    def test_selecting_a_stage_installs_the_pipeline_group_and_says_so(self) -> None:
         stages = self.stage_skill_names()
+        self.assertIn("bio-annotation", stages)
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             result = self.run_make(
                 home,
                 "install-selected",
-                "SELECTED_AGENT_FILES=omics-scientist.md",
+                f"SELECTED_AGENT_FILES={AGENT}.md",
                 "SELECTED_SKILL_DIRS=bio-logic bio-annotation",
             )
 
             added = [line for line in result.stderr.splitlines() if "expanded" in line]
             self.assertEqual(len(added), 1, result.stderr)
-            self.assertIn("omics-pipeline", added[0])
-            catalog = json.loads(
-                (home / ".agents" / "omics-skills" / "catalog.json").read_text(
-                    encoding="utf-8"
-                )
-            )
+            named = added[0].split("added ", 1)[1].split(" (", 1)[0].split()
             self.assertEqual(
-                [skill["name"] for skill in catalog["skills"]],
-                sorted([*stages, "bio-logic", "omics-pipeline"]),
+                sorted(named),
+                sorted({"omics-pipeline", *stages} - {"bio-annotation"}),
             )
             skills_dir = home / ".agents" / "skills"
-            self.assertTrue((skills_dir / "omics-pipeline" / "SKILL.md").is_file())
-            route = self.run_installed_route(
-                home, "annotate proteins with eggnog-mapper"
+            self.assertEqual(
+                installed_names(skills_dir),
+                sorted([*stages, "bio-logic", "omics-pipeline"]),
             )
-            self.assertEqual(route["primary_skills"][0], "omics-pipeline")
+            self.assertTrue((skills_dir / "omics-pipeline" / "SKILL.md").is_file())
 
-    def test_selecting_the_router_installs_every_stage_it_names(self) -> None:
+    def test_selecting_omics_pipeline_installs_every_stage_it_names(self) -> None:
         stages = self.stage_skill_names()
-        self.assertGreater(len(stages), 10)
+        self.assertTrue(stages)
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             result = self.run_make(
@@ -207,6 +266,59 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
                 self.assertTrue((skills_dir / name / "SKILL.md").is_file(), name)
             added = [line for line in result.stderr.splitlines() if "expanded" in line]
             self.assertEqual(len(added), 1, result.stderr)
+
+    def test_a_runtime_install_with_a_pipeline_selection_adds_the_stage_group(
+        self,
+    ) -> None:
+        """Another tool installs through install-claude with a selection. The
+        pipeline group must be complete there too, not only in install-selected."""
+        stages = self.stage_skill_names()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+
+            result = self.run_make(
+                home,
+                "install-claude",
+                "LINK_CLIENT_SKILLS=no",
+                f"CLAUDE_AGENTS_DIR={home / '.agents' / 'agents'}",
+                "SELECTED_SKILL_DIRS=omics-pipeline",
+            )
+
+            self.assertEqual(
+                installed_names(home / ".agents" / "skills"),
+                sorted([*stages, "omics-pipeline"]),
+            )
+            self.assertIn("Selection expanded", result.stderr)
+
+    def test_a_leftover_directory_without_a_skill_file_is_not_a_skill(self) -> None:
+        """Ignored files such as __pycache__ keep the directory of a deleted
+        skill alive in an updated checkout. It must not be installed, and it
+        must not stop the retirement of the old link."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            pack_skills = home / "pack" / "skills"
+            (pack_skills / "bio-logic").mkdir(parents=True)
+            (pack_skills / "bio-logic" / "SKILL.md").write_text(
+                "---\nname: bio-logic\ndescription: kept\n---\n", encoding="utf-8"
+            )
+            leftover = pack_skills / "preprint-search" / "scripts" / "__pycache__"
+            leftover.mkdir(parents=True)
+            (leftover / "search.cpython-312.pyc").write_bytes(b"")
+            skills_dir = home / ".agents" / "skills"
+            skills_dir.mkdir(parents=True)
+            (skills_dir / "preprint-search").symlink_to(pack_skills / "preprint-search")
+
+            result = self.run_make(
+                home,
+                "install-skills",
+                f"SKILLS_DIR={pack_skills}",
+                "SELECTED_SKILL_DIRS=bio-logic preprint-search",
+            )
+            status = self.run_make(home, "status", f"SKILLS_DIR={pack_skills}")
+
+            self.assertEqual(installed_names(skills_dir), ["bio-logic"])
+            self.assertIn("skipped preprint-search", result.stdout)
+            self.assertIn("1/1", status.stdout)
 
     def test_clean_preserves_unrelated_backups(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -229,76 +341,28 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
 
     def test_missing_selected_skill_fails_install(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            env = os.environ.copy()
-            env["HOME"] = str(home)
-            env["NO_COLOR"] = "1"
-            result = subprocess.run(
-                [
-                    "make",
-                    "--no-print-directory",
-                    "install-skills",
-                    "SELECTED_SKILL_DIRS=not-a-real-skill",
-                ],
-                cwd=REPO_ROOT,
-                env=env,
-                text=True,
-                capture_output=True,
+            result = self.run_make(
+                Path(tmpdir),
+                "install-skills",
+                "SELECTED_SKILL_DIRS=not-a-real-skill",
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not-a-real-skill not found", result.stdout)
 
-    def test_install_prunes_retired_symlink_from_previous_catalog(self) -> None:
+    def test_install_removes_a_retired_symlink_into_this_checkout(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
-            catalog_dir = home / ".agents" / "omics-skills"
             skills_dir = home / ".agents" / "skills"
-            catalog_dir.mkdir(parents=True)
             skills_dir.mkdir(parents=True)
-            (catalog_dir / "catalog.json").write_text("not json\n", encoding="utf-8")
             retired = skills_dir / "get-api-docs"
             retired.symlink_to(REPO_ROOT / "skills" / "get-api-docs")
 
-            self.run_make(
-                home,
-                "install-skills",
-                "SELECTED_SKILL_DIRS=bio-logic",
-            )
+            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
 
             self.assertFalse(retired.exists())
             self.assertFalse(retired.is_symlink())
             self.assertTrue((skills_dir / "bio-logic").exists())
-
-    def test_install_archives_retired_copy_outside_active_skills(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            catalog_dir = home / ".agents" / "omics-skills"
-            skills_dir = home / ".agents" / "skills"
-            retired = skills_dir / "get-api-docs"
-            catalog_dir.mkdir(parents=True)
-            retired.mkdir(parents=True)
-            (catalog_dir / "catalog.json").write_text(
-                json.dumps(
-                    {"skills": [{"name": "bio-logic"}, {"name": "get-api-docs"}]}
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            (retired / "SKILL.md").write_text(
-                "---\nname: get-api-docs\ndescription: retired fixture\n---\n",
-                encoding="utf-8",
-            )
-
-            self.run_make(
-                home,
-                "install-skills",
-                "SELECTED_SKILL_DIRS=bio-logic",
-            )
-
-            self.assertFalse(retired.exists())
-            archived = catalog_dir / "retired-skills" / "get-api-docs"
-            self.assertTrue((archived / "SKILL.md").is_file())
 
     def test_install_archives_replaced_skill_outside_active_skills(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -338,11 +402,7 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             unrelated = skills_dir / "unrelated.bak"
             unrelated.mkdir()
 
-            self.run_make(
-                home,
-                "install-skills",
-                "SELECTED_SKILL_DIRS=bio-logic",
-            )
+            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
 
             self.assertFalse(legacy.exists())
             archived = (
@@ -380,12 +440,23 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             self.assertTrue(archived.is_file())
 
     def test_install_removes_links_to_skills_deleted_from_the_pack(self) -> None:
-        """A symlinked install updates catalog.json in place, so the previous
-        skill list is gone; the deleted names must be retired by name."""
         deleted = (
             "arxiv-search",
             "biorxiv-search",
+            "bio-assembly-qc",
+            "bio-binning-qc",
+            "bio-fasta-database-curator",
+            "bio-foundation-housekeeping",
+            "bio-gene-calling",
+            "bio-phylogenomics",
             "bio-prefect-dask-nextflow",
+            "bio-protein-clustering-pangenome",
+            "bio-reads-qc-mapping",
+            "bio-stats-ml-reporting",
+            "bio-structure-annotation",
+            "bio-workflow-methods-docwriter",
+            "exploratory-data-analysis",
+            "preprint-search",
             "manuscript-review-council",
             "plotly-dashboard-skill",
             "scientific-impact-assessment",
@@ -406,16 +477,19 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
                 )
 
     def test_install_keeps_skills_that_moved_to_another_repository(self) -> None:
-        """pdf-to-md and csag-extraction left this pack but live on in another
-        repository, whose installer owns them. Only a link into this checkout
-        is retired; a copied directory or a link elsewhere stays."""
+        """A moved skill left this pack but lives on in another repository,
+        whose installer owns it. Only a link into this checkout is retired; a
+        copied directory or a link elsewhere stays, and a link elsewhere is
+        the expected state, so it draws no warning."""
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             skills_dir = home / ".agents" / "skills"
             elsewhere = home / "other-repo" / "skills"
             skills_dir.mkdir(parents=True)
-            (elsewhere / "csag-extraction").mkdir(parents=True)
-            (skills_dir / "csag-extraction").symlink_to(elsewhere / "csag-extraction")
+            linked = ("csag-extraction", "proposal-review", "ai-scientist-evaluator")
+            for name in linked:
+                (elsewhere / name).mkdir(parents=True)
+                (skills_dir / name).symlink_to(elsewhere / name)
             copied = skills_dir / "pdf-to-md"
             copied.mkdir()
             (copied / "SKILL.md").write_text(
@@ -423,10 +497,14 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
+            result = self.run_make(
+                home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic"
+            )
 
-            self.assertTrue((skills_dir / "csag-extraction").is_symlink())
+            for name in linked:
+                self.assertTrue((skills_dir / name).is_symlink(), name)
             self.assertTrue((copied / "SKILL.md").is_file())
+            self.assertNotIn("WARNING", result.stdout)
 
     def test_install_retires_a_link_to_a_moved_skill_in_this_checkout(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -439,7 +517,7 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
 
             self.assertFalse((skills_dir / "pdf-to-md").is_symlink())
 
-    def write_agent_files(self, home: Path) -> tuple[Path, Path]:
+    def write_agent_dirs(self, home: Path) -> tuple[Path, Path]:
         claude_agents = home / ".claude" / "agents"
         codex_agents = home / ".codex" / "agents"
         claude_agents.mkdir(parents=True)
@@ -450,44 +528,57 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
         self.run_make(
             home,
             "install-selected",
-            "SELECTED_AGENT_FILES=science-writer.md",
+            f"SELECTED_AGENT_FILES={AGENT}.md",
             "SELECTED_SKILL_DIRS=bio-logic",
         )
 
-    def test_install_retires_the_dataviz_artist_agent_this_pack_installed(self) -> None:
-        """The link into this checkout goes. Copied files go to the archive only
-        when a catalog that this pack copied lists the agent."""
+    def test_install_retires_the_dataviz_artist_link_but_keeps_rendered_files(
+        self,
+    ) -> None:
+        """The link into this checkout goes. A rendered Codex file cannot be tied
+        to this pack, so it stays."""
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
-            claude_agents, codex_agents = self.write_agent_files(home)
+            claude_agents, codex_agents = self.write_agent_dirs(home)
             (claude_agents / "dataviz-artist.md").symlink_to(
                 REPO_ROOT / "agents" / "dataviz-artist.md"
             )
-            (codex_agents / "dataviz-artist.toml").write_text(
+            rendered = codex_agents / "dataviz-artist.toml"
+            rendered.write_text(
                 'name = "dataviz-artist"\ndescription = "x"\n'
                 'developer_instructions = "x"\n',
-                encoding="utf-8",
-            )
-            catalog_dir = home / ".agents" / "omics-skills"
-            catalog_dir.mkdir(parents=True)
-            (catalog_dir / "catalog.json").write_text(
-                json.dumps({"skills": [], "agents": [{"name": "dataviz-artist"}]})
-                + "\n",
                 encoding="utf-8",
             )
 
             self.install_one_agent(home)
 
-            self.assertFalse((claude_agents / "dataviz-artist.md").is_symlink())
-            self.assertFalse((codex_agents / "dataviz-artist.toml").exists())
-            archived = catalog_dir / "retired-agents"
-            self.assertEqual(len(list(archived.glob("dataviz-artist.toml*"))), 1)
+            self.assertFalse(os.path.lexists(claude_agents / "dataviz-artist.md"))
+            self.assertTrue(rendered.is_file())
+            self.assertFalse(
+                (home / ".agents" / "omics-skills" / "retired-agents").exists()
+            )
 
-    def test_install_leaves_an_independent_dataviz_artist_agent_untouched(self) -> None:
-        """Same name, valid definition, no record that this pack installed it."""
+    def test_install_retires_the_links_of_the_agents_removed_in_2_0(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
-            claude_agents, codex_agents = self.write_agent_files(home)
+            claude_agents, _ = self.write_agent_dirs(home)
+            retired = ("omics-scientist", "science-writer")
+            for name in retired:
+                (claude_agents / f"{name}.md").symlink_to(
+                    REPO_ROOT / "agents" / f"{name}.md"
+                )
+
+            self.install_one_agent(home)
+
+            for name in retired:
+                self.assertFalse(os.path.lexists(claude_agents / f"{name}.md"), name)
+            self.assertTrue((claude_agents / f"{AGENT}.md").is_symlink())
+
+    def test_install_leaves_an_independent_dataviz_artist_agent_untouched(self) -> None:
+        """Same name, valid definition, no link into this checkout."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            claude_agents, codex_agents = self.write_agent_dirs(home)
             own = "---\nname: dataviz-artist\ndescription: my own\n---\nI draw.\n"
             (claude_agents / "dataviz-artist.md").write_text(own, encoding="utf-8")
             (codex_agents / "dataviz-artist.toml").write_text(
@@ -511,27 +602,6 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
                 (home / ".agents" / "omics-skills" / "retired-agents").exists()
             )
 
-    def test_install_ignores_a_symlinked_catalog_for_agent_ownership(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            claude_agents, _ = self.write_agent_files(home)
-            listed = home / "elsewhere.json"
-            listed.write_text(
-                json.dumps({"skills": [], "agents": [{"name": "dataviz-artist"}]})
-                + "\n",
-                encoding="utf-8",
-            )
-            catalog_dir = home / ".agents" / "omics-skills"
-            catalog_dir.mkdir(parents=True)
-            (catalog_dir / "catalog.json").symlink_to(listed)
-            (claude_agents / "dataviz-artist.md").write_text(
-                "---\nname: dataviz-artist\n---\n", encoding="utf-8"
-            )
-
-            self.install_one_agent(home)
-
-            self.assertTrue((claude_agents / "dataviz-artist.md").is_file())
-
     def write_skill_copy(self, path: Path, name: str) -> None:
         path.mkdir(parents=True)
         (path / "SKILL.md").write_text(
@@ -539,42 +609,10 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def test_install_leaves_an_independent_copy_of_a_retired_name_untouched(
-        self,
-    ) -> None:
-        """A directory with a retired name and a valid frontmatter is not ours
-        unless a catalog that this pack copied lists it."""
+    def test_install_leaves_a_copied_skill_with_a_retired_name_untouched(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             skills_dir = home / ".agents" / "skills"
-            catalog_dir = home / ".agents" / "omics-skills"
-            catalog_dir.mkdir(parents=True)
-            self.write_skill_copy(
-                skills_dir / "scientific-writing", "scientific-writing"
-            )
-            (catalog_dir / "catalog.json").write_text(
-                json.dumps({"skills": [{"name": "bio-logic"}]}) + "\n", encoding="utf-8"
-            )
-
-            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
-
-            self.assertTrue((skills_dir / "scientific-writing" / "SKILL.md").is_file())
-            self.assertFalse((catalog_dir / "retired-skills").exists())
-
-    def test_install_ignores_a_symlinked_catalog_as_ownership_evidence(self) -> None:
-        """A catalog that links to another file is rewritten by every update, so
-        it records nothing about what this pack installed."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            skills_dir = home / ".agents" / "skills"
-            catalog_dir = home / ".agents" / "omics-skills"
-            catalog_dir.mkdir(parents=True)
-            listed = home / "elsewhere.json"
-            listed.write_text(
-                json.dumps({"skills": [{"name": "scientific-writing"}]}) + "\n",
-                encoding="utf-8",
-            )
-            (catalog_dir / "catalog.json").symlink_to(listed)
             self.write_skill_copy(
                 skills_dir / "scientific-writing", "scientific-writing"
             )
@@ -582,28 +620,9 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
 
             self.assertTrue((skills_dir / "scientific-writing" / "SKILL.md").is_file())
-
-    def test_install_archives_a_copy_that_a_copied_catalog_lists(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            skills_dir = home / ".agents" / "skills"
-            catalog_dir = home / ".agents" / "omics-skills"
-            catalog_dir.mkdir(parents=True)
-            self.write_skill_copy(
-                skills_dir / "scientific-writing", "scientific-writing"
+            self.assertFalse(
+                (home / ".agents" / "omics-skills" / "retired-skills").exists()
             )
-            (catalog_dir / "catalog.json").write_text(
-                json.dumps({"skills": [{"name": "scientific-writing"}]}) + "\n",
-                encoding="utf-8",
-            )
-
-            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
-
-            self.assertFalse((skills_dir / "scientific-writing").exists())
-            archived = (
-                catalog_dir / "retired-skills" / "scientific-writing" / "SKILL.md"
-            )
-            self.assertTrue(archived.is_file())
 
     def test_install_leaves_a_foreign_backup_symlink_untouched(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -640,16 +659,10 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
     def test_install_leaves_foreign_retired_symlink_untouched(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
-            catalog_dir = home / ".agents" / "omics-skills"
             skills_dir = home / ".agents" / "skills"
             foreign_dir = home / "foreign" / "skills"
-            catalog_dir.mkdir(parents=True)
             skills_dir.mkdir(parents=True)
             foreign_dir.mkdir(parents=True)
-            (catalog_dir / "catalog.json").write_text(
-                json.dumps({"skills": [{"name": "bio-logic"}]}) + "\n",
-                encoding="utf-8",
-            )
             retired = skills_dir / "get-api-docs"
             retired.symlink_to(foreign_dir / "get-api-docs")
 
@@ -661,34 +674,6 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
 
             self.assertTrue(retired.is_symlink())
             self.assertIn("left unexpected symlink untouched", result.stdout)
-
-    def test_install_leaves_name_mismatched_directory_untouched(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            catalog_dir = home / ".agents" / "omics-skills"
-            retired = home / ".agents" / "skills" / "get-api-docs"
-            catalog_dir.mkdir(parents=True)
-            retired.mkdir(parents=True)
-            (catalog_dir / "catalog.json").write_text(
-                json.dumps(
-                    {"skills": [{"name": "bio-logic"}, {"name": "get-api-docs"}]}
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            (retired / "SKILL.md").write_text(
-                "---\nname: user-owned-skill\ndescription: keep\n---\n",
-                encoding="utf-8",
-            )
-
-            result = self.run_make(
-                home,
-                "install-skills",
-                "SELECTED_SKILL_DIRS=bio-logic",
-            )
-
-            self.assertTrue((retired / "SKILL.md").is_file())
-            self.assertIn("left unrecognized directory untouched", result.stdout)
 
 
 if __name__ == "__main__":

@@ -9,11 +9,27 @@ import sys
 import tomllib
 from pathlib import Path
 
-import skill_index
+
+def split_frontmatter(text: str) -> tuple[dict[str, str], str]:
+    """Split the ``---`` frontmatter of an agent file from its body.
+
+    Agent files hold single-line ``key: value`` entries, so nothing more is parsed.
+    """
+    if not text.startswith("---\n"):
+        return {}, text
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        return {}, text
+    entries: dict[str, str] = {}
+    for line in text[4:end].splitlines():
+        key, separator, value = line.partition(":")
+        if separator:
+            entries[key.strip()] = value.strip().strip("\"'")
+    return entries, text[end + 5 :]
 
 
 def render_agent(source: Path) -> str:
-    frontmatter, body = skill_index.split_frontmatter(source.read_text(encoding="utf-8"))
+    frontmatter, body = split_frontmatter(source.read_text(encoding="utf-8"))
     name = (frontmatter.get("name") or source.stem).strip()
     description = (frontmatter.get("description") or "").strip()
     instructions = body.strip()

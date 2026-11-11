@@ -43,17 +43,8 @@ jobs:
       - name: Validate citations
         run: python3 scripts/validate-citations.py
 
-      - name: Check catalog is up to date with sources
-        run: |
-          python3 scripts/skill_index.py build --repo . --out catalog
-          git diff --exit-code -- catalog/ \
-            || { echo "::error::catalog/catalog.json is stale. Run 'make build-catalog' and commit."; exit 1; }
-
       - name: Run unit tests
         run: uv run --no-project --with pytest --with requests --with PyYAML python -m pytest tests -q
-
-      - name: Run routing benchmark
-        run: make benchmark
 
       - name: Build documentation
         run: uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict --site-dir site
