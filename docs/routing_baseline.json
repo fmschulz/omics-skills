@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 74,
-    "passed": 74,
+    "total": 76,
+    "passed": 76,
     "failed": 0,
     "pass_rate": 1.0,
     "agent_failures": 0,
@@ -968,6 +968,26 @@
     },
     {
       "task": "the shower is broken",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "how do I rename a git branch",
+      "passed": true,
+      "actual": {
+        "agent": null,
+        "primary_skills": [],
+        "supporting_skills": [],
+        "ordered_skills": []
+      }
+    },
+    {
+      "task": "why is my docker build slow",
       "passed": true,
       "actual": {
         "agent": null,
