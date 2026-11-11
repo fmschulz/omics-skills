@@ -128,7 +128,7 @@ If it is missing, create a project or shared DB location under `$BIO_DB_ROOT`, i
 ### Classification example
 ```bash
 SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
-  scripts/submit_taxonomy.sh gtdbtk bins results/taxonomy/gtdbtk
+  "$SKILL_DIR/scripts/submit_taxonomy.sh" gtdbtk bins results/taxonomy/gtdbtk
 ```
 
 The template passes `-x "${GTDBTK_EXTENSION:-fa}"`; export `GTDBTK_EXTENSION=fna` (or another suffix) when the genome files do not end in `.fa`.
@@ -157,7 +157,7 @@ Use the project's pinned **Pixi** environment and capture:
 ### Run examples
 ```bash
 SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
-  scripts/submit_taxonomy.sh eukcc bins results/taxonomy/eukcc_bins
+  "$SKILL_DIR/scripts/submit_taxonomy.sh" eukcc bins results/taxonomy/eukcc_bins
 ```
 
 ---
@@ -184,7 +184,7 @@ Use the project's pinned **Pixi** environment and capture:
 ### Run examples
 ```bash
 SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" VCONTACT3_DB=/path/to/vcontact3_db \
-  scripts/submit_taxonomy.sh vcontact3 genomes.fna results/taxonomy/vcontact3
+  "$SKILL_DIR/scripts/submit_taxonomy.sh" vcontact3 genomes.fna results/taxonomy/vcontact3
 ```
 
 ---
@@ -210,7 +210,7 @@ Release checked:
 ### Run examples
 ```bash
 SLURM_ACCOUNT="${SLURM_ACCOUNT:?}" \
-  scripts/submit_taxonomy.sh gvclass my_genomes results/taxonomy/gvclass
+  "$SKILL_DIR/scripts/submit_taxonomy.sh" gvclass my_genomes results/taxonomy/gvclass
 ```
 
 ---

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-
+from typing import Any
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = REPO_ROOT / "skills" / "bio-foundation-housekeeping"
@@ -412,6 +414,141 @@ class LinkedMetadataCatalogTests(unittest.TestCase):
             self.assertEqual(second.returncode, 2, second.stderr)
             self.assertIn("refusing to overwrite", second.stdout)
             self.assertEqual(before, after)
+
+    def run_generate_models(self, output: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                "uv",
+                "run",
+                "--script",
+                str(MODEL_SCRIPT),
+                "--schema",
+                str(SCHEMA),
+                "--output",
+                str(output),
+                "--expect-class",
+                "MetadataBundle",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def run_build(
+        self, schema: Path, project: Path
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                "uv",
+                "run",
+                "--script",
+                str(CATALOG_SCRIPT),
+                "--schema",
+                str(schema),
+                "--input",
+                str(SKILL_ROOT / "fixtures" / "valid-project-metadata.json"),
+                "--project-root",
+                str(project),
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def test_documented_steps_run_in_order_without_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project = Path(tmpdir)
+            model = project / "schemas" / "generated" / "project_metadata.py"
+            generated = self.run_generate_models(model)
+            self.assertEqual(generated.returncode, 0, generated.stdout)
+            before = model.read_bytes()
+
+            built = self.run_build(SCHEMA, project)
+
+            self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
+            self.assertEqual(model.read_bytes(), before)
+            self.assertGreater((project / "data" / "catalog.duckdb").stat().st_size, 0)
+
+    def test_schema_adapted_in_place_can_be_the_build_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project = Path(tmpdir)
+            schema = project / "schemas" / "project-metadata.yaml"
+            schema.parent.mkdir(parents=True)
+            schema.write_bytes(SCHEMA.read_bytes())
+
+            built = self.run_build(schema, project)
+
+            self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
+            self.assertEqual(schema.read_bytes(), SCHEMA.read_bytes())
+            self.assertGreater((project / "data" / "catalog.duckdb").stat().st_size, 0)
+
+    def test_target_with_different_content_is_still_refused(self) -> None:
+        for relative in (
+            Path("schemas") / "generated" / "project_metadata.py",
+            Path("schemas") / "project-metadata.yaml",
+        ):
+            with (
+                self.subTest(target=str(relative)),
+                tempfile.TemporaryDirectory() as tmpdir,
+            ):
+                project = Path(tmpdir)
+                target = project / relative
+                target.parent.mkdir(parents=True)
+                target.write_text("# project-owned content\n", encoding="utf-8")
+
+                built = self.run_build(SCHEMA, project)
+
+                self.assertEqual(built.returncode, 2, built.stdout + built.stderr)
+                self.assertIn("refusing to overwrite", built.stdout)
+                self.assertIn(str(target), built.stdout)
+                self.assertEqual(
+                    target.read_text(encoding="utf-8"), "# project-owned content\n"
+                )
+                self.assertFalse((project / "data" / "catalog.duckdb").exists())
+
+    def test_the_overwrite_check_does_not_read_an_existing_catalog(self) -> None:
+        # Load only the preflight code: the script's own imports (duckdb,
+        # linkml) are not needed to reach the refusal.
+        wanted = {"build_outputs", "final_artifacts"}
+        nodes = [
+            node
+            for node in ast.parse(CATALOG_SCRIPT.read_text(encoding="utf-8")).body
+            if (isinstance(node, ast.FunctionDef) and node.name in wanted)
+            or (
+                isinstance(node, ast.Assign)
+                and any(
+                    isinstance(target, ast.Name) and target.id == "TABLE_NAMES"
+                    for target in node.targets
+                )
+            )
+        ]
+        namespace: dict[str, Any] = {"Path": Path, "Any": Any}
+        exec(  # noqa: S102  # runs the script's own preflight functions, no other code
+            compile(
+                ast.Module(body=nodes, type_ignores=[]), str(CATALOG_SCRIPT), "exec"
+            ),
+            namespace,
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project = Path(tmpdir)
+            catalog = project / "data" / "catalog.duckdb"
+            catalog.parent.mkdir()
+            catalog.write_bytes(b"project-owned database")
+            original_read_bytes = Path.read_bytes
+            read_paths: list[Path] = []
+
+            def recording_read_bytes(path: Path) -> bytes:
+                read_paths.append(path)
+                return original_read_bytes(path)
+
+            with (
+                mock.patch.object(Path, "read_bytes", recording_read_bytes),
+                self.assertRaises(FileExistsError),
+            ):
+                namespace["build_outputs"](
+                    project, SCHEMA, project / "input.json", "", None
+                )
+            self.assertNotIn(catalog, read_paths)
 
 
 if __name__ == "__main__":

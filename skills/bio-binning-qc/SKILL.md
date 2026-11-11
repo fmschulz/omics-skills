@@ -31,11 +31,11 @@ Tool guides and versions: [docs/README.md](docs/README.md).
    ```bash
    uv run --script ~/.agents/skills/bio-binning-qc/scripts/build_bin_qc_tables.py \
      --routing results/taxonomy/domain_routing.tsv --checkm2 quality_report.tsv \
-     --gunc GUNC.progenomes_3.maxCSS_level.tsv --eukcc eukcc.csv \
+     --gunc GUNC.progenomes_3.maxCSS_level.tsv --eukcc eukcc.tsv \
      --gtdbtk gtdbtk.bac120.summary.tsv --out-dir results/bio-binning-qc
    ```
 
-   The join rejects GUNC rows for non-prokaryotic routes, refuses prokaryotic or eukaryotic bins that lack their domain-specific QC or taxonomy outputs, and refuses to overwrite existing outputs. Accepted routes are `prokaryote`, `eukaryote`, `prokaryotic_virus`, `giant_virus`, and `manual_review`. Inputs are native tool outputs, tab-separated: CheckM2 (`Name`, `Completeness`, `Contamination`), GUNC (`genome`, `clade_separation_score`, `pass.GUNC`), EukCC folder mode (`bin`, `completeness`, `contamination`, `ncbi_lng`), GTDB-Tk (`user_genome`, `classification`). FASTA suffixes on bin names are stripped before joining. When GTDB-Tk writes both `bac120` and `ar53` summaries, concatenate them with a single header line.
+   The join rejects GUNC rows for non-prokaryotic routes, refuses prokaryotic or eukaryotic bins that lack their domain-specific QC or taxonomy outputs, and refuses to overwrite existing outputs. Accepted routes are `prokaryote`, `eukaryote`, `prokaryotic_virus`, `giant_virus`, and `manual_review`. Inputs are native tool outputs, tab-separated: CheckM2 (`Name`, `Completeness`, `Contamination`), GUNC (`genome`, `clade_separation_score`, `pass.GUNC`), EukCC folder mode (`bin`, `completeness`, `contamination`, `ncbi_lng`), GTDB-Tk (`user_genome`, `classification`). FASTA suffixes on bin names are stripped before joining. A per-contig routing table is collapsed to one row per `query_id`: when all contigs of a bin share a route, the bin takes it; when they differ, the bin is `manual_review` with `review_flag` true. When GTDB-Tk writes both `bac120` and `ar53` summaries, concatenate them with a single header line.
 
 ## Input Requirements
 

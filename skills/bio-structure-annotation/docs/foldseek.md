@@ -146,7 +146,7 @@ foldseek easy-search query.pdb target.pdb results.html tmp --format-mode 3
 RAM formula: `(6 bytes Cα + 1 3Di byte + 1 AA byte) × database residues`
 
 Example: 54M AFDB50 entries require ~151GB RAM
-- Disable `--sort-by-structure-bits 0` to reduce to ~35GB
+- Set `--sort-by-structure-bits 0` to reduce to ~35GB
 
 ## Performance Tips
 
@@ -154,7 +154,7 @@ Example: 54M AFDB50 entries require ~151GB RAM
 - Enable GPU with `--gpu 1` for 5-10x speedup on large databases
 - Create padded database (`makepaddedseqdb`) for GPU searches
 - Use `--split-memory-limit` to control RAM usage on large datasets
-- Disable `--sort-by-structure-bits 0` if memory is constrained
+- Set `--sort-by-structure-bits 0` if memory is constrained
 - Pre-create and index databases for repeated searches
 
 ## Webserver Alternative

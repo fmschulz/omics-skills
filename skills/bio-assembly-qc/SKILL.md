@@ -46,7 +46,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
 ## Output
 
-- results/bio-assembly-qc/run_manifest.json (validated rows, planned commands, and per-stage `status` after `--execute`)
+- results/bio-assembly-qc/run_manifest.json (validated rows, planned commands, and per-stage `status` after `--execute`; a failed run still writes it, with the failing step marked `failed`, then prints the error envelope and exits 2)
 - results/bio-assembly-qc/<sample_id>/assembler/ (raw assembler output)
 - results/bio-assembly-qc/<sample_id>/contigs.fasta (normalized assembly)
 - results/bio-assembly-qc/<sample_id>/quast/report.tsv (QUAST or MetaQUAST metrics)

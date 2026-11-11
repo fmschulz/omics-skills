@@ -75,8 +75,9 @@ diamond blastx --query reads.fna --db reference.dmnd \
 ### Alignment Sensitivity Modes
 - `--faster` - Fastest mode, lowest sensitivity
 - `--fast` - Fast mode
+- No flag - Default mode, sits between `--fast` and `--mid-sensitive`
 - `--mid-sensitive` - Mid-sensitive mode
-- `--sensitive` - Sensitive mode (the default mode, used when no flag is given, sits between `--fast` and `--mid-sensitive`)
+- `--sensitive` - Sensitive mode, a separate mode above the default with full sensitivity for hits of >40% identity
 - `--more-sensitive` - More sensitive mode
 - `--very-sensitive` - Very sensitive mode
 - `--ultra-sensitive` - Highest sensitivity, slowest

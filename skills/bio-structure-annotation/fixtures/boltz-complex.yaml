@@ -3,6 +3,7 @@ sequences:
   - protein:
       id: A
       sequence: MKTAYIAKQRQISFVKSHFSRQ
+      msa: empty
   - ligand:
       id: B
       smiles: "CCO"

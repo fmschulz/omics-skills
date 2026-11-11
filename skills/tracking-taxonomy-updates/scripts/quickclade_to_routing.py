@@ -41,14 +41,14 @@ def choose(columns: list[str], logical: str, required: bool = True) -> str | Non
 
 def route(domain: str) -> tuple[str, str, str, str]:
     value = domain.strip().lower()
-    if "bacter" in value or "archaea" in value:
-        return "prokaryote", "gtdbtk", "false", ""
-    if "euk" in value or "fung" in value:
-        return "eukaryote", "eukcc", "false", ""
     if "nucleocyt" in value or "giant" in value or "ncldv" in value:
         return "giant_virus", "gvclass", "false", "validate with marker-gene phylogeny"
     if "viral" in value or "virus" in value or "phage" in value:
         return "prokaryotic_virus", "vcontact3", "false", "confirm lineage before clustering"
+    if "bacter" in value or "archaea" in value:
+        return "prokaryote", "gtdbtk", "false", ""
+    if "euk" in value or "fung" in value:
+        return "eukaryote", "eukcc", "false", ""
     return "manual_review", "", "true", "mixed, low-confidence, or unknown domain"
 
 

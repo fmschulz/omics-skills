@@ -50,23 +50,30 @@ def annotation_failure(tmp_path):
     out = tmp_path / "out"
     out.mkdir()
     (out / "keep").write_text("user data")
-    return DRIVERS["bio-annotation"][2](SKILLS / "bio-annotation" / "fixtures"), out
+    return (
+        DRIVERS["bio-annotation"][2](SKILLS / "bio-annotation" / "fixtures"),
+        out,
+        "output directory is not empty",
+    )
 
 
 def assembly_failure(tmp_path):
     manifest = tmp_path / "assemblies.tsv"
-    manifest.write_text("sample_id\tmode\tread1\tread2\tread_qc_status\nx\tlong_isolate\treads.fastq\t\tfailed\n")
+    manifest.write_text(
+        "sample_id\tmode\tread1\tread2\tread_qc_status\tread_platform\nx\tlong_isolate\treads.fastq\t\tfailed\tont\n"
+    )
     (tmp_path / "reads.fastq").write_text("@x\nAC\n+\nII\n")
-    return [manifest], tmp_path / "out"
+    return [manifest], tmp_path / "out", "read_qc_status must be passed"
 
 
 @pytest.mark.parametrize("skill, setup", [("bio-annotation", annotation_failure), ("bio-assembly-qc", assembly_failure)])
 def test_failure_envelope(skill, setup, tmp_path):
-    inputs, out = setup(tmp_path)
+    inputs, out, message = setup(tmp_path)
     result = run(skill, inputs, out)
     assert result.returncode == 2
     payload = envelope(result)
     assert payload["ok"] is False
     assert payload["skill"] == skill
     assert payload["error"]["code"] and payload["error"]["message"]
+    assert message in payload["error"]["message"]
     assert payload["error"]["message"] in result.stderr

@@ -187,16 +187,49 @@ def execute(steps: list[dict[str, object]]) -> None:
         if complete(step):
             step["status"] = "reused"
             continue
+        step["status"] = "failed"
         completion_marker(step).unlink(missing_ok=True)
         for output in step["outputs"]:
             Path(output).parent.mkdir(parents=True, exist_ok=True)
         stdout_path = step.get("stdout")
-        with Path(stdout_path).open("wb") if stdout_path else open("/dev/null", "wb") as stdout:
-            result = subprocess.run(step["command"], stdout=stdout if stdout_path else None, check=False)
+        if stdout_path:
+            with Path(stdout_path).open("wb") as stdout:
+                result = subprocess.run(step["command"], stdout=stdout, check=False)
+        else:
+            result = subprocess.run(step["command"], check=False)
         if result.returncode or not outputs_complete(step):
             raise RuntimeError(f"step failed or produced an empty output: {shlex.join(step['command'])}")
         mark_complete(step)
         step["status"] = "completed"
+
+
+def write_reports(
+    out_dir: Path, rows: list[dict[str, str]], steps: list[dict[str, object]]
+) -> None:
+    """Write the manifest and mapping table with the statuses reached so far.
+
+    A failed run calls this too, so the files never stay a stale dry-run copy.
+    """
+    manifest = {
+        "schema_version": "1.0",
+        "mapping_required": any(r["reference"] for r in rows),
+        "samples": rows,
+        "steps": steps,
+    }
+    manifest_path = out_dir / "run_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    # Report what the mapping step actually did. Writing "planned" after an
+    # --execute run made the table claim work that had already happened.
+    mapping_status = {
+        step["sample_id"]: step.get("status", "planned")
+        for step in steps
+        if step["stage"] == "mapping"
+    }
+    with (out_dir / "mapping_stats.tsv").open("w", encoding="utf-8") as handle:
+        handle.write("sample_id\tmapping_status\treference\n")
+        for row in rows:
+            status = mapping_status.get(row["sample_id"], "not_requested")
+            handle.write(f"{row['sample_id']}\t{status}\t{row['reference']}\n")
 
 
 def main() -> int:
@@ -217,22 +250,11 @@ def main() -> int:
         rows = load_samples(args.sample_sheet.resolve())
         args.out.mkdir(parents=True, exist_ok=True)
         steps = build_steps(rows, args.out.resolve(), args.threads)
-        if args.execute:
-            execute(steps)
-        manifest = {"schema_version": "1.0", "mapping_required": any(r["reference"] for r in rows), "samples": rows, "steps": steps}
-        (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-        # Report what the mapping step actually did. Writing "planned" after an
-        # --execute run made the table claim work that had already happened.
-        mapping_status = {
-            step["sample_id"]: step.get("status", "planned")
-            for step in steps
-            if step["stage"] == "mapping"
-        }
-        with (args.out / "mapping_stats.tsv").open("w", encoding="utf-8") as handle:
-            handle.write("sample_id\tmapping_status\treference\n")
-            for row in rows:
-                status = mapping_status.get(row["sample_id"], "not_requested")
-                handle.write(f"{row['sample_id']}\t{status}\t{row['reference']}\n")
+        try:
+            if args.execute:
+                execute(steps)
+        finally:
+            write_reports(args.out, rows, steps)
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-reads-qc-mapping", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError, ValidationError) as error:

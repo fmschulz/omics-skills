@@ -59,7 +59,7 @@ minimap2 [options] <target.fa|target.mmi> [query.fa] [...]
 - `-w <int>` - Minimizer window size (default varies by preset)
 - `-I <num>` - Maximum number of target bases per index batch (default: 8G bases); this is not a byte-valued RAM limit
 - `-f <float>` - Filter out top fraction of repetitive minimizers
-- `-g <int>` - Stop chain enlarge if gap > INT (default: inf)
+- `-g <int>` - Stop chain elongation if there are no minimizers within INT bp (default: 10k)
 
 ### Output Control
 - `--cs[=STR]` - Output cs tag; STR is 'short' (default) or 'long'
@@ -71,7 +71,7 @@ minimap2 [options] <target.fa|target.mmi> [query.fa] [...]
 ### Mapping Sensitivity
 - `-N <int>` - Retain at most INT secondary alignments (default: 5)
 - `-p <float>` - Minimum score ratio for retaining a secondary alignment relative to its primary alignment (default: 0.8); it does not filter alignment identity
-- `-r <int>` - Bandwidth for chaining and alignment (default: 500)
+- `-r <int>` - Bandwidth for chaining and alignment, as `INT1[,INT2]`: INT1 for initial chaining and extension, INT2 for re-chaining and closing gaps (default: 500,20k)
 - `-n <int>` - Minimum number of minimizers on chain (default: 3)
 - `-m <int>` - Minimum chain score (default: 40)
 

@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
@@ -103,3 +104,53 @@ def test_mapping_status_reflects_execution_not_intent(tmp_path):
     assert "\tplanned\t" not in stats, stats
     assert "\treused\t" in stats, stats
     assert "\tnot_requested\t" in stats, stats
+
+
+def test_failed_execute_still_writes_manifest_and_mapping_table(tmp_path):
+    """A failed --execute used to leave no manifest or a stale dry-run copy, though
+    the finished stages were already on disk with their .done markers."""
+    out = tmp_path / "out"
+    sheet = SKILL / "fixtures" / "sample_sheet.tsv"
+    dry = subprocess.run(
+        command(sheet, "--out", out), text=True, capture_output=True, check=False
+    )
+    assert dry.returncode == 0, dry.stderr
+
+    tool_dir = tmp_path / "bin"
+    tool_dir.mkdir()
+    fastp = tool_dir / "fastp"
+    fastp.write_text(
+        f"#!{sys.executable}\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "for flag in ('--out1', '--out2', '--json'):\n"
+        "    if flag in sys.argv:\n"
+        "        Path(sys.argv[sys.argv.index(flag) + 1]).write_text('x\\n')\n"
+    )
+    bwa = tool_dir / "bwa-mem2"
+    bwa.write_text("#!/bin/sh\nexit 3\n")
+    for stub in (fastp, bwa):
+        stub.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tool_dir}:{os.environ['PATH']}"}
+    result = subprocess.run(
+        command(sheet, "--out", out, "--execute"),
+        text=True,
+        capture_output=True,
+        env=env,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload["ok"] is False
+    assert "bwa-mem2" in payload["error"]["message"]
+    manifest = json.loads((out / "run_manifest.json").read_text())
+    statuses = [
+        (step["sample_id"], step["stage"], step.get("status"))
+        for step in manifest["steps"]
+    ]
+    assert statuses[:2] == [
+        ("paired", "qc", "completed"),
+        ("paired", "mapping", "failed"),
+    ]
+    assert "paired\tfailed\t" in (out / "mapping_stats.tsv").read_text()

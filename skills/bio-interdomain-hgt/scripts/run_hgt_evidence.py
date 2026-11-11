@@ -26,6 +26,7 @@ DEPTH_FIELDS = ("lineage", "genomes_sampled")
 HYPOTHESIS_FIELDS = ("hypothesis_id", "hypothesis", "type", "status", "evidence", "revision_stage")
 REFLECTION_FIELDS = ("gate", "observed", "qc_status", "hypotheses_gained", "hypotheses_lost", "alternatives", "next_check", "literature_id")
 REQUIRED_DOMAINS = {"eukaryota", "bacteria", "archaea", "ncldv", "phage", "organelle"}
+Rows = list[dict[str, str]]
 SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "hgt-evidence.schema.json"
 
 
@@ -42,7 +43,13 @@ def read(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
         reader = csv.DictReader(handle, delimiter="\t")
         if tuple(reader.fieldnames or ()) != fields:
             raise ValueError(f"{path}: columns must be exactly {', '.join(fields)}")
-        rows = list(reader)
+        rows = []
+        for number, row in enumerate(reader, start=1):
+            if None in row or None in row.values():
+                raise ValueError(
+                    f"{path}: data row {number} must have exactly {len(fields)} fields"
+                )
+            rows.append(row)
     if not rows:
         raise ValueError(f"{path}: no rows")
     return rows
@@ -53,6 +60,26 @@ def write(path: Path, fields: tuple[str, ...], rows: list[dict[str, object]]) ->
         writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def check_inputs(
+    args: argparse.Namespace, forward: Rows, arbiter: Rows, trees: Rows
+) -> None:
+    """Reject domain labels outside the vocabulary and tree support outside 0..1."""
+    labels = [("--query-domain", args.query_domain)]
+    labels += [("hit_domain", row["hit_domain"]) for row in arbiter]
+    labels += [("recipient_domain", row["recipient_domain"]) for row in forward]
+    for name, value in labels:
+        if value not in REQUIRED_DOMAINS:
+            raise ValueError(
+                f"{name} {value!r} must be one of {', '.join(sorted(REQUIRED_DOMAINS))}"
+            )
+    for row in trees:
+        if not 0 <= float(row["support"]) <= 1:
+            raise ValueError(
+                f"tree support for candidate {row['candidate_id']} must be on a "
+                f"0-1 scale, got {row['support']}"
+            )
 
 
 def load_databases(path: Path) -> dict[str, object]:
@@ -101,9 +128,7 @@ def main() -> int:
         required_gates = ["database", "forward", "reciprocal", "context", "phylogeny", "final"]
         if [row["gate"] for row in reflections] != required_gates:
             raise ValueError(f"reflections must cover gates in order: {', '.join(required_gates)}")
-        if args.out.exists() and any(args.out.iterdir()):
-            raise ValueError(f"output directory is not empty: {args.out}")
-        args.out.mkdir(parents=True, exist_ok=True)
+        check_inputs(args, forward, arbiter, trees)
 
         best: dict[str, dict[str, str]] = {}
         for row in arbiter:
@@ -136,11 +161,6 @@ def main() -> int:
             reciprocal_pass = rbh.get((query_id, locus), False)
             status = "confirmed" if all((homology_pass, reciprocal_pass, context_pass, phylogeny_pass)) and direction != "ambiguous" else "candidate" if homology_pass else "rejected"
             candidates.append({**hit, "query_best_domain": q_domain, "recipient_best_domain": r_domain, "reciprocal_best_hit": str(reciprocal_pass).lower(), "direction": direction, "context_pass": str(context_pass).lower(), "frame_aware_context": str(frame_aware).lower(), "phylogeny_support": phy["support"], "phylogeny_pass": str(phylogeny_pass).lower(), "status": status})
-        candidate_fields = (*FORWARD_FIELDS, "query_best_domain", "recipient_best_domain", "reciprocal_best_hit", "direction", "context_pass", "frame_aware_context", "phylogeny_support", "phylogeny_pass", "status")
-        write(args.out / "hgt_candidates.tsv", candidate_fields, candidates)
-        origin_rows = [{"query_protein": row["query_protein"], "best_domain": best[row["query_protein"]]["hit_domain"], "best_lineage": best[row["query_protein"]]["hit_lineage"], "origin_class": "query_core" if best[row["query_protein"]]["hit_domain"] == args.query_domain else "donor_derived"} for row in forward]
-        write(args.out / "query_protein_origin.tsv", ("query_protein", "best_domain", "best_lineage", "origin_class"), origin_rows)
-
         confirmed = Counter(row["recipient_lineage"] for row in candidates if row["status"] == "confirmed")
         depth_map = {row["lineage"]: int(row["genomes_sampled"]) for row in depths}
         normalization = []
@@ -149,12 +169,51 @@ def main() -> int:
             if depth <= 0:
                 raise ValueError(f"missing positive sampling depth for lineage: {lineage}")
             normalization.append({"lineage": lineage, "confirmed_candidates": confirmed[lineage], "genomes_sampled": depth, "candidates_per_100_genomes": f"{100 * confirmed[lineage] / depth:.6f}"})
+        manifest = {
+            "schema_version": "1.0",
+            "query_domain": args.query_domain,
+            "databases": databases,
+            "candidate_count": len(candidates),
+            "confirmed_count": sum(row["status"] == "confirmed" for row in candidates),
+            "gates": required_gates,
+        }
+        validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
+        if args.out.exists() and any(args.out.iterdir()):
+            raise ValueError(f"output directory is not empty: {args.out}")  # noqa: TRY301  # main() has one try block; its handler turns this into the error envelope
+        args.out.mkdir(parents=True, exist_ok=True)
+        candidate_fields = (
+            *FORWARD_FIELDS,
+            "query_best_domain",
+            "recipient_best_domain",
+            "reciprocal_best_hit",
+            "direction",
+            "context_pass",
+            "frame_aware_context",
+            "phylogeny_support",
+            "phylogeny_pass",
+            "status",
+        )
+        write(args.out / "hgt_candidates.tsv", candidate_fields, candidates)
+        origin_rows = [
+            {
+                "query_protein": row["query_protein"],
+                "best_domain": best[row["query_protein"]]["hit_domain"],
+                "best_lineage": best[row["query_protein"]]["hit_lineage"],
+                "origin_class": "query_core"
+                if best[row["query_protein"]]["hit_domain"] == args.query_domain
+                else "donor_derived",
+            }
+            for row in forward
+        ]
+        write(
+            args.out / "query_protein_origin.tsv",
+            ("query_protein", "best_domain", "best_lineage", "origin_class"),
+            origin_rows,
+        )
         write(args.out / "lineage_sampling_normalization.tsv", ("lineage", "confirmed_candidates", "genomes_sampled", "candidates_per_100_genomes"), normalization)
         write(args.out / "phylogeny_evidence.tsv", TREE_FIELDS, trees)
         write(args.out / "hypothesis_register.tsv", HYPOTHESIS_FIELDS, hypotheses)
         write(args.out / "gate_reflections.tsv", REFLECTION_FIELDS, reflections)
-        manifest = {"schema_version": "1.0", "query_domain": args.query_domain, "databases": databases, "candidate_count": len(candidates), "confirmed_count": sum(row["status"] == "confirmed" for row in candidates), "gates": required_gates}
-        validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
         (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-interdomain-hgt", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))

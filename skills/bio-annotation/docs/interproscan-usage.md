@@ -85,11 +85,11 @@ first, run this setup step before retrying.
 - `-goterms` - Include Gene Ontology terms in output
 - `-pathways` - Include pathway annotations
 - `-iprlookup` - Enable InterPro lookup (map to InterPro entries)
-- `-pa` - Enable precalculated match lookup (faster, requires network)
-- `-dp` - Disable precalculated match lookup
+- `-pa, --pathways` - Switch on pathway lookup (implies `-iprlookup`)
+- `-dp, --disable-precalc` - Turn off the precalculated match lookup (on by default); all matches are then computed locally
 - `-t` - Sequence type (p=protein, n=nucleotide)
 - `-seqtype` - Explicit sequence type
-- `-ms` - Minimum sequence length (default: 15)
+- `-ms, --minsize` - Minimum nucleotide size of an ORF to report; applies only with `-t n`
 
 ### Output Control
 - `-T, --tempdir` - Temporary directory location
@@ -234,9 +234,9 @@ present, non-empty, and parseable.
 
 ### Using precalculated matches
 ```bash
-# Faster execution using EBI's precalculated matches
+# The EBI precalculated match lookup is on by default (needs network); -dp turns it off
 ./interproscan.sh -i proteins.faa -b results \
-  -f TSV -pa -goterms -iprlookup
+  -f TSV -goterms -iprlookup
 ```
 
 ### InterProScan 6 with Nextflow
@@ -315,13 +315,13 @@ MALWMRLLPLLALLALWGPDPAAAFVNQHLC...
 ```
 
 ### Requirements
-- Minimum sequence length: 15 amino acids (configurable with `-ms`)
+- Minimum sequence length: 15 amino acids
 - Valid amino acid characters
 - Unique sequence identifiers
 
 ## Performance Tips
 
-1. **Enable precalculated matches**: Use `-pa` for faster results on known sequences
+1. **Keep precalculated matches on**: They are the default; do not pass `-dp` if you want faster results on known sequences
 2. **Use appropriate CPU count**: Set `-cpu` to available cores (don't exceed physical cores)
 3. **Select specific analyses**: Use `-appl` to run only needed databases
 4. **Use SSD for temp directory**: Set `-T` to fast storage location
@@ -383,8 +383,8 @@ cut -f1,14 interpro_results.tsv | grep -v "^$" > go_annotations.tsv
 
 ### Slow performance
 ```bash
-# Use precalculated matches
-./interproscan.sh -i proteins.faa -b results -pa
+# Keep the precalculated match lookup on (default; leave out -dp)
+./interproscan.sh -i proteins.faa -b results
 
 # Or select specific fast analyses
 ./interproscan.sh -i proteins.faa -b results -appl Pfam,Gene3D
@@ -418,7 +418,7 @@ Key settings:
 
 1. **Always include GO terms and pathways**: Use `-goterms -iprlookup -pathways`
 2. **Use TSV and GFF3 formats**: TSV for analysis, GFF3 for visualization
-3. **Enable precalculated matches**: Saves compute time for known sequences
+3. **Keep precalculated matches on**: Default; saves compute time for known sequences
 4. **Monitor resource usage**: InterProScan can be memory-intensive
 5. **Keep data updated**: Regularly update InterPro databases
 6. **Validate input**: Check FASTA format before processing

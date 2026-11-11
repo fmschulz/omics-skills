@@ -29,7 +29,13 @@ def read(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
         reader = csv.DictReader(handle, delimiter="\t")
         if tuple(reader.fieldnames or ()) != fields:
             raise ValueError(f"{path}: columns must be exactly {', '.join(fields)}")
-        rows = list(reader)
+        rows = []
+        for number, row in enumerate(reader, start=1):
+            if None in row or None in row.values():
+                raise ValueError(
+                    f"{path}: data row {number} must have exactly {len(fields)} fields"
+                )
+            rows.append(row)
     if not rows:
         raise ValueError(f"{path}: no rows")
     return rows
@@ -70,9 +76,6 @@ def main() -> int:
         catalog = read(args.marker_catalog, MARKER_CATALOG_FIELDS)
         hits = read(args.marker_hits, MARKER_HIT_FIELDS)
         ncrna = read(args.ncrna, NCRNA_FIELDS)
-        if args.out.exists() and any(args.out.iterdir()):
-            raise ValueError(f"output directory is not empty: {args.out}")
-        args.out.mkdir(parents=True, exist_ok=True)
         genome_ids = [row["genome"] for row in genomes]
         if len(genome_ids) != len(set(genome_ids)):
             raise ValueError("genome identifiers must be unique")
@@ -85,14 +88,19 @@ def main() -> int:
         counts = Counter((row["orthogroup"], row["genome"]) for row in orthos)
         families = sorted({row["orthogroup"] for row in orthos})
         copy_rows = [{"orthogroup": family, **{genome: counts[(family, genome)] for genome in genome_ids}} for family in families]
-        pl.DataFrame(copy_rows).write_parquet(args.out / "copy_number_matrix.parquet")
-        pl.DataFrame([{"orthogroup": row["orthogroup"], **{genome: int(row[genome] > 0) for genome in genome_ids}} for row in copy_rows]).write_parquet(args.out / "presence_absence.parquet")
+        presence_rows = [
+            {
+                "orthogroup": row["orthogroup"],
+                **{genome: int(row[genome] > 0) for genome in genome_ids},
+            }
+            for row in copy_rows
+        ]
 
         roles = {row["genome"]: row["role"] for row in genomes}
         queries = [genome for genome in genome_ids if roles[genome] == "query"]
         refs = [genome for genome in genome_ids if roles[genome] == "reference"]
         if not queries or len(refs) < 2:
-            raise ValueError("fixture/analysis requires at least one query and two references")
+            raise ValueError("at least one query and two references are required")  # noqa: TRY301  # main() has one try block; its handler turns this into the error envelope
         comparisons = []
         for family in families:
             reference_counts = [counts[(family, genome)] for genome in refs]
@@ -109,7 +117,6 @@ def main() -> int:
                     fold = "inf" if absent_everywhere and count else (count / baseline if baseline else 0)
                     status = "query_specific" if absent_everywhere and count else "missing_expected" if count == 0 and baseline else "expanded" if baseline and count >= 2 * baseline else "contracted" if baseline and count * 2 <= baseline else "conserved"
                 comparisons.append({"family_id": family, "query": query, "query_copy_number": count, "relative_median": f"{baseline:g}", "fold_change": f"{fold:g}" if isinstance(fold, float) else fold, "status": status})
-        write(args.out / "family_copy_number_comparison.tsv", ("family_id", "query", "query_copy_number", "relative_median", "fold_change", "status"), comparisons)
 
         hit_map: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
         for hit in hits:
@@ -119,8 +126,6 @@ def main() -> int:
             for marker in catalog:
                 found = hit_map[(genome, marker["family_id"])]
                 marker_rows.append({"genome": genome, "category": marker["category"], "family_id": marker["family_id"], "family_name": marker["family_name"], "copy_number": len(found), "evidence_source": "marker_hits" if found else "explicit_absence", "e_value": min((float(hit["e_value"]) for hit in found), default=""), "notes": "" if found else "expected marker absent"})
-        write(args.out / "marker_census.tsv", ("genome", "category", "family_id", "family_name", "copy_number", "evidence_source", "e_value", "notes"), marker_rows)
-        write(args.out / "ncRNA_census.tsv", NCRNA_FIELDS, ncrna)
 
         adjacent = adjacency(orthos)
         neighborhoods = []
@@ -131,8 +136,53 @@ def main() -> int:
                     relative_spacing, relative_contig = adjacent[relative][pair]
                     ratio = "inf" if relative_spacing == 0 and query_spacing else (query_spacing / relative_spacing if relative_spacing else 1)
                     neighborhoods.append({"query_block_id": f"{query_contig}:{pair[0]}-{pair[1]}", "relative": relative, "relative_block_id": f"{relative_contig}:{pair[0]}-{pair[1]}", "members": ",".join(pair), "intergenic_spacing_query": query_spacing, "intergenic_spacing_relative": relative_spacing, "spacing_ratio": ratio, "notes": "conserved_pair"})
-        write(args.out / "conserved_neighborhoods.tsv", ("query_block_id", "relative", "relative_block_id", "members", "intergenic_spacing_query", "intergenic_spacing_relative", "spacing_ratio", "notes"), neighborhoods)
         metrics = [{**row, "relative_distribution": "query" if row["role"] == "query" else "baseline", "literature_range_reference": "required before biological interpretation"} for row in genomes]
+        if args.out.exists() and any(args.out.iterdir()):
+            raise ValueError(f"output directory is not empty: {args.out}")  # noqa: TRY301  # main() has one try block; its handler turns this into the error envelope
+        args.out.mkdir(parents=True, exist_ok=True)
+        pl.DataFrame(copy_rows).write_parquet(args.out / "copy_number_matrix.parquet")
+        pl.DataFrame(presence_rows).write_parquet(args.out / "presence_absence.parquet")
+        write(
+            args.out / "family_copy_number_comparison.tsv",
+            (
+                "family_id",
+                "query",
+                "query_copy_number",
+                "relative_median",
+                "fold_change",
+                "status",
+            ),
+            comparisons,
+        )
+        write(
+            args.out / "marker_census.tsv",
+            (
+                "genome",
+                "category",
+                "family_id",
+                "family_name",
+                "copy_number",
+                "evidence_source",
+                "e_value",
+                "notes",
+            ),
+            marker_rows,
+        )
+        write(args.out / "ncRNA_census.tsv", NCRNA_FIELDS, ncrna)
+        write(
+            args.out / "conserved_neighborhoods.tsv",
+            (
+                "query_block_id",
+                "relative",
+                "relative_block_id",
+                "members",
+                "intergenic_spacing_query",
+                "intergenic_spacing_relative",
+                "spacing_ratio",
+                "notes",
+            ),
+            neighborhoods,
+        )
         write(args.out / "relative_genome_metrics.tsv", (*GENOME_FIELDS, "relative_distribution", "literature_range_reference"), metrics)
         print(json.dumps({"ok": True, "skill": "bio-protein-clustering-pangenome", "out": str(args.out.resolve()), "warnings": []}))
     except (OSError, ValueError) as error:

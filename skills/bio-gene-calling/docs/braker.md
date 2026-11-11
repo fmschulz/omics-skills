@@ -48,7 +48,8 @@ export AUGUSTUS_SCRIPTS_PATH=/path/to/Augustus/scripts/
 | `--bam=FILE` | RNA-Seq alignments (BAM format) |
 | `--prot_seq=FILE` | Protein database for homology |
 | `--threads=INT` | Number of CPU threads |
-| `--ab_initio` | De novo prediction without evidence |
+| `--esmode` | Genome-only mode: GeneMark-ES training, no extrinsic evidence |
+| `--ab_initio` | Add AUGUSTUS ab initio predictions to the output (`augustus.ab_initio.*`) |
 | `--fungus` | Enable fungal-specific parameters |
 | `--stranded=+,-,.` | RNA-Seq strandedness |
 | `--UTR=on` | Experimental UTR prediction from RNA-Seq coverage; upstream container notes UTR-related tooling is not maintained |
@@ -94,7 +95,7 @@ braker.pl \
 ```bash
 braker.pl \
     --genome=genome.fa \
-    --ab_initio \
+    --esmode \
     --threads=8
 ```
 

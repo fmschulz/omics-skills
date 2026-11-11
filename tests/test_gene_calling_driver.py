@@ -9,6 +9,29 @@ SKILL = ROOT / "skills" / "bio-gene-calling"
 SCRIPT = SKILL / "scripts" / "run_gene_calling.py"
 
 
+def write_marked_outputs(steps, *, skip_marker=None):
+    """Write fixture outputs with their .done markers, as a finished run leaves them."""
+    for step in steps:
+        for output in step["outputs"]:
+            path = Path(output)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if step["stage"] == "trna":
+                path.write_text(
+                    "Sequence tRNA # Begin End Type Codon IntronBegin IntronEnd Score\n"
+                    "seq 1 1 70 Ala TGC 0 0 55.0\n"
+                )
+            elif step["stage"] == "rrna":
+                path.write_text(
+                    "# cmsearch tblout\n"
+                    "seq - SSU RF00177 cm 1 10 1 10 + no 1 0.5 0.0 42.0 1e-10 ! hit\n"
+                    "seq - SSU RF00177 cm 1 10 30 40 + no 1 0.5 0.0 9.0 2.1 ? weak\n"
+                )
+            else:
+                path.write_text("fixture output\n")
+            if output != skip_marker:
+                Path(f"{output}.done").write_text("complete\n")
+
+
 def test_domain_routes_and_per_assembly_outputs(tmp_path):
     out = tmp_path / "out"
     result = subprocess.run([sys.executable, str(SCRIPT), str(SKILL / "fixtures" / "assemblies.tsv"), "--tool-manifest", str(SKILL / "fixtures" / "tool-manifest.json"), "--out", str(out)], text=True, capture_output=True)
@@ -44,20 +67,7 @@ def test_plan_is_idempotent_and_execute_reuses_complete_outputs(tmp_path):
     second = subprocess.run(args, text=True, capture_output=True)
     assert second.returncode == 0, second.stderr
     manifest = json.loads((out / "run_manifest.json").read_text())
-    for step in manifest["steps"]:
-        for output in step["outputs"]:
-            path = Path(output)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if step["stage"] == "trna":
-                path.write_text("Sequence tRNA # Begin End Type Codon IntronBegin IntronEnd Score\nseq 1 1 70 Ala TGC 0 0 55.0\n")
-            elif step["stage"] == "rrna":
-                path.write_text(
-                    "# cmsearch tblout\n"
-                    "seq - SSU RF00177 cm 1 10 1 10 + no 1 0.5 0.0 42.0 1e-10 ! hit\n"
-                    "seq - SSU RF00177 cm 1 10 30 40 + no 1 0.5 0.0 9.0 2.1 ? weak\n"
-                )
-            else:
-                path.write_text("fixture output\n")
+    write_marked_outputs(manifest["steps"])
     executed = subprocess.run([*args, "--execute"], text=True, capture_output=True)
     assert executed.returncode == 0, executed.stderr
     rerun = json.loads((out / "run_manifest.json").read_text())
@@ -146,12 +156,7 @@ def test_failed_empty_trna_output_is_rerun_not_reused(tmp_path: Path) -> None:
     planned = subprocess.run(args, text=True, capture_output=True, check=False)
     assert planned.returncode == 0, planned.stderr
     steps = json.loads((out / "run_manifest.json").read_text())["steps"]
-    for step in steps:
-        if step["stage"] == "trna":
-            continue
-        for output in step["outputs"]:
-            Path(output).parent.mkdir(parents=True, exist_ok=True)
-            Path(output).write_text("fixture output\n")
+    write_marked_outputs([step for step in steps if step["stage"] != "trna"])
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     fake = bin_dir / "tRNAscan-SE"
@@ -192,3 +197,56 @@ def test_failed_empty_trna_output_is_rerun_not_reused(tmp_path: Path) -> None:
         if s["stage"] == "trna"
     ]
     assert {step["status"] for step in trna} == {"reused"}
+
+
+FAKE_CMSEARCH = """#!/bin/sh
+out=""
+while [ $# -gt 0 ]; do [ "$1" = --tblout ] && out=$2; shift; done
+echo "# cmsearch tblout" > "$out"
+echo run >> "$FAKE_LOG"
+"""
+
+
+def test_non_empty_output_without_done_marker_is_not_reused(tmp_path: Path) -> None:
+    """cmsearch and pyrodigal write incrementally, so a killed job leaves a
+    non-empty partial file that only a .done marker can tell from a finished one."""
+    out = tmp_path / "out"
+    args = [
+        sys.executable,
+        str(SCRIPT),
+        str(SKILL / "fixtures" / "assemblies.tsv"),
+        "--tool-manifest",
+        str(SKILL / "fixtures" / "tool-manifest.json"),
+        "--out",
+        str(out),
+    ]
+    planned = subprocess.run(args, text=True, capture_output=True, check=False)
+    assert planned.returncode == 0, planned.stderr
+    steps = json.loads((out / "run_manifest.json").read_text())["steps"]
+    partial = next(
+        step
+        for step in steps
+        if step["stage"] == "rrna" and step["assembly_id"] == "bacterium"
+    )
+    write_marked_outputs(steps, skip_marker=partial["outputs"][0])
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "cmsearch"
+    fake.write_text(FAKE_CMSEARCH)
+    fake.chmod(0o755)
+    log = tmp_path / "cmsearch.log"
+    env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"}
+    env["FAKE_LOG"] = str(log)
+
+    result = subprocess.run(
+        [*args, "--execute"], text=True, capture_output=True, env=env, check=False
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert len(log.read_text().splitlines()) == 1
+    statuses = [
+        step["status"]
+        for step in json.loads((out / "run_manifest.json").read_text())["steps"]
+    ]
+    assert statuses.count("completed") == 1
+    assert statuses.count("reused") == len(statuses) - 1

@@ -25,14 +25,13 @@ cmpress Rfam.cm
 
 ## Rfam models for ribosomal RNA
 
-Select the model set by the inferred domain of life. Run `cmsearch` once per model or pass a pre-pressed CM library with the relevant accessions selected via `cmscan --tblout` filtering.
+Select the model set by the inferred domain of life. Run `cmsearch` once per model or pass a pre-pressed CM library with the relevant accessions selected via `cmsearch --tblout` filtering.
 
 | Domain | SSU rRNA | LSU rRNA | 5S | 5.8S | Notes |
 |--------|----------|----------|----|------|-------|
 | Bacteria | RF00177 (16S) | RF02541 (23S) | RF00001 | — | — |
 | Archaea | RF01959 (16S) | RF02540 (23S) | RF00001 | — | — |
 | Eukaryotes | RF01960 (18S) | RF02543 (28S) | RF00001 | RF00002 | — |
-| Metazoan mitochondria | RF02555 (12S) | RF02546 (16S) | — | — | Use when calling mitochondrial contigs |
 
 ## Default search
 

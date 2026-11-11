@@ -65,8 +65,9 @@ from ete4 import Tree
 t = Tree(open('tree.nwk'))
 t.set_outgroup(t.get_midpoint_outgroup())
 for node in list(t.traverse()):
-    # VeryFastTree support is on a 0-1 scale; the root has no support value.
-    if not node.is_leaf and not node.is_root and node.support < 0.70:
+    # VeryFastTree support is on a 0-1 scale; the root, and a node that
+    # set_outgroup re-roots, can have no support value (None).
+    if not node.is_leaf and not node.is_root and node.support is not None and node.support < 0.70:
         node.delete()
 t.write(outfile='tree.filtered.nwk')
 ```

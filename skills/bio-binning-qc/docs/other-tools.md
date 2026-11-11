@@ -39,7 +39,7 @@ metabat2 -i contigs.fasta -a depth.txt -o bins/bin --seed 12345 --unbinned --sav
 
 - Defaults: `-m` 2500 bp minimum contig, `-s` 200000 bp minimum bin, `--maxP` 95, `--minS` 60. `-t 0` uses every core, so always pass `-t`.
 - Less contamination: `--noAdd`, higher `--minS`. Higher completeness: higher `--maxEdges` (up to 500), lower `-m`.
-- Bins are written as `bin.<n>.fa`. The depth table is the `jgi_summarize_bam_contig_depths` format; `coverm contig -m mean variance` writes a compatible one.
+- Bins are written as `bin.<n>.fa`. The depth table is the `jgi_summarize_bam_contig_depths` format; `coverm contig -m metabat` reproduces that output (CoverM README).
 
 ## GUNC (prokaryotic bins only)
 

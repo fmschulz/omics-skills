@@ -31,8 +31,10 @@ Add validated metadata models and a queryable catalog to a project that `bioinfo
      --project-root .
    ```
 
+   A schema or model already in the project with the same bytes the run would write is kept, so step 2 and an in-place schema can precede this step. A target with different content is refused, as is any existing catalog or Parquet file.
+
    Adapt the schema and the fixtures together for project-specific records. `scripts/build_sample_catalog.py` (with `fixtures/valid-samples.jsonl`) is the smaller sample-only smoke path.
-4. Before you adopt a project-specific extension or migrate stored records, run `scripts/check_schema_compatibility.py`. Optional slots and new classes are compatible; required additions and constraint changes are reported as breaking. Keep a versioned input/expected migration fixture like `fixtures/schema-migration-v1-to-v1.1.json` for every supported transition.
+4. Before you adopt a project-specific extension or migrate stored records, run `scripts/check_schema_compatibility.py`. Optional slots and new classes are compatible; required additions, constraint changes, and permissible values dropped from an enum that the extension redefines are reported as breaking. An omitted `range` counts as the base `default_range`. The extension is read as a delta, so a class it does not mention is not reported as removed. Keep a versioned input/expected migration fixture like `fixtures/schema-migration-v1-to-v1.1.json` for every supported transition.
 
 A killed run can leave some generated targets but no catalog. `data/catalog.duckdb` is the completion marker. Compare the remaining targets with the run log and remove only artifacts of the interrupted run after you confirm they are not project-owned; the next run refuses partial targets.
 

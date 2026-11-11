@@ -28,7 +28,7 @@ def resolve_file(value: str, base: Path, label: str) -> Path:
 
 def load(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
+        reader = csv.DictReader(handle, delimiter="\t", restval="")
         if tuple(reader.fieldnames or ()) != FIELDS:
             raise ValueError(f"manifest columns must be exactly: {', '.join(FIELDS)}")
         rows = list(reader)
@@ -199,6 +199,7 @@ def execute(steps: list[dict[str, object]]) -> None:
         if complete(step):
             step["status"] = "reused"
             continue
+        step["status"] = "failed"
         completion_marker(step).unlink(missing_ok=True)
         for output in step["outputs"]:
             Path(output).parent.mkdir(parents=True, exist_ok=True)
@@ -242,9 +243,18 @@ def main() -> int:
         rows = load(args.manifest.resolve())
         args.out.mkdir(parents=True, exist_ok=True)
         steps = plan(rows, args.out.resolve(), args.threads)
-        if args.execute:
-            execute(steps)
-        (args.out / "run_manifest.json").write_text(json.dumps({"schema_version": "1.0", "assemblies": rows, "steps": steps}, indent=2) + "\n")
+        try:
+            if args.execute:
+                execute(steps)
+        finally:
+            # A failed run keeps the statuses reached so far, not a stale dry-run copy.
+            (args.out / "run_manifest.json").write_text(
+                json.dumps(
+                    {"schema_version": "1.0", "assemblies": rows, "steps": steps},
+                    indent=2,
+                )
+                + "\n"
+            )
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-assembly-qc", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError) as error:

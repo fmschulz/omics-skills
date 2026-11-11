@@ -112,15 +112,16 @@ cat taxids.txt | taxonkit filter -L genus
 # Filter at specific rank
 cat taxids.txt | taxonkit filter -E species
 
-# Filter between ranks
-cat taxids.txt | taxonkit filter -L genus -H species
+# Keep ranks higher than phylum and drop TaxIDs with no rank
+# (-L and -H are mutually exclusive)
+cat taxids.txt | taxonkit filter -H phylum -N
 ```
 
 ### lca - Compute Lowest Common Ancestor
 ```bash
-# Compute LCA for multiple TaxIDs
-echo "9606,9597" | taxonkit lca
-# Output: LCA of 9606,9597: 9604 (Hominidae)
+# Compute LCA for multiple TaxIDs (default separator is a space; change it with -s)
+echo "63221 2665953" | taxonkit lca
+# Output: 63221 2665953<TAB>9605
 ```
 
 ## Key Command-Line Options
@@ -212,7 +213,7 @@ echo "2" | taxonkit list --ids 2 | \
 ### LCA for sequence clusters
 ```bash
 # Find common ancestor for TaxIDs in a cluster
-echo "9606,9597,9598" | taxonkit lca -d ","
+echo "63221,2665953" | taxonkit lca -s ","
 ```
 
 ## Input/Output Formats
@@ -239,8 +240,8 @@ Example formats:
 # Domain-aware seven-rank output
 -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}"
 
-# With rank prefixes
--f "{domain};{phylum};{class};{order};{family};{genus};{species}" -P
+# With rank prefixes (reformat2 has no -P; write the prefixes in the format)
+-f "d__{domain};p__{phylum};c__{class};o__{order};f__{family};g__{genus};s__{species}"
 
 # Custom separator
 -f "{domain|acellular root|superkingdom}|{phylum}|{class}|{order}|{family}|{genus}|{species}"

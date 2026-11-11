@@ -355,7 +355,20 @@ def build_outputs(
     bundle: Any,
 ) -> dict[str, Path]:
     artifacts = final_artifacts(project_root)
-    existing = [path for path in artifacts.values() if path.exists()]
+    # A schema or model already in place with the bytes this run would write
+    # is left alone, so the documented steps do not collide.
+    expected = {
+        "schema": schema_path.read_bytes(),
+        "model": model_source.encode("utf-8"),
+    }
+    existing = [
+        path
+        for name, path in artifacts.items()
+        if path.exists()
+        and not (
+            name in expected and path.is_file() and path.read_bytes() == expected[name]
+        )
+    ]
     if existing:
         raise FileExistsError(
             "refusing to overwrite existing output(s): " + ", ".join(str(path) for path in existing)
@@ -395,6 +408,8 @@ def build_outputs(
         published: list[Path] = []
         try:
             for name in ("schema", "model", *TABLE_NAMES, "catalog"):
+                if artifacts[name].exists():
+                    continue
                 staged[name].replace(artifacts[name])
                 published.append(artifacts[name])
         except OSError as exc:
@@ -485,8 +500,6 @@ def main(argv: list[str] | None = None) -> int:
         write_rejection_report(project_root, input_path, rejected)
         print(f"Rejected {len(rejected)} validation error(s) before artifact publication")
         return 2
-    if bundle is None:
-        raise RuntimeError("validated metadata bundle is unexpectedly missing")
 
     try:
         artifacts = build_outputs(project_root, schema_path, input_path, model_source, bundle)

@@ -49,10 +49,12 @@ tar xzf mmseqs-linux-avx2.tar.gz
 - `--min-seq-id FLOAT` - Sequence identity threshold (0.0-1.0, default: varies by workflow)
 - `-c FLOAT` - Coverage threshold (0.0-1.0, e.g., 0.8 for 80% coverage)
 - `--cov-mode INT` - Coverage calculation mode
-  - `0` - bidirectional coverage (default)
-  - `1` - query coverage (target covered by query)
-  - `2` - target coverage (query covered by target)
-  - `3` - target coverage if above id, query coverage otherwise
+  - `0` - coverage of query and target (default)
+  - `1` - coverage of target
+  - `2` - coverage of query
+  - `3` - target sequence length has to be at least x% of query length
+  - `4` - query sequence length has to be at least x% of target length
+  - `5` - short sequence needs to be at least x% of the other sequence length
 - `-s FLOAT` - Sensitivity (1.0 = fast, 7.0 = very sensitive)
 - `--threads INT` - Number of CPU threads (default: auto-detect)
 
@@ -99,9 +101,9 @@ mmseqs easy-cluster proteins.faa orthologs tmp \
     -s 7.0 \
     --cluster-mode 0
 
-# cluster-mode 0 = set cover (greedy incremental)
-# cluster-mode 1 = connected component
-# cluster-mode 2 = greedy incremental (default)
+# cluster-mode 0 = set cover (greedy), the default
+# cluster-mode 1 = connected component (BLASTclust)
+# cluster-mode 2, 3 = greedy clustering by sequence length (CDHIT)
 ```
 
 ### GPU-Accelerated Clustering
@@ -170,7 +172,7 @@ matrix = (matrix > 0).astype(int)
 ### Speed vs Sensitivity Trade-offs
 ```bash
 # FAST: Large datasets (>100k sequences), 95%+ identity
-mmseqs easy-linclust proteins.faa out tmp --min-seq-id 0.95 -s 1.0
+mmseqs easy-linclust proteins.faa out tmp --min-seq-id 0.95
 
 # BALANCED: Medium sensitivity, good for 70-90% identity
 mmseqs easy-cluster proteins.faa out tmp --min-seq-id 0.7 -s 4.0
@@ -247,8 +249,8 @@ mmseqs easy-cluster proteins.faa orthogroups tmp \
 - Use `easy-linclust` instead of `easy-cluster` for very large datasets
 
 ### Too Few/Many Clusters
-- **Too few clusters**: Lower `--min-seq-id` or `-c` thresholds
-- **Too many clusters**: Increase `--min-seq-id` or use `--cluster-mode 0`
+- **Too few clusters**: Raise `--min-seq-id` or `-c`
+- **Too many clusters**: Lower `--min-seq-id` or `-c`
 
 ### Slow Performance
 - Use `easy-linclust` for linear-time clustering (10-100x faster)

@@ -212,24 +212,31 @@ def build_plan(
 
 
 def done_marker(output: str) -> Path:
-    """Return the marker that records a zero exit for an output allowed to be empty."""
+    """Return the marker that records a zero exit for one declared output."""
     return Path(f"{output}.done")
 
 
-def complete(step: dict[str, object]) -> bool:
+def outputs_present(step: dict[str, object]) -> bool:
     """Report whether every declared output exists and is non-empty.
 
-    An empty output counts only for steps that allow it and only when its done
-    marker shows that the run that wrote it exited 0.
+    An empty output counts only for steps that allow it.
     """
     allow_empty = bool(step.get("allow_empty"))
     return all(
-        Path(path).is_file()
-        and (
-            Path(path).stat().st_size > 0
-            or (allow_empty and done_marker(path).is_file())
-        )
+        Path(path).is_file() and (allow_empty or Path(path).stat().st_size > 0)
         for path in step["outputs"]
+    )
+
+
+def complete(step: dict[str, object]) -> bool:
+    """Report whether a finished run left this step's outputs.
+
+    Tools such as pyrodigal and cmsearch write incrementally, so a killed job
+    leaves a non-empty partial file. Only the done marker, written after an exit
+    code of 0, tells it from a finished output.
+    """
+    return outputs_present(step) and all(
+        done_marker(path).is_file() for path in step["outputs"]
     )
 
 
@@ -245,6 +252,8 @@ def execute(plan: list[dict[str, object]]) -> None:
         if result.returncode == 0 and step.get("allow_empty"):
             for output in step["outputs"]:
                 Path(output).touch()
+        if result.returncode == 0 and outputs_present(step):
+            for output in step["outputs"]:
                 done_marker(output).touch()
         if result.returncode or not complete(step):
             raise RuntimeError(

@@ -15,8 +15,128 @@ def test_fixture_plans_short_long_and_metagenome_workflows(tmp_path):
     assert result.returncode == 0, result.stderr
     plan = json.loads((out / "run_manifest.json").read_text())
     commands = [step.get("command", [""])[0] for step in plan["steps"]]
-    assert {"spades.py", "flye", "metaspades.py", "quast.py", "metaquast.py"} <= set(commands)
+    assert {
+        "spades.py",
+        "flye",
+        "metaspades.py",
+        "metaMDBG",
+        "quast.py",
+        "metaquast.py",
+    } <= set(commands)
     assert all(step["outputs"] for step in plan["steps"])
+
+
+def test_fixture_plans_the_expected_tool_for_every_mode(tmp_path):
+    out = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(SKILL / "fixtures" / "assemblies.tsv"),
+            "--out",
+            str(out),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    plan = json.loads((out / "run_manifest.json").read_text())
+    modes = {row["sample_id"]: row["mode"] for row in plan["assemblies"]}
+    assert set(modes.values()) == {
+        "short_isolate",
+        "long_isolate",
+        "short_metagenome",
+        "long_metagenome",
+        "hifi_metagenome",
+    }
+    commands = {
+        (step["sample_id"], step["stage"]): step["command"]
+        for step in plan["steps"]
+        if "command" in step
+    }
+    expected = {
+        "short_isolate": ("spades.py", "quast.py"),
+        "long_isolate": ("flye", "quast.py"),
+        "short_metagenome": ("metaspades.py", "metaquast.py"),
+        "long_metagenome": ("flye", "metaquast.py"),
+        "hifi_metagenome": ("metaMDBG", "metaquast.py"),
+    }
+    for sample, mode in modes.items():
+        assembler, qc_tool = expected[mode]
+        assert commands[(sample, "assembly")][0] == assembler, mode
+        assert commands[(sample, "qc")][0] == qc_tool, mode
+    long_meta = next(
+        sample for sample, mode in modes.items() if mode == "long_metagenome"
+    )
+    assert "--meta" in commands[(long_meta, "assembly")]
+    hifi = next(sample for sample, mode in modes.items() if mode == "hifi_metagenome")
+    assert "--in-hifi" in commands[(hifi, "assembly")]
+
+
+def test_short_manifest_row_is_a_reported_error_not_a_traceback(tmp_path):
+    manifest = tmp_path / "assemblies.tsv"
+    manifest.write_text(
+        "sample_id\tmode\tread1\tread2\tread_qc_status\tread_platform\nx\tshort_isolate\n"
+    )
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), str(manifest), "--out", str(tmp_path / "out")],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 2, result.stderr
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload["ok"] is False
+    assert "read_qc_status must be passed" in payload["error"]["message"]
+
+
+def write_stub(tool_dir, name, body):
+    tool_dir.mkdir(exist_ok=True)
+    stub = tool_dir / name
+    stub.write_text(f"#!{sys.executable}\nimport sys\nfrom pathlib import Path\n{body}")
+    stub.chmod(0o755)
+
+
+def test_failed_execute_still_writes_manifest_with_reached_statuses(tmp_path):
+    out = tmp_path / "out"
+    args = [
+        sys.executable,
+        str(SCRIPT),
+        str(SKILL / "fixtures" / "assemblies.tsv"),
+        "--out",
+        str(out),
+    ]
+    dry = subprocess.run(args, text=True, capture_output=True, check=False)
+    assert dry.returncode == 0, dry.stderr
+    tool_dir = tmp_path / "bin"
+    write_stub(
+        tool_dir,
+        "spades.py",
+        "target = Path(sys.argv[sys.argv.index('-o') + 1])\n"
+        "target.mkdir(parents=True, exist_ok=True)\n"
+        "(target / 'scaffolds.fasta').write_text('>c\\nAC\\n')\n",
+    )
+    write_stub(tool_dir, "quast.py", "sys.exit(3)\n")
+    env = {**os.environ, "PATH": f"{tool_dir}:{os.environ['PATH']}"}
+    result = subprocess.run(
+        [*args, "--execute"],
+        text=True,
+        capture_output=True,
+        env=env,
+        check=False,
+    )
+    assert result.returncode == 2
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload["ok"] is False
+    assert "qc command failed with exit 3" in payload["error"]["message"]
+    manifest = json.loads((out / "run_manifest.json").read_text())
+    first_sample = [step for step in manifest["steps"] if step["sample_id"] == "short"]
+    assert [step.get("status") for step in first_sample] == [
+        "completed",
+        "completed",
+        "failed",
+    ]
 
 
 def test_failed_read_qc_blocks_assembly(tmp_path):

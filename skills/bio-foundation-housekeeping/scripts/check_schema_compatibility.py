@@ -26,6 +26,11 @@ def load(path: Path) -> dict:
 def compare(base: dict, extension: dict) -> list[dict[str, str]]:
     changes: list[dict[str, str]] = []
     base_classes = base["classes"]
+    base_defaults = {
+        key: False if key in {"required", "identifier", "multivalued"} else None
+        for key in CONSTRAINTS
+    }
+    base_defaults["range"] = base.get("default_range")
     for class_name, class_spec in extension["classes"].items():
         if class_name not in base_classes:
             changes.append({"location": f"classes.{class_name}", "compatibility": "compatible", "change": "class_added"})
@@ -39,10 +44,35 @@ def compare(base: dict, extension: dict) -> list[dict[str, str]]:
                 continue
             old_slot = old_slots[slot_name]
             for key in CONSTRAINTS:
-                old_value = old_slot.get(key, False if key in {"required", "identifier", "multivalued"} else None)
+                old_value = old_slot.get(key, base_defaults[key])
                 new_value = new_slot.get(key, old_value)
                 if new_value != old_value:
                     changes.append({"location": f"{location}.{key}", "compatibility": "breaking", "change": f"constraint_changed:{old_value!r}->{new_value!r}"})
+    changes.extend(
+        removed_enum_values(base.get("enums") or {}, extension.get("enums") or {})
+    )
+    return changes
+
+
+def removed_enum_values(
+    base_enums: dict, extension_enums: dict
+) -> list[dict[str, str]]:
+    """Report base enum values that the extension's copy of the enum drops."""
+    changes: list[dict[str, str]] = []
+    for enum_name, extension_enum in extension_enums.items():
+        if enum_name not in base_enums:
+            continue
+        kept = set((extension_enum or {}).get("permissible_values") or ())
+        base_values = (base_enums[enum_name] or {}).get("permissible_values") or ()
+        changes.extend(
+            {
+                "location": f"enums.{enum_name}.permissible_values.{value}",
+                "compatibility": "breaking",
+                "change": "enum_value_removed",
+            }
+            for value in base_values
+            if value not in kept
+        )
     return changes
 
 

@@ -39,16 +39,16 @@ mmseqs createindex mmseqs/proteins_db tmp
 ### Build BLAST+ databases
 
 ```bash
-makeblastdb -in proteins.faa -dbtype prot -parse_seqids \
+makeblastdb -in proteins.faa -dbtype prot \
   -out blast/proteins
 ```
 
-`-parse_seqids` reads `|` as NCBI seq-id syntax. With custom pipe-delimited IDs such as `VP|Mavirus_MCP|...` it stops with "Could not construct seq-id"; drop `-parse_seqids` for those databases (checked with BLAST+ 2.17.0).
+Do not add `-parse_seqids`: it reads `|` as NCBI seq-id syntax, so custom pipe-delimited IDs such as `VP|Mavirus_MCP|...` stop with "Could not construct seq-id" (checked with BLAST+ 2.17.0).
 
 For nucleotide FASTA:
 
 ```bash
-makeblastdb -in contigs.fna -dbtype nucl -parse_seqids \
+makeblastdb -in contigs.fna -dbtype nucl \
   -out blast/contigs
 ```
 

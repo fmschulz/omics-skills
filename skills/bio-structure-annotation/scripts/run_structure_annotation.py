@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["PyYAML==6.0.3"]
@@ -15,8 +15,11 @@ from pathlib import Path
 
 import yaml
 
+SKILL = "bio-structure-annotation"
 
-def validate_boltz(path: Path) -> None:
+
+def validate_boltz(path: Path, *, use_msa_server: bool) -> None:
+    """Check the Boltz YAML shape; without an MSA server every protein needs an msa."""
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict) or payload.get("version") != 1:
         raise ValueError("Boltz YAML must be an object with version: 1")
@@ -33,6 +36,12 @@ def validate_boltz(path: Path) -> None:
         required = "sequence" if entity_type != "ligand" else None
         if required and not entity.get(required):
             raise ValueError(f"Boltz {entity_type} sequence {index} is missing {required}")
+        if entity_type == "protein" and not use_msa_server and not entity.get("msa"):
+            raise ValueError(
+                f"Boltz protein {entity['id']} has no msa: set `msa: <path to .a3m>` "
+                "or `msa: empty` (single-sequence mode, lower accuracy) in the YAML, "
+                "or pass --use-msa-server with --approve-public-msa-upload"
+            )
         if entity_type == "ligand" and bool(entity.get("smiles")) == bool(entity.get("ccd")):
             raise ValueError("each Boltz ligand requires exactly one of smiles or ccd")
 
@@ -47,11 +56,13 @@ def existing(path: Path | None, label: str) -> Path | None:
 
 
 def build_plan(args: argparse.Namespace) -> dict[str, object]:
+    if args.threads <= 0:
+        raise ValueError("--threads must be positive")
     out_dir = args.out_dir.expanduser().resolve()
     commands: list[dict[str, object]] = []
     boltz_yaml = existing(args.boltz_yaml, "Boltz YAML")
     if boltz_yaml:
-        validate_boltz(boltz_yaml)
+        validate_boltz(boltz_yaml, use_msa_server=args.use_msa_server)
         if args.use_msa_server and not args.approve_public_msa_upload:
             raise ValueError(
                 "--use-msa-server requires --approve-public-msa-upload because sequences leave the system"
@@ -78,6 +89,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, object]:
             str(database),
             str(result),
             str(out_dir / "foldseek_tmp"),
+            "--threads",
+            str(args.threads),
         ]
         if args.gpu:
             command.extend(["--gpu", "1"])
@@ -135,6 +148,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tmvec-query", type=Path)
     parser.add_argument("--tmvec-db", type=Path)
     parser.add_argument("--gpu", action="store_true")
+    parser.add_argument("--threads", type=int, default=1, help="threads for Foldseek")
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--plan-out", type=Path)
     parser.add_argument("--execute", action="store_true")
@@ -152,10 +166,22 @@ def main(argv: list[str] | None = None) -> int:
             args.plan_out.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
         if args.execute:
             execute(plan)
-    except (OSError, subprocess.CalledProcessError, ValueError, yaml.YAMLError) as error:
+    except (
+        OSError,
+        subprocess.CalledProcessError,
+        ValueError,
+        yaml.YAMLError,
+    ) as error:
+        failure = {"code": type(error).__name__, "message": str(error)}
+        print(json.dumps({"ok": False, "skill": SKILL, "error": failure}))
         print(f"ERROR: {error}", file=sys.stderr)
-        return 1
+        return 2
     print(json.dumps(plan, indent=2))
+    envelope: dict[str, object] = {"ok": True, "skill": SKILL, "out": plan["out_dir"]}
+    if args.plan_out:
+        envelope["manifest"] = str(args.plan_out.resolve())
+    envelope["warnings"] = []
+    print(json.dumps(envelope))
     return 0
 
 

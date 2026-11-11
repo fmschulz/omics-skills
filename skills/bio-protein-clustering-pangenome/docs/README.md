@@ -138,7 +138,7 @@ orthofinder --core Results_Core/ --assign AllMAGs/ -t 64
 ### Tool-Specific Recommendations
 
 #### MMseqs2
-- **Closely related (>95% identity)**: `easy-linclust` with `-s 1.0`
+- **Closely related (>95% identity)**: `easy-linclust`
 - **Moderate divergence (70-95%)**: `easy-cluster` with `-s 4.0`
 - **Distant homologs (<70%)**: `easy-cluster` with `-s 7.0`
 
@@ -208,7 +208,7 @@ cloud = og[freq < 0.15]        # <15%
 - **RIBAP**: Core genome annotation beyond species level
 
 ### References
-See [../SKILL.md](../SKILL.md) for comprehensive references and concepts.
+See [../references.md](../references.md) for comprehensive references and concepts.
 
 ## Getting Help
 

@@ -51,7 +51,7 @@ Tool guides, versions, and verified flags: [docs/README.md](docs/README.md).
 Driver outputs under the `--out` directory (`results/bio-phylogenomics/trees/` above):
 - one directory per marker (`{marker_id}/`) with `alignment.fasta`, `trimmed.fasta`, `support.tsv`, and stage `.done` markers
 - the tree in the same directory: `tree.nwk` from VeryFastTree, or IQ-TREE's `.treefile` and companion files next to `trimmed.fasta`
-- `run_manifest.json`: seed, tree tool, threads, inputs, and every stage command
+- `run_manifest.json`: seed, tree tool, threads, inputs, and every stage command. A failed `--execute` run also writes it, with the status of each step reached (`failed` on the failing step), and the error envelope names the marker and the failed command
 
 Workflow outputs under `results/bio-phylogenomics/`, written by the agent:
 - (agent-authored) `closest_relatives.tsv`

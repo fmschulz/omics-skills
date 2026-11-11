@@ -18,7 +18,7 @@ Tool versions: [docs/README.md](docs/README.md). DuckDB guide: [docs/duckdb.md](
 
    ```bash
    uv run --script ~/.agents/skills/bio-stats-ml-reporting/scripts/validate_predictions.py \
-     predictions.tsv --report validation.json --require-beats-null
+     predictions.tsv --report results/bio-stats-ml-reporting/prediction_validation.json --require-beats-null
    ```
 
    Keep group identifiers and confounder labels in the table so the gate can detect sample/group leakage, class imbalance, calibration failure, batch-outcome imbalance, and performance that does not beat the majority-class null.

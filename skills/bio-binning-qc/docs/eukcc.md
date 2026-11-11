@@ -100,32 +100,30 @@ EukCC is **specific to eukaryotes**. Pre-classify bins to avoid running CheckM2 
 ## Output Format
 
 ### Single mode output
-**File:** `eukcc.csv`
+**File:** `eukcc.tsv` (tab-separated)
 
 Columns:
-- Genome name
-- Completeness (%)
-- Contamination (%)
-- Taxonomy prediction
-- Number of marker genes found
-- Additional QC metrics
+- `fasta`: input file name
+- `completeness` (%)
+- `contamination` (%)
+- `ncbi_lng`: lineage of the chosen marker set as NCBI taxon IDs joined by `-`, or `NA`
 
 Example:
 ```
-genome,completeness,contamination,taxonomy,markers_found
-bin1.fasta,95.2,1.3,Ascomycota,450
-bin2.fasta,78.6,4.1,Metazoa,389
+fasta	completeness	contamination	ncbi_lng
+bin1.fasta	95.2	1.3	1-131567-2759-4751
+bin2.fasta	78.6	4.1	NA
 ```
 
 ### Folder mode output
 **Files:**
-- `eukcc.csv` - High-quality bins (pass thresholds)
-- `bad_quality.csv` - Low-quality bins (fail thresholds)
+- `eukcc.tsv` - Good-quality bins; the first column is named `bin` in folder mode (`fasta` in single mode)
+- `bad_quality.csv` - Bad-quality bins (tab-separated despite the name)
 - Merged bin sequences (optional)
 - Intermediate results in subdirectories
 
 **Quality tiers:**
-Quality assessment results are automatically split into pass/fail based on completeness and contamination thresholds.
+A bin goes to `bad_quality.csv` when its chosen marker gene set is supported by less than half of the alignments.
 
 ## Quality Thresholds
 
@@ -137,10 +135,10 @@ Quality assessment results are automatically split into pass/fail based on compl
 **Filtering results:**
 ```bash
 # High-quality eukaryotic bins
-awk -F',' '$2 >= 90 && $3 <= 5' eukcc.csv | tail -n +2
+awk -F'\t' '$2 >= 90 && $3 <= 5' eukcc.tsv | tail -n +2
 
 # Medium-quality bins
-awk -F',' '$2 >= 50 && $3 <= 10' eukcc.csv | tail -n +2
+awk -F'\t' '$2 >= 50 && $3 <= 10' eukcc.tsv | tail -n +2
 ```
 
 ## Performance Tips

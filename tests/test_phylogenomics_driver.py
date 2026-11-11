@@ -149,3 +149,40 @@ def test_non_positive_threads_are_rejected(tmp_path):
     )
     assert result.returncode == 2
     assert "positive --seed and --threads" in result.stderr
+
+
+def test_failed_tool_reports_marker_command_and_writes_manifest(tmp_path):
+    out = tmp_path / "out"
+    tool_dir = tmp_path / "bin"
+    tool_dir.mkdir()
+    for name, body in (("mafft", "echo '>a'; echo MKT"), ("trimal", "exit 5")):
+        tool = tool_dir / name
+        tool.write_text(f"#!/bin/sh\n{body}\n")
+        tool.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tool_dir}:{os.environ['PATH']}"}
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(SKILL / "fixtures" / "markers.tsv"),
+            "--references",
+            str(SKILL / "fixtures" / "references.tsv"),
+            "--out",
+            str(out),
+            "--execute",
+        ],
+        text=True,
+        capture_output=True,
+        env=env,
+        check=False,
+    )
+    assert result.returncode == 2
+    envelope = json.loads(result.stdout.strip().splitlines()[-1])
+    message = envelope["error"]["message"]
+    assert envelope["ok"] is False
+    assert "trimming command failed with exit 5" in message
+    assert "marker1" in message
+    assert "trimal -in" in message
+    manifest = json.loads((out / "run_manifest.json").read_text())
+    statuses = [step.get("status") for step in manifest["steps"]]
+    assert statuses == ["completed", "failed", None, None]

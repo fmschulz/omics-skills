@@ -51,7 +51,13 @@ def read(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
         reader = csv.DictReader(handle, delimiter="\t")
         if tuple(reader.fieldnames or ()) != fields:
             raise ValueError(f"{path}: columns must be exactly {', '.join(fields)}")
-        rows = list(reader)
+        rows = []
+        for number, row in enumerate(reader, start=1):
+            if None in row or None in row.values():
+                raise ValueError(
+                    f"{path}: data row {number} must have exactly {len(fields)} fields"
+                )
+            rows.append(row)
     if not rows:
         raise ValueError(f"{path}: no rows")
     return rows
@@ -112,14 +118,6 @@ def main() -> int:
             path = args.comparative_dir / name
             if not path.is_file() or path.stat().st_size == 0:
                 raise ValueError(f"required comparative artifact is missing or empty: {path}")
-        if args.out.exists() and any(args.out.iterdir()):
-            raise ValueError(f"output directory is not empty: {args.out}")
-        args.out.mkdir(parents=True, exist_ok=True)
-        for name in COMPARATIVE:
-            shutil.copyfile(args.comparative_dir / name, args.out / name)
-        shutil.copyfile(args.hypotheses, args.out / "hypothesis_register.tsv")
-        shutil.copyfile(args.reflections, args.out / "intermediate_reflections.tsv")
-
         by_group: dict[str, list[int]] = {}
         for row in metrics:
             if row["role"] == "reference":
@@ -136,12 +134,26 @@ def main() -> int:
             median = (baseline[(len(baseline) - 1) // 2] + baseline[len(baseline) // 2]) / 2
             frontier.append({**row, "relative_percentile": f"{percentile:.1f}", "relative_median": f"{median:g}", "distance_from_median": f"{size - median:g}", "record_class": "above_literature_max" if size > int(row["literature_max"]) else "within_known_range"})
         fields = (*METRIC_FIELDS, "relative_percentile", "relative_median", "distance_from_median", "record_class")
+        manifest = {
+            "schema_version": "1.0",
+            "resources": resources["resources"],
+            "hypothesis_count": len(hypotheses),
+            "reflection_stages": stages,
+            "comparative_artifacts": list(COMPARATIVE),
+        }
+        validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
+        if args.out.exists() and any(args.out.iterdir()):
+            raise ValueError(f"output directory is not empty: {args.out}")  # noqa: TRY301  # main() has one try block; its handler turns this into the error envelope
+        args.out.mkdir(parents=True, exist_ok=True)
+        for name in COMPARATIVE:
+            shutil.copyfile(args.comparative_dir / name, args.out / name)
+        shutil.copyfile(args.hypotheses, args.out / "hypothesis_register.tsv")
+        shutil.copyfile(args.reflections, args.out / "intermediate_reflections.tsv")
+
         with (args.out / "genome_size_frontier.tsv").open("x", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
             writer.writeheader()
             writer.writerows(frontier)
-        manifest = {"schema_version": "1.0", "resources": resources["resources"], "hypothesis_count": len(hypotheses), "reflection_stages": stages, "comparative_artifacts": list(COMPARATIVE)}
-        validate(manifest, json.loads(SCHEMA.read_text(encoding="utf-8")))
         (args.out / "run_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-viromics", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))

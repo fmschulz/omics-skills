@@ -3,7 +3,7 @@
 
 Expected inputs are the tools' native tables: CheckM2 `quality_report.tsv`
 (`Name`), GUNC `GUNC.*.maxCSS_level.tsv` (`genome`), EukCC folder-mode
-`eukcc.csv` (tab-separated, `bin` with its FASTA suffix), and GTDB-Tk
+`eukcc.tsv` (tab-separated, `bin` with its FASTA suffix), and GTDB-Tk
 `gtdbtk.*.summary.tsv` (`user_genome`).
 """
 
@@ -51,6 +51,43 @@ def keyed(rows: list[dict[str, str]], key: str, label: str) -> dict[str, dict[st
     return result
 
 
+def collapse_routing(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Reduce a per-contig routing table to one row per bin.
+
+    Args:
+        rows: Routing rows; `percontig` mode writes one row per contig.
+
+    Returns:
+        One row per `(sample_id, query_id)`; the caller rejects a `query_id`
+        that two samples share. A bin whose contigs share one route keeps it, with
+        `review_flag` true when any contig row has it. A bin whose contigs differ
+        gets route `manual_review` and `review_flag` true.
+    """
+    by_bin: dict[tuple[str, str], list[dict[str, str]]] = {}
+    for row in rows:
+        key = (row.get("sample_id", ""), row.get("query_id", ""))
+        by_bin.setdefault(key, []).append(row)
+    collapsed = []
+    for (_sample_id, query_id), bin_rows in by_bin.items():
+        routes = {row.get("route", "") for row in bin_rows}
+        flagged = any(
+            row.get("review_flag", "").strip().lower() == "true" for row in bin_rows
+        )
+        if len(routes) > 1:
+            route, flagged = "manual_review", True
+        else:
+            route = routes.pop()
+        collapsed.append(
+            {
+                **bin_rows[0],
+                "query_id": query_id,
+                "route": route,
+                "review_flag": str(flagged).lower(),
+            }
+        )
+    return collapsed
+
+
 def bin_name(value: str) -> str:
     """Return a bin identifier without a trailing FASTA suffix.
 
@@ -68,7 +105,9 @@ def bin_name(value: str) -> str:
 
 
 def build(args: argparse.Namespace) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
-    routes = keyed(read_table(args.routing), "query_id", "domain routing")
+    routes = keyed(
+        collapse_routing(read_table(args.routing)), "query_id", "domain routing"
+    )
     checkm2 = keyed(read_table(args.checkm2), "Name", "CheckM2") if args.checkm2 else {}
     gunc = keyed(read_table(args.gunc), "genome", "GUNC") if args.gunc else {}
     eukcc = keyed(read_table(args.eukcc), "bin", "EukCC") if args.eukcc else {}

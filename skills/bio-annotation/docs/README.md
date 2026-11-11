@@ -156,7 +156,7 @@ emapper.py -i proteins.faa -o eggnog_annotation \
 - **Immediate startup failure**: Check for mutually exclusive `-b`/`-d` usage, missing `setup.py` initialization, unresolved ProSite binaries, or `*` in the FAA input
 
 ### eggNOG-mapper
-- **Database download fails**: Use `--resume` flag, check disk space
+- **Database download fails**: Re-run `download_eggnog_data.py` (present files are skipped, `-f` forces), check disk space
 - **Slow annotation**: Use `--sensmode fast`, enable `--dbmem`
 
 ## References

@@ -27,7 +27,7 @@ Tool guides and versions: [docs/README.md](docs/README.md).
      --out results/bio-gene-calling --threads 8 --execute
    ```
 
-   The tool manifest must pin the BRAKER4 repository commit, Snakefile checksum, container-lock checksum, and every Rfam model checksum. The driver records input FASTA checksums, routes each assembly by domain, writes idempotent BRAKER4 `samples.csv` and `config.ini` files, uses absolute covariance-model paths, and writes the default and relaxed ncRNA census rows. `--threads` (default 8) sets the thread count of every tool. Execution reuses non-empty declared outputs. A tRNAscan-SE run that exits 0 without a table counts as zero tRNAs and writes `trnascan.tsv.done`; an empty table without that marker is rerun. Execution replaces pending ncRNA counts with parsed tRNAscan-SE and Infernal counts.
+   The tool manifest must pin the BRAKER4 repository commit, Snakefile checksum, container-lock checksum, and every Rfam model checksum. The driver records input FASTA checksums, routes each assembly by domain, writes idempotent BRAKER4 `samples.csv` and `config.ini` files, uses absolute covariance-model paths, and writes the default and relaxed ncRNA census rows. `--threads` (default 8) sets the thread count of every tool. Execution writes `<output>.done` for each declared output after its tool exits 0, and reuses a step only when every output is non-empty and has its marker, so a partial file from a killed job is rerun. A tRNAscan-SE run that exits 0 without a table counts as zero tRNAs and writes an empty `trnascan.tsv` with its marker; an empty table without that marker is rerun. Execution replaces pending ncRNA counts with parsed tRNAscan-SE and Infernal counts.
 2. Select gene caller by organism class:
    - Bacteria and Archaea: **Pyrodigal**. Set `mode` to `single` for an isolate genome (training needs at least 20 kbp of sequence) or `metagenome` for MAGs, short contigs, and mixed input.
    - Viruses, including giant and alternative-code viruses: the **Prodigal-GV** model set in metagenomic mode. The driver runs **pyrodigal-gv**, which bundles the prodigal-gv 2.11.0 models. When results must match ViroSync or another pipeline that pins the standalone `prodigal-gv` 2.11.0 binary, use that binary with `-p meta` (ViroSync builds it with a node-capacity patch through `pixi run setup-prodigal-gv`) and record which implementation produced the calls.
@@ -40,7 +40,6 @@ Tool guides and versions: [docs/README.md](docs/README.md).
      - Bacteria: RF00177 (SSU 16S), RF02541 (LSU 23S), RF00001 (5S).
      - Archaea: RF01959 (SSU 16S), RF02540 (LSU 23S), RF00001 (5S).
      - Eukaryotes: RF01960 (SSU 18S), RF02543 (LSU 28S), RF00002 (5.8S), RF00001 (5S).
-     - Metazoan mitochondria, when applicable: RF02555 (12S), RF02546 (16S).
      - Viruses: no domain-specific set. The census records an explicit "not screened" rRNA row; screen host-domain models when host contamination is suspected.
      The default run is `cmsearch --rfam --cut_ga --nohmmonly`. The relaxed run drops `--cut_ga` and counts only hits that pass the inclusion E-value (`!` in the tblout `inc` column). Record both results.
 6. Summarize gene count, gene density, coding fraction, ORF length distribution, unusually long ORFs, overlapping genes, tRNAs, rRNAs, and other features that may affect downstream discovery.

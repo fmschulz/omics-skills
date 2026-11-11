@@ -37,12 +37,12 @@ pixi add "trnascan-se>=2.0.12"   # the options used here were checked from 2.0.1
 - `-g FILE`, `--gencode FILE` - Use an alternate genetic-code file; this is not a GFF/GTF output flag
 
 ### Search Parameters
-- `-H` - Report possible pseudogenes
+- `-H`, `--breakdown` - Show the score breakdown (primary and secondary structure components); pseudogene checking is on by default and `-D`, `--nopseudo` turns it off
 - `--detail` - Detailed output with scores
 - `--thread N` - Number of CPU threads (default: all available threads, so always set it)
 - `-Q`, `--forceow` - Overwrite existing output files without the interactive prompt
 - `--max` - Maximum-sensitivity Infernal search without the HMM filter; slow
-- `--fast` - Faster search mode with a stricter filter
+- `--mid` - Faster scan mode: Infernal with a mid-level strictness of the HMM filter
 
 ## Common Usage Examples
 
@@ -82,10 +82,14 @@ tRNAscan-SE -B \
 tRNAscan-SE -B --thread 8 -o results.txt genome.fna
 ```
 
-### Include Pseudogenes
+### Score Breakdown and Pseudogene Checking
 
 ```bash
-tRNAscan-SE -B -H -o results_with_pseudo.txt genome.fna
+# Pseudogene checking is on by default; -H adds the score breakdown
+tRNAscan-SE -B -H -o results_with_breakdown.txt genome.fna
+
+# Turn pseudogene checking off
+tRNAscan-SE -B -D -o results_nopseudo.txt genome.fna
 ```
 
 ## Input/Output Formats
@@ -141,7 +145,7 @@ tRNAscan-SE -B -H -o results_with_pseudo.txt genome.fna
 
 ### Accuracy Improvements
 - Use correct mode for organism type
-- Include pseudogenes (-H) for complete annotation
+- Leave pseudogene checking on (default; `-D` disables it)
 - Check detailed scores (--detail) for borderline hits
 
 ### Large Genomes

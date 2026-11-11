@@ -27,6 +27,8 @@ pixi add --pypi boltz
 boltz predict input_path --use_msa_server
 ```
 
+`--use_msa_server` sends the sequences to a public server, so it needs the user's approval first (the driver requires `--approve-public-msa-upload`).
+
 ### Help and Options
 ```bash
 boltz predict --help
@@ -62,6 +64,7 @@ sequences:
   - protein:
       id: A
       sequence: MKTAYIAKQRQISFVKSHFSRQ
+      msa: ./A.a3m   # precomputed MSA; `empty` forces single-sequence mode (lower accuracy)
   - ligand:
       id: B
       smiles: "CCO"
@@ -105,8 +108,15 @@ boltz predict input_configs/ --use_msa_server --out_dir predictions/
 ```
 
 ### Without MSA Server
+Without `--use_msa_server`, Boltz requires an `msa:` value on every protein entity: the path to an `.a3m` file, or `empty` for single-sequence mode (lower accuracy, not recommended).
+```yaml
+sequences:
+  - protein:
+      id: A
+      sequence: MKTAYIAKQRQISFVKSHFSRQ
+      msa: ./A.a3m   # or: empty
+```
 ```bash
-# For pre-generated MSAs or single-sequence prediction
 boltz predict input.yaml
 ```
 

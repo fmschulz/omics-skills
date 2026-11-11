@@ -76,3 +76,78 @@ def test_repeated_protein_family_pair_is_still_rejected(tmp_path):
     )
     assert result.returncode != 0
     assert "duplicate protein_id/family_id rows" in result.stderr
+
+
+def run_with_genomes(tmp_path, genomes_text, out):
+    """Run the driver on fixture inputs with a replaced genomes table."""
+    fixture = SKILL / "fixtures"
+    genomes = tmp_path / "genomes.tsv"
+    genomes.write_text(genomes_text, encoding="utf-8")
+    return subprocess.run(
+        [
+            "uv",
+            "run",
+            "--script",
+            str(SCRIPT),
+            str(fixture / "annotations.tsv"),
+            "--genomes",
+            str(genomes),
+            "--markers",
+            str(fixture / "markers.tsv"),
+            "--out",
+            str(out),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_failed_role_check_leaves_no_partial_output_and_rerun_succeeds(tmp_path):
+    """The role check used to run after the Parquet tables were written, so a failed
+    run left files behind and the corrected rerun hit "output directory is not
+    empty"."""
+    out = tmp_path / "out"
+    fixture_genomes = (SKILL / "fixtures" / "genomes.tsv").read_text()
+    only_queries = fixture_genomes.replace("\treference\t", "\tquery\t")
+    failed = run_with_genomes(tmp_path, only_queries, out)
+    assert failed.returncode == 2
+    payload = json.loads(failed.stdout.strip().splitlines()[-1])
+    assert payload["ok"] is False
+    assert "at least one query and one reference" in payload["error"]["message"]
+    assert not out.exists() or not any(out.iterdir())
+
+    rerun = run_with_genomes(tmp_path, fixture_genomes, out)
+    assert rerun.returncode == 0, rerun.stderr
+
+
+def test_unknown_genome_role_is_an_input_error(tmp_path):
+    """A typo such as `refrence` silently dropped that genome from the baseline."""
+    fixture_genomes = (SKILL / "fixtures" / "genomes.tsv").read_text()
+    typo = fixture_genomes.replace("\treference\t", "\trefrence\t")
+    out = tmp_path / "out"
+    result = run_with_genomes(tmp_path, typo, out)
+    assert result.returncode == 2
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload["ok"] is False
+    assert "refrence" in payload["error"]["message"]
+    assert not out.exists() or not any(out.iterdir())
+
+
+def test_row_with_the_wrong_field_count_is_rejected_before_any_output(tmp_path):
+    """A surplus field gives csv.DictReader a None key; the DictWriter failed on it
+    only after other artifacts were written."""
+    lines = (SKILL / "fixtures" / "genomes.tsv").read_text().splitlines()
+    bad_rows = {"extra": lines[1] + "\textra", "short": lines[1].rsplit("\t", 1)[0]}
+    for name, row in bad_rows.items():
+        work = tmp_path / name
+        work.mkdir()
+        out = work / "out"
+        text = "\n".join([lines[0], row, *lines[2:]]) + "\n"
+        result = run_with_genomes(work, text, out)
+        assert result.returncode == 2, result.stdout + result.stderr
+        payload = json.loads(result.stdout.strip().splitlines()[-1])
+        assert payload["ok"] is False
+        assert "genomes.tsv" in payload["error"]["message"]
+        assert "data row 1" in payload["error"]["message"]
+        assert not out.exists() or not any(out.iterdir())

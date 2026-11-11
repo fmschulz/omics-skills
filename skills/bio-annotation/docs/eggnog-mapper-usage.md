@@ -107,7 +107,7 @@ emapper.py -i proteins.faa -o annotation \
 ```bash
 emapper.py -i bacterial_proteins.faa -o bacteria_annot \
   --data_dir $EGGNOG_DATA_DIR \
-  --dmnd_db $EGGNOG_DATA_DIR/bacteria.dmnd \
+  --dmnd_db $EGGNOG_DATA_DIR/eggnog_proteins.dmnd \
   --tax_scope Bacteria \
   --cpu 32
 ```
@@ -322,8 +322,8 @@ COG functional categories:
 
 ### Database download issues
 ```bash
-# Download with resume capability
-download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y --resume
+# Re-run the download; files already present are skipped (add -f to force a new download)
+download_eggnog_data.py --data_dir $EGGNOG_DATA_DIR -y
 
 # Check downloaded files
 ls -lh $EGGNOG_DATA_DIR/

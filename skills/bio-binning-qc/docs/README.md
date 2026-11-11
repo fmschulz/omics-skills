@@ -56,7 +56,7 @@ export EUKCC2_DB=$(realpath eukcc2_db_ver_1.2)
 
 ```bash
 # 1. Compute coverage from BAM files
-coverm contig --bam-files *.bam -m mean variance -o depth.txt
+coverm contig --bam-files *.bam -m metabat -o depth.txt
 
 # 2. Bin (QuickBin by default; SemiBin2 only when a CUDA GPU is available)
 mkdir -p quickbin
@@ -131,7 +131,7 @@ gunc run --input_dir prokaryotic_bins/ --db_file "$GUNC_DB" --out_dir gunc_qc/ -
 
 ### Single-Sample Binning
 ```bash
-coverm contig --bam-files sample.bam -m mean variance -o depth.txt
+coverm contig --bam-files sample.bam -m metabat -o depth.txt
 mkdir -p bins
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
@@ -142,7 +142,7 @@ checkm2 predict --input bins/ --output-directory qc/ -t 16
 
 ### Multi-Sample Binning (Recommended)
 ```bash
-coverm contig --bam-files sample*.bam -m mean variance -o depth.txt
+coverm contig --bam-files sample*.bam -m metabat -o depth.txt
 mkdir -p bins
 docker run --rm -u "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
@@ -226,7 +226,7 @@ gunc run --input_dir final_bins/ --db_file "$GUNC_DB" --out_dir gunc_qc/ -t 16
 
 ### Key Publications
 - MetaBAT2: Kang et al. (2019) *PeerJ* https://doi.org/10.7717/peerj.7359
-- SemiBin2: Pan et al. (2022) *Nat Commun* https://doi.org/10.1038/s41467-022-29843-y
+- SemiBin2: Pan et al. (2023) *Bioinformatics* https://doi.org/10.1093/bioinformatics/btad209
 - QuickBin: Bushnell (2026) *bioRxiv* https://doi.org/10.64898/2026.01.08.698506
 - CheckM2: Chklovski et al. (2023) *Nat Methods* https://doi.org/10.1038/s41592-023-01940-w
 - EukCC: Saary et al. (2020) *Genome Biol* https://doi.org/10.1186/s13059-020-02155-4

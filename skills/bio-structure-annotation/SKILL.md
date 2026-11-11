@@ -19,14 +19,16 @@ Tool guides and versions: [docs/README.md](docs/README.md).
    - **ESMFold** for fast monomer pre-screening only; route candidates to Boltz-2 for final models.
 3. Search predicted or experimental structures with **Foldseek**. On CUDA Turing or newer, `--gpu 1` enables the GPU ungapped prefilter and needs a target database built with `makepaddedseqdb`. Use `easy-multimersearch` for complex-vs-complex search.
 4. Annotate hits and route high-value unknowns back to `/bio-annotation` for sequence-side context, or to comparative analyses via `/bio-protein-clustering-pangenome`.
-5. Build and validate commands with the driver. It prints the command plan as JSON and, with `--execute`, runs it:
+5. Build and validate commands with the driver. It prints the command plan as JSON, then the one-line JSON envelope as the last line of stdout, and with `--execute` runs the plan first. A driver-detected failure prints the error envelope as the last line, the message on stderr, and exits 2:
 
    ```bash
    uv run --script ~/.agents/skills/bio-structure-annotation/scripts/run_structure_annotation.py \
      --boltz-yaml complex.yaml --out-dir results/bio-structure-annotation
    ```
 
-   Add `--foldseek-query query.pdb --foldseek-db targetDB` for structure search (with `--gpu`, also `--foldseek-padded-db`) and `--tmvec-query proteins.faa --tmvec-db db.npz` for the embedding screen.
+   Add `--foldseek-query query.pdb --foldseek-db targetDB` for structure search (with `--gpu`, also `--foldseek-padded-db`; `--threads N` sets the Foldseek thread count, default 1) and `--tmvec-query proteins.faa --tmvec-db db.npz` for the embedding screen.
+
+   Without `--use-msa-server`, every protein in the Boltz YAML needs an `msa:` value: a path to an `.a3m` file, or `empty` for single-sequence mode (lower accuracy). The driver rejects a protein without one.
 
    Public MSA services receive biological sequences. `--use-msa-server` (passed to Boltz as `--use_msa_server`) is rejected unless the user explicitly approved the upload with `--approve-public-msa-upload`.
 
@@ -44,7 +46,8 @@ Written by the driver's `--execute` run:
 - results/bio-structure-annotation/boltz/ (Boltz predictions and confidence files)
 - results/bio-structure-annotation/foldseek_hits.tsv
 - results/bio-structure-annotation/tmvec/results.tsv (TM-Vec hits; `tmvec search` writes into the `tmvec/` folder)
-- The command plan on stdout, or in `--plan-out` when given
+- The command plan on stdout (before the envelope), or in `--plan-out` when given
+- The envelope on the last stdout line: `{"ok": true, "skill", "out", "warnings"}`, plus `"manifest"` (the `--plan-out` path) when given
 
 Written by the agent:
 - results/bio-structure-annotation/structure_hits.tsv (merged, filtered hits with thresholds)

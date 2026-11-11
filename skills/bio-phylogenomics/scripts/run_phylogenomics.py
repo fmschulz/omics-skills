@@ -12,6 +12,7 @@ import csv
 import hashlib
 import json
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -169,28 +170,48 @@ def mark_complete(step: dict[str, object]) -> None:
     partial.replace(marker)
 
 
+def run_step(step: dict[str, object]) -> None:
+    """Run one plan step and mark it complete.
+
+    Raises:
+        RuntimeError: If the tool exits non-zero (the message names the marker
+            and the command) or the declared output is missing or empty.
+    """
+    completion_marker(step).unlink(missing_ok=True)
+    for output in step["outputs"]:
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+    if step["stage"] == "normalize_support":
+        normalize_tree(Path(step["source"]), Path(step["outputs"][0]))
+    else:
+        stdout_path = step.get("stdout")
+        if stdout_path:
+            with Path(stdout_path).open("wb") as handle:
+                result = subprocess.run(step["command"], stdout=handle, check=False)
+        else:
+            result = subprocess.run(step["command"], check=False)
+        if result.returncode:
+            marker = step.get("marker_id")
+            where = f" for marker {marker}" if marker else ""
+            raise RuntimeError(
+                f"{step['stage']} command failed with exit {result.returncode}{where}: "
+                f"{shlex.join(step['command'])}"
+            )
+    if not outputs_complete(step):
+        raise RuntimeError(f"{step['stage']} did not produce its declared output")
+    mark_complete(step)
+
+
 def execute(plan: list[dict[str, object]]) -> None:
+    """Run the plan in order and record each step status; mark a failed step."""
     for step in plan:
         if complete(step):
             step["status"] = "reused"
             continue
-        completion_marker(step).unlink(missing_ok=True)
-        for output in step["outputs"]:
-            Path(output).parent.mkdir(parents=True, exist_ok=True)
-        if step["stage"] == "normalize_support":
-            normalize_tree(Path(step["source"]), Path(step["outputs"][0]))
-        else:
-            stdout_path = step.get("stdout")
-            if stdout_path:
-                with Path(stdout_path).open("wb") as handle:
-                    result = subprocess.run(step["command"], stdout=handle, check=False)
-            else:
-                result = subprocess.run(step["command"], check=False)
-            if result.returncode:
-                raise RuntimeError(f"{step['stage']} command failed with exit {result.returncode}")
-        if not outputs_complete(step):
-            raise RuntimeError(f"{step['stage']} did not produce its declared output")
-        mark_complete(step)
+        try:
+            run_step(step)
+        except (OSError, RuntimeError, ValueError):
+            step["status"] = "failed"
+            raise
         step["status"] = "completed"
 
 
@@ -243,23 +264,26 @@ def main() -> int:
         plan = build_plan(
             markers, args.out.resolve(), args.tree_tool, args.seed, args.threads
         )
-        if args.execute:
-            execute(plan)
-        (args.out / "run_manifest.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": "1.0",
-                    "seed": args.seed,
-                    "threads": args.threads,
-                    "tree_tool": args.tree_tool,
-                    "markers": markers,
-                    "references": references,
-                    "steps": plan,
-                },
-                indent=2,
+        try:
+            if args.execute:
+                execute(plan)
+        finally:
+            # A failed run keeps the statuses reached so far.
+            (args.out / "run_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "seed": args.seed,
+                        "threads": args.threads,
+                        "tree_tool": args.tree_tool,
+                        "markers": markers,
+                        "references": references,
+                        "steps": plan,
+                    },
+                    indent=2,
+                )
+                + "\n"
             )
-            + "\n"
-        )
         out = args.out.resolve()
         print(json.dumps({"ok": True, "skill": "bio-phylogenomics", "out": str(out), "manifest": str(out / "run_manifest.json"), "warnings": []}))
     except (OSError, ValueError, RuntimeError) as error:

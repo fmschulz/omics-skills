@@ -20,7 +20,9 @@ case "$TAXONOMY_TOOL" in
         ;;
     eukcc)
         : "${EUKCC2_DB:?Set EUKCC2_DB}"
-        eukcc folder --db "$EUKCC2_DB" --out "$TAXONOMY_OUTPUT" --threads "$threads" "$TAXONOMY_INPUT"
+        # eukcc folder reads only files that end in --suffix.
+        eukcc folder --db "$EUKCC2_DB" --out "$TAXONOMY_OUTPUT" --threads "$threads" \
+            --suffix "${EUKCC_SUFFIX:-.fa}" "$TAXONOMY_INPUT"
         ;;
     vcontact3)
         # vConTACT3 requires --db-path and defaults --threads to every CPU on the node.

@@ -238,7 +238,7 @@ For eukaryotic bins, use **EukCC** instead:
 # Classify bins first
 # Then run domain-specific QC
 checkm2 predict --input bacteria_bins/ --output-directory qc_bacteria/
-eukcc single --input eukaryote_bins/ --output-directory qc_eukaryotes/
+eukcc folder eukaryote_bins/ --out qc_eukaryotes/ --db $EUKCC2_DB --threads 16
 ```
 
 ## Citation

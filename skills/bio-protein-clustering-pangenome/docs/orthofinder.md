@@ -61,11 +61,11 @@ orthofinder -f DIRECTORY [OPTIONS]
 ### Threading and Performance
 - `-t THREADS` - Number of parallel threads for BLAST/Diamond
 - `-a THREADS` - Number of parallel threads for MSA and tree inference
-- `-T AUTO|BLAST|MSA` - Control which steps use parallelization
 
 ### Analysis Modes
 - `-M msa` - Infer orthogroup and species trees from multiple sequence alignments
 - `-M dendroblast` - Infer species tree from BLAST bit scores (fastest)
+- `-T METHOD` - Tree inference method; needs `-M msa`. Options: `fasttree` (default), `fasttree_fastest`, `raxml`, `iqtree`
 - `-og` - Stop after inferring orthogroups (skip gene trees)
 - `-os` - Stop after writing orthogroup sequences
 - `-oa` - Stop after performing MSAs

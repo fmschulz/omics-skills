@@ -55,7 +55,9 @@ contracts (tab-separated, exact column order) are in `fixtures/`; the gates are:
 A row is `confirmed` only when all gates pass and the direction is not ambiguous,
 `candidate` when homology passes but another gate fails, and `rejected` otherwise. Domain labels use
 the arbiter vocabulary `eukaryota`, `bacteria`, `archaea`, `ncldv`, `phage`,
-`organelle`, and `--query-domain` must be one of them. Hypotheses need five distinct
+`organelle`. `--query-domain`, `hit_domain` and `recipient_domain` must be one of them, and a
+`support` outside 0-1 (for example 95 instead of 0.95) stops the run with the error envelope.
+Hypotheses need five distinct
 IDs with one `technical` or `null` row; reflections must cover the gates `database`,
 `forward`, `reciprocal`, `context`, `phylogeny`, `final` in that order.
 

@@ -1,3 +1,5 @@
+import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -59,3 +61,81 @@ def test_family_present_in_one_reference_is_not_called_query_specific(tmp_path):
     assert "query_specific" not in og3[0], og3[0]
     assert "inf" not in og3[0], og3[0]
     assert "present_in_reference_minority" in og3[0], og3[0]
+
+
+def run_driver(fixtures, out):
+    return subprocess.run(
+        [
+            "uv",
+            "run",
+            "--script",
+            str(SCRIPT),
+            str(fixtures / "orthogroups.tsv"),
+            "--genomes",
+            str(fixtures / "genomes.tsv"),
+            "--marker-catalog",
+            str(fixtures / "marker_catalog.tsv"),
+            "--marker-hits",
+            str(fixtures / "marker_hits.tsv"),
+            "--ncrna",
+            str(fixtures / "ncRNA_census.tsv"),
+            "--out",
+            str(out),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_failed_run_leaves_no_output_and_the_rerun_succeeds(tmp_path):
+    work = tmp_path / "fixtures"
+    shutil.copytree(SKILL / "fixtures", work)
+    good_genomes = (work / "genomes.tsv").read_text()
+    # Drop the reference genomes' role so the run has no two references.
+    (work / "genomes.tsv").write_text(
+        good_genomes.replace("\treference\t", "\tquery\t")
+    )
+    out = tmp_path / "out"
+    result = run_driver(work, out)
+    assert result.returncode == 2, result.stdout + result.stderr
+    envelope = json.loads(result.stdout.strip().splitlines()[-1])
+    assert envelope["ok"] is False
+    assert (
+        envelope["error"]["message"]
+        == "at least one query and two references are required"
+    )
+    assert not out.exists() or not any(out.iterdir())
+    (work / "genomes.tsv").write_text(good_genomes)
+    rerun = run_driver(work, out)
+    assert rerun.returncode == 0, rerun.stderr
+
+
+def test_duplicate_genome_ids_leave_no_output_directory(tmp_path):
+    work = tmp_path / "fixtures"
+    shutil.copytree(SKILL / "fixtures", work)
+    lines = (work / "genomes.tsv").read_text().splitlines()
+    (work / "genomes.tsv").write_text("\n".join([*lines, lines[1]]) + "\n")
+    out = tmp_path / "out"
+    result = run_driver(work, out)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert not out.exists()
+
+
+def test_row_with_the_wrong_field_count_leaves_no_output_directory(tmp_path):
+    lines = (SKILL / "fixtures" / "orthogroups.tsv").read_text().splitlines()
+    bad_rows = {"extra": lines[1] + "\textra", "short": lines[1].rsplit("\t", 1)[0]}
+    for name, row in bad_rows.items():
+        work = tmp_path / name / "fixtures"
+        shutil.copytree(SKILL / "fixtures", work)
+        (work / "orthogroups.tsv").write_text(
+            "\n".join([lines[0], row, *lines[2:]]) + "\n"
+        )
+        out = tmp_path / name / "out"
+        result = run_driver(work, out)
+        assert result.returncode == 2, result.stdout + result.stderr
+        envelope = json.loads(result.stdout.strip().splitlines()[-1])
+        assert envelope["ok"] is False
+        assert "orthogroups.tsv" in envelope["error"]["message"]
+        assert "data row 1" in envelope["error"]["message"]
+        assert not out.exists() or not any(out.iterdir())

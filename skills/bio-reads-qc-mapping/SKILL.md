@@ -45,9 +45,9 @@ Tool guides and versions: [docs/README.md](docs/README.md).
 
 ## Output
 
-- results/bio-reads-qc-mapping/run_manifest.json (validated rows, planned commands, and per-stage `status` after `--execute`)
+- results/bio-reads-qc-mapping/run_manifest.json (validated rows, planned commands, and per-stage `status` after `--execute`; a failed run still writes it and `mapping_stats.tsv`, with the failing step marked `failed`, then prints the error envelope and exits 2)
 - results/bio-reads-qc-mapping/<sample_id>/ with trimmed reads (`reads.fastq`, or `reads_R1.fastq` and `reads_R2.fastq`), `fastp.json`, `fastp.html`, `mapped.sam`, and the `qc.done` and `mapping.done` markers
-- results/bio-reads-qc-mapping/mapping_stats.tsv (`mapping_status` is `planned` before `--execute`, then `completed` or `reused`, and `not_requested` for rows with no reference)
+- results/bio-reads-qc-mapping/mapping_stats.tsv (`mapping_status` is `planned` before `--execute`, then `completed`, `reused` or `failed`, and `not_requested` for rows with no reference)
 - Sample sheet contract: [schemas/sample-sheet.schema.json](schemas/sample-sheet.schema.json)
 
 ## Quality Gates
