@@ -38,6 +38,35 @@ class ProposalReviewTests(unittest.TestCase):
         self.assertEqual(result["rubric_source"], "sponsor")
         self.assertEqual(result["recommendation"], "Fund")
 
+    def test_fatal_flaw_uses_the_lowest_label_of_a_sponsor_rubric(self) -> None:
+        payload = {
+            "rubric": {
+                "weights": {"mission": 70, "feasibility": 30},
+                "recommendations": [
+                    {"minimum": 4, "label": "Fund"},
+                    {"minimum": 1, "label": "Decline"},
+                ],
+            },
+            "scores": {"mission": 5, "feasibility": 5},
+            "fatal_flaw": True,
+        }
+        self.assertEqual(
+            score_proposal.score_payload(payload)["recommendation"], "Decline"
+        )
+        payload["fatal_flaw_recommendation"] = "Defer"
+        self.assertEqual(
+            score_proposal.score_payload(payload)["recommendation"], "Defer"
+        )
+
+    def test_fatal_flaw_on_the_default_rubric_is_reject(self) -> None:
+        payload = {
+            "scores": dict.fromkeys(score_proposal.DEFAULT_WEIGHTS, 5),
+            "fatal_flaw": True,
+        }
+        self.assertEqual(
+            score_proposal.score_payload(payload)["recommendation"], "Reject"
+        )
+
     def test_invalid_weight_total_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "expected 100"):
             score_proposal.score_payload(

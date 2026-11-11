@@ -18,7 +18,6 @@ pyarrow = ">=17"
 # Notebook automation dependencies
 jupytext = ">=1.19"
 nbclient = ">=0.10"
-papermill = ">=2.6"
 
 [tasks]
 lab = "jupyter lab"

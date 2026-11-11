@@ -1,11 +1,11 @@
 # Service cards
 
-**Last verified:** 2026-08-24
-**Tool version/release checked:** UniProt REST, NCBI E-utilities, NCBI Datasets v2, MGnify API v1, InterPro API, AlphaFold DB API, STRING API, ENA Portal API; live endpoints checked 2026-08-24
+**Last verified:** 2026-11-10
+**Tool version/release checked:** UniProt REST, NCBI E-utilities, NCBI Datasets v2, MGnify API v2, InterPro API, AlphaFold DB API, STRING API, ENA Portal API; MGnify v2 paths checked live 2026-11-10, the other endpoints 2026-08-24
 **Official docs/manual:** The Docs line on each card.
 **Release/source:** The Base line on each card.
 
-One card per `--service` value. Paths are relative to the base URL. All base URLs and example commands were checked live on 2026-08-24 and the example commands again on 2026-10-01 (all returned HTTP 200). "Not documented" means the official docs named on the card state no request rate.
+One card per `--service` value. Paths are relative to the base URL. All base URLs and example commands were checked live on 2026-08-24 and the example commands again on 2026-10-01 (all returned HTTP 200). The UniProt example and every MGnify path were checked again on 2026-11-10 (HTTP 200). "Not documented" means the official docs named on the card state no request rate.
 
 ## uniprot
 
@@ -15,13 +15,14 @@ One card per `--service` value. Paths are relative to the base URL. All base URL
 - `uniprotkb/search` with `--param query=...` and `--param size=N`: `--record-path results`
 - `uniref/search`, `uniparc/search`: `--record-path results`
 - Rate limit: not documented. Pass `fields` to keep entries small.
-- Example: `lookup --service uniprot --path uniprotkb/P04637 --param fields=accession,protein_name,organism_name --max-items 3`
+- `--max-items` also limits the keys of each record, and `--max-depth` collapses nested values to `...`; the example needs both to show the protein name.
+- Example: `lookup --service uniprot --path uniprotkb/P04637 --param fields=accession,protein_name,organism_name --max-items 8 --max-depth 5`
 
 ## ncbi-entrez
 
 - Base: `https://eutils.ncbi.nlm.nih.gov/entrez/eutils`
 - Docs: https://www.ncbi.nlm.nih.gov/books/NBK25497/
-- `esearch.fcgi` with `db`, `term`, `retmode=json`: `--record-path esearchresult.idlist` (inferred)
+- `esearch.fcgi` with `db`, `term`, `retmode=json`: `--record-path esearchresult.idlist` (inferred); `record_count_available` is the hit total from `esearchresult.count`, not the length of the returned page
 - `esummary.fcgi` with `db`, `id`, `retmode=json`: `summary`; the records sit under `result.<uid>`
 - `efetch.fcgi` with `db`, `id`, `rettype`: usually XML or text, so add `--format text`
 - Rate limit: 3 requests per second without an API key, 10 with one. NCBI asks for `tool` and `email` on every request. The script reads NCBI_API_KEY and NCBI_TOOL from the environment; it sends `email` only when you pass `--email`.
@@ -40,14 +41,15 @@ One card per `--service` value. Paths are relative to the base URL. All base URL
 
 ## mgnify
 
-- Base: `https://www.ebi.ac.uk/metagenomics/api/v1`
-- Docs: https://docs.mgnify.org/src/docs/api.html
-- `biomes` with `--param page_size=N`: `--record-path data` (inferred)
-- `studies` with `--param lineage=root:Environmental:Terrestrial:Soil`: `--record-path data`
-- `samples/<accession>`, `analyses/<accession>`: `summary`; the record is under `data`
-- `studies/<MGYS accession>/analyses`: `--record-path data`
-- Rate limit: not documented. Page size caps at 100 per the docs.
-- Example: `lookup --service mgnify --path biomes --param page_size=2 --max-items 2`
+- Base: `https://www.ebi.ac.uk/metagenomics/api/v2`
+- Docs: https://docs.mgnify.org/src/docs/api.html (API v1 was deprecated in June 2026 and serves frozen data without MGnify V6 analyses)
+- `biomes/` with `--param page_size=N`: `--record-path items` (inferred)
+- `studies/` with `--param biome_lineage=root:Environmental:Terrestrial:Soil`: `--record-path items`
+- `samples/<accession>`, `analyses/<accession>`: `summary`; the record is the top-level object
+- `studies/<MGYS accession>/analyses/`: `--record-path items`
+- List responses carry the total as `count`; `record_count_available` is the length of the returned page.
+- Rate limit: not documented.
+- Example: `lookup --service mgnify --path biomes/ --param page_size=2 --max-items 2`
 
 ## interpro
 

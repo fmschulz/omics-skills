@@ -37,7 +37,7 @@ Produce a decision-ready review of an AI/ML, computational biology, or bioscienc
     uv run --script "$HOME/.agents/skills/proposal-review/scripts/score_proposal.py" scorecard.json
     ```
 
-    With the default rubric, `scores` must contain exactly these 1-to-5 keys: `strategic_fit_and_novelty`, `technical_rigor`, `feasibility_and_resources`, `team_and_execution`, `risk_ethics_and_compliance`, `budget_and_schedule`. For a sponsor rubric, add `"rubric": {"weights": {...}, "recommendations": [{"minimum": 4, "label": "Fund"}, ...]}`; weights must total 100 and the score keys must match them. Set `"fatal_flaw": true` (and optionally `fatal_flaw_recommendation`) to override the band. The helper rejects weights that do not total 100, category mismatches, and scores outside 1 to 5, and never mixes default bands into a sponsor rubric.
+    With the default rubric, `scores` must contain exactly these 1-to-5 keys: `strategic_fit_and_novelty`, `technical_rigor`, `feasibility_and_resources`, `team_and_execution`, `risk_ethics_and_compliance`, `budget_and_schedule`. For a sponsor rubric, add `"rubric": {"weights": {...}, "recommendations": [{"minimum": 4, "label": "Fund"}, ...]}`; weights must total 100 and the score keys must match them. Set `"fatal_flaw": true` to override the band with the label of the lowest band of the active rubric, or with `fatal_flaw_recommendation` when you set it. The helper rejects weights that do not total 100, category mismatches, and scores outside 1 to 5, and never mixes default bands into a sponsor rubric.
 
 ## Input Requirements
 

@@ -81,6 +81,45 @@ class PolarsDovmedLocalTests(unittest.TestCase):
         self.assertEqual(help_result.returncode, 0, help_result.stderr)
         self.assertNotIn("--api-key", help_result.stdout)
 
+    def test_a_request_without_a_key_sends_no_key_header(self) -> None:
+        """The hosted API answers anonymously, so the header is sent only with a key."""
+        anonymous = query_literature.make_request(
+            "https://api.example.org", "/api/usage", None
+        )
+        self.assertNotIn("x-api-key", {name.lower() for name in anonymous.headers})
+        keyed = query_literature.make_request(
+            "https://api.example.org", "/api/usage", "secret"
+        )
+        self.assertEqual(keyed.get_header("X-api-key"), "secret")
+
+    def test_the_api_key_is_optional(self) -> None:
+        with patch.dict(query_literature.os.environ, {}, clear=True):
+            self.assertIsNone(query_literature.load_api_key())
+        with patch.dict(
+            query_literature.os.environ, {"POLARS_DOVMED_API_KEY": "secret"}, clear=True
+        ):
+            self.assertEqual(query_literature.load_api_key(), "secret")
+
+    def test_auto_mode_without_a_key_or_parquet_uses_the_hosted_api(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            args = _args(
+                Path(tmp_name), execution_mode="auto", local_parquet_pattern=None
+            )
+        with patch.dict(query_literature.os.environ, {}, clear=True):
+            self.assertEqual(query_literature.determine_execution_mode(args), "api")
+        with patch.dict(
+            query_literature.os.environ,
+            {"DOVMED_PMC_PARQUET": "/data/*.parquet"},
+            clear=True,
+        ):
+            self.assertEqual(query_literature.determine_execution_mode(args), "local")
+
+    def test_local_scan_reports_a_missing_repo_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            args = _args(Path(tmp_name), local_repo_dir="/nonexistent/repo")
+            with self.assertRaisesRegex(SystemExit, "/nonexistent/repo"):
+                query_literature.execute_local_scan(args)
+
     def test_local_scan_uses_upstream_parquet_pattern_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_name:
             args = _args(Path(tmp_name))

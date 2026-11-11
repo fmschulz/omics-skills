@@ -10,7 +10,7 @@ Inspect a scientific file before downstream analysis. `scripts/eda_analyzer.py` 
 **Parsed by the script:**
 - NumPy arrays (`.npy`, `.npz`), CSV/TSV samples, JSON, HDF5
 - FASTA and FASTQ, including common gzip-compressed suffixes
-- TIFF/OME-TIFF, PNG, JPEG
+- TIFF/OME-TIFF, PNG, JPEG (pixel statistics only up to 50 million pixels; a larger image gets size, mode and format, and Pillow refuses images above about 179 million pixels)
 - Streaming analyzers for PDB/SDF/SMILES, MGF/mzML/mzXML and mzTab families
 
 **Reference-only:** every other recognized suffix, and proprietary binary formats unless the project environment supplies a reader.

@@ -32,7 +32,8 @@ outputs, not plans.
    - scientific validity reviewer
    - computational and reproducibility reviewer
    - domain biology reviewer
-   - writing and editorial reviewer, who scores `prose_quality` against these
+   - writing and editorial reviewer, who scores `prose_quality` (profile
+     `manuscript-packaging`) or `communication` (every other profile) against these
      rules: each supported claim stated once, plainly; each limitation stated
      once, where it applies; no stacked qualifiers on a comparative claim that
      the numbers support; no explanation of a result that was not checked;

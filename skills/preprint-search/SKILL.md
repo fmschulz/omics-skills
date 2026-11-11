@@ -6,7 +6,7 @@ user-invocable: true
 
 # Preprint Search
 
-Two bundled CLIs, installed at `~/.agents/skills/preprint-search/scripts/`: `arxiv_search`, `arxiv_summarize` (Markdown notes) and `biorxiv_search`. Both print JSON. Treat output as discovery metadata; check final candidates on arxiv.org or bioRxiv when the version, withdrawal status or exact dates matter.
+Three bundled CLIs, installed at `~/.agents/skills/preprint-search/scripts/`: `arxiv_search`, `arxiv_summarize` (Markdown notes) and `biorxiv_search`. `arxiv_search` and `biorxiv_search` print JSON. `arxiv_summarize` writes Markdown files and prints a JSON status. Treat output as discovery metadata; check final candidates on arxiv.org or bioRxiv when the version, withdrawal status or exact dates matter.
 
 ## Instructions
 
@@ -29,6 +29,8 @@ $S/arxiv_search --ids 2501.01234,2406.00001
 $S/arxiv_summarize 2501.01234 --output-dir arxiv-summaries [--force]
 ```
 
+`--ids` requests as many results as there are IDs unless you give the positional `max_results`. A raw query with `--category` is wrapped in parentheses before `AND cat:...` is added.
+
 Other options: `--sort relevance|lastUpdatedDate|submittedDate`, `--order`, `--start N`, `--timeout 20`, `--cache-dir PATH` (or `ARXIV_SEARCH_CACHE_DIR`), `--no-cache`, `--cache-ttl 86400`, `--min-interval 3.1`, `--retries 2`, `--retry-backoff 60`. `arxiv_summarize` writes one file per ID (metadata, abstract, citation, empty `## Notes`) and lists missing IDs.
 
 ### bioRxiv
@@ -38,7 +40,7 @@ The API has no keyword search. The CLI fetches metadata for a bounded interval a
 - Interval: `--days N` or `--start-date YYYY-MM-DD --end-date YYYY-MM-DD`. Without one, the last 30 days, noted in `warnings`.
 - Scan limit: the API returns 30 records per page, oldest first. The CLI starts at the newest page and reads backward until it has read `--scan-limit` records (default 300) or reached the start of the interval. Recall for a broad or old search is therefore weak; widen the interval and `--scan-limit` deliberately, report `reached_scan_limit`, and do not overstate recall.
 - Query syntax: words are `AND`ed; `OR` must be explicit (`organoid OR spheroid`); quoted phrases stay together (`'"single cell" atlas'`); `--phrase` treats the whole query as one phrase. Fields default to `title,abstract,authors`; `--fields abstract` restricts it.
-- `--category` takes the bioRxiv name with underscores (`genomics`, `cell_biology`, `developmental_biology`). `--doi 10.1101/...` looks up one DOI. The CLI keeps the latest version of each DOI; `--all-versions` keeps all.
+- `--category` takes the bioRxiv name with underscores (`genomics`, `cell_biology`, `developmental_biology`). The API ignores an unknown category, so the CLI drops records of other categories and adds a warning when it did. `--doi 10.1101/...` looks up one DOI and warns when bioRxiv does not know it; medRxiv DOIs are not covered. The CLI keeps the latest version of each DOI; `--all-versions` keeps all.
 - Pacing: page requests at least 0.2 seconds apart; `HTTP 429` and transient `5xx` retried with exponential backoff (`--retries 3`, `--retry-backoff 1`). `--timeout 30`.
 - Author variants also accept `Surname, F. M.` forms; add middle-initial variants (`"Peter E. Nugent"`, `"P. E. Nugent"`) when results look incomplete.
 

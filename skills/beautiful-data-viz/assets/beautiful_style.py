@@ -55,6 +55,9 @@ GREY_SERIES = ["#333333", "#7a7a7a", "#a8a8a8", "#555555"]
 GREY_SERIES_DARK = ["#dddddd", "#999999", "#6e6e6e", "#bbbbbb"]
 LINE_STYLES = ["-", "--", ":", "-."]
 
+# seaborn has no "slides" context; "talk" is its presentation size.
+SEABORN_CONTEXTS = {"paper": "paper", "notebook": "notebook", "slides": "talk"}
+
 
 def _maybe_set_retina() -> None:
     """Make notebook output crisper if running inside IPython."""
@@ -119,6 +122,7 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
         "text.color": fg,
         "axes.labelcolor": secondary,
         "axes.titlecolor": fg,
+        "font.size": label,
         "axes.titlesize": title,
         "axes.labelsize": label,
         "xtick.color": fg,
@@ -156,11 +160,13 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
     # If seaborn is available, use it for coherent themes/palettes.
     try:
         import seaborn as sns  # type: ignore
-        sns.set_theme(style="white", context=medium)
-        sns.set_context(medium, font_scale=font_scale)
+    except ImportError:
+        sns = None
+    if sns is not None:
+        context = SEABORN_CONTEXTS.get(medium, "notebook")
+        sns.set_theme(style="white", context=context)
+        sns.set_context(context, font_scale=font_scale)
         mpl.rcParams.update(rc)
-    except Exception:
-        pass
 
     return VizConfig(
         medium=medium,
@@ -310,7 +316,8 @@ def finalize_axes(
 
     if tight:
         fig = ax.figure
-        if isinstance(fig, Figure):
+        # A figure with its own layout engine (constrained_layout=True) keeps it.
+        if isinstance(fig, Figure) and fig.get_layout_engine() is None:
             try:
                 fig.tight_layout()
             except Exception:

@@ -7,12 +7,14 @@
 # ]
 # ///
 
-"""
-Execute a Jupyter notebook top-to-bottom on a fresh kernel and write an executed copy.
+"""Execute a Jupyter notebook top to bottom on a fresh kernel and save a copy.
 
 Why this exists:
 - Human "it ran on my machine" is not enough.
 - This creates a deterministic validation gate in CI or local checks.
+
+Without --kernel the notebook's own kernelspec runs, else python3. A given --kernel is
+written into the executed notebook's kernelspec.
 
 Usage:
   uv run --script ~/.agents/skills/notebooks/scripts/execute_notebook.py \
@@ -27,6 +29,16 @@ import nbformat
 from nbclient import NotebookClient
 
 
+DEFAULT_KERNEL = "python3"
+
+
+def resolve_kernel_name(
+    notebook_kernel_name: str | None, kernel_flag: str | None
+) -> str:
+    """Pick the kernel: the --kernel flag, else the notebook's own, else python3."""
+    return kernel_flag or notebook_kernel_name or DEFAULT_KERNEL
+
+
 def execute_notebook(
     notebook_path: Path,
     out_path: Path,
@@ -35,6 +47,12 @@ def execute_notebook(
     timeout_s: int = 600,
 ) -> None:
     nb = nbformat.read(str(notebook_path), as_version=4)
+
+    # A given kernel replaces the notebook's own, so the executed file records it.
+    kernelspec = nb.metadata.setdefault("kernelspec", {})
+    kernel_name = resolve_kernel_name(kernelspec.get("name"), kernel_name)
+    kernelspec["name"] = kernel_name
+    kernelspec.setdefault("display_name", kernel_name)
 
     # Execute in the notebook's directory so relative paths behave as expected.
     resources = {"metadata": {"path": str(notebook_path.parent)}}
@@ -57,7 +75,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("notebook", type=Path, help="Path to .ipynb notebook")
     ap.add_argument("--out", type=Path, default=None, help="Output executed notebook path")
-    ap.add_argument("--kernel", type=str, default=None, help="Kernel name (optional)")
+    ap.add_argument(
+        "--kernel",
+        type=str,
+        default=None,
+        help=(
+            "Kernel name, written into the executed notebook "
+            "(default: the notebook's own kernelspec, else python3)"
+        ),
+    )
     ap.add_argument("--timeout", type=int, default=600, help="Cell timeout in seconds (default: 600)")
     args = ap.parse_args()
 

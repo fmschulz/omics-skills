@@ -17,6 +17,7 @@ import jsonschema
 import yaml
 
 INCOMPLETE_VALUES = {"", "NOT CAPTURED", "UNKNOWN", "TBD"}
+PLACEHOLDER_VALUES = INCOMPLETE_VALUES - {""}
 
 
 def load_obj(path: Path):
@@ -29,6 +30,27 @@ def load_obj(path: Path):
 def require_complete(value, path: str, errors: list[str]) -> None:
     if value is None or (isinstance(value, str) and value.strip().upper() in INCOMPLETE_VALUES):
         errors.append(f"{path} is incomplete")
+
+
+def placeholder_errors(value: object, path: str = "") -> list[str]:
+    """Return one error per string in ``value`` that is a draft placeholder."""
+    if isinstance(value, str):
+        if value.strip().upper() in PLACEHOLDER_VALUES:
+            return [f"{path} is incomplete"]
+        return []
+    if isinstance(value, dict):
+        children = [
+            (f"{path}.{key}" if path else str(key), item) for key, item in value.items()
+        ]
+    elif isinstance(value, list):
+        children = [(f"{path}[{index}]", item) for index, item in enumerate(value)]
+    else:
+        return []
+    return [
+        error
+        for child_path, item in children
+        for error in placeholder_errors(item, child_path)
+    ]
 
 
 def semantic_errors(manifest: dict) -> list[str]:
@@ -49,6 +71,9 @@ def semantic_errors(manifest: dict) -> list[str]:
             errors.append(f"steps[{index}].outputs is empty")
     if not manifest.get("outputs"):
         errors.append("outputs is empty")
+    errors.extend(
+        error for error in placeholder_errors(manifest) if error not in errors
+    )
     return errors
 
 

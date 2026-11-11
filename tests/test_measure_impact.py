@@ -15,22 +15,22 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = REPO_ROOT / "skills" / "crossref-lookup"
 MODULE_PATH = SKILL_ROOT / "scripts" / "measure_impact.py"
 
-spec = importlib.util.spec_from_file_location("scientific_impact_assessment", MODULE_PATH)
+spec = importlib.util.spec_from_file_location("measure_impact", MODULE_PATH)
 assert spec is not None and spec.loader is not None
-scientific_impact_assessment = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(scientific_impact_assessment)
+measure_impact = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(measure_impact)
 
 
 class ScientificImpactAssessmentTests(unittest.TestCase):
     def test_fixture_report_matches_expected(self) -> None:
-        metrics = scientific_impact_assessment.load_journal_metrics(
+        metrics = measure_impact.load_journal_metrics(
             SKILL_ROOT / "references" / "journal_metrics_2024.tsv"
         )
         openalex_payload = json.loads((SKILL_ROOT / "fixtures" / "openalex_work.json").read_text(encoding="utf-8"))
         altmetric_payload = json.loads((SKILL_ROOT / "fixtures" / "altmetric_counts.json").read_text(encoding="utf-8"))
         expected = json.loads((SKILL_ROOT / "fixtures" / "expected_report.json").read_text(encoding="utf-8"))
 
-        report = scientific_impact_assessment.build_report_from_payloads(
+        report = measure_impact.build_report_from_payloads(
             openalex_payload,
             metrics,
             altmetric_payload=altmetric_payload,
@@ -39,7 +39,7 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         self.assertEqual(report, expected)
 
     def test_altmetric_is_explicitly_unavailable_without_key(self) -> None:
-        summary = scientific_impact_assessment.summarize_altmetric_payload(None, reason="no_api_key")
+        summary = measure_impact.summarize_altmetric_payload(None, reason="no_api_key")
         self.assertEqual(summary["status"], "unavailable")
         self.assertEqual(summary["reason"], "no_api_key")
 
@@ -58,17 +58,17 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         with (
             patch.dict(os.environ, {"ALTMETRIC_API_KEY": "test-key"}),
             patch.object(
-                scientific_impact_assessment,
+                measure_impact,
                 "fetch_openalex_work",
                 return_value=openalex_payload,
             ),
             patch.object(
-                scientific_impact_assessment,
+                measure_impact,
                 "fetch_altmetric_summary",
                 return_value={"status": "available", "score": 1},
             ) as fetch_altmetric,
         ):
-            report = scientific_impact_assessment.build_live_report(args)
+            report = measure_impact.build_live_report(args)
 
         fetch_altmetric.assert_called_once_with(
             doi="10.1038/s41586-024-00000-0",
@@ -80,7 +80,7 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
     def test_altmetric_key_and_mailto_are_not_command_line_defaults(self) -> None:
         environ = {"ALTMETRIC_API_KEY": "env-key", "OPENALEX_MAILTO": "env@example.org"}
         with patch.dict(os.environ, environ):
-            parser = scientific_impact_assessment.build_parser()
+            parser = measure_impact.build_parser()
             args = parser.parse_args(["--doi", "10.1038/nature12373"])
         self.assertIsNone(args.mailto)
         self.assertFalse(hasattr(args, "altmetric_api_key"))
@@ -118,13 +118,13 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         with (
             patch.dict(os.environ, {"ALTMETRIC_API_KEY": "ambient-key"}),
             patch.object(
-                scientific_impact_assessment,
+                measure_impact,
                 "fetch_openalex_work",
                 return_value=self.openalex_payload(),
             ),
             patch("urllib.request.urlopen", side_effect=record),
         ):
-            report = scientific_impact_assessment.build_live_report(self.live_args())
+            report = measure_impact.build_live_report(self.live_args())
 
         self.assertEqual(requested, [])
         self.assertEqual(report["altmetric"]["reason"], "not_requested")
@@ -141,21 +141,19 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         with (
             patch.dict(os.environ, {"ALTMETRIC_API_KEY": "secret-key"}),
             patch.object(
-                scientific_impact_assessment,
+                measure_impact,
                 "fetch_openalex_work",
                 return_value=self.openalex_payload(),
             ),
             patch("urllib.request.urlopen", side_effect=record),
             patch("time.sleep"),
         ):
-            report = scientific_impact_assessment.build_live_report(
-                self.live_args(altmetric=True)
-            )
+            report = measure_impact.build_live_report(self.live_args(altmetric=True))
 
         self.assertEqual(len(requested), 1)
         self.assertTrue(requested[0].startswith("https://api.altmetric.com/v1/doi/"))
         self.assertIn("key=secret-key", requested[0])
-        shown = json.dumps(report) + scientific_impact_assessment.format_text(report)
+        shown = json.dumps(report) + measure_impact.format_text(report)
         self.assertNotIn("secret-key", shown)
         self.assertEqual(report["altmetric"]["reason"], "http_500")
 
@@ -168,7 +166,7 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
             patch("urllib.request.urlopen", side_effect=explode),
             patch("time.sleep"),
         ):
-            summary = scientific_impact_assessment.fetch_altmetric_summary(
+            summary = measure_impact.fetch_altmetric_summary(
                 "10.1038/nature12373", "secret-key", min_interval=0
             )
 
@@ -179,21 +177,19 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         with (
             patch.dict(os.environ, {}, clear=True),
             patch.object(
-                scientific_impact_assessment,
+                measure_impact,
                 "fetch_openalex_work",
                 return_value=self.openalex_payload(),
             ),
             patch("urllib.request.urlopen") as urlopen,
         ):
-            report = scientific_impact_assessment.build_live_report(
-                self.live_args(altmetric=True)
-            )
+            report = measure_impact.build_live_report(self.live_args(altmetric=True))
 
         urlopen.assert_not_called()
         self.assertEqual(report["altmetric"]["reason"], "no_api_key")
 
     def test_the_command_line_takes_an_altmetric_flag_and_no_key(self) -> None:
-        parser = scientific_impact_assessment.build_parser()
+        parser = measure_impact.build_parser()
         self.assertFalse(parser.parse_args(["--doi", "10.1038/nature12373"]).altmetric)
         self.assertTrue(
             parser.parse_args(["--doi", "10.1038/nature12373", "--altmetric"]).altmetric
@@ -204,14 +200,31 @@ class ScientificImpactAssessmentTests(unittest.TestCase):
         payload = {"id": "https://openalex.org/W1"}
         with tempfile.TemporaryDirectory() as tmp:
             cache_dir = Path(tmp)
-            with patch.object(scientific_impact_assessment, "fetch_json", return_value=payload) as fetch:
-                first = scientific_impact_assessment.fetch_openalex_cached("https://api.openalex.org/works/W1", cache_dir=cache_dir, cache_ttl=60, min_interval=0)
-                second = scientific_impact_assessment.fetch_openalex_cached("https://api.openalex.org/works/W1", cache_dir=cache_dir, cache_ttl=60, min_interval=0)
+            with patch.object(
+                measure_impact, "fetch_json", return_value=payload
+            ) as fetch:
+                first = measure_impact.fetch_openalex_cached(
+                    "https://api.openalex.org/works/W1",
+                    cache_dir=cache_dir,
+                    cache_ttl=60,
+                    min_interval=0,
+                )
+                second = measure_impact.fetch_openalex_cached(
+                    "https://api.openalex.org/works/W1",
+                    cache_dir=cache_dir,
+                    cache_ttl=60,
+                    min_interval=0,
+                )
                 self.assertEqual(first, second)
                 self.assertEqual(fetch.call_count, 1)
                 cache = next((cache_dir / "responses").glob("*.json"))
                 os.utime(cache, (1, 1))
-                scientific_impact_assessment.fetch_openalex_cached("https://api.openalex.org/works/W1", cache_dir=cache_dir, cache_ttl=60, min_interval=0)
+                measure_impact.fetch_openalex_cached(
+                    "https://api.openalex.org/works/W1",
+                    cache_dir=cache_dir,
+                    cache_ttl=60,
+                    min_interval=0,
+                )
                 self.assertEqual(fetch.call_count, 2)
 
 

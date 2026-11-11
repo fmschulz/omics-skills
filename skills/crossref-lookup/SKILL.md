@@ -29,7 +29,11 @@ $L --audit-bibliography refs.bib --strict --output crossref-audit.json
 
 ## Citation impact (OpenAlex)
 
-`~/.agents/skills/crossref-lookup/scripts/measure-impact --doi 10.1038/nature12373 --format text` reports OpenAlex citation counts and a journal impact factor from a small manual table (2024 values). Keep paper-level and journal-level metrics separate. Altmetric is sent only with `--altmetric`, and its key (`ALTMETRIC_API_KEY`, environment only) is never printed. Options, the email rule for `--mailto`, caching and the journal table are in `references/impact.md`.
+```bash
+~/.agents/skills/crossref-lookup/scripts/measure-impact --doi 10.1038/nature12373 --format text
+```
+
+The command reports OpenAlex citation counts and a journal impact factor from a small manual table (2024 values). Keep paper-level and journal-level metrics separate. Altmetric is sent only with `--altmetric`, and its key (`ALTMETRIC_API_KEY`, environment only) is never printed. Options, the email rule for `--mailto`, caching and the journal table are in `references/impact.md`.
 
 ## Input Requirements
 
@@ -41,7 +45,7 @@ JSON on stdout, or in the `--output` file:
 
 - `--doi`: `status`, `doi`, `detail`, `title`, `journal`, `year`
 - `--title`: `query` and `candidates` with `doi`, `title`, `journal`, `year`
-- `--validate-file` and `--audit-bibliography`: `records`, `counts` per status (`valid`, `invalid`, `not_found`, `transient_error`, `http_error`), and `potentially_missing_dois` (BibTeX titles without a DOI; a coverage gap, not proof of invalid citations)
+- `--validate-file` and `--audit-bibliography`: `records`, `counts` per status (`valid`, `invalid`, `not_found`, `transient_error`, `http_error`), and `potentially_missing_dois` (BibTeX entries without a DOI; a coverage gap, not proof of invalid citations)
 
 Exit codes: 0 on success; 1 for an invalid or missing single DOI, a strict-mode audit failure, or a refused overwrite; 2 for transient service or network failures (HTTP 429, 5xx, timeouts). Exit 2 means rerun later.
 

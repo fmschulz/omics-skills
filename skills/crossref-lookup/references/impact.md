@@ -31,4 +31,4 @@ Keep paper-level and journal-level metrics separate. A journal impact factor is 
 
 ## Tests
 
-`tests/test_scientific_impact_assessment.py` (repository only) uses the fixtures in `fixtures/`.
+`tests/test_measure_impact.py` (repository only) uses the fixtures in `fixtures/`.

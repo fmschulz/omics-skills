@@ -56,7 +56,7 @@ A notebook is not "done" until it has been executed end to end on a fresh kernel
      uv run --script "$NOTEBOOKS_SKILL/scripts/execute_notebook.py" \
        <notebook.ipynb> --kernel <project>
      ```
-     The helper writes `<notebook>.executed.ipynb`. `pixi run jupyter nbconvert --to notebook --execute --inplace <notebook.ipynb>` is also valid when Jupyter is declared in the project environment.
+     The helper writes `<notebook>.executed.ipynb` and sets its kernelspec name to the `--kernel` value. Without `--kernel` it uses the notebook's own kernelspec, else `python3`. `pixi run jupyter nbconvert --to notebook --execute --inplace <notebook.ipynb>` is also valid when Jupyter is declared in the project environment.
 
 7. **Evaluate the plots, then refine.** This step is required. Figures follow `/beautiful-data-viz`; [references/plot_style.md](references/plot_style.md) has the notebook style cell. After the run-all execution:
    - Open the executed notebook (or exported HTML) and inspect every figure.

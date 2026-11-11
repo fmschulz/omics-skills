@@ -82,6 +82,21 @@ def split_ids(values: list[str]) -> list[str]:
     return [paper_id for paper_id in ids if paper_id]
 
 
+def strip_version(arxiv_id: str) -> str:
+    """Drop a trailing ``vN`` version suffix."""
+    return re.sub(r"v\d+$", "", arxiv_id)
+
+
+def is_returned(requested: str, returned: set[str], returned_bare: set[str]) -> bool:
+    """Tell whether a requested id came back.
+
+    A versioned id needs that exact version; an id without a version takes any.
+    """
+    if strip_version(requested) != requested:
+        return requested in returned
+    return requested in returned_bare
+
+
 def safe_filename(arxiv_id: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", arxiv_id)
 
@@ -175,19 +190,26 @@ def main() -> int:
 
         written_files = []
         returned_ids = set()
+        returned_bare_ids = set()
         for paper in papers:
             arxiv_id = paper.get("arxiv_id")
             if not arxiv_id:
                 continue
             returned_ids.add(arxiv_id)
+            returned_bare_ids.add(strip_version(arxiv_id))
             path = output_dir / f"{safe_filename(arxiv_id)}.md"
             if path.exists() and not args.force:
                 raise FileExistsError(f"{path} already exists; rerun with --force to overwrite")
             path.write_text(build_markdown(paper), encoding="utf-8")
             written_files.append({"arxiv_id": arxiv_id, "path": str(path)})
 
-        requested_ids = set(ids)
-        missing_ids = sorted(requested_ids - returned_ids)
+        missing_ids = sorted(
+            {
+                paper_id
+                for paper_id in ids
+                if not is_returned(paper_id, returned_ids, returned_bare_ids)
+            }
+        )
     except Exception as exc:  # noqa: BLE001
         print(json.dumps({"success": False, "error": str(exc)}, indent=2))
         return 1

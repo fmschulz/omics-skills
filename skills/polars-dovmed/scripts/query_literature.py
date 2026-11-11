@@ -359,26 +359,25 @@ def parse_args():
 
 
 def load_api_key():
-    api_key = os.environ.get("POLARS_DOVMED_API_KEY")
-    if not api_key:
-        raise SystemExit("missing POLARS_DOVMED_API_KEY")
-    return api_key
+    """Return the API key from the environment, or None for anonymous access."""
+    return os.environ.get("POLARS_DOVMED_API_KEY") or None
 
 
 def determine_execution_mode(args):
     if args.execution_mode != "auto":
         return args.execution_mode
     corpus = effective_corpus(args)
-    # --query and --details are only supported by the API path. Route them
-    # there even without a key so the user sees a clear missing-key error
-    # instead of the generic "local mode does not support ..." message.
+    # --query and --details are only supported by the API path.
     if args.query or args.details:
         return "api"
     if os.environ.get("POLARS_DOVMED_API_KEY"):
         return "api"
-    if corpus != "pmc":
+    # The hosted API answers without a key, so go local only when a local
+    # corpus is configured.
+    env_var = LOCAL_CORPUS_ENV.get(corpus)
+    if args.local_parquet_pattern or (env_var and os.environ.get(env_var)):
         return "local"
-    return "local"
+    return "api"
 
 
 def effective_corpus(args):
@@ -748,6 +747,11 @@ def execute_local_scan(args):
         query_file = Path(args.queries_file).expanduser().resolve()
 
     repo_dir = Path(args.local_repo_dir).expanduser().resolve()
+    if not repo_dir.is_dir():
+        raise SystemExit(
+            f"local repo directory not found: {repo_dir}; "
+            "pass --local-repo-dir with a polars-dovmed checkout"
+        )
     output_dir = local_output_dir(args)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     parquet_pattern = local_parquet_pattern(args)
@@ -857,10 +861,9 @@ def make_request(base_url, endpoint, api_key, *, method="GET", payload=None):
     data = None
     if payload is not None:
         data = json.dumps(payload).encode("utf-8")
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "X-API-Key": api_key,
-    }
+    headers = {"User-Agent": "Mozilla/5.0"}
+    if api_key:
+        headers["X-API-Key"] = api_key
     if payload is not None:
         headers["Content-Type"] = "application/json"
     return urllib.request.Request(
@@ -1180,8 +1183,7 @@ def has_incomplete_citation(papers):
 
 
 def normalize_pattern(pattern):
-    cleaned = pattern.replace("(?i)", "")
-    return cleaned.replace("\\b", r"\b")
+    return pattern.replace("(?i)", "")
 
 
 def pattern_matches_text(pattern, text):

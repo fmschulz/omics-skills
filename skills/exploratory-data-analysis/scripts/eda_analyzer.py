@@ -13,13 +13,15 @@
 
 import argparse
 import gzip
+import json
+import re
 import sys
 from datetime import datetime
-import json
 from pathlib import Path
 
-
 CSV_SAMPLE_LIMIT = 10_000
+# Decoding a larger image into one array needs too much memory for a bounded report.
+IMAGE_STATS_PIXEL_LIMIT = 50_000_000
 
 COMPOUND_EXTENSION_MAP = {
     'ome.tif': ('microscopy_imaging', 'OME-TIFF'),
@@ -195,6 +197,15 @@ def format_bytes(size):
     return f"{size:.2f} PB"
 
 
+def reference_extensions(section: str) -> set[str]:
+    """Return the lowercase extensions that a '### .a / .b - Title' section covers."""
+    heading = section.split("\n", 1)[0]
+    if not heading.startswith("### "):
+        return set()
+    names = re.sub(r"\s*\(.*?\)", "", heading[4:].split(" - ", 1)[0])
+    return {name.strip().removeprefix(".").lower() for name in names.split("/")}
+
+
 def load_reference_info(category, extension):
     """
     Load reference information for the file type.
@@ -233,28 +244,19 @@ def load_reference_info(category, extension):
             content = f.read()
 
         # Compound suffixes share the reference entry for their base format.
-        import re
         base_extension = extension.removesuffix('.gz')
         reference_extension = {
-            'fa': 'fasta',
-            'fna': 'fasta',
-            'fq': 'fastq',
-            'h5': 'hdf5',
-            'jpeg': 'jpg',
-            'tiff': 'tif',
-            'ome.tiff': 'ome.tif',
-            'prot.xml': 'protxml',
-            'pep.xml': 'pepxml',
+            "ome.tiff": "ome.tif",
+            "prot.xml": "protxml",
+            "pep.xml": "pepxml",
+            "mzid": "mzidentml",
         }.get(base_extension, base_extension)
-        pattern = rf'### \.{re.escape(reference_extension)}[^#]*?(?=###|\Z)'
-        match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
-
-        if match:
-            section = match.group(0)
-            return {
-                'raw_section': section,
-                'reference_file': category_files[category]
-            }
+        for section in re.split(r"(?m)^(?=#{2,3} )", content):
+            if reference_extension in reference_extensions(section):
+                return {
+                    "raw_section": section,
+                    "reference_file": category_files[category],
+                }
     except Exception as e:
         print(f"Error loading reference: {e}", file=sys.stderr)
 
@@ -314,18 +316,19 @@ def analyze_general_scientific(filepath, extension):
         if extension in ['npy']:
             import numpy as np
             data = np.load(filepath, mmap_mode='r')
+            has_values = data.size > 0 and np.issubdtype(data.dtype, np.number)
             results = {
-                'analysis_scope': 'memory_mapped',
-                'shape': data.shape,
-                'dtype': str(data.dtype),
-                'size': data.size,
-                'ndim': data.ndim,
-                'statistics': {
-                    'min': float(np.min(data)) if np.issubdtype(data.dtype, np.number) else None,
-                    'max': float(np.max(data)) if np.issubdtype(data.dtype, np.number) else None,
-                    'mean': float(np.mean(data)) if np.issubdtype(data.dtype, np.number) else None,
-                    'std': float(np.std(data)) if np.issubdtype(data.dtype, np.number) else None,
-                }
+                "analysis_scope": "memory_mapped",
+                "shape": data.shape,
+                "dtype": str(data.dtype),
+                "size": data.size,
+                "ndim": data.ndim,
+                "statistics": {
+                    "min": float(np.min(data)) if has_values else None,
+                    "max": float(np.max(data)) if has_values else None,
+                    "mean": float(np.mean(data)) if has_values else None,
+                    "std": float(np.std(data)) if has_values else None,
+                },
             }
 
         elif extension in ['npz']:
@@ -444,7 +447,11 @@ def analyze_bioinformatics(filepath, extension):
                         break
 
             lengths = [len(seq) for seq in sequences]
-            qualities = [sum(seq.letter_annotations['phred_quality']) / len(seq) for seq in sequences]
+            qualities = [
+                sum(seq.letter_annotations["phred_quality"]) / len(seq)
+                for seq in sequences
+                if len(seq)
+            ]
 
             results = {
                 'analysis_scope': 'streaming_sample',
@@ -524,9 +531,11 @@ def analyze_spectrometry(filepath, extension):
     if logical in {'mzml', 'mzxml'}:
         import xml.etree.ElementTree as ET
         spectra = chromatograms = 0
+        # Every mzML spectrum holds a scan element, so only mzXML counts scans.
+        spectrum_tag = "spectrum" if logical == "mzml" else "scan"
         for _, element in ET.iterparse(filepath, events=('end',)):
             tag = element.tag.rsplit('}', 1)[-1].lower()
-            spectra += tag in {'spectrum', 'scan'}
+            spectra += tag == spectrum_tag
             chromatograms += tag == 'chromatogram'
             element.clear()
         return {'analysis_scope': 'streaming_xml', 'spectra': spectra, 'chromatograms': chromatograms}
@@ -542,18 +551,29 @@ def analyze_imaging(filepath, extension):
             from PIL import Image
             import numpy as np
 
-            img = Image.open(filepath)
-            img_array = np.array(img)
-
+            img = Image.open(filepath)  # reads the header only
             results = {
                 'size': img.size,
                 'mode': img.mode,
                 'format': img.format,
-                'shape': img_array.shape,
-                'dtype': str(img_array.dtype),
-                'value_range': [int(img_array.min()), int(img_array.max())],
-                'mean_intensity': float(img_array.mean()),
             }
+
+            pixels = img.size[0] * img.size[1]
+            if pixels > IMAGE_STATS_PIXEL_LIMIT:
+                results["statistics_skipped"] = (
+                    f"{pixels:,} pixels exceed the {IMAGE_STATS_PIXEL_LIMIT:,} pixel "
+                    "limit for pixel statistics"
+                )
+            else:
+                img_array = np.array(img)
+                results.update(
+                    {
+                        "shape": img_array.shape,
+                        "dtype": str(img_array.dtype),
+                        "value_range": [int(img_array.min()), int(img_array.max())],
+                        "mean_intensity": float(img_array.mean()),
+                    }
+                )
 
             # Check for multi-page TIFF
             if extension in ['tif', 'tiff', 'ome.tif', 'ome.tiff']:
@@ -566,9 +586,12 @@ def analyze_imaging(filepath, extension):
                     results['page_count'] = frame_count
 
     except ImportError as e:
-        results['error'] = f"Required library not installed: {e}"
+        results["error"] = f"Required library not installed: {e}"
+    except Image.DecompressionBombError as e:
+        # Pillow refuses to open the image, so no header is available.
+        results["statistics_skipped"] = f"Pillow refused to open the image: {e}"
     except Exception as e:
-        results['error'] = f"Analysis error: {e}"
+        results["error"] = f"Analysis error: {e}"
 
     return results
 
@@ -627,29 +650,41 @@ def generate_markdown_report(analysis, output_path=None):
             lines.append("```\n")
 
     # Recommendations
-    lines.append("## Recommendations for Further Analysis\n")
-    lines.append(f"Based on the file type (`.{analysis['file_type']['extension']}`), consider the following analyses:\n")
-
-    # Add specific recommendations based on category
     category = analysis['file_type']['category']
+    recommendations = []
     if category == 'general_scientific':
-        lines.append("- Statistical distribution analysis")
-        lines.append("- Missing value imputation strategies")
-        lines.append("- Correlation analysis between variables")
-        lines.append("- Outlier detection and handling")
-        lines.append("- Dimensionality reduction (PCA, t-SNE)")
+        recommendations += [
+            "- Statistical distribution analysis",
+            "- Missing value imputation strategies",
+            "- Correlation analysis between variables",
+            "- Outlier detection and handling",
+            "- Dimensionality reduction (PCA, t-SNE)",
+        ]
     elif category == 'bioinformatics_genomics':
-        lines.append("- Sequence quality control and filtering")
-        lines.append("- GC content analysis")
-        lines.append("- Read alignment and mapping statistics")
-        lines.append("- Variant calling and annotation")
-        lines.append("- Differential expression analysis")
+        recommendations += [
+            "- Sequence quality control and filtering",
+            "- GC content analysis",
+            "- Read alignment and mapping statistics",
+            "- Variant calling and annotation",
+            "- Differential expression analysis",
+        ]
     elif category == 'microscopy_imaging':
-        lines.append("- Image quality assessment")
-        lines.append("- Background correction and normalization")
-        lines.append("- Segmentation and object detection")
-        lines.append("- Colocalization analysis")
-        lines.append("- Intensity measurements and quantification")
+        recommendations += [
+            "- Image quality assessment",
+            "- Background correction and normalization",
+            "- Segmentation and object detection",
+            "- Colocalization analysis",
+            "- Intensity measurements and quantification",
+        ]
+
+    if recommendations:
+        lines.append("## Recommendations for Further Analysis\n")
+        extension = analysis["file_type"]["extension"]
+        lines.append(
+            f"Based on the file type (`.{extension}`), "
+            "consider the following analyses:\n"
+        )
+        lines.extend(recommendations)
 
     lines.append("")
 

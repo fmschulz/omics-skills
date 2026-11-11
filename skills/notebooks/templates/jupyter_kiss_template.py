@@ -63,6 +63,7 @@ def find_project_root(start: Path | None = None) -> Path:
 PROJECT_ROOT = find_project_root()
 DATA_DIR = PROJECT_ROOT / "data"
 OUT_DIR = PROJECT_ROOT / "outputs"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 SEED = 7

@@ -142,6 +142,22 @@ def extract_dois(text: str) -> list[str]:
     return sorted(doi for doi in normalized if doi)
 
 
+# A `doi` field with a value: `{x`, `"x` or a bare token. `doi={}` has none.
+DOI_FIELD = re.compile(
+    r"""[\s,]doi\s*=\s*(?:\{\s*[^\s}]|"\s*[^\s"]|[^\s,{}"])""", re.IGNORECASE
+)
+
+
+def count_entries_without_doi(bibtex: str) -> int:
+    """Count BibTeX entries that have no ``doi`` field or an empty one."""
+    entries = re.findall(
+        r"@(?!(?:string|preamble|comment)\b)\w+\s*[{(](.*?)(?=^\s*@|\Z)",
+        bibtex,
+        re.IGNORECASE | re.DOTALL | re.MULTILINE,
+    )
+    return sum(not DOI_FIELD.search(entry) for entry in entries)
+
+
 def exit_code(results: list[LookupResult], strict: bool, missing_dois: int = 0) -> int:
     if any(result.status == "transient_error" for result in results):
         return 2
@@ -198,8 +214,7 @@ def main(argv: list[str] | None = None) -> int:
                 dois = [line.strip() for line in text.splitlines() if line.strip()]
             else:
                 dois = extract_dois(text)
-                titles = re.findall(r'title\s*=\s*["{]([^"}]+)', text, re.IGNORECASE)
-                missing_dois = max(len(titles) - len(dois), 0)
+                missing_dois = count_entries_without_doi(text)
             results = [client.fetch_doi(doi) for doi in dois]
             payload = {
                 "records": [format_record(result) for result in results],

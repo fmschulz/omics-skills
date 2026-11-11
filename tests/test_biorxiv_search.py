@@ -194,5 +194,95 @@ class QueryParsingTests(unittest.TestCase):
         self.assertEqual(collection, [])
         self.assertEqual(count, 0)
 
+def run_main(module, argv, pages):
+    """Run main() against stubbed API pages; return (exit code, payload)."""
+
+    def fake_fetch(url, _timeout, *_retry):
+        return pages(url)
+
+    stdout = io.StringIO()
+    with (
+        mock.patch.object(module, "fetch_json", side_effect=fake_fetch),
+        mock.patch.object(sys, "argv", [str(SCRIPT), *argv]),
+        contextlib.redirect_stdout(stdout),
+    ):
+        exit_code = module.main()
+    return exit_code, json.loads(stdout.getvalue())
+
+
+def single_page(records):
+    return {
+        "messages": [
+            {"status": "ok", "cursor": 0, "count": len(records), "total": len(records)}
+        ],
+        "collection": records,
+    }
+
+
+def category_record(index, category):
+    return {
+        "doi": f"10.1101/{index:06d}",
+        "title": f"Preprint {index}",
+        "abstract": "",
+        "authors": "A. Author",
+        "date": "2026-07-01",
+        "version": "1",
+        "category": category,
+    }
+
+
+class CategoryAndDoiTests(unittest.TestCase):
+    def test_category_filter_drops_records_the_api_did_not_filter(self):
+        """The API ignores an unknown or mis-spelled category and returns every
+        category, which used to be reported as a clean filtered result."""
+        module = load_search_module()
+        records = [
+            category_record(1, "genomics"),
+            category_record(2, "cell biology"),
+            category_record(3, "bioinformatics"),
+        ]
+        code, payload = run_main(
+            module,
+            ["--days", "3", "--category", "Cell_Biology"],
+            lambda _url: single_page(records),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual([r["doi"] for r in payload["results"]], ["10.1101/000002"])
+        self.assertTrue(
+            any("category" in w and "outside" in w for w in payload["warnings"])
+        )
+
+    def test_category_filter_is_silent_when_the_api_filtered(self):
+        module = load_search_module()
+        records = [
+            category_record(1, "cell biology"),
+            category_record(2, "cell biology"),
+        ]
+        code, payload = run_main(
+            module,
+            ["--days", "3", "--category", "cell_biology"],
+            lambda _url: single_page(records),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(len(payload["results"]), 2)
+        self.assertFalse(any("outside" in w for w in payload["warnings"]))
+
+    def test_unknown_doi_warns_that_it_was_not_found_on_biorxiv(self):
+        module = load_search_module()
+        code, payload = run_main(
+            module,
+            ["--doi", "10.1101/0000.00.00.000000"],
+            lambda _url: {"messages": [{"status": "no posts found"}], "collection": []},
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["results"], [])
+        self.assertTrue(
+            any(
+                "not found on bioRxiv" in w and "medRxiv" in w
+                for w in payload["warnings"]
+            )
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -51,8 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
         "max_results",
         nargs="?",
         type=int,
-        default=10,
-        help="Number of results to request (default: 10)",
+        default=None,
+        help="Number of results to request (default: 10, or the number of --ids)",
     )
     parser.add_argument(
         "--phrase",
@@ -219,6 +219,8 @@ def compile_search_query(args: argparse.Namespace) -> str | None:
         filters.append(f"cat:{args.category}")
 
     if filters:
+        if is_raw_query(compiled):
+            compiled = f"({compiled})"
         compiled = f"{compiled} AND " + " AND ".join(filters)
 
     return compiled
@@ -397,6 +399,14 @@ def text_or_none(parent: ET.Element, path: str) -> str | None:
     return value or None
 
 
+def arxiv_id_from_url(abs_url: str | None) -> str | None:
+    """Return the id after ``/abs/``, keeping the archive of an old-style id."""
+    path = (abs_url or "").rstrip("/")
+    if "/abs/" in path:
+        return path.split("/abs/", 1)[1] or None
+    return path.split("/")[-1] or None
+
+
 def parse_result(entry: ET.Element) -> dict[str, object]:
     categories = [
         category.attrib["term"]
@@ -423,7 +433,7 @@ def parse_result(entry: ET.Element) -> dict[str, object]:
             for node in entry.findall("atom:author/atom:name", ATOM_NS)
             if node.text
         ],
-        "arxiv_id": (abs_url or "").rstrip("/").split("/")[-1] or None,
+        "arxiv_id": arxiv_id_from_url(abs_url),
         "abs_url": abs_url,
         "pdf_url": pdf_url,
         "published": text_or_none(entry, "atom:published"),
@@ -464,6 +474,10 @@ def parse_feed(xml_text: str) -> dict[str, object]:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    if args.max_results is None:
+        args.max_results = (
+            len([i for i in (args.ids or "").split(",") if i.strip()]) or 10
+        )
 
     try:
         cache_dir = args.cache_dir or default_cache_dir()

@@ -33,7 +33,7 @@
 - Environment lockfile or export (pixi.lock, uv.lock, conda export): {{env_lockfile}}
 
 ## 4. Workflow steps (as executed)
-> Rule: include the verbatim command for each step (or NOT CAPTURED).
+> Rule: include the verbatim command for each step. Record a missing command under Limitations.
 
 {{steps_block}}
 

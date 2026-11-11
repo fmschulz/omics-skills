@@ -11,20 +11,31 @@ This script is intentionally conservative:
 - It reads `.command.sh` when present and embeds it into the manifest.
 - It does NOT guess tool versions.
 
-Usage:
-  python scripts/extract_nextflow_run.py --trace trace.txt --workdir work --out run_manifest.yaml \
-      --pipeline-name rnaseq --commit-sha <sha> --launch-command "nextflow run ..."
+Usage (the dependencies come from the inline script header, so use `uv run --script`):
+  uv run --script scripts/extract_nextflow_run.py --trace trace.txt --workdir work \
+      --out run_manifest.yaml --run-id <id> --pipeline-name rnaseq \
+      --tool-versions tool-versions.json --outputs-manifest outputs.txt \
+      [--pipeline-version <tag>] [--repo-url <url>] [--commit-sha <sha>] \
+      [--engine-version <version>] [--launch-command "nextflow run ..."]
 
+Required: --trace, --workdir, --out, --run-id, --pipeline-name, --tool-versions,
+--outputs-manifest. Run with --help for the option list.
 """
 
 import argparse
 import csv
 import json
-import re
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import (  # noqa: UP035  # legacy Dict/List annotations remain in this file
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
 import yaml
+
+from command_redaction import redact_command
 
 
 def sniff_dialect(path: Path) -> csv.Dialect:
@@ -42,18 +53,6 @@ def sniff_dialect(path: Path) -> csv.Dialect:
             lineterminator = '\n'
             quoting = csv.QUOTE_MINIMAL
         return Tab()
-
-
-SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|PASSWORD|SECRET|CREDENTIAL|_PAT)[A-Z0-9_]*)="
-    r"(?:'[^']*'|\"[^\"]*\"|[^\s]+)"
-)
-BEARER_RE = re.compile(r"(?i)(authorization:\s*bearer\s+)\S+")
-
-
-def redact_command(command: str) -> str:
-    command = SECRET_ASSIGNMENT_RE.sub(lambda match: f"{match.group(1)}=$REDACTED", command)
-    return BEARER_RE.sub(r"\1$REDACTED", command)
 
 
 def read_command(work_task_dir: Path) -> Optional[str]:
@@ -139,25 +138,30 @@ def main():
         })
 
     manifest: Dict[str, Any] = {
-        'run_id': args.run_id,
-        'workflow_summary': f"Evidence-derived Nextflow run for {args.pipeline_name}.",
-        'workflow': {
-            'engine': 'nextflow',
-            'engine_version': args.engine_version,
-            'pipeline': {
-                'name': args.pipeline_name,
-                'version': args.pipeline_version,
-                'repo_url': args.repo_url,
-                'commit_sha': args.commit_sha,
-                'launch_command': args.launch_command,
+        "run_id": args.run_id,
+        "workflow_summary": f"Evidence-derived Nextflow run for {args.pipeline_name}.",
+        "workflow": {
+            "engine": "nextflow",
+            "engine_version": args.engine_version,
+            "pipeline": {
+                "name": args.pipeline_name,
+                "version": args.pipeline_version,
+                "repo_url": args.repo_url,
+                "commit_sha": args.commit_sha,
+                "launch_command": redact_command(args.launch_command),
             },
-            'execution': {
-                'workdir': str(args.workdir),
-            }
+            "execution": {
+                "workdir": str(args.workdir),
+            },
         },
-        'steps': steps,
-        'outputs': final_outputs,
-        'evidence': [str(args.trace), str(args.workdir), str(args.tool_versions), str(args.outputs_manifest)]
+        "steps": steps,
+        "outputs": final_outputs,
+        "evidence": [
+            str(args.trace),
+            str(args.workdir),
+            str(args.tool_versions),
+            str(args.outputs_manifest),
+        ],
     }
 
     if args.out.suffix.lower() in {'.yml', '.yaml'}:

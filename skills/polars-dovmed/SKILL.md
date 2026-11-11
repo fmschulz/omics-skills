@@ -12,10 +12,10 @@ Search the PubMed Central Open Access (`pmc`) and bioRxiv (`biorxiv`) corpora th
 
 ## Access
 
-- Hosted API: `POLARS_DOVMED_API_KEY` in the environment or in `~/.config/polars-dovmed/.env`. Never pass the key in argv, and never write it to run directories, memory records, summaries or answers. Keys come from the service admin.
+- Hosted API: the key is optional. Without `POLARS_DOVMED_API_KEY` the helper runs anonymously, and `/api/usage` reports the anonymous rate limit (`rate_limit: 120` on 2026-11-10). With a key, set it in the environment or in `~/.config/polars-dovmed/.env`; the helper then sends it as `X-API-Key`, and an invalid key fails with HTTP 403. Never pass the key in argv, and never write it to run directories, memory records, summaries or answers. Keys come from the service admin.
 - Local corpora: see `references/commands.md`.
 - Crossref contact address: pass `--crossref-email` only when the user gave an address for that purpose. Never take one from conversation, git config or system context. The helper reads no environment variable for it.
-- With no key and no corpora, say that `polars-dovmed` is not configured and use another literature skill.
+- Without a key or local corpora the helper uses the hosted API anonymously. If the API is unreachable or the anonymous rate limit is spent, say so and use another literature skill.
 
 ## Instructions
 
@@ -69,7 +69,7 @@ For a range that crosses bands, pass a comma list, for example `--year-bands 202
 
 ## Input Requirements
 
-A literature question turned into an inspected `query.json`, a hosted key or local parquet files, and a writable run directory.
+A literature question turned into an inspected `query.json`, network access to the hosted API (a key is optional) or local parquet files, and a writable run directory.
 
 ## Output
 

@@ -47,6 +47,8 @@ uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --save-payload "$RUN/payload_local.json" --save-response "$RUN/results_local.json"
 ```
 
+- Local mode runs `pixi run dovmed scan` inside a polars-dovmed checkout given by `--local-repo-dir` (default `~/dev/polars-dovmed`); a missing directory stops the run with a clear message.
+- With no API key, `--execution-mode auto` uses the hosted API anonymously unless `--local-parquet-pattern` or the corpus variable is set.
 - `--corpus pmc` reads `DOVMED_PMC_PARQUET` and `--corpus biorxiv` reads `DOVMED_BIORXIV_PARQUET` unless `--local-parquet-pattern` is given. Run one scan per corpus.
 - Local runs record `--corpus-revision` (or `DOVMED_CORPUS_REVISION`) and read `flattened.csv`, falling back to `processed.parquet` (or the legacy `prcoessed.parquet`) only when the compact output is absent. `--timeout` caps a local scan (default 900 seconds).
 - Local corpora come from upstream `dovmed download`, `dovmed build-parquet` and `dovmed scan` (<https://github.com/UriNeri/polars-dovmed>). The pack ships neither an API key nor the corpora.

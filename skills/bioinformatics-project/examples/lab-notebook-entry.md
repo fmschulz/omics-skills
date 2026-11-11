@@ -14,20 +14,20 @@ Chronological, dated decision log kept at the root of `results/` (Noble 2009). E
 
 ---
 
-## 2026-03-30 — QC, trim, assemble, bin (stations A & B)
+## 2026-03-30 — QC, trim, assemble, bin (station A)
 
-**Goal.** Get a QC'd co-assembly and a first set of MAGs from the two arctic stations, with adapter trimming re-enabled after the 2026-03-20 failure.
+**Goal.** Get a QC'd assembly and a first set of MAGs from arctic station A, with adapter trimming re-enabled after the 2026-03-20 failure.
 
 **What I ran.** `results/2026-03-30_qc_trim_assemble_bin/runall` (commit `a1b2c3d`). Stages: FastQC -> fastp (adapter trimming ON) -> metaSPAdes -> bwa mem (reads mapped back to the assembly) -> samtools sort/index -> QuickBin binning (container `bryce911/bbtools:39.85`, digest in provenance).
 
 **Decisions.**
 - Confirmed adapter trimming was on this time; N50 recovered to 14.2 kbp (vs 412 bp on 2026-03-20).
-- Mapped the trimmed reads back to the metaSPAdes contigs to get per-contig coverage; coverage + tetranucleotide composition is what MetaBAT2 bins on.
-- Set MetaBAT2 `--seed 42` so the (stochastic) clustering reproduces bit-for-bit; seed recorded in `results/2026-03-30_qc_trim_assemble_bin/provenance.txt`.
+- Mapped the trimmed reads back to the metaSPAdes contigs; QuickBin reads coverage from the sorted BAM, so no separate depth table is needed.
+- Fixed seed 42 for any stochastic tool that has a seed flag; seed recorded in `results/2026-03-30_qc_trim_assemble_bin/provenance.txt`. QuickBin lists no seed, so the binning step is not guaranteed to reproduce bit-for-bit.
 
-**Observations.** Station A: 41.2M read pairs, 96.8% mapped back to the co-assembly. 18 bins recovered, total 142 Mbp (see `figures/bin_sizes_data.tsv`, plotted in `figures/bin_sizes.png`). MultiQC read-QC summary: `qc/multiqc_report.html`.
+**Observations.** Station A: 41.2M read pairs, 96.8% mapped back to the assembly. 18 bins recovered, total 142 Mbp (see `figures/bin_sizes_data.tsv`, plotted in `figures/bin_sizes.png`). MultiQC read-QC summary: `qc/multiqc_report.html`.
 
-**Provenance.** Tool versions + git commit + seed in `results/2026-03-30_qc_trim_assemble_bin/provenance.txt` (metaSPAdes 3.15.5, bwa 0.7.18, samtools 1.21, MetaBAT2 2.15).
+**Provenance.** Tool versions + git commit + seed in `results/2026-03-30_qc_trim_assemble_bin/provenance.txt` (metaSPAdes 3.15.5, bwa 0.7.18, samtools 1.21, QuickBin from `bryce911/bbtools:39.85`).
 
 **Next.** Run CheckM on the bins, then dereplicate across stations.
 

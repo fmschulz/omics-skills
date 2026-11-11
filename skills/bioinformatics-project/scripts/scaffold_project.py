@@ -376,15 +376,10 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         parser.error(str(exc))
 
-    mismatches = conflicts(project_root, files) if project_root.exists() else []
-    if mismatches:
-        print("Scaffold conflicts; no files changed:")
-        for path in mismatches:
-            print(f"  {path}")
-        return 2
-
     if args.check:
-        missing = [relative for relative in files if not (project_root / relative).exists()]
+        missing = [
+            relative for relative in files if not (project_root / relative).is_file()
+        ]
         if missing:
             print("Scaffold is incomplete:")
             for path in missing:
@@ -392,6 +387,13 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"Scaffold valid: {project_root}")
         return 0
+
+    mismatches = conflicts(project_root, files) if project_root.exists() else []
+    if mismatches:
+        print("Scaffold conflicts; no files changed:")
+        for path in mismatches:
+            print(f"  {path}")
+        return 2
 
     project_root.mkdir(parents=True, exist_ok=True)
     created, unchanged = apply_scaffold(project_root, files)

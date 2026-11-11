@@ -5,12 +5,14 @@ import importlib.util
 import io
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
 import requests
 
+QUOTE = "\N{RIGHT SINGLE QUOTATION MARK}"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = REPO_ROOT / "skills" / "public-db-lookup" / "scripts" / "lookup.py"
 SPEC = importlib.util.spec_from_file_location("public_db_lookup", MODULE_PATH)
@@ -44,6 +46,73 @@ class PublicDbLookupTests(unittest.TestCase):
         self.assertEqual(envelope["record_count_returned"], 3)
         self.assertEqual(envelope["record_count_available"], 7)
         self.assertTrue(envelope["truncated"])
+
+    def test_text_without_a_charset_is_decoded_as_utf8(self) -> None:
+        """requests decodes text/* without a charset as ISO-8859-1, which garbles
+        UTF-8 text (ENA searchFields serves text/plain with no charset)."""
+        real = requests.Response()
+        real.status_code = 200
+        real._content = f"field\tdescription\nname\tit{QUOTE}s\n".encode()
+        real.headers["Content-Type"] = "text/plain"
+        # The HTTP adapter sets this the same way when it builds a response.
+        real.encoding = requests.utils.get_encoding_from_headers(real.headers)
+        session = Mock()
+        session.get = Mock(return_value=real)
+        with tempfile.TemporaryDirectory() as tmp:
+            saved = Path(tmp) / "raw.txt"
+            code, envelope = run(
+                [
+                    "--service",
+                    "ena",
+                    "--path",
+                    "searchFields",
+                    "--format",
+                    "text",
+                    "--save-raw",
+                    str(saved),
+                ],
+                session,
+            )
+            self.assertEqual(code, 0)
+            self.assertIn(f"it{QUOTE}s", envelope["text_head"])
+            self.assertIn(f"it{QUOTE}s", saved.read_text(encoding="utf-8"))
+
+    def test_esearch_reports_the_hit_count_not_the_idlist_length(self) -> None:
+        body = {
+            "esearchresult": {
+                "count": "11018",
+                "retmax": "20",
+                "idlist": [str(i) for i in range(20)],
+            }
+        }
+        session = Mock()
+        session.get = Mock(return_value=response(200, body))
+        code, envelope = run(
+            ["--service", "ncbi-entrez", "--path", "esearch.fcgi", "--max-items", "5"],
+            session,
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(envelope["record_path"], "esearchresult.idlist")
+        self.assertEqual(envelope["record_count_returned"], 5)
+        self.assertEqual(envelope["record_count_available"], 11018)
+        self.assertTrue(envelope["truncated"])
+
+    def test_mgnify_uses_api_v2_and_its_items_key(self) -> None:
+        """MGnify API v1 is deprecated; v2 list responses put records under `items`."""
+        session = Mock()
+        session.get = Mock(
+            return_value=response(
+                200, {"count": 644, "items": [{"accession": "MGYS00001031"}]}
+            )
+        )
+        code, envelope = run(["--service", "mgnify", "--path", "studies/"], session)
+        self.assertEqual(code, 0)
+        self.assertTrue(
+            session.get.call_args.args[0].startswith(
+                "https://www.ebi.ac.uk/metagenomics/api/v2/"
+            )
+        )
+        self.assertEqual(envelope["record_path"], "items")
 
     def test_retries_after_429_and_succeeds(self) -> None:
         session = Mock()
@@ -140,6 +209,27 @@ class ContactAddressTests(unittest.TestCase):
         code, envelope = self.ncbi(session, "--email", self.ADDRESS)
         self.assertEqual((code, envelope["error"]["code"]), (1, "network_error"))
         self.assertNotIn(self.ADDRESS, json.dumps(envelope))
+
+    def test_network_errors_do_not_echo_the_url_encoded_address_or_key(self) -> None:
+        key = "FAKE/KEY+VALUE"
+        url = (
+            requests.Request(
+                "GET",
+                "https://example.org",
+                params={"email": self.ADDRESS, "api_key": key},
+            )
+            .prepare()
+            .url
+        )
+        session = Mock()
+        session.get = Mock(side_effect=requests.ConnectionError(f"failed: {url}"))
+        code, envelope = self.ncbi(
+            session, "--email", self.ADDRESS, env={"NCBI_API_KEY": key}
+        )
+        self.assertEqual((code, envelope["error"]["code"]), (1, "network_error"))
+        shown = json.dumps(envelope)
+        for leaked in ("you%40example.org", "FAKE%2FKEY%2BVALUE", "FAKE%2FKEY%2bVALUE"):
+            self.assertNotIn(leaked, shown)
 
     def test_the_address_and_the_key_stay_out_of_a_service_error(self) -> None:
         session = Mock()

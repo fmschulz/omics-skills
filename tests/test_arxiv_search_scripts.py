@@ -3,13 +3,13 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import json
 import os
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = REPO_ROOT / "skills" / "preprint-search" / "scripts"
@@ -118,6 +118,124 @@ class ArxivSummarizeTests(unittest.TestCase):
                 retries=1,
                 retry_backoff=2.0,
             )
+
+
+def atom_feed(*abs_urls: str) -> str:
+    entries = "".join(
+        f"""<entry><id>{url}</id><title>Paper</title>
+        <link rel="alternate" href="{url}"/></entry>"""
+        for url in abs_urls
+    )
+    return f"""<feed xmlns="http://www.w3.org/2005/Atom">
+    <updated>2026-01-01T00:00:00Z</updated>{entries}</feed>"""
+
+
+class ArxivIdentifierTests(unittest.TestCase):
+    def test_old_style_id_keeps_its_archive(self) -> None:
+        parsed = arxiv_search.parse_feed(
+            atom_feed(
+                "http://arxiv.org/abs/hep-th/9901001v1",
+                "http://arxiv.org/abs/2501.01234v2",
+            )
+        )
+        self.assertEqual(
+            [r["arxiv_id"] for r in parsed["results"]],
+            ["hep-th/9901001v1", "2501.01234v2"],
+        )
+
+    def test_summarize_matches_requested_ids_ignoring_the_version_suffix(self) -> None:
+        feed = arxiv_search.parse_feed(
+            atom_feed(
+                "http://arxiv.org/abs/2501.01234v2",
+                "http://arxiv.org/abs/hep-th/9901001v1",
+            )
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            argv = [
+                "arxiv_summarize.py",
+                "2501.01234,hep-th/9901001,2406.00001",
+                "--output-dir",
+                tmp,
+            ]
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(
+                    arxiv_summarize,
+                    "fetch_results_by_ids",
+                    return_value=("https://example.test", feed),
+                ),
+                contextlib.redirect_stdout(stdout),
+            ):
+                result = arxiv_summarize.main()
+        self.assertEqual(result, 0)
+        self.assertEqual(json.loads(stdout.getvalue())["missing_ids"], ["2406.00001"])
+
+    def test_summarize_reports_a_requested_version_that_was_not_returned(self) -> None:
+        feed = arxiv_search.parse_feed(atom_feed("http://arxiv.org/abs/2501.01234v1"))
+        with tempfile.TemporaryDirectory() as tmp:
+            argv = [
+                "arxiv_summarize.py",
+                "2501.01234v1,2501.01234v999",
+                "--output-dir",
+                tmp,
+            ]
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(
+                    arxiv_summarize,
+                    "fetch_results_by_ids",
+                    return_value=("https://example.test", feed),
+                ),
+                contextlib.redirect_stdout(stdout),
+            ):
+                result = arxiv_summarize.main()
+        self.assertEqual(result, 0)
+        self.assertEqual(
+            json.loads(stdout.getvalue())["missing_ids"], ["2501.01234v999"]
+        )
+
+
+class ArxivRequestTests(unittest.TestCase):
+    def run_search(self, argv: list[str]) -> dict[str, str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            full_argv = ["arxiv_search.py", *argv, "--cache-dir", tmp]
+            with (
+                mock.patch.object(sys, "argv", full_argv),
+                mock.patch.object(
+                    arxiv_search,
+                    "fetch_feed",
+                    return_value=("https://example.test", atom_feed()),
+                ) as fetch,
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(arxiv_search.main(), 0)
+        return fetch.call_args.args[0]
+
+    def test_ids_request_as_many_results_as_ids_by_default(self) -> None:
+        ids = ",".join(f"2501.{n:05d}" for n in range(1, 13))
+        self.assertEqual(self.run_search(["--ids", ids])["max_results"], "12")
+
+    def test_explicit_max_results_wins_over_the_id_count(self) -> None:
+        # max_results is positional and follows the (ignored) query.
+        argv = ["", "5", "--ids", "2501.00001,2501.00002"]
+        self.assertEqual(self.run_search(argv)["max_results"], "5")
+
+    def test_query_without_ids_keeps_the_default_of_ten(self) -> None:
+        self.assertEqual(self.run_search(["protein folding"])["max_results"], "10")
+
+    def test_category_binds_to_the_whole_raw_query(self) -> None:
+        args = arxiv_search.build_parser().parse_args(
+            ["ti:a OR ti:b", "--category", "cs.LG"]
+        )
+        self.assertEqual(
+            arxiv_search.compile_search_query(args), "(ti:a OR ti:b) AND cat:cs.LG"
+        )
+
+    def test_raw_query_without_category_passes_through_unchanged(self) -> None:
+        args = arxiv_search.build_parser().parse_args(["ti:a OR ti:b"])
+        self.assertEqual(arxiv_search.compile_search_query(args), "ti:a OR ti:b")
 
 
 if __name__ == "__main__":

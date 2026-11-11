@@ -183,6 +183,11 @@ def parse_query_groups(query: str | None, phrase: bool) -> list[list[str]]:
     return groups
 
 
+def normalize_category(text: object) -> str:
+    """Return a category in the API form: lower case, underscores as spaces."""
+    return compact_whitespace(str(text or "").replace("_", " ")).lower()
+
+
 def parse_authors(raw: str | None) -> list[str]:
     if not raw:
         return []
@@ -488,6 +493,25 @@ def main() -> int:
         pages_fetched = 0
         records_scanned = 0
         reached_scan_limit = False
+        wanted_category = normalize_category(args.category)
+        off_category = 0
+
+        def collect(raw: dict[str, object]) -> None:
+            """Keep a scanned record that is in the category and matches the filters."""
+            nonlocal off_category
+            record = normalize_record(raw)
+            if (
+                wanted_category
+                and normalize_category(record["category"]) != wanted_category
+            ):
+                off_category += 1
+                return
+            is_match, where = record_matches(
+                record, fields, query_groups, author_variants
+            )
+            if is_match:
+                record["matched_in"] = where
+                matched.append(record)
 
         if args.doi:
             url = build_url(args, "", 0)
@@ -499,6 +523,11 @@ def main() -> int:
                 raise RuntimeError("unexpected bioRxiv API response: missing collection list")
             total_available = len(collection)
             records_scanned = len(collection)
+            if not collection:
+                warnings.append(
+                    f"DOI {args.doi} was not found on bioRxiv; "
+                    "medRxiv DOIs are not covered by this script"
+                )
             for raw in collection:
                 record = normalize_record(raw)
                 is_match, where = record_matches(record, fields, query_groups, author_variants)
@@ -532,11 +561,7 @@ def main() -> int:
 
                     for raw in reversed(collection):
                         records_scanned += 1
-                        record = normalize_record(raw)
-                        is_match, where = record_matches(record, fields, query_groups, author_variants)
-                        if is_match:
-                            record["matched_in"] = where
-                            matched.append(record)
+                        collect(raw)
                         if records_scanned >= args.scan_limit:
                             reached_scan_limit = records_scanned < total_available
                             break
@@ -559,11 +584,7 @@ def main() -> int:
 
                     for raw in collection:
                         records_scanned += 1
-                        record = normalize_record(raw)
-                        is_match, where = record_matches(record, fields, query_groups, author_variants)
-                        if is_match:
-                            record["matched_in"] = where
-                            matched.append(record)
+                        collect(raw)
                         if records_scanned >= args.scan_limit:
                             reached_scan_limit = (
                                 total_available is None or records_scanned < total_available
@@ -592,6 +613,13 @@ def main() -> int:
                     request_urls.append(url)
                     data = fetch_json(url, args.timeout, args.retries, args.retry_backoff)
                     pages_fetched += 1
+
+        if off_category:
+            warnings.append(
+                f"the API returned {off_category} of {records_scanned} scanned records "
+                f"outside category {args.category!r}; they were dropped "
+                "(check the category name)"
+            )
 
         deduped = matched
         versions_collapsed = 0

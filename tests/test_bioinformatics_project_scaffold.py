@@ -85,6 +85,41 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
             self.assertIn("Scaffold is incomplete", result.stdout)
             self.assertIn("README.md", result.stdout)
 
+    def test_check_passes_after_a_scaffolded_file_is_edited(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project = Path(tmpdir) / "coastal-metagenomes"
+            self.run_scaffold(project)
+            hypotheses = project / "tasks" / "hypotheses.md"
+            hypotheses.write_text("H1: filled in by the user\n", encoding="utf-8")
+
+            result = self.run_scaffold(project, "--check", check=False)
+
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertIn("Scaffold valid", result.stdout)
+
+    def test_check_fails_when_a_scaffolded_file_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project = Path(tmpdir) / "coastal-metagenomes"
+            self.run_scaffold(project)
+            (project / "README.md").unlink()
+
+            result = self.run_scaffold(project, "--check", check=False)
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("README.md", result.stdout)
+
+    def test_check_fails_when_a_directory_replaces_a_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project = Path(tmpdir) / "coastal-metagenomes"
+            self.run_scaffold(project)
+            (project / "README.md").unlink()
+            (project / "README.md").mkdir()
+
+            result = self.run_scaffold(project, "--check", check=False)
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("README.md", result.stdout)
+
     def test_numbered_layout_with_first_experiment_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             project = Path(tmpdir) / "coastal-metagenomes"

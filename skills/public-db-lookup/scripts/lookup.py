@@ -13,19 +13,18 @@ import json
 import os
 import sys
 import time
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, quote, quote_plus
 
 import requests
-
 
 BASE_URLS = {
     "uniprot": "https://rest.uniprot.org",
     "ncbi-entrez": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
     "ncbi-datasets": "https://api.ncbi.nlm.nih.gov/datasets/v2",
-    "mgnify": "https://www.ebi.ac.uk/metagenomics/api/v1",
+    "mgnify": "https://www.ebi.ac.uk/metagenomics/api/v2",
     "interpro": "https://www.ebi.ac.uk/interpro/api",
     "alphafold": "https://alphafold.ebi.ac.uk/api",
     "string": "https://string-db.org/api",
@@ -228,10 +227,26 @@ def find_records(payload: Any, record_path: str | None) -> tuple[str | None, lis
     return None, None, []
 
 
+def available_count(payload: Any, record_path: str | None, records: list[Any]) -> int:  # noqa: ANN401  # decoded JSON of any shape
+    """Return the number of matches the service reports, else the list length.
+
+    An esearch response holds one page of ids in `idlist`; the hit total is in
+    `esearchresult.count`.
+    """
+    if record_path == "esearchresult.idlist":
+        try:
+            return int(get_path(payload, "esearchresult.count"))
+        except (TypeError, ValueError):
+            pass
+    return len(records)
+
+
 def redact(text: str, secrets: list[str]) -> str:
-    """Replace every secret value in ``text``."""
+    """Replace every secret value in ``text``, also in its URL-encoded forms."""
     for secret in secrets:
-        text = text.replace(secret, "REDACTED")
+        forms = (secret, quote(secret, safe=""), quote_plus(secret))
+        for form in forms:
+            text = text.replace(form, "REDACTED")
     return text
 
 
@@ -282,6 +297,13 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
         )
     except requests.RequestException as error:
         return fail(args.service, "network_error", redact(str(error), secrets))
+    content_type = str(
+        {k.lower(): v for k, v in response.headers.items()}.get("content-type", "")
+    )
+    if "charset" not in content_type.lower():
+        # requests decodes text/* without a charset as ISO-8859-1, which garbles
+        # the UTF-8 these services send (ENA searchFields).
+        response.encoding = "utf-8"
     # Redact before anything is parsed or printed: a service that echoes the
     # request (NCBI error bodies do) would otherwise leak the key on success too.
     text = redact(response.text, secrets)
@@ -303,7 +325,6 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
         "url": display_url,
         "status_code": response.status_code,
     }
-    content_type = str({k.lower(): v for k, v in response.headers.items()}.get("content-type", ""))
     looks_json = "json" in content_type.lower() or text.lstrip()[:1] in ("{", "[")
     if args.format == "text" or (args.format == "auto" and not looks_json):
         result["text_head"] = text[:TEXT_HEAD]
@@ -328,8 +349,9 @@ def main(argv: list[str] | None = None, session: Any = None, env: dict[str, str]
         if records is not None:
             result["record_path"] = record_path
             result["record_count_returned"] = min(len(records), args.max_items)
-            result["record_count_available"] = len(records)
-            result["truncated"] = len(records) > args.max_items
+            available = available_count(payload, record_path, records)
+            result["record_count_available"] = available
+            result["truncated"] = available > result["record_count_returned"]
             result["records"] = [compact(item, args.max_items, args.max_depth) for item in records[: args.max_items]]
         else:
             result["summary"] = compact(payload, args.max_items, args.max_depth)

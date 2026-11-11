@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 from unittest.mock import Mock
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = REPO_ROOT / "skills" / "crossref-lookup" / "scripts" / "lookup.py"
@@ -36,6 +40,67 @@ class CrossrefLookupTests(unittest.TestCase):
         transient = crossref_lookup.LookupResult("transient_error", "10.1000/retry")
         self.assertEqual(crossref_lookup.exit_code([missing], strict=True), 1)
         self.assertEqual(crossref_lookup.exit_code([transient], strict=True), 2)
+
+    def test_audit_counts_entries_without_doi_not_title_fields(self) -> None:
+        bib = (
+            "@inproceedings{with_doi,\n  title = {A},\n  booktitle = {Proc B},\n"
+            "  doi = {10.1000/abc}\n}\n\n"
+            "@article{no_doi,\n  title = {C},\n  journaltitle = {J}\n}\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "refs.bib"
+            path.write_text(bib, encoding="utf-8")
+            valid = crossref_lookup.LookupResult("valid", "10.1000/abc", {})
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(
+                    crossref_lookup.CrossrefClient, "fetch_doi", return_value=valid
+                ),
+                contextlib.redirect_stdout(stdout),
+            ):
+                code = crossref_lookup.main(
+                    ["--audit-bibliography", str(path), "--strict"]
+                )
+        self.assertEqual(json.loads(stdout.getvalue())["potentially_missing_dois"], 1)
+        self.assertEqual(code, 1)
+
+    def test_an_empty_doi_field_counts_as_a_missing_doi(self) -> None:
+        for bib in (
+            "@article{k, title={Missing DOI}, doi={}}",
+            '@article{k,\n  title = {Missing DOI},\n  doi = ""\n}',
+            "@article{k, title={Missing DOI}, doi = { }}",
+        ):
+            with self.subTest(bib=bib):
+                self.assertEqual(crossref_lookup.count_entries_without_doi(bib), 1)
+        full = "@article{k, title={T}, doi={10.1000/abc}}"
+        self.assertEqual(crossref_lookup.count_entries_without_doi(full), 0)
+
+    def test_parenthesized_entries_are_audited(self) -> None:
+        bib = (
+            "@article(no_doi, title={C})\n"
+            "@article(with_doi, title={D}, doi={10.1000/abc})\n"
+        )
+        self.assertEqual(crossref_lookup.count_entries_without_doi(bib), 1)
+
+    def test_audit_of_a_complete_bibliography_passes_strict(self) -> None:
+        bib = (
+            "@inproceedings{k,\n  title = {A},\n  booktitle = {B},\n"
+            "  doi = {10.1000/abc}\n}\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "refs.bib"
+            path.write_text(bib, encoding="utf-8")
+            valid = crossref_lookup.LookupResult("valid", "10.1000/abc", {})
+            with (
+                mock.patch.object(
+                    crossref_lookup.CrossrefClient, "fetch_doi", return_value=valid
+                ),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                code = crossref_lookup.main(
+                    ["--audit-bibliography", str(path), "--strict"]
+                )
+        self.assertEqual(code, 0)
 
     def test_wrapper_runs_its_own_script_and_no_other_skill(self) -> None:
         wrapper = (MODULE_PATH.parent / "lookup").read_text(encoding="utf-8")

@@ -14,7 +14,7 @@ Write Methods text and run documentation from real workflow artifacts. Every com
    - Nextflow: `extract_nextflow_run.py` reads `trace.txt` and the `work/` task folders. `--tool-versions` is a JSON mapping of process name to `{"tool": ..., "version": ...}`; `--outputs-manifest` lists one final output path per line.
    - Snakemake: `extract_snakemake_run.py` reads a JSONL file with one record per job (`rule`, `status`, `tool`, `version`, `command`, `inputs`, `outputs`). Assemble it from `--printshellcmds` logs and the version records; see `fixtures/snakemake/jobs.jsonl`.
    - CWL: `extract_cwl_run.py` reads one normalized JSON record (run metadata plus `steps` and `outputs`), not a raw CWLProv folder; see `fixtures/cwl/provenance.json`.
-3. Fill the remaining fields from evidence only. While drafting, mark a missing value `NOT CAPTURED`; the final manifest must not contain it. If the value cannot be recovered, record the gap under `limitations` and do not call the manifest reproducible.
+3. Fill the remaining fields from evidence only. While drafting, mark a missing value `NOT CAPTURED`; the final manifest must not contain it, and the validator rejects `NOT CAPTURED`, `UNKNOWN` and `TBD` in any string value. If the value cannot be recovered, record the gap under `limitations` and do not call the manifest reproducible.
 4. Validate the manifest against [schemas/run-manifest.schema.json](schemas/run-manifest.schema.json) with `validate_run_manifest.py`.
 5. Draft `METHODS.md` from [templates/methods_report.md](templates/methods_report.md): workflow summary at the top, then inputs, exact rerun command, environment, steps as executed, QC, outputs, and limitations.
 6. For manuscript Methods prose, hand the manifest to `academic-writing` with `stop-slop`. Keep script names, internal flags, and runtime bookkeeping in Methods or the supplement, not in Results.
@@ -58,7 +58,8 @@ Each script declares its dependencies inline (PEP 723), so `uv run --script` nee
 - [ ] No invented commands, versions, or parameters
 - [ ] Every step has inputs, outputs, and versions captured
 - [ ] Commands were sourced from task scripts, not environment-bearing wrappers, and contain no credentials
-- [ ] No `NOT CAPTURED`, `UNKNOWN`, or `TBD` placeholder remains in a required field
+- [ ] The extractors redact secret flags, `NAME=value` secrets, URL passwords and `Bearer`/`Basic` headers (`scripts/command_redaction.py`); read the commands once for anything else
+- [ ] No `NOT CAPTURED`, `UNKNOWN`, or `TBD` placeholder remains anywhere in the manifest
 - [ ] Workflow summary appears at top of `METHODS.md`
 - [ ] The final manifest passes `validate_run_manifest.py`
 

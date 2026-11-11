@@ -1,27 +1,27 @@
 marimo has a rich set of UI components. 
 
-* `mo.ui.altair_chart(altair_chart)` - create a reactive Altair chart
-* `mo.ui.button(value=None, kind='primary')` - create a clickable button
-* `mo.ui.run_button(label=None, tooltip=None, kind='primary')` - create a button that runs code
-* `mo.ui.checkbox(label='', value=False)` - create a checkbox
-* `mo.ui.chat(placeholder='', value=None)` - create a chat interface
-* `mo.ui.date(value=None, label=None, full_width=False)` - create a date picker
-* `mo.ui.dropdown(options, value=None, label=None, full_width=False)` - create a dropdown menu
-* `mo.ui.file(label='', multiple=False, full_width=False)` - create a file upload element
-* `mo.ui.number(value=None, label=None, full_width=False)` - create a number input
-* `mo.ui.radio(options, value=None, label=None, full_width=False)` - create radio buttons
-* `mo.ui.refresh(options: List[str], default_interval: str)` - create a refresh control
-* `mo.ui.slider(start, stop, value=None, label=None, full_width=False, step=None)` - create a slider
-* `mo.ui.range_slider(start, stop, value=None, label=None, full_width=False, step=None)` - create a range slider
-* `mo.ui.table(data, columns=None, on_select=None, sortable=True, filterable=True)` - create an interactive table
-* `mo.ui.text(value='', label=None, full_width=False)` - create a text input
-* `mo.ui.text_area(value='', label=None, full_width=False)` - create a multi-line text input
+* `mo.ui.altair_chart(chart)` - create a reactive Altair chart
+* `mo.ui.button(on_click=None, value=None, kind='neutral', *, label='click here')` - create a clickable button (`kind`: neutral, success, warn, danger)
+* `mo.ui.run_button(kind='neutral', tooltip=None, *, label='click to run')` - create a button that runs code
+* `mo.ui.checkbox(value=False, *, label='')` - create a checkbox
+* `mo.ui.chat(model, *, prompts=None)` - create a chat interface; `model` is a callable `(messages, config)` that returns the reply
+* `mo.ui.date(start=None, stop=None, value=None, *, label='', full_width=False)` - create a date picker
+* `mo.ui.dropdown(options, value=None, allow_select_none=None, searchable=False, *, label='', full_width=False)` - create a dropdown menu
+* `mo.ui.file(filetypes=None, multiple=False, kind='button', *, label='')` - create a file upload element (`kind`: button, area)
+* `mo.ui.number(start=None, stop=None, step=None, value=None, *, label='', full_width=False)` - create a number input
+* `mo.ui.radio(options, value=None, inline=False, *, label='')` - create radio buttons
+* `mo.ui.refresh(options=None, default_interval=None, *, label='')` - create a refresh control, for example `options=['1s', '5s'], default_interval='1s'`
+* `mo.ui.slider(start, stop, step=None, value=None, *, label='', full_width=False)` - create a slider
+* `mo.ui.range_slider(start, stop, step=None, value=None, *, label='', full_width=False)` - create a range slider; `value` is `[low, high]`
+* `mo.ui.table(data, pagination=None, selection='multi', page_size=None, *, label='')` - create an interactive table with built-in search and sort; read the selected rows from `.value`
+* `mo.ui.text(value='', placeholder='', kind='text', *, label='', full_width=False)` - create a text input
+* `mo.ui.text_area(value='', placeholder='', *, label='', full_width=False)` - create a multi-line text input
 * `mo.ui.data_explorer(df)` - create an interactive dataframe explorer
 * `mo.ui.dataframe(df)` - display a dataframe with search, filter, and sort capabilities
-* `mo.ui.plotly(plotly_figure)` - create a reactive Plotly chart (supports scatter, treemap, and sunburst)
-* `mo.ui.tabs(elements: dict[str, mo.ui.Element])` - create a tabbed interface from a dictionary
-* `mo.ui.array(elements: list[mo.ui.Element])` - create an array of UI elements
-* `mo.ui.form(element: mo.ui.Element, label='', bordered=True)` - wrap an element in a form
+* `mo.ui.plotly(figure)` - create a reactive Plotly chart (supports scatter, treemap, and sunburst)
+* `mo.ui.tabs(tabs, value=None)` - create a tabbed interface from a dictionary of tab name to content
+* `mo.ui.array(elements)` - create an array of UI elements from a list
+* `mo.ui.form(element, *, bordered=True, label='')` - wrap an element in a form
 
 Inspect the installed API with `uv run --no-project --with marimo python -c "import marimo as mo; help(mo.ui.form)"`.
 

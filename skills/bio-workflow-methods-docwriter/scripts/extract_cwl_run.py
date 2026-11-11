@@ -11,6 +11,8 @@ from pathlib import Path
 
 import yaml
 
+from command_redaction import redact_command
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -24,8 +26,31 @@ def main() -> int:
     step_required = {'name', 'status', 'tool', 'tool_version', 'command', 'inputs', 'outputs'}
     if any(set(step) != step_required for step in data['steps']):
         parser.error('each CWL step lacks complete command/version/input/output evidence')
-    steps = [{"step_id": f"cwl-step-{index}", **step} for index, step in enumerate(data['steps'], 1)]
-    manifest = {"run_id": data['run_id'], "workflow_summary": f"Evidence-derived CWL run for {data['pipeline_name']}.", "workflow": {"engine": "cwl", "engine_version": data['engine_version'], "pipeline": {"name": data['pipeline_name'], "version": data['pipeline_version'], "commit_sha": data['commit_sha'], "launch_command": data['launch_command']}}, "steps": steps, "outputs": data['outputs'], "evidence": [str(args.provenance)]}
+    steps = [
+        {
+            "step_id": f"cwl-step-{index}",
+            **step,
+            "command": redact_command(step["command"]),
+        }
+        for index, step in enumerate(data["steps"], 1)
+    ]
+    manifest = {
+        "run_id": data["run_id"],
+        "workflow_summary": f"Evidence-derived CWL run for {data['pipeline_name']}.",
+        "workflow": {
+            "engine": "cwl",
+            "engine_version": data["engine_version"],
+            "pipeline": {
+                "name": data["pipeline_name"],
+                "version": data["pipeline_version"],
+                "commit_sha": data["commit_sha"],
+                "launch_command": redact_command(data["launch_command"]),
+            },
+        },
+        "steps": steps,
+        "outputs": data["outputs"],
+        "evidence": [str(args.provenance)],
+    }
     args.out.write_text(yaml.safe_dump(manifest, sort_keys=False))
     return 0
 

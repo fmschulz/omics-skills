@@ -11,6 +11,8 @@ from pathlib import Path
 
 import yaml
 
+from command_redaction import redact_command
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -31,8 +33,36 @@ def main() -> int:
     outputs = [line.strip() for line in args.outputs_manifest.read_text().splitlines() if line.strip()]
     if not outputs:
         parser.error('outputs manifest is empty')
-    steps = [{"step_id": f"smk-job-{index}", "name": job['rule'], "status": job['status'], "tool": job['tool'], "tool_version": job['version'], "command": job['command'], "inputs": job['inputs'], "outputs": job['outputs']} for index, job in enumerate(jobs, 1)]
-    manifest = {"run_id": args.run_id, "workflow_summary": f"Evidence-derived Snakemake run for {args.pipeline_name}.", "workflow": {"engine": "snakemake", "engine_version": args.engine_version, "pipeline": {"name": args.pipeline_name, "version": args.pipeline_version, "commit_sha": args.commit_sha, "launch_command": args.launch_command}}, "steps": steps, "outputs": outputs, "evidence": [str(args.jobs), str(args.outputs_manifest)]}
+    steps = [
+        {
+            "step_id": f"smk-job-{index}",
+            "name": job["rule"],
+            "status": job["status"],
+            "tool": job["tool"],
+            "tool_version": job["version"],
+            "command": redact_command(job["command"]),
+            "inputs": job["inputs"],
+            "outputs": job["outputs"],
+        }
+        for index, job in enumerate(jobs, 1)
+    ]
+    manifest = {
+        "run_id": args.run_id,
+        "workflow_summary": f"Evidence-derived Snakemake run for {args.pipeline_name}.",
+        "workflow": {
+            "engine": "snakemake",
+            "engine_version": args.engine_version,
+            "pipeline": {
+                "name": args.pipeline_name,
+                "version": args.pipeline_version,
+                "commit_sha": args.commit_sha,
+                "launch_command": redact_command(args.launch_command),
+            },
+        },
+        "steps": steps,
+        "outputs": outputs,
+        "evidence": [str(args.jobs), str(args.outputs_manifest)],
+    }
     args.out.write_text(yaml.safe_dump(manifest, sort_keys=False))
     return 0
 

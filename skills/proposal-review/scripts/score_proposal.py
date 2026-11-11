@@ -47,6 +47,11 @@ def recommendation(score: float, bands: list[dict[str, object]]) -> str:
     raise ValueError("recommendation bands do not cover the computed score")
 
 
+def lowest_label(bands: list[dict[str, object]]) -> str:
+    """Return the label of the band with the lowest minimum score."""
+    return str(min(bands, key=lambda item: float(item["minimum"]))["label"])
+
+
 def score_payload(payload: dict[str, object]) -> dict[str, object]:
     rubric = payload.get("rubric")
     if rubric is None:
@@ -77,7 +82,7 @@ def score_payload(payload: dict[str, object]) -> dict[str, object]:
     weighted_mean = sum(scores[category] * weights[category] for category in weights) / 100.0
     label = recommendation(weighted_mean, bands)
     if payload.get("fatal_flaw"):
-        label = str(payload.get("fatal_flaw_recommendation", "Reject"))
+        label = str(payload.get("fatal_flaw_recommendation", lowest_label(bands)))
     return {
         "rubric_source": rubric_source,
         "weights_total": sum(weights.values()),
