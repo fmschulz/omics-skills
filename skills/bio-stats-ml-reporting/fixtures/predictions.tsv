@@ -1,7 +1,0 @@
-sample_id	group_id	split	y_true	y_pred	y_score	batch
-S01	G01	train	0	0	0.10	A
-S02	G02	train	1	1	0.90	B
-S03	G03	test	0	0	0.10	A
-S04	G04	test	0	0	0.20	B
-S05	G05	test	1	1	0.80	A
-S06	G06	test	1	1	0.90	B

@@ -71,7 +71,7 @@ A notebook is not "done" until it has been executed end to end on a fresh kernel
    - marimo `.py` → `.ipynb`: `uvx marimo export ipynb <notebook.py> -o <notebook.ipynb> --include-outputs --sandbox -f`.
    - After conversion, re-run step 6 (check/execute), step 7 (inspect plots), and step 8 (deliver pre-executed).
 
-10. **References.** Marimo: `references/notebook_structure.md`, `UI.md`, `SQL.md`, `STATE.md`, `EXPORTS.md`, `PYTEST.md`, `TOP-LEVEL-IMPORTS.md`, `DEPLOYMENT.md`. Conversion: `references/widgets.md`, `references/latex.md`. Pixi and Jupyter: `references/pixi_jupyter.md`. DuckDB loading: `references/data_loading_duckdb.md`. Templates (start a new notebook from one): `templates/marimo_notebook_template.py`, `templates/jupyter_kiss_template.py`. Jupyter structure linter: `uv run --script "$NOTEBOOKS_SKILL/scripts/lint_notebook_structure.py" <notebook.ipynb>`.
+10. **References.** Marimo: `references/notebook_structure.md`, `UI.md`, `STATE.md`, `EXPORTS.md`. For testing, SQL cells, top-level imports and deployment, see the marimo documentation at https://docs.marimo.io/. Conversion: `references/widgets.md`, `references/latex.md`. Pixi and Jupyter: `references/pixi_jupyter.md`. DuckDB loading: `references/data_loading_duckdb.md`. Templates (start a new notebook from one): `templates/marimo_notebook_template.py`, `templates/jupyter_kiss_template.py`. Jupyter structure linter: `uv run --script "$NOTEBOOKS_SKILL/scripts/lint_notebook_structure.py" <notebook.ipynb>`.
 
 ## Input Requirements
 

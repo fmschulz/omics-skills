@@ -26,6 +26,9 @@ ENV/
 *.ipynb
 !skills/**/fixtures/*.ipynb
 
+# Agent session worktrees (an untracked entry makes the checkout look dirty to installers)
+.claude/worktrees/
+
 # IDE
 .vscode/
 .idea/
@@ -51,11 +54,6 @@ site/
 tmp/
 temp/
 *.tmp
-
-# Skill-local CLI outputs
-skills/preprint-search/out.json
-skills/preprint-search/scripts/out.json
-
 
 # AI scratch artifacts (task lists, session handoffs, agent memory, plans, reasoning)
 tasks/

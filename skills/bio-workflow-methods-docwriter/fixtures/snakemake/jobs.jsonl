@@ -1,1 +1,0 @@
-{"rule":"fastqc","status":"completed","tool":"FastQC","version":"0.12.1","command":"fastqc reads.fastq --outdir qc","inputs":["reads.fastq"],"outputs":["qc/reads_fastqc.html"]}

@@ -1,4 +1,0 @@
-assembly	class	tool	model	threshold	count	notes
-query	tRNA	tRNAscan-SE	all	default	1	fixture
-relative_a	tRNA	tRNAscan-SE	all	default	1	fixture
-relative_b	tRNA	tRNAscan-SE	all	default	1	fixture

@@ -35,10 +35,6 @@ def supplementary_doc_files(root: Path) -> list[Path]:
             files.extend(sorted(p for p in docs.glob("*.md") if p.is_file()))
         if skill_dir.name == "omics-pipeline":
             files.extend(sorted(skill_dir.glob("references/*.md")))
-        if skill_dir.name == "bio-fasta-database-curator":
-            path = skill_dir / "tools.md"
-            if path.exists():
-                files.append(path)
         if skill_dir.name == "tracking-taxonomy-updates":
             for rel in ("reference/sources.md", "reference/tools.md"):
                 path = skill_dir / rel

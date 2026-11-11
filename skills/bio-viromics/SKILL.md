@@ -10,7 +10,7 @@ Detect, quality-check, and classify viral contigs, then compare each viral genom
 
 ## Instructions
 
-Tool guides, versions, and verified flags: [docs/README.md](docs/README.md).
+Tool order, versions, database pairing and the vConTACT3 and GVClass guides: [docs/README.md](docs/README.md).
 
 Pass an explicit thread count to each tool (`-t`) and match the CPUs you request to it. Without it, geNomad and CheckV use every CPU available to the process, and vConTACT3 uses every CPU on the host, even inside a smaller Slurm allocation.
 
@@ -21,9 +21,9 @@ Pass an explicit thread count to each tool (`-t`) and match the CPUs you request
 5. Search the literature for that group and write `analysis_playbook.md`: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by people who study the group.
 6. Choose taxonomy, clustering, phylogenetic, and comparative methods from the playbook:
    - Bacteriophages and other prokaryotic viruses: vConTACT3 gene-sharing networks for genus-to-order assignment. vConTACT3 replaces vConTACT2. The upstream source tag is 3.2.4; bioconda ships 3.1.6. Record the version you ran.
-   - Nucleocytoviricota, Mirusviricota, and Preplasmiviricota: GVClass 2.0.3 with resource bundle v2.0.0, plus marker-gene phylogenies of core genes through `/bio-phylogenomics`.
+   - Nucleocytoviricota, Mirusviricota, and Preplasmiviricota: GVClass 2.0.3 with resource bundle v2.0.0, plus marker-gene phylogenies of core genes by following the [phylogenomics page](../omics-pipeline/references/phylogenomics.md).
    - RNA viruses, ssDNA viruses, and other groups that vConTACT3 does not cover well: group-specific markers, phylogenomics, and protein-family methods from the playbook. Do not force a phage-oriented workflow on them.
-7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (`/bio-gene-calling`, `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list.
+7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (the [gene-calling page](../omics-pipeline/references/gene-calling.md), `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list.
 8. Compare each query to the literature-supported reference set on the comparative axes. Write `marker_census.tsv`, `family_copy_number_comparison.tsv`, `conserved_neighborhoods.tsv`, and `ncRNA_census.tsv` to one comparison directory. Report what matches expectations, what is missing, expanded, or query-specific, and which patterns are likely artifacts.
 9. Assemble the evidence bundle. The driver checksum-verifies the geNomad, CheckV, GVClass, and vConTACT3 database resources, checks the hypothesis register and reflections, copies the four comparative tables, and computes `genome_size_frontier.tsv`:
 

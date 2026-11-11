@@ -1,3 +1,0 @@
-rule all:
-    input:
-        "fixture-complete.txt"

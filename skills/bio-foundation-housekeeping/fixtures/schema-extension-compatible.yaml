@@ -1,8 +1,0 @@
-id: https://example.org/project-extension
-name: project_extension
-classes:
-  Sample:
-    attributes:
-      collection_site:
-        range: string
-        required: false

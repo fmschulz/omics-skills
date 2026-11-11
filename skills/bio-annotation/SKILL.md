@@ -12,7 +12,7 @@ Shared pipeline rules: read `~/.agents/skills/omics-pipeline/SKILL.md` first (in
 
 ## Instructions
 
-1. Read `docs/README.md` and the relevant tool guides before running anything.
+1. Read [docs/README.md](docs/README.md) for the tool choice and its pitfalls before running anything.
 2. Normalize tool outputs and generate the complete comparison bundle with the schema-backed driver:
 
    ```bash
@@ -23,7 +23,7 @@ Shared pipeline rules: read `~/.agents/skills/omics-pipeline/SKILL.md` first (in
 
    `raw_annotations.tsv` is one row per protein and family hit with columns `genome, protein_id, family_id, family_name, category, e_value, annotation, taxonomy, confidence`, merged by you from the tool outputs below. `genomes.tsv` has `genome, role (query|reference), domain, route`; `marker_catalog.tsv` has `category, family_id, family_name, expected`. `fixtures/` holds a runnable example. The driver refuses a non-empty destination, rejects any `role` other than `query` or `reference`, validates all inputs before it writes a file (a failed run leaves the destination empty, so you can rerun into it), enforces globally unique protein identifiers, writes normalized Parquet tables, adds explicit absent-marker rows, and computes query-specific/missing/expanded/contracted families against the reference median. The artifact contract is in `schemas/artifacts.schema.json`.
 3. Take the domain route for each genome from the router's routing table before interpreting protein annotations. Domain-specific taxonomy follows the route: GTDB-Tk for Bacteria and Archaea (cross-check NCBI/DIAMOND lineages), `bio-viromics` for viruses (PHROG/NCVOG markers and vConTACT3 only for phage and prokaryotic-virus contexts; GVClass and NCLDV marker phylogeny for giant viruses), EukCC for Eukaryota without CheckM or GTDB-Tk assumptions.
-4. For InterProScan, read `docs/interproscan-usage.md` and validate the exact CLI with `--help` or `--version`. InterProScan 5 and the Nextflow-based InterProScan 6 both have current releases (see `docs/README.md`). Pin one release and one InterPro data release per project.
+4. For InterProScan, validate the exact CLI with `--help` or `--version`. InterProScan 5 and the Nextflow-based InterProScan 6 both have current releases (see [docs/README.md](docs/README.md#interproscan-domains)). Pin one release and one InterPro data release per project.
 5. Run InterProScan for domain and family annotation.
 6. Run eggNOG-mapper v2 for orthology-based annotation. v3.0.0 is in beta; use it only when the project pins it deliberately.
 7. Run sequence-vs-database search and resolve taxonomy with TaxonKit v0.20.0+ (required for the March 2025 NCBI rank update that replaces "superkingdom" with "domain" and adds "realm" for viruses). Backend choice (DIAMOND, clustered nr, MMseqs2-GPU): see [docs/README.md](docs/README.md#sequence-search-backends).
@@ -73,4 +73,4 @@ The driver writes every file below except the agent-authored report and `logs/`,
 - No causal or phenotype claims from homology alone. An annotation transfer is a hypothesis about function, not a demonstration of it.
 - No taxonomy for nucleotide assemblies, MAGs, or contigs outside the QuickClade route and its domain-specific follow-up.
 - No reference database downloads or builds. The databases under `$BIO_DB_ROOT` are an input; report a missing database instead of fetching it.
-- No structure-based inference. High-value unknowns go to `bio-structure-annotation`.
+- No structure-based inference. High-value unknowns go to the [structure page](../omics-pipeline/references/structure.md).

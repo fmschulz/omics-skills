@@ -1,4 +1,0 @@
-sample_id	read_type	read1	read2	reference
-paired	paired_short	reads/paired_R1.fastq	reads/paired_R2.fastq	reads/reference.fasta
-single	single_short	reads/single.fastq		""
-long	long	reads/long.fastq		reads/reference.fasta

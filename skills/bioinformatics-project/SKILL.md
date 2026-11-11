@@ -105,7 +105,7 @@ uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project
 | Publication metadata | `--license MIT --author "Name or organization" --copyright-year YYYY`; all three explicit values are required |
 | Verify | `--check` (every scaffold file exists; edits to scaffolded files are allowed) |
 
-Other examples: [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md), [examples/samples.tsv](examples/samples.tsv). Metadata schemas and a queryable catalog are a separate follow-up (`bio-foundation-housekeeping`, when installed).
+Other examples: [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md), [examples/samples.tsv](examples/samples.tsv).
 
 ## Input Requirements
 

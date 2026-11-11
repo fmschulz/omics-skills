@@ -1,7 +1,0 @@
-{
-  "from_schema_version": "1.0.0",
-  "to_schema_version": "1.1.0",
-  "record_type": "Sample",
-  "input": {"sample_id": "sample-1", "organism": "community", "collection_date": "2026-01-01"},
-  "expected": {"sample_id": "sample-1", "organism": "community", "collection_date": "2026-01-01", "collection_site": null}
-}

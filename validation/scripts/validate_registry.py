@@ -18,12 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REGISTRY = ROOT / "truth-sets.json"
 DEFAULT_SCHEMA = ROOT / "schemas" / "truth-set-registry.schema.json"
 CORE_DRIVERS = {
-    "bio-reads-qc-mapping",
-    "bio-assembly-qc",
-    "bio-gene-calling",
     "bio-annotation",
-    "bio-phylogenomics",
-    "bio-protein-clustering-pangenome",
     "bio-viromics",
     "bio-interdomain-hgt",
 }

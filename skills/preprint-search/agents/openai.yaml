@@ -1,4 +1,0 @@
-interface:
-  display_name: "Preprint Search"
-  short_description: "Search arXiv and scan bioRxiv preprints"
-  default_prompt: "Search arXiv, or scan bioRxiv by date range, for preprints on a topic, author, ID or DOI and return a clean shortlist with links and metadata."

@@ -1,199 +1,90 @@
-# Bio-Annotation Tool Documentation
+# Bio-Annotation Tool Choice
 
 **Last verified**: 2026-05-30
 **Tool version/release checked:** DIAMOND v2.2.1; eggNOG-mapper v2.1.15; InterProScan 5.77-108.0 / InterProScan6 6.0.0; TaxonKit v0.20.0; MMseqs2 official static build checked 2026-05-30
-**Official docs/manual:** See linked per-tool guides in this directory.
-**Release/source:** See linked per-tool guides in this directory.
+**Official docs/manual:** https://github.com/bbuchfink/diamond/wiki; https://github.com/eggnogdb/eggnog-mapper; https://interproscan-docs.readthedocs.io/; https://bioinf.shenwei.me/taxonkit/usage/; https://github.com/soedinglab/MMseqs2/wiki
+**Release/source:** https://github.com/bbuchfink/diamond/releases/tag/v2.2.1; https://github.com/eggnogdb/eggnog-mapper/releases/tag/v2.1.15; https://github.com/ebi-pf-team/interproscan/releases/tag/5.77-108.0; https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0
 
-This directory contains practical usage guides for the core bioinformatics tools used in the bio-annotation skill workflow.
+This page records which tool to use for which task and the points a model is likely to get wrong. For flags, run `--help`.
 
-## Documentation Overview
+## Tool choice
 
-Each tool has a dedicated markdown file with comprehensive usage information including installation, command-line options, common examples, and performance tips.
-
-## Available Tool Guides
-
-### [DIAMOND](diamond-usage.md)
-**Version**: v2.2.1
-**Purpose**: Accelerated BLAST-compatible sequence aligner (CPU)
-**Key features**: 100×–10,000× faster than BLAST; protein and translated-DNA searches
-**Documentation**: [diamond-usage.md](diamond-usage.md)
-**Official docs/source**: https://github.com/bbuchfink/diamond/wiki; https://github.com/bbuchfink/diamond/releases/tag/v2.2.1
-
-### MMseqs2 / MMseqs2-GPU (alternative to DIAMOND on CUDA nodes)
-**Version**: latest official static build checked 2026-05-30 (commit `11933403321b1a062d5d82fecd5a1d823d0d3bf6`)
-**Purpose**: Iterative sequence search; GPU-accelerated since the 2025 release
-**Key features**: GPU acceleration is available in official CUDA builds; benchmark the current build on the target node before production. Reference: Kallenborn et al., *Nature Methods* 2025, DOI 10.1038/s41592-025-02819-8.
-**Use when**: a GPU is available, or when iterative profile searches are needed in place of JackHMMER.
-**Official docs/source**: https://github.com/soedinglab/MMseqs2/wiki; https://mmseqs.com/latest/userguide.pdf
-
-### [TaxonKit](taxonkit-usage.md)
-**Version**: v0.20.0 (required for the March 2025 NCBI rank update: "superkingdom" -> "domain", added "realm" for viruses)
-**Purpose**: NCBI taxonomy data manipulation toolkit
-**Key features**: Taxonomy resolution, lineage queries, TaxID conversion
-**Documentation**: [taxonkit-usage.md](taxonkit-usage.md)
-**Official docs/source**: https://bioinf.shenwei.me/taxonkit/usage/; https://github.com/shenwei356/taxonkit/releases/tag/v0.20.0
-
-### [InterProScan](interproscan-usage.md)
-**Version**: v5.77-108.0 checked in the guide; 5.78-109.0 and InterProScan 6.0.2.2 (Nextflow) were current on 2026-10-01. Pin one release per project
-**Purpose**: Protein function classification and domain prediction
-**Key features**: Integrates multiple signature databases, GO terms, pathway annotations
-**Documentation**: [interproscan-usage.md](interproscan-usage.md)
-**Official docs/source**: https://interproscan-docs.readthedocs.io/; https://github.com/ebi-pf-team/interproscan/releases/tag/5.77-108.0
-
-### [eggNOG-mapper](eggnog-mapper-usage.md)
-**Version**: v2.1.15 final-v2 tag (v2.1.14 release fixed the database download URL)
-**Purpose**: Functional annotation through orthology assignment
-**Key features**: Fast genome-wide annotation, COG categories, KEGG pathways; supports MMseqs2 as an internal search backend.
-**Documentation**: [eggnog-mapper-usage.md](eggnog-mapper-usage.md)
-**Official docs/source**: https://github.com/eggnogdb/eggnog-mapper; https://github.com/eggnogdb/eggnog-mapper/releases/tag/v2.1.15
-
-### pyhmmer (preferred HMMER interface)
-**Version**: v0.10+
-**Purpose**: Python bindings around HMMER 3.4 for profile HMM search
-**Key features**: Native SIMD, batch-friendly APIs, no temporary-file overhead. Use for Pfam/TIGRFAM/PHROG/NCVOG/COG scans by default; fall back to `hmmsearch`/`hmmscan` only when an upstream tool requires the CLI.
-
-## Workflow integration
-
-These tools are used together in the bio-annotation workflow:
-
-1. **InterProScan**: domain and family annotation from protein signatures.
-2. **eggNOG-mapper**: orthology-based functional annotation with GO, COG, and KEGG.
-3. **DIAMOND** (CPU) or **MMseqs2-GPU** (when a GPU is available): sequence similarity search for taxonomy and homology assignment.
-4. **pyhmmer**: HMM-based marker-gene and domain-family searches.
-5. **TaxonKit**: resolve taxonomy from search-result TaxIDs to full lineages.
-
-## Quick Start Examples
-
-### DIAMOND + TaxonKit Pipeline
-```bash
-# Sequence alignment with taxonomy
-# Prefer a clustered nr database (e.g. clusterednr) for much faster search at
-# comparable sensitivity. Check whether a clusterednr build is available under
-# $BIO_DB_ROOT before running; if not, build one from a clustered FASTA or
-# fall back to full nr and note the choice in the run log.
-diamond blastp --query proteins.faa --db clusterednr.dmnd \
-  --out results.tsv --outfmt 6 qseqid sseqid staxids evalue bitscore \
-  --threads 32 --sensitive
-
-# Resolve taxonomy
-cut -f3 results.tsv | taxonkit lineage -n -r | \
-  taxonkit reformat2 \
-    -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" | \
-  paste results.tsv - > results_with_taxonomy.tsv
-```
-
-### InterProScan Annotation
-```bash
-# Comprehensive protein annotation
-interproscan.sh -i proteins.faa -b interpro_results \
-  -f TSV,GFF3 -goterms -iprlookup -pathways -cpu 32
-```
-
-### eggNOG-mapper Annotation
-```bash
-# Orthology-based annotation
-emapper.py -i proteins.faa -o eggnog_annotation \
-  --data_dir $EGGNOG_DATA_DIR \
-  --sensmode very-sensitive \
-  --cpu 32 --report_orthologs
-```
-
-## Performance Optimization
-
-### Resource Requirements
-
-| Tool | CPU | Memory | Disk Space | Speed |
-|------|-----|--------|------------|-------|
-| DIAMOND | High | Moderate (8-32GB) | Low | Very Fast |
-| TaxonKit | Low | Low (1-2GB) | Low | Very Fast |
-| InterProScan | High | High (16-64GB) | Moderate | Slow |
-| eggNOG-mapper | High | Moderate (8-32GB) | High (databases) | Fast |
-
-### Optimization Tips
-
-1. **DIAMOND**: Use `--sensitive` mode by default, increase to `--very-sensitive` for divergent sequences
-2. **TaxonKit**: Keep taxdump on SSD, use appropriate thread count
-3. **InterProScan**: Validate the exact CLI first, use either `-b` or `-d` for output, and select specific analyses with `-appl` when appropriate
-4. **eggNOG-mapper**: Use `--dbmem` on high-RAM systems, set appropriate `--tax_scope`
-
-## Database Requirements
-
-### DIAMOND
-- **NCBI nr**: ~100-200GB (DIAMOND format)
-- **Clustered nr (preferred)**: a sequence-clustered build of nr (e.g. `clusterednr`) — substantially smaller and faster to search at comparable sensitivity. Check whether one is already available under `$BIO_DB_ROOT` before downloading or building. If absent, build with `diamond makedb` from an MMseqs2/CD-HIT-reduced nr FASTA (cluster identity e.g. 70-90% depending on use case).
-- **Custom databases**: Variable size
-- **Update frequency**: Monthly recommended
-
-### TaxonKit
-- **NCBI taxdump**: ~500MB
-- **Files needed**: nodes.dmp, names.dmp, merged.dmp, delnodes.dmp
-- **Update frequency**: Monthly recommended
-
-### InterProScan
-- **InterPro data**: ~30-50GB
-- **Components**: Multiple signature databases
-- **Update frequency**: Quarterly recommended
-
-### eggNOG-mapper
-- **eggNOG database**: ~100GB+
-- **Taxonomic-specific**: Variable (10-50GB per scope)
-- **Update frequency**: Yearly recommended
-
-## Common Issues and Solutions
-
-### DIAMOND
-- **Out of memory**: Reduce `--block-size`, increase `--index-chunks`
-- **Slow performance**: Use faster sensitivity mode, reduce `--max-target-seqs`
-
-### TaxonKit
-- **Missing TaxIDs**: Update taxdump files (merged.dmp and delnodes.dmp resolve renamed and deleted IDs); set `reformat2 -R` to mark unresolved IDs
-- **Slow processing**: Increase thread count, check disk I/O
-
-### InterProScan
-- **Memory errors**: Increase Java heap size in interproscan.properties
-- **Timeout issues**: Split input into smaller batches
-- **Immediate startup failure**: Check for mutually exclusive `-b`/`-d` usage, missing `setup.py` initialization, unresolved ProSite binaries, or `*` in the FAA input
-
-### eggNOG-mapper
-- **Database download fails**: Re-run `download_eggnog_data.py` (present files are skipped, `-f` forces), check disk space
-- **Slow annotation**: Use `--sensmode fast`, enable `--dbmem`
-
-## References
-
-### Official Documentation
-- DIAMOND: https://github.com/bbuchfink/diamond/wiki
-- TaxonKit: https://bioinf.shenwei.me/taxonkit/usage/
-- InterProScan: https://interproscan-docs.readthedocs.io/
-- eggNOG-mapper: https://github.com/eggnogdb/eggnog-mapper
-
-### Citations
-- **DIAMOND**: Buchfink et al. (2021) Nature Methods. doi:10.1038/s41592-021-01101-x
-- **TaxonKit**: Shen & Ren (2021) J Genet Genomics. doi:10.1016/j.jgg.2021.03.006
-- **InterProScan**: Jones et al. (2014) Bioinformatics. doi:10.1093/bioinformatics/btu031
-- **eggNOG-mapper**: Cantalapiedra et al. (2021) Mol Biol Evol. doi:10.1093/molbev/msab293
-
-## Documentation Updates
-
-**Last Updated**: 2026-05-30
-**Documentation Version**: 1.1
-**Tool Versions**: See individual files for version-specific information
-
-For the most current information, always refer to the official documentation links provided in each tool's usage guide.
-
-## Additional Resources
-
-### Related Documentation
-- See `../SKILL.md` for overall bio-annotation workflow
-
-### Support
-For tool-specific issues, consult:
-- Tool GitHub repositories (Issues section)
-- Official documentation websites
-- Bioconda package pages
-- User communities (Biostars, Stack Overflow)
+| Task | Tool | Reason |
+|------|------|--------|
+| Homology search, CPU | DIAMOND | Fast BLAST-compatible search for proteins and translated DNA. |
+| Homology search, GPU node (CUDA Turing or newer) | MMseqs2-GPU | Use `mmseqs easy-search` or `easy-taxonomy` with `--gpu`. Also replaces JackHMMER for iterative profile searches. |
+| Orthology and function (GO, COG, KEGG) | eggNOG-mapper v2 | Transfers annotation through orthologous groups. |
+| Domains and families | InterProScan | Integrates the member signature databases and maps them to InterPro entries and GO terms. |
+| Taxonomy from homology hits | TaxonKit | Resolves the TaxIDs in search results to lineages. |
+| HMM marker and domain-family scans | pyhmmer | Python bindings for HMMER 3.4. Fall back to `hmmsearch` or `hmmscan` only when an upstream tool requires the CLI. |
 
 ## Sequence search backends
 
-- Default CPU path: DIAMOND v2.1.20+. For any search against NCBI **nr**, prefer a clustered nr database (e.g., a `clusterednr` build under `$BIO_DB_ROOT`) — it is dramatically faster than full nr at comparable sensitivity for most annotation tasks. Check whether a clusterednr build is available under the reference root; if not, build one with `diamond makedb` from a clustered FASTA (MMseqs2/CD-HIT-reduced nr) or fall back to full nr and record the choice in the run log.
-- GPU node available (CUDA Turing or newer): MMseqs2-GPU as an alternative to DIAMOND. Published benchmark: 20× faster and ~71× cheaper per query versus 128-core CPU MMseqs2, and 177–199× faster than JackHMMER iterative search for profile-equivalent workflows (Kallenborn et al., *Nature Methods* 2025, DOI: 10.1038/s41592-025-02819-8). Use `mmseqs easy-search` or `easy-taxonomy` with the `--gpu` flag.
+Default CPU path: DIAMOND v2.1.20 or later, against a clustered nr database. Use MMseqs2-GPU when a CUDA node is available.
+
+### DIAMOND
+
+- Prefer a clustered nr database (for example `clusterednr`) over full nr. It searches much faster at comparable sensitivity for most annotation tasks. Check `$BIO_DB_ROOT` first. If it is missing, fall back to full nr and record the choice in the run log, or build one with `diamond makedb` from an MMseqs2 or CD-HIT reduced nr FASTA (identity 70 to 90% by use case).
+- The default mode sits between `--fast` and `--mid-sensitive`. `--sensitive` is a separate mode above the default, with full sensitivity for hits above 40% identity. Use `--very-sensitive` for divergent sequences.
+- `--memory-limit` applies only to `cluster` and `linclust`. For `blastp` and `blastx`, lower `--block-size` or raise `--index-chunks`.
+- DIAMOND tabular output has no header. Do not drop the first line before TaxonKit.
+
+```bash
+diamond blastp --query proteins.faa --db clusterednr.dmnd --out results.tsv \
+  --outfmt 6 qseqid sseqid staxids evalue bitscore --threads 32 --sensitive
+```
+
+### MMseqs2-GPU
+
+Published benchmark: 20 times faster and about 71 times cheaper per query than 128-core CPU MMseqs2, and 177 to 199 times faster than JackHMMER iterative search (Kallenborn et al., *Nature Methods* 2025, https://doi.org/10.1038/s41592-025-02819-8). Benchmark the current build on the target node before production.
+
+## eggNOG-mapper (orthology and function)
+
+- Stay on v2 (`eggnog-mapper>=2.1.13,<3`) with the eggNOG v5.0.2 data these commands were checked against. v3.0.0 is a beta with changes. Use it only when a project pins it on purpose.
+- `download_eggnog_data.py` skips files that are already present; `-f` forces a new download. It writes `eggnog.db` and `eggnog_proteins.dmnd` (`-D` skips the DIAMOND database).
+- `--dbmem` loads `eggnog.db` (39 GB) and the DIAMOND database (8.7 GB) into memory. Benchmark runs ran out of memory at 32 GB and often at 64 GB. Request at least 128 GB or leave it out.
+- `emapper.py` finds DIAMOND with `shutil.which('diamond')`. Inside a pixi environment on a batch node, put the environment `bin` on `PATH`.
+- `-m cache -c <file>` reuses an earlier annotations file made with `--md5`.
+
+```bash
+emapper.py -i proteins.faa -o annotation --data_dir $EGGNOG_DATA_DIR \
+  --sensmode very-sensitive --report_orthologs --cpu 32
+```
+
+## InterProScan (domains)
+
+- InterProScan 5 (`interproscan.sh`) and InterProScan 6 (Nextflow) both have current releases. 5.78-109.0 and 6.0.2.2 were current on 2026-10-01. Pin one release and one InterPro data release per project.
+- InterProScan 6 needs Nextflow 25.10 or later and a container runtime (Docker, Podman, SingularityCE or Apptainer). It has no `local` profile. Pin the workflow with `-r` and the data with `--interpro` (`latest` is not reproducible). A node without internet needs `--noMatchesApi`.
+- InterProScan 5: the precalculated match lookup is on by default and needs network. `-dp` turns it off. `-pa` adds pathways and implies `-iprlookup`.
+- `-b`, `-d` and `-o` are mutually exclusive. Input sequences need at least 15 amino acids and no `*`. After a packaged install, run `python3 setup.py -f interproscan.properties`.
+
+```bash
+interproscan.sh -i proteins.faa -b interpro_results -f TSV,GFF3 \
+  -goterms -iprlookup -pathways -cpu 32
+```
+
+```bash
+nextflow run ebi-pf-team/interproscan6 -r 6.0.2.2 -profile singularity \
+  --input proteins.faa --datadir /path/to/interpro_data --interpro 110.0
+```
+
+## TaxonKit (taxonomy from homology)
+
+- Use v0.20.0 or later. It handles the March 2025 NCBI rank update ("superkingdom" became "domain"; viruses gained "realm").
+- Use `reformat2` with `{domain|acellular root|superkingdom}`; `{a|b}` takes the first rank present. `reformat2` takes TaxIDs only and has no `-F` or `-P`. Write rank prefixes in the format string.
+- `lca` splits ids on spaces. Pass `-s ","` for comma-separated ids.
+- The taxdump needs `names.dmp`, `nodes.dmp`, `delnodes.dmp` and `merged.dmp` in `~/.taxonkit` or `--data-dir`. The last two resolve renamed and deleted IDs. `reformat2 -R` marks unresolved IDs.
+
+```bash
+cut -f3 results.tsv | taxonkit lineage -n -r -j 8 | taxonkit reformat2 -j 8 \
+  -f "{domain|acellular root|superkingdom};{phylum};{class};{order};{family};{genus};{species}" \
+  | paste results.tsv - > results_with_taxonomy.tsv
+```
+
+## References
+
+- DIAMOND: Buchfink et al. (2021) *Nature Methods* https://doi.org/10.1038/s41592-021-01101-x
+- TaxonKit: Shen & Ren (2021) *Journal of Genetics and Genomics* https://doi.org/10.1016/j.jgg.2021.03.006
+- InterProScan: Jones et al. (2014) *Bioinformatics* https://doi.org/10.1093/bioinformatics/btu031
+- eggNOG-mapper: Cantalapiedra et al. (2021) *Molecular Biology and Evolution* https://doi.org/10.1093/molbev/msab293
+- MMseqs2-GPU: Kallenborn et al. (2025) *Nature Methods* https://doi.org/10.1038/s41592-025-02819-8

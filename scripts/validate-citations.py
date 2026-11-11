@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CACHE = ROOT / "catalog" / "citation-cache.json"
+DEFAULT_CACHE = ROOT / "scripts" / "citation-cache.json"
 # A cached registration check has a shelf life: without one, CI can accept a
 # result from years ago for a DOI whose metadata has since changed.
 MAX_CACHE_AGE_DAYS = 180

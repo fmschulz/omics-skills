@@ -10,8 +10,8 @@ Detect, polarize, and confirm horizontal gene transfer between a query genome
 (virus, MAG, isolate, or bin) and other domains of life. Built for the common
 asymmetric case where the query is well annotated but the comparison set is
 genome-only (proteins missing). Pairs with `/bio-annotation` (homology/taxonomy),
-`/bio-phylogenomics` (trees), `/bio-viromics` (viral classification), and
-`/bio-fasta-database-curator` (building the arbiter database). Shared pipeline
+the [phylogenomics page](../omics-pipeline/references/phylogenomics.md)
+(trees), and `/bio-viromics` (viral classification). Shared pipeline
 rules: read `~/.agents/skills/omics-pipeline/SKILL.md` first (in a plugin install,
 `../omics-pipeline/SKILL.md` from this file).
 
@@ -75,9 +75,9 @@ BOTH of the following exist before any search; if one is missing, build it or ST
    - Building blocks: EukProt, GTDB, NCBI nr/RefSeq, IMG/VR, a giant-virus proteome
      (GVDB / gvclass-style), organelle RefSeq.
    - Check: list `$BIO_DB_ROOT` for an existing combined-proteome `.dmnd` + labels.
-   - If absent: build it with `/bio-fasta-database-curator` (prefix every header by
-     domain, e.g. `EUK__`, `BAC__`, `ARC__`, `NCLDV__`, `PHAGE__`, then
-     `diamond makedb`). A clustered build (clusterednr / MMseqs2-reduced) is much
+   - If absent: build it with standard tools such as `seqkit` (prefix every header by
+     domain, e.g. `EUK__`, `BAC__`, `ARC__`, `NCLDV__`, `PHAGE__`; deduplicate; keep a
+     mapping table; then `diamond makedb`). A clustered build (clusterednr / MMseqs2-reduced) is much
      faster at comparable sensitivity; prefer it.
    - A euk-only or virus-only arbiter CANNOT polarize transfer. Confirm it spans
      every candidate donor domain.

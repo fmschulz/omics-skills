@@ -1,6 +1,0 @@
-genome	family_id	protein_id	e_value
-query	OG1	q1	1e-30
-relative_a	OG1	a1	1e-30
-relative_a	OG4	a3	1e-20
-relative_b	OG1	b1	1e-30
-relative_b	OG4	b3	1e-20

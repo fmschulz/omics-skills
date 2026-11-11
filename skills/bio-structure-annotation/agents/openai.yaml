@@ -1,6 +1,0 @@
-interface:
-  display_name: "Bio Structure Annotation"
-  short_description: "Predict structures and find structural homologs"
-  default_prompt: "Use the bio-structure-annotation stage to predict structures and find structural homologs."
-policy:
-  allow_implicit_invocation: false

@@ -5,7 +5,7 @@
 **Official docs/manual:** https://docs.prefect.io/latest/ ; https://docs.dask.org/en/stable/ ; https://www.nextflow.io/docs/latest/
 **Release/source:** https://github.com/PrefectHQ/prefect/releases/tag/3.8.7 ; https://github.com/dask/dask/releases/tag/2026.8.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.6
 
-This page was condensed from the decision matrix and the Nextflow, Prefect and Prefect-on-Slurm guides of the former `bio-prefect-dask-nextflow` skill, plus its Slurm submit wrapper. Check a version-specific detail against the upstream documentation before you rely on it.
+Check a version-specific detail against the upstream documentation before you rely on it.
 
 Read this when a pipeline must run as a repeatable workflow on a workstation, a cluster, or both. Scheduler flags and accounts come from the `hpc-slurm` skill.
 

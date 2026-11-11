@@ -1,6 +1,0 @@
-interface:
-  display_name: "FASTA Database Curator"
-  short_description: "Curate and validate FASTA or FAA databases"
-  default_prompt: "Use the bio-fasta-database-curator stage to standardize headers and deduplicate these FASTA files."
-policy:
-  allow_implicit_invocation: false

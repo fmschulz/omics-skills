@@ -18,7 +18,7 @@ Pin all tools in the project's Pixi environment. Check the exact CLI with
 | geNomad | "is this contig viral" context cross-check | needs `genomad_db` under `$BIO_DB_ROOT` |
 | TaxonKit (>=0.20) | resolve lineages from the labels table / taxdump | 2025 NCBI rank update: `domain` replaces `superkingdom`, adds `realm` for viruses |
 | seqkit | FASTA stats / extraction | |
-| ETE 4 (`ete4`) | tree parsing and nesting/monophyly tests (`check_monophyly`) | load IQ-TREE `SH-aLRT/UFBoot` labels with `parser=1`; see `~/.agents/skills/bio-phylogenomics/docs/README.md`; no Qt needed |
+| ETE 4 (`ete4`) | tree parsing and nesting/monophyly tests (`check_monophyly`) | load IQ-TREE `SH-aLRT/UFBoot` labels with `parser=1`; see the [phylogenomics page](../../omics-pipeline/references/phylogenomics.md); no Qt needed |
 
 ## Environment
 - `BIO_DB_ROOT`: site or project reference-DB root. The skill NEVER hardcodes absolute
@@ -29,5 +29,6 @@ Pin all tools in the project's Pixi environment. Check the exact CLI with
 ## Reciprocal-arbiter database
 See `database-availability.md`. Minimum: one protein search DB spanning eukaryotes +
 bacteria + archaea + viruses (incl. NCLDV + phage) + organelles, headers prefixed by
-domain, with a `genome_id<TAB>lineage` labels file. Build/curate with
-`/bio-fasta-database-curator` if absent.
+domain, with a `genome_id<TAB>lineage` labels file. Build it if absent
+with standard tools such as `seqkit`: prefix every header with its domain label,
+deduplicate, and keep a mapping table.

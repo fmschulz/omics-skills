@@ -358,7 +358,7 @@ class ValidateSkillTests(unittest.TestCase):
         router = skills / validate_skills.ROUTER_SKILL
         text = (router / "SKILL.md").read_text(encoding="utf-8")
         stages = validate_skills.ROUTER_STAGE_ROW_PATTERN.findall(text)
-        self.assertGreater(len(stages), 10)
+        self.assertGreater(len(stages), 3)
         for stage in stages:
             self.assertTrue(
                 (router / ".." / stage / "SKILL.md").resolve().is_file(), stage
@@ -436,19 +436,6 @@ class ValidateSupplementaryDocsTests(unittest.TestCase):
             )
 
             self.assertEqual(validate_supplementary_docs.validate_all(root), [])
-
-    def test_fasta_curator_root_tools_doc_is_in_scope(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            skill_dir = root / "skills" / "bio-fasta-database-curator"
-            skill_dir.mkdir(parents=True)
-            (skill_dir / "tools.md").write_text(
-                "# Tools\n\nOfficial docs: https://example.org\nVersion: v1\n",
-                encoding="utf-8",
-            )
-
-            errors = validate_supplementary_docs.validate_all(root)
-            self.assertTrue(any("bio-fasta-database-curator/tools.md" in e for e in errors))
 
     def test_router_workflow_guide_is_in_scope(self) -> None:
         """The workflow-engine guide replaced five checked guides; it keeps

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Gene Calling"
-  short_description: "Call genes and count tRNA and rRNA"
-  default_prompt: "Read the omics-pipeline skill, then plan and run gene calling and the ncRNA census."
-policy:
-  allow_implicit_invocation: false

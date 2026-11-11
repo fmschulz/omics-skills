@@ -34,7 +34,7 @@ cut -f1 <labels.tsv> | sed 's/__.*//' | sort | uniq -c
 Decision: if a single DB does not span all domains, it CANNOT polarize transfer.
 Build a combined one rather than running per-domain searches that can't be compared.
 
-Build (if absent), via `/bio-fasta-database-curator`:
+Build (if absent) with standard tools such as `seqkit` (prefix every header with its domain label, deduplicate, keep a mapping table):
 ```bash
 # 1) collect domain proteomes (EukProt, GTDB, IMG/VR, giant-virus proteome, organelle RefSeq)
 # 2) prefix headers by domain/source; concatenate

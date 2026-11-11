@@ -60,8 +60,9 @@ See `SKILL.md`.
   `iqtree3 -s aln.faa -m MFP -B 1000 --seed 1729 -keep-ident -T 4`. Pass
   `-keep-ident` so the focal tip is not collapsed; make tip names unique to avoid
   duplicate-taxon failures. Give the driver the support of the nesting node on a
-  0-1 scale (UFBoot 95 becomes 0.95); `/bio-phylogenomics` `--normalize-only`
-  converts a tree's labels.
+  0-1 scale: convert UFBoot 0-100 to 0-1 (UFBoot 95 becomes 0.95) before the
+  gate. The [phylogenomics page](../../omics-pipeline/references/phylogenomics.md)
+  covers the trees.
 - Confirmed when the focal sequence nests inside the EXPECTED donor/recipient clade
   with support. Including donor + other-virus + recipient homologs is exactly what
   separates genuine host <-> virus transfer from virus <-> virus transfer.

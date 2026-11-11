@@ -1,4 +1,0 @@
-sample_id	query_id	contig_id	quickclade_domain	quickclade_taxonomy	quickclade_confidence	route	downstream_tool	review_flag	notes
-S1	bin_prok		Bacteria	d__Bacteria	0.98	prokaryote	gtdbtk	false	none
-S1	bin_euk		Eukaryota	d__Eukaryota	0.91	eukaryote	eukcc	false	none
-S1	bin_viral		Viral	Viruses	0.88	prokaryotic_virus	vcontact3	false	none

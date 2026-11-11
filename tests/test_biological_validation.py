@@ -18,9 +18,9 @@ def ready_job(workdir: Path) -> dict[str, object]:
     return {
         "schema_version": "1.0",
         "status": "ready",
-        "validation_id": "test-phylogenomics-pilot",
-        "driver": "bio-phylogenomics",
-        "truth_set_id": "qfo-2025-04-reference-proteomes",
+        "validation_id": "test-validation",
+        "driver": "bio-annotation",
+        "truth_set_id": "cafa5-evaluation",
         "workdir": str(workdir),
         "logs_dir": "tasks/test-validation-run",
         "scheduler": {
@@ -46,7 +46,7 @@ def ready_job(workdir: Path) -> dict[str, object]:
     }
 
 
-def test_registry_covers_exactly_eight_core_drivers() -> None:
+def test_registry_covers_exactly_three_core_drivers() -> None:
     result = subprocess.run(
         ["uv", "run", "--script", str(REGISTRY_SCRIPT)],
         cwd=ROOT,
@@ -54,7 +54,7 @@ def test_registry_covers_exactly_eight_core_drivers() -> None:
         capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "8 drivers, 8 truth sets, 0 ready" in result.stdout
+    assert "3 drivers, 3 truth sets, 0 ready" in result.stdout
 
 
 def test_project_gate_runs_pytest_style_driver_tests() -> None:
@@ -70,13 +70,15 @@ def test_project_gate_runs_pytest_style_driver_tests() -> None:
 
 
 def test_draft_scheduler_job_cannot_be_rendered(tmp_path: Path) -> None:
+    draft = tmp_path / "draft.json"
+    draft.write_text(json.dumps(ready_job(tmp_path) | {"status": "draft"}))
     result = subprocess.run(
         [
             "uv",
             "run",
             "--script",
             str(RENDER_SCRIPT),
-            str(VALIDATION / "jobs" / "phylogenomics-qfo-pilot.draft.json"),
+            str(draft),
             "--output",
             str(tmp_path / "job.sbatch"),
         ],

@@ -147,7 +147,7 @@ The column reference lists all 44: https://NeLLi-team.github.io/gvclass/referenc
 1. Input: bins or long contigs routed as giant-virus candidates by QuickClade or geNomad.
 2. Analysis: per-marker phylogenetic placement and quality models.
 3. Output: taxonomy, completeness, contamination, and duplication metrics.
-4. Follow with core-gene phylogenies in `/bio-phylogenomics` for placement claims beyond the nearest reference.
+4. Follow with core-gene phylogenies, as the [phylogenomics page](../../omics-pipeline/references/phylogenomics.md) describes, for placement claims beyond the nearest reference.
 
 ## Troubleshooting
 
