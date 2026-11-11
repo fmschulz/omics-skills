@@ -31,6 +31,16 @@ WRAPPERS = {
 }
 
 
+def fake_sbatch(root: Path) -> Path:
+    """Put an `sbatch` that prints its arguments in ``root/bin``; return ``bin``."""
+    fake_bin = root / "bin"
+    fake_bin.mkdir()
+    sbatch = fake_bin / "sbatch"
+    sbatch.write_text('#!/usr/bin/env bash\nprintf "%s\\n" "$@"\n', encoding="utf-8")
+    sbatch.chmod(sbatch.stat().st_mode | stat.S_IXUSR)
+    return fake_bin
+
+
 class SlurmWrapperTests(unittest.TestCase):
     def test_wrappers_forward_the_account_and_job_template_to_sbatch(self) -> None:
         for relative, (build_args, template) in WRAPPERS.items():
@@ -42,14 +52,7 @@ class SlurmWrapperTests(unittest.TestCase):
                     (root / "bins").mkdir()
                     (root / "main.nf").write_text("nextflow.enable.dsl=2\n", encoding="utf-8")
 
-                    fake_bin = root / "bin"
-                    fake_bin.mkdir()
-                    sbatch = fake_bin / "sbatch"
-                    sbatch.write_text(
-                        '#!/usr/bin/env bash\nprintf "%s\\n" "$@"\n', encoding="utf-8"
-                    )
-                    sbatch.chmod(sbatch.stat().st_mode | stat.S_IXUSR)
-
+                    fake_bin = fake_sbatch(root)
                     result = subprocess.run(
                         [str(wrapper), *build_args(root)],
                         cwd=REPO_ROOT,
@@ -79,7 +82,11 @@ class SlurmWrapperTests(unittest.TestCase):
                     root = Path(tmp)
                     (root / "bins").mkdir()
                     (root / "main.nf").write_text("nextflow.enable.dsl=2\n", encoding="utf-8")
+                    # A working sbatch must be on PATH: without one the wrapper
+                    # fails for a missing command, whatever it checks.
+                    fake_bin = fake_sbatch(root)
                     env = {k: v for k, v in os.environ.items() if k != "SLURM_ACCOUNT"}
+                    env["PATH"] = f"{fake_bin}:{os.environ['PATH']}"
                     result = subprocess.run(
                         [str(wrapper), *build_args(root)],
                         cwd=REPO_ROOT,
@@ -89,6 +96,8 @@ class SlurmWrapperTests(unittest.TestCase):
                         check=False,
                     )
                 self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertIn("SLURM_ACCOUNT", result.stderr)
+                self.assertEqual(result.stdout, "", "sbatch must not be reached")
 
 
 if __name__ == "__main__":

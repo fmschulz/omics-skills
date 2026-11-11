@@ -363,7 +363,6 @@
         "experimental design",
         "follow-up experiments",
         "formulate hypothesis",
-        "how",
         "hypothesis",
         "intermediate result",
         "interpret",
@@ -377,8 +376,7 @@
         "scientific critique",
         "study design supports causal conclusions",
         "surprising",
-        "unexpected",
-        "why"
+        "unexpected"
       ],
       "internal_references": [],
       "reference_contexts": {}
@@ -857,11 +855,12 @@
         "crossref-lookup"
       ],
       "reference_contexts": {
+        "api": [
+          "- Hosted API: the key is optional. Without `POLARS_DOVMED_API_KEY` the helper runs anonymously, and `/api/usage` reports the anonymous rate limit (`rate_limit: 120` on 2026-11-10). With a key, set it in the environment or in `~/.config/polars-dovmed/.env`; the helper then sends it as `X-API-Key`, and an invalid key fails with HTTP 403. Never pass the key in argv, and never write it to run directories, memory records, summaries or answers. Keys come from the service admin.",
+          "7. Do not use the flat `/api/search_literature` endpoint. It needs `--allow-flat-query` and can hang behind the edge proxy."
+        ],
         "crossref-lookup": [
           "5. Fill citation metadata from the corpus details first, then `--crossref-metadata` or `/crossref-lookup`. Use DOI landing pages only when corpus metadata and Crossref disagree; do not use generic web search for DOI repair."
-        ],
-        "api": [
-          "7. Do not use the flat `/api/search_literature` endpoint. It needs `--allow-flat-query` and can hang behind the edge proxy."
         ]
       }
     },
@@ -1267,8 +1266,6 @@
         {
           "skill_name": "bio-logic",
           "phrases": [
-            "why",
-            "how",
             "interpret",
             "hypothesis",
             "formulate hypothesis",

@@ -196,6 +196,32 @@ class CitationIdentityTests(unittest.TestCase):
         self.assertTrue(any("registered to 2019" in error for error in errors), errors)
         self.assertTrue(any("but the citation names Shen" in error for error in errors), errors)
 
+    def test_a_claim_without_a_cached_identity_is_rejected(self) -> None:
+        """A record cached before the prose named an author or year holds neither.
+
+        Skipping the comparison then let any registered DOI pass until the next
+        refresh.
+        """
+        bare = {**self.RECORD, "title": None, "authors": [], "year": None}
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            doc = root / "README.md"
+            doc.write_text(
+                "- MetaBAT2: Kang et al. (2019) *PeerJ* doi:10.7717/peerj.7359\n",
+                encoding="utf-8",
+            )
+            cache = root / "cache.json"
+            cache.write_text(
+                json.dumps({"version": 1, "records": {"10.7717/peerj.7359": bare}}),
+                encoding="utf-8",
+            )
+            citations = validate_citations.collect_citations([doc])
+            with contextlib.redirect_stderr(io.StringIO()):
+                errors = validate_citations.validate_cache(citations, cache)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("no cached author or year", errors[0])
+        self.assertIn("--refresh", errors[0])
+
     def test_the_correct_citation_passes(self) -> None:
         self.assertEqual(
             self.check("- MetaBAT2: Kang et al. (2019) *PeerJ* doi:10.7717/peerj.7359"), []

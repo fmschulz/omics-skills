@@ -342,6 +342,17 @@ def validate_cache(citations: list[Citation], cache_path: Path) -> list[str]:
         # this, one registered DOI substituted for another still passed.
         if not citation.doi.startswith(TITLE_CHECK_SKIP_PREFIXES):
             registered_year = record.get("year")
+            makes_claim = bool(citation.claimed_year or citation.claimed_surnames)
+            has_identity = isinstance(registered_year, int) or bool(
+                record.get("authors")
+            )
+            # A record cached before the prose named an author or year holds
+            # neither, and comparing against nothing would pass any DOI.
+            if makes_claim and not has_identity:
+                errors.append(
+                    f"{location}: {citation.doi} has no cached author or year to "
+                    "check the citation against; run with --refresh"
+                )
             if citation.claimed_year and isinstance(registered_year, int):
                 # Online-vs-print can differ by a year; more than that is a swap.
                 if abs(citation.claimed_year - registered_year) > 1:
