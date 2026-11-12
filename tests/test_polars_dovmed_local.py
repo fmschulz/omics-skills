@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = REPO_ROOT / "skills" / "polars-dovmed" / "scripts" / "query_literature.py"
@@ -558,6 +558,127 @@ class PolarsDovmedLocalTests(unittest.TestCase):
                 "https://api.example.org", "/api/usage", None, timeout=5
             )
             pace.assert_called_once()
+
+    def test_request_json_retries_503_then_returns_payload(self) -> None:
+        error = query_literature.urllib.error.HTTPError(
+            "https://api.example.org/api/jobs", 503, "Async job queue is full", {}, None
+        )
+        stderr = io.StringIO()
+        with (
+            patch.object(
+                query_literature.urllib.request,
+                "urlopen",
+                side_effect=[error, io.BytesIO(b'{"job_id": "example"}')],
+            ) as urlopen,
+            patch.object(query_literature.time, "sleep") as sleep,
+            contextlib.redirect_stderr(stderr),
+        ):
+            payload = query_literature.request_json(
+                "https://api.example.org",
+                "/api/jobs",
+                "secret",
+                timeout=5,
+                method="POST",
+                payload={"query": "mirusvirus"},
+            )
+        self.assertEqual(payload, {"job_id": "example"})
+        sleep.assert_called_once_with(2)
+        self.assertEqual(urlopen.call_count, 2)
+        self.assertEqual(urlopen.call_args_list[0], urlopen.call_args_list[1])
+        request = urlopen.call_args.args[0]
+        self.assertEqual(request.method, "POST")
+        self.assertEqual(json.loads(request.data), {"query": "mirusvirus"})
+        self.assertEqual(len(stderr.getvalue().splitlines()), 1)
+        self.assertIn("503", stderr.getvalue())
+        self.assertIn("2s", stderr.getvalue())
+        self.assertIn("1/5", stderr.getvalue())
+
+    def test_request_json_honors_numeric_retry_after_with_a_cap(self) -> None:
+        for retry_after, expected_wait in (("7", 7), ("120", 60)):
+            with self.subTest(retry_after=retry_after):
+                error = query_literature.urllib.error.HTTPError(
+                    "https://api.example.org/api/usage",
+                    503,
+                    "busy",
+                    {"Retry-After": retry_after},
+                    None,
+                )
+                with (
+                    patch.object(
+                        query_literature.urllib.request,
+                        "urlopen",
+                        side_effect=[error, io.BytesIO(b"{}")],
+                    ),
+                    patch.object(query_literature.time, "sleep") as sleep,
+                ):
+                    query_literature.request_json(
+                        "https://api.example.org", "/api/usage", "secret", timeout=5
+                    )
+                sleep.assert_called_once_with(expected_wait)
+
+    def test_request_json_stops_after_five_503_retries(self) -> None:
+        errors = [
+            query_literature.urllib.error.HTTPError(
+                "https://api.example.org/api/usage", 503, f"busy {attempt}", {}, None
+            )
+            for attempt in range(6)
+        ]
+        stderr = io.StringIO()
+        with (
+            patch.object(
+                query_literature.urllib.request, "urlopen", side_effect=errors
+            ) as urlopen,
+            patch.object(query_literature.time, "sleep") as sleep,
+            contextlib.redirect_stderr(stderr),
+            self.assertRaises(query_literature.urllib.error.HTTPError) as raised,
+        ):
+            query_literature.request_json(
+                "https://api.example.org", "/api/usage", "secret", timeout=5
+            )
+        self.assertIs(raised.exception, errors[-1])
+        self.assertEqual(urlopen.call_count, 6)
+        self.assertEqual(
+            sleep.call_args_list, [call(2), call(4), call(8), call(16), call(30)]
+        )
+        self.assertEqual(len(stderr.getvalue().splitlines()), 5)
+        self.assertIn("5/5", stderr.getvalue())
+
+    def test_request_json_does_not_retry_500(self) -> None:
+        error = query_literature.urllib.error.HTTPError(
+            "https://api.example.org/api/usage", 500, "server error", {}, None
+        )
+        with (
+            patch.object(
+                query_literature.urllib.request, "urlopen", side_effect=error
+            ) as urlopen,
+            patch.object(query_literature.time, "sleep") as sleep,
+            self.assertRaises(query_literature.urllib.error.HTTPError) as raised,
+        ):
+            query_literature.request_json(
+                "https://api.example.org", "/api/usage", "secret", timeout=5
+            )
+        self.assertIs(raised.exception, error)
+        urlopen.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_request_json_paces_every_anonymous_attempt(self) -> None:
+        error = query_literature.urllib.error.HTTPError(
+            "https://api.example.org/api/usage", 503, "busy", {}, None
+        )
+        with (
+            patch.object(query_literature, "wait_for_anonymous_slot") as pace,
+            patch.object(
+                query_literature.urllib.request,
+                "urlopen",
+                side_effect=[error, io.BytesIO(b"{}")],
+            ) as urlopen,
+            patch.object(query_literature.time, "sleep"),
+        ):
+            query_literature.request_json(
+                "https://api.example.org", "/api/usage", None, timeout=5
+            )
+        self.assertEqual(urlopen.call_count, 2)
+        self.assertEqual(pace.call_count, 2)
 
     def test_corpus_both_is_rejected_with_a_clear_message(self) -> None:
         stderr = io.StringIO()

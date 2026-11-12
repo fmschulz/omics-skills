@@ -22,7 +22,7 @@ timeout 90s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
 # OpenPMC discovery over the four clean year bands (year-band discovery is synchronous)
 timeout 120s uv run --script "$SKILL_DIR/scripts/query_literature.py" \
   --queries-file "$RUN/query.json" --corpus pmc --mode discovery \
-  --year-bands clean_split --year-band-workers 4 --skip-details-rerank \
+  --year-bands clean_split --year-band-workers 2 --skip-details-rerank \
   --extract-matches none --add-group-counts primary \
   --max-results 25 --poll-timeout 120 \
   --save-payload "$RUN/payload_pmc.json" --save-response "$RUN/results_pmc.json" \
@@ -69,6 +69,7 @@ Run either check before declaring an outage.
 | --- | --- |
 | `--corpus both` is rejected (the API answers HTTP 502) | Run `--corpus biorxiv` and `--corpus pmc` separately and merge the results. |
 | A run pauses without output | Without a key the helper waits for a free slot of its 20 requests per minute. Set `POLARS_DOVMED_API_KEY` to lift the client limit. |
+| HTTP 503 reports busy search capacity or a full async queue | The helper retries five times, waiting 2, 4, 8, 16 and 30 seconds. A numeric `Retry-After` sets the wait instead, capped at 60 seconds. Keep `--year-band-workers 2` and report the error if retries run out. |
 | OpenPMC year-band search returns `Database not found` | Report that the deployment does not expose the indexed OpenPMC bands. Do not fall back to an unbanded scan. |
 | OpenPMC year-band search times out | Report the timeout and keep the bioRxiv result. Narrow to the requested bands or refine the anchors; do not retry with longer waits or an unbanded scan. |
 | A "topic of X" query returns generic topic papers | Rerun with the entity and its aliases only; use topic terms during triage. |

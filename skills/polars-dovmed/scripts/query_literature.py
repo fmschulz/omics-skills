@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -28,6 +29,7 @@ from pathlib import Path
 # this rate on its own; a key lifts the limit. The server enforces its own.
 ANONYMOUS_REQUESTS_PER_MINUTE = 20
 ANONYMOUS_WINDOW_S = 60.0
+HTTP_503_RETRY_DELAYS = (2, 4, 8, 16, 30)
 ASYNC_ENDPOINTS = {
     "/api/search_literature": "search_literature",
     "/api/scan_literature_advanced": "scan_literature_advanced",
@@ -989,8 +991,6 @@ def write_request_times(state_path: Path, times: list[float]) -> None:
 
 
 def request_json(base_url, endpoint, api_key, *, timeout, method="GET", payload=None):
-    if not api_key:
-        wait_for_anonymous_slot()
     request = make_request(
         base_url,
         endpoint,
@@ -998,8 +998,34 @@ def request_json(base_url, endpoint, api_key, *, timeout, method="GET", payload=
         method=method,
         payload=payload,
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+    attempt = 0
+    while True:
+        if not api_key:
+            wait_for_anonymous_slot()
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as err:
+            if err.code != 503 or attempt == len(HTTP_503_RETRY_DELAYS):
+                raise
+            wait = HTTP_503_RETRY_DELAYS[attempt]
+            try:
+                retry_after = float((err.headers or {}).get("Retry-After", ""))
+            except (TypeError, ValueError):
+                retry_after = None
+            if (
+                retry_after is not None
+                and math.isfinite(retry_after)
+                and retry_after >= 0
+            ):
+                wait = min(retry_after, 60)
+            print(
+                f"HTTP 503; retry in {wait:g}s "
+                f"({attempt + 1}/{len(HTTP_503_RETRY_DELAYS)})",
+                file=sys.stderr,
+            )
+            time.sleep(wait)
+            attempt += 1
 
 
 def post_json(base_url, endpoint, api_key, payload, timeout):

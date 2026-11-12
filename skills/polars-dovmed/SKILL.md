@@ -29,7 +29,7 @@ Run the helper as `uv run --script ~/.agents/skills/polars-dovmed/scripts/query_
    - Put acronym collisions and wrong systems in `disqualifying_terms`.
 3. Run discovery first, one corpus per call. Never use `--corpus both`; the helper rejects it because the API answers HTTP 502.
    - bioRxiv: async discovery, `--poll-timeout 75`, `--details-rerank-limit` 8 to 12.
-   - OpenPMC: `--year-bands <bands> --year-band-workers 4 --skip-details-rerank --poll-timeout 120`. Year-band discovery of OpenPMC runs synchronously by itself. Map the requested years to bands (table below) and search only those. Never run a broad unbanded OpenPMC scan. Fetch details by PMCID after inspecting the top hits.
+   - OpenPMC: `--year-bands <bands> --year-band-workers 2 --skip-details-rerank --poll-timeout 120`. The server has two search slots, and the helper retries HTTP 503 with backoff. Year-band discovery of OpenPMC runs synchronously by itself. Map the requested years to bands (table below) and search only those. Never run a broad unbanded OpenPMC scan. Fetch details by PMCID after inspecting the top hits.
    - Use `--extract-matches none --add-group-counts primary` for discovery. Wrap calls in `timeout` when it exists.
 4. Inspect the first 5 to 10 hits. If they are noisy, refine `query.json` and rerun.
 5. Fill citation metadata from the corpus details first, then `--crossref-metadata` or `/crossref-lookup`. Use DOI landing pages only when corpus metadata and Crossref disagree; do not use generic web search for DOI repair.
