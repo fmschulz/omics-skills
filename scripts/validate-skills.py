@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["PyYAML==6.0.3"]
+# dependencies = ["PyYAML>=6.0.3"]
 # ///
 """Validate every skills/<name>/SKILL.md and the skill set as a whole.
 

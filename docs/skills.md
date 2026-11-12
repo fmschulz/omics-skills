@@ -13,7 +13,7 @@ Two kinds of skill exist. A **model-visible** skill is listed in every session, 
 | `public-db-lookup` | Fetching a record from UniProt, NCBI, MGnify, InterPro, AlphaFold DB, STRING, or ENA. | A compact JSON envelope with bounded records, counts, and an optional raw-response file. |
 | `bio-logic` | Auditing scientific reasoning, study design, bias, or strength of evidence behind project results. | A hypothesis register and a structured critique with uncertainty, alternative explanations, and follow-up checks. |
 | `polars-dovmed` | Searching PMC Open Access or bioRxiv full text, through the connector or the hosted API or parquet script. | A run directory with `query.json`, raw responses, and timings, plus a paper list with relevance notes. |
-| `crossref-lookup` | Validating DOIs, matching titles to citation metadata, or comparing papers by citations. | Crossref records, DOI matches, bibliography cleanup evidence, OpenAlex citation counts, and a journal impact factor from a small manual table. |
+| `crossref-lookup` | Validating DOIs, matching titles to citation metadata, or comparing papers by citations. | Crossref records, DOI matches, bibliography cleanup evidence, and OpenAlex citation counts. |
 | `notebooks` | Building or converting reproducible marimo or Jupyter notebooks. | A fully executed notebook with embedded figures and clear analysis flow. |
 | `beautiful-data-viz` | Making, restyling, or reviewing any plot, chart, figure, dashboard, or data visual. | Greyscale-first PNG, SVG, PDF, or HTML figures, color only to encode information, reproducible plotting code, and a Plotly Dash guide with an example app. |
 
@@ -39,7 +39,7 @@ Read these through `omics-pipeline`. Projects call their scripts by path, so the
 | Skill | Use when | Main result |
 |---|---|---|
 | `tracking-taxonomy-updates` | Routing sequences by domain with QuickClade before any domain-specific stage, comparing NCBI, GTDB, ICTV, or eukaryotic taxonomy releases, or assigning taxonomy. | `results/taxonomy/domain_routing.tsv`, GTDB-Tk, EukCC, vConTACT3, or GVClass assignments, and a versioned release change and conflict report. |
-| `bio-annotation` | Assigning function and taxonomy from sequence homology. | Annotation and taxonomy Parquet tables, `marker_census.tsv`, a family copy-number matrix, and `discovery_candidates.tsv`. |
+| `bio-annotation` | Assigning function and taxonomy from sequence homology. | Annotation and taxonomy Parquet tables, `marker_census.tsv`, a family copy-number matrix, and `family_expansion_candidates.tsv`. |
 | `bio-viromics` | Detecting, classifying, and QCing viral contigs. | Viral calls, quality summaries, taxonomy evidence, and candidate discovery tables. |
 | `bio-interdomain-hgt` | Testing interdomain horizontal gene transfer and donor direction. | Homology, context, contamination, and per-gene phylogenetic evidence for candidate transfers. |
 

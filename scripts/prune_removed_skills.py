@@ -7,9 +7,9 @@ tie to this checkout:
 
 * A symlink into this checkout's ``skills/`` directory is removed when its name
   is on the explicit lists below and the checkout no longer ships the skill.
-* A ``.bak`` backup that is a symlink follows the same target rule. A ``.bak``
-  directory is archived when its frontmatter names the skill.
-* A copied skill directory is never touched.
+* A ``.bak`` backup that is a symlink follows the same target rule.
+* A copied directory is never touched, a ``.bak`` copy included: it may be the
+  user's own backup, and ``make clean`` deletes the archive.
 """
 
 from __future__ import annotations
@@ -82,17 +82,6 @@ def current_skill_names(skills_dir: Path) -> set[str]:
     }
 
 
-def frontmatter_name(skill_dir: Path) -> str | None:
-    """Return the ``name`` in a skill directory's ``SKILL.md``, if it has one."""
-    skill_file = skill_dir / "SKILL.md"
-    if not skill_file.is_file():
-        return None
-    for line in skill_file.read_text(encoding="utf-8").splitlines()[1:20]:
-        if line.startswith("name:"):
-            return line.partition(":")[2].strip().strip("'\"")
-    return None
-
-
 def next_backup_path(backup_dir: Path, name: str) -> Path:
     """Return the first unused path for ``name`` inside ``backup_dir``."""
     candidate = backup_dir / name
@@ -103,28 +92,17 @@ def next_backup_path(backup_dir: Path, name: str) -> Path:
     return candidate
 
 
-def is_our_backup(target: Path, name: str, skills_dir: Path) -> bool:
-    """Tell whether a ``.bak`` entry is a backup of this pack's skill ``name``.
-
-    A symlink is ours only through its target. A directory is ours when its
-    frontmatter names the skill.
-    """
-    if target.is_symlink():
-        return links_into(target, name, skills_dir)
-    return target.is_dir() and frontmatter_name(target) == name
-
-
 def prune_removed_skills(
     skills_dir: Path,
     installed_skills_dir: Path,
     archive_dir: Path,
 ) -> tuple[list[str], list[str]]:
-    """Retire installed links and backups that belong to skills of this pack.
+    """Retire installed links and backup links that belong to skills of this pack.
 
     Args:
         skills_dir: The checkout's ``skills/`` directory.
         installed_skills_dir: The shared ``~/.agents/skills`` directory.
-        archive_dir: Where recognized ``.bak`` backups are moved.
+        archive_dir: Where ``.bak`` symlinks into this checkout are moved.
 
     Returns:
         The messages for what was removed or archived, then the warnings for
@@ -141,7 +119,7 @@ def prune_removed_skills(
     for target in sorted(installed_skills_dir.glob("*.bak*")):
         match = LEGACY_BACKUP.fullmatch(target.name)
         name = match.group("name") if match else ""
-        if name not in ours or not is_our_backup(target, name, skills_dir):
+        if name not in ours or not links_into(target, name, skills_dir):
             warnings.append(f"left unrecognized legacy backup untouched: {target}")
             continue
         archive_dir.mkdir(parents=True, exist_ok=True)

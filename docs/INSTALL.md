@@ -16,7 +16,7 @@ cd omics-skills
 make install
 ```
 
-`make install` links every skill into `~/.agents/skills`, links the Claude agent, and renders the Codex agent. It also removes the links of skills and agents that left the pack. It removes a link only when the link points into the checkout and the name is on the pack's list of retired or moved skills or retired agents. Everything else stays: a copied skill directory, a copied agent file, a rendered Codex agent such as `~/.codex/agents/omics-scientist.toml`, an independent skill or agent with a retired name, a `.bak` link to another repository, and a moved skill such as `pdf-to-md` that another repository now owns. Delete those by hand when you no longer want them.
+`make install` links every skill into `~/.agents/skills`, links the Claude agent, and renders the Codex agent. It also removes the links of skills and agents that left the pack. It removes a link only when the link points into the checkout and the name is on the pack's list of retired or moved skills or retired agents. Everything else stays: a copied skill directory, a copied agent file, a rendered Codex agent such as `~/.codex/agents/omics-scientist.toml`, an independent skill or agent with a retired name, a `.bak` link to another repository, a copied `.bak` directory, and a moved skill such as `pdf-to-md` that another repository now owns. Delete those by hand when you no longer want them.
 
 | Command | Effect |
 |---|---|
@@ -40,7 +40,7 @@ A checkout install writes:
 ~/.codex/skills                 link to ~/.agents/skills
 ```
 
-- An existing directory with a pack skill's name is moved to `~/.agents/omics-skills/previous-skills/`. A link with that name is replaced. A `.bak` backup of a pack skill moves there too.
+- An existing directory with a pack skill's name is moved to `~/.agents/omics-skills/previous-skills/`. A link with that name is replaced. A `.bak` symlink into the checkout moves there too; a copied `.bak` directory stays where it is, even when its `SKILL.md` names a pack skill.
 - The install deletes `skill_index.py`, `catalog.json` and `README.md` in `~/.agents/omics-skills/`, which earlier versions installed there.
 - An installed agent identical to the new one is left in place. A differing file is kept once as a timestamped `.bak` file.
 - If `~/.claude/skills` or `~/.codex/skills` is a real directory, the installer stops instead of hiding its contents. Merge it into `~/.agents/skills`, or install with `LINK_CLIENT_SKILLS=no`.

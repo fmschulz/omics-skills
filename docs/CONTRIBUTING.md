@@ -28,7 +28,7 @@ CI runs these on every push to `main`:
 
 ```bash
 make test
-find scripts skills validation -name '*.sh' -print0 | xargs -0 -r -n 1 bash -n
+find scripts skills -name '*.sh' -print0 | xargs -0 -r -n 1 bash -n
 uvx --from mkdocs --with 'mkdocs-material==9.5.*' --with pymdown-extensions mkdocs build --strict
 ```
 

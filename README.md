@@ -119,7 +119,6 @@ scripts/
   check_tool_versions.py    report of tool guides behind the newest release
   check_release_sync.py     tag, manifest and release-note check before a release
 tests/                      unit and fixture tests, one file per script or skill
-validation/                 truth-set registry and Slurm job harness for biological validation
 docs/                       MkDocs site sources (install, skills, agent, validation, tooling, contributing)
 ```
 

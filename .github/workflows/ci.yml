@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -30,9 +30,12 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
+        with:
+          # The repository has no requirements or lock file to key a cache on.
+          enable-cache: false
 
       - name: Validate shell scripts
-        run: find scripts skills validation -type f -name '*.sh' -print0 | xargs -0 -r -n 1 bash -n
+        run: find scripts skills -type f -name '*.sh' -print0 | xargs -0 -r -n 1 bash -n
 
       - name: Validate skills
         run: uv run --script scripts/validate-skills.py

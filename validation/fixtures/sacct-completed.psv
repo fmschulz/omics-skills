@@ -1,4 +1,0 @@
-JobIDRaw|State|ExitCode|ElapsedRaw|MaxRSS|AllocCPUS|ReqMem|NodeList
-12345|COMPLETED|0:0|42||4|8192Mc|node001
-12345.batch|COMPLETED|0:0|41|512M|4|8192Mc|node001
-12345.extern|COMPLETED|0:0|42|24M|4|8192Mc|node001
