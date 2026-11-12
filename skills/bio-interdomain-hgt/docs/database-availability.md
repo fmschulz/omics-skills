@@ -1,7 +1,7 @@
 # Database availability & build recipe (path-agnostic)
 
 Last verified: 2026-10-01
-Tool version/release checked: DIAMOND v2.2.8, MMseqs2 (linclust/cluster), geNomad v1.12.0 / DB v1.9
+Tool version/release checked: DIAMOND v2.2.8, MMseqs2 (linclust/cluster), geNomad v1.13.0 / DB v1.9
 Official docs/manual: https://github.com/bbuchfink/diamond/wiki
 Release/source: https://github.com/bbuchfink/diamond/releases
 
@@ -16,9 +16,20 @@ One protein search database that spans all domains, with a lineage labels table.
 Required properties:
 - Contains eukaryotes, bacteria, archaea, and viruses (DNA viruses incl.
   NCLDV/giant viruses, and phages), plus organelle references (plastid/mito).
-- Headers carry a domain/source prefix so origin is recoverable from the subject id,
-  e.g. `EUK__<genome>|<locus>`, `BAC__...`, `ARC__...`, `NCLDV__...`, `PHAGE__...`,
-  `VP__...` (virophage), `PLASTID__...`, `MITO__...`.
+- Headers carry a domain/source prefix so origin is recoverable from the subject id.
+  The driver accepts six labels, so six prefixes cover everything:
+
+  | Prefix | Driver label |
+  |--------|--------------|
+  | `EUK__<genome>\|<locus>` | `eukaryota` |
+  | `BAC__...` | `bacteria` |
+  | `ARC__...` | `archaea` |
+  | `NCLDV__...` | `ncldv` |
+  | `PHAGE__...` | `phage` |
+  | `ORG__...` (plastid and mitochondrial proteins) | `organelle` |
+
+  Virophages fit none of the six labels. Leave them out of the arbiter; a virophage
+  protein labelled `ncldv` or `phage` would polarize transfers wrongly.
 - A sibling labels file maps `genome_id` -> pipe-delimited lineage
   (`DOMAIN|phylum|class|...|species`).
 
@@ -28,7 +39,7 @@ Availability check (adapt to local layout):
 # look for a combined multi-domain proteome diamond db + labels
 find "$BIO_DB_ROOT" -maxdepth 3 \( -iname '*combined*proteome*.dmnd' -o -iname '*nr*.dmnd' \) 2>/dev/null
 find "$BIO_DB_ROOT" -maxdepth 3 -iname '*labels*.tsv' 2>/dev/null
-# confirm domain coverage from the labels prefixes (must show EUK, BAC, ARC, and viral)
+# confirm domain coverage from the labels prefixes (must show EUK, BAC, ARC, NCLDV, PHAGE, ORG)
 cut -f1 <labels.tsv> | sed 's/__.*//' | sort | uniq -c
 ```
 Decision: if a single DB does not span all domains, it CANNOT polarize transfer.
@@ -37,7 +48,7 @@ Build a combined one rather than running per-domain searches that can't be compa
 Build (if absent) with standard tools such as `seqkit` (prefix every header with its domain label, deduplicate, keep a mapping table):
 ```bash
 # 1) collect domain proteomes (EukProt, GTDB, IMG/VR, giant-virus proteome, organelle RefSeq)
-# 2) prefix headers by domain/source; concatenate
+# 2) prefix headers with the six prefixes above; concatenate
 # 3) (recommended) cluster to reduce size at ~equal sensitivity (MMseqs2 linclust/cluster)
 # 4) diamond makedb --in combined_proteome.faa --db combined_proteome.dmnd
 # 5) write genome_id<TAB>lineage labels.tsv from each source's taxonomy

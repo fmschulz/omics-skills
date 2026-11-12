@@ -389,55 +389,60 @@ class InstallSelectedIntegrationTests(unittest.TestCase):
             self.assertIn("old copy", (backups[0] / "SKILL.md").read_text(encoding="utf-8"))
             self.assertEqual(list(skills_dir.glob("bio-logic.bak*")), [])
 
-    def test_install_archives_recognized_legacy_backup_outside_active_skills(self) -> None:
+    def test_install_leaves_a_copied_backup_directory_untouched(self) -> None:
+        """A copied `<skill>.bak` may be the user's own backup, even when its
+        frontmatter names a pack skill, and `make clean` deletes the archive."""
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir)
             skills_dir = home / ".agents" / "skills"
-            legacy = skills_dir / "bio-logic.bak"
-            legacy.mkdir(parents=True)
-            (legacy / "SKILL.md").write_text(
-                "---\nname: bio-logic\ndescription: legacy copy\n---\n",
-                encoding="utf-8",
+            kept = []
+            for name in ("bio-logic", "jgi-lakehouse"):
+                backup = skills_dir / f"{name}.bak"
+                backup.mkdir(parents=True)
+                (backup / "SKILL.md").write_text(
+                    f"---\nname: {name}\ndescription: my own copy\n---\n",
+                    encoding="utf-8",
+                )
+                kept.append(backup)
+
+            result = self.run_make(
+                home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic"
             )
-            unrelated = skills_dir / "unrelated.bak"
-            unrelated.mkdir()
+
+            for backup in kept:
+                self.assertTrue((backup / "SKILL.md").is_file())
+            self.assertEqual(
+                list(
+                    (home / ".agents" / "omics-skills" / "previous-skills").glob(
+                        "*.bak"
+                    )
+                ),
+                [],
+            )
+            self.assertIn("left unrecognized legacy backup untouched", result.stdout)
+
+    def test_install_archives_a_retired_skills_backup_symlink(self) -> None:
+        """A backup link to a skill that was just retired is ours too. Matching
+        only against skills still on disk stranded `jgi-lakehouse.bak` beside
+        the active skills forever."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            skills_dir = home / ".agents" / "skills"
+            skills_dir.mkdir(parents=True)
+            retired_backup = skills_dir / "jgi-lakehouse.bak"
+            retired_backup.symlink_to(REPO_ROOT / "skills" / "jgi-lakehouse")
 
             self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
 
-            self.assertFalse(legacy.exists())
+            self.assertFalse(retired_backup.is_symlink())
             archived = (
                 home
                 / ".agents"
                 / "omics-skills"
                 / "previous-skills"
-                / "bio-logic.bak"
-                / "SKILL.md"
+                / "jgi-lakehouse.bak"
             )
-            self.assertTrue(archived.is_file())
-            self.assertTrue(unrelated.is_dir())
-
-    def test_install_archives_a_retired_skills_legacy_backup(self) -> None:
-        """A backup of a skill that was just retired is ours too. Matching only
-        against skills still on disk stranded `jgi-lakehouse.bak` beside the
-        active skills forever."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            home = Path(tmpdir)
-            skills_dir = home / ".agents" / "skills"
-            retired_backup = skills_dir / "jgi-lakehouse.bak"
-            retired_backup.mkdir(parents=True)
-            (retired_backup / "SKILL.md").write_text(
-                "---\nname: jgi-lakehouse\ndescription: retired copy\n---\n",
-                encoding="utf-8",
-            )
-
-            self.run_make(home, "install-skills", "SELECTED_SKILL_DIRS=bio-logic")
-
-            self.assertFalse(retired_backup.exists())
-            archived = (
-                home / ".agents" / "omics-skills" / "previous-skills"
-                / "jgi-lakehouse.bak" / "SKILL.md"
-            )
-            self.assertTrue(archived.is_file())
+            self.assertTrue(archived.is_symlink())
 
     def test_install_removes_links_to_skills_deleted_from_the_pack(self) -> None:
         deleted = (

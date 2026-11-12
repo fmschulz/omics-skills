@@ -4,44 +4,16 @@ Figures in notebooks follow `/beautiful-data-viz` ([../../beautiful-data-viz/SKI
 
 ## Style cell
 
-Put one styling cell near the top and reuse its result in every plot cell. With the skill installed, use its helper:
+[../../beautiful-data-viz/assets/beautiful_style.py](../../beautiful-data-viz/assets/beautiful_style.py) is the single source of the palette, rcParams and dpi: 150 dpi on screen, 300 dpi on export. Do not copy its values into a notebook. Copy the file next to the notebook (it needs only matplotlib and cycler; seaborn is optional), then put one styling cell near the top and reuse its result in every plot cell:
 
 ```python
-from pathlib import Path
-import sys
-
-sys.path.insert(0, str(Path.home() / ".agents" / "skills" / "beautiful-data-viz"))
-from assets.beautiful_style import set_beautiful_style
+from beautiful_style import set_beautiful_style
 
 cfg = set_beautiful_style(medium="notebook", background="light")
 # cfg.accent is the one highlight color; all other series use the grey cycle.
 ```
 
-A marimo `--sandbox` notebook or a teammate's clean clone may not have the skill installed. Then inline the same defaults instead of importing them:
-
-```python
-import matplotlib as mpl
-from cycler import cycler
-
-ACCENT = "#D55E00"  # Okabe-Ito vermillion: the one highlighted finding
-mpl.rcParams.update({
-    "figure.dpi": 120,
-    "savefig.dpi": 300,
-    "savefig.bbox": "tight",
-    "savefig.pad_inches": 0.02,
-    "font.family": "sans-serif",
-    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans", "Liberation Sans"],
-    "figure.facecolor": "#ffffff",
-    "axes.facecolor": "#ffffff",
-    "axes.spines.top": False,
-    "axes.spines.right": False,
-    "axes.grid": False,
-    "axes.prop_cycle": cycler(color=["#333333", "#7a7a7a", "#a8a8a8", "#555555"])
-    + cycler(linestyle=["-", "--", ":", "-."]),
-    "legend.frameon": False,
-    "figure.constrained_layout.use": True,
-})
-```
+Both notebook templates start from this cell. The base font sizes are 9, 11 and 14 pt for `medium="paper"`, `"notebook"` and `"slides"`.
 
 ## Notebook-specific rules
 

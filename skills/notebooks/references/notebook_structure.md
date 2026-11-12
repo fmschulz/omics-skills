@@ -60,7 +60,7 @@ print(df.shape)
 - Remove trailing empty cells and placeholder cells before final verification.
 
 ## Cell sizing limits (recommended)
-- Target **≤ 25 lines** per code cell.
+- Target **≤ 50 lines** per code cell (the linter warns above 50).
 - If a cell grows, extract helpers into functions or modules.
 - Prefer functions with docstrings for multi-step logic.
 

@@ -2,8 +2,8 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "nbclient>=0.10,<1",
-#     "nbformat>=5.10,<6",
+#     "nbclient>=0.10",
+#     "nbformat>=5.10",
 # ]
 # ///
 

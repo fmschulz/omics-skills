@@ -19,9 +19,9 @@ Read this after Step 0 of `SKILL.md`. Step 0 (database gate) and Step 5 (context
   comparison NUCLEOTIDE genomes (6-frame) vs the query proteins (tiny db). For
   genome-length queries use `-F 15 --range-culling --top 10` so multiple genes per
   contig are reported.
-- Scale: shard the collection across a SLURM array, bin-packed by cumulative size so
-  no shard is dominated by one giant genome; set `--time` to cover the largest single
-  genome; write a resume-safe per-shard `.done` sentinel.
+- Scale: shard the collection by cumulative size so no shard is dominated by one giant
+  genome, and run the shards through the scheduler (`hpc-slurm`). Shared rule 2 of the
+  `omics-pipeline` skill covers the resume-safe `.done` marker.
 - Thresholds: e-value <=1e-5, subject coverage >=0.5, plus identity/bitscore floors.
   Record id%, query AND subject coverage, e-value, bitscore for every hit.
 
@@ -50,7 +50,9 @@ See `SKILL.md`.
 ### Step 6: Deep homology vs recent transfer
 - Ancient shared genes sit at LOW identity; recent HGT sits HIGH. Bound the expensive
   context + phylogeny steps to high-identity candidates (state the cutoff and log how
-  many were dropped). Do not treat every conserved-core hit as HGT.
+  many were dropped). Do not treat every conserved-core hit as HGT. The driver's
+  `--min-identity` marks candidates below the cutoff `ambiguous` and records the cutoff
+  in the manifest.
 
 ### Step 7: Per-gene phylogenetic confirmation (required for confirmed calls)
 - For each top candidate, gather homologs ACROSS ALL DOMAINS from the arbiter (one

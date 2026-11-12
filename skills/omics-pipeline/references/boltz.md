@@ -2,8 +2,8 @@
 
 Biomolecular interaction model for structure prediction and binding affinity estimation.
 
-Last verified: 2026-05-30
-Tool version/release checked: Boltz v2.2.1
+Last verified: 2026-11-11
+Tool version/release checked: Boltz v2.2.1 (still the newest release on 2026-11-11; the `predict` options, YAML schema and affinity output fields were checked against the docs and source of that tag, not run)
 Official docs/manual: https://github.com/jwohlwend/boltz
 Release/source: https://github.com/jwohlwend/boltz/releases/tag/v2.2.1; https://boltz.ai
 

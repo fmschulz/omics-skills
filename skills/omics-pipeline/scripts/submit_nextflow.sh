@@ -11,13 +11,17 @@ if [[ $# -ne 3 ]]; then
 fi
 : "${SLURM_ACCOUNT:?Set SLURM_ACCOUNT to the scheduler account}"
 
-pipeline="$(realpath "$1")"
+# cd and pwd -P resolve a path on GNU and BSD systems; realpath is not portable
+# (macOS has no -m).
+pipeline_dir="$(cd "$(dirname "$1")" && pwd -P)"
+pipeline="$pipeline_dir/$(basename "$1")"
 reads_glob="$2"
-result_dir="$(realpath -m "$3")"
+mkdir -p "$3"
+result_dir="$(cd "$3" && pwd -P)"
 # Nextflow writes .nextflow/ and work/ in the launch directory. Slurm spools the
 # batch script, so pin the project root with --chdir instead of deriving it
 # from the script path.
-project_root="$(realpath "${PROJECT_ROOT:-$PWD}")"
+project_root="$(cd "${PROJECT_ROOT:-$PWD}" && pwd -P)"
 mkdir -p "$result_dir/run-metadata"
 
 launcher="$result_dir/run-metadata/nextflow-run.sbatch"

@@ -2,8 +2,8 @@
 
 Fast protein structure embedding and similarity search using transformer-based vector representations.
 
-Last verified: 2026-05-30
-Tool version/release checked: TM-Vec 1.0.2 (original); valentynbez/tmvec fork 1.1.0 at commit 6bdf11a (2026-07-24; the fork has no tagged releases)
+Last verified: 2026-11-11
+Tool version/release checked: TM-Vec 1.0.2 (original; its last commit is from 2024-09-25); valentynbez/tmvec fork 1.1.0 at commit 6bdf11a (2026-07-24; still the head of the default branch on 2026-11-11; the fork has no tagged releases). Options, defaults and output names checked in `src/tmvec/cli.py` at that commit; not run (the ProtT5 weights are too large for a smoke test)
 Official docs/manual: https://github.com/tymor22/tm-vec; https://github.com/valentynbez/tmvec
 Release/source: https://github.com/tymor22/tm-vec/releases/tag/1.0.2
 

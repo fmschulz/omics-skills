@@ -18,7 +18,7 @@ Derived from Wilson G, Bryan J, Cranston K, Kitzes J, Nederbragt L, Teal TK, "Go
 - **Save the raw data.** Keep an untouched, read-only copy; never edit it in place — all processing happens via scripts on copies. Store demultiplexed FASTQs under `data/raw/` and `chmod -R 444 data/raw/*.fastq.gz`; write trimmed reads to `results/`, never into `data/raw/`.
 - **Back up raw data in more than one location.** At least two physically separate places. Raw BAM/FASTQ live on HPC scratch, are rsynced nightly to institutional object storage, and the run is archived at SRA/ENA: `rsync -av --checksum data/raw/ /backup/seqcenter_run42/`.
 - **Create open, readable formats.** Convert proprietary/binary outputs to open, documented, future-proof formats with explicit metadata. Export vendor format to CSV/TSV and bgzipped VCF; store sample metadata as a UTF-8 `sample_metadata.csv`, not a multi-tab `.xlsx`.
-- **Create tidy data.** One variable per column, one observation per row. A tidy `samples.tsv` with columns `sample_id, condition, replicate, fastq_r1, fastq_r2` (one row per sample), not a wide spreadsheet with merged cells.
+- **Create tidy data.** One variable per column, one observation per row. A tidy `samples.tsv` with the required columns `sample_id, r1, r2` (`r2` empty for single-end or long reads) and free metadata columns such as `condition, replicate` (one row per sample), not a wide spreadsheet with merged cells.
 - **Record all processing steps.** Capture every step as scripts/workflows, not GUI edits — a Snakemake/Nextflow pipeline running `fastp -> metaspades -> bwa-mem -> quickbin`.
 - **Anticipate multiple tables; use a unique identifier for every record.** Give every record a stable key. Use a canonical `sample_id` (e.g. `BIOSAMPLE_0001`) shared by `samples.tsv`, `qc_metrics.tsv`, and `bin_stats.tsv`; pair gene tables on stable Ensembl gene IDs, not display names.
 - **Submit data to a DOI-issuing repository.** Reads at SRA/ENA, MAGs at GenBank, processed count matrix/derived tables to Zenodo for a citable DOI.
@@ -31,7 +31,7 @@ Derived from Wilson G, Bryan J, Cranston K, Kitzes J, Nederbragt L, Teal TK, "Go
 - **Always search for well-maintained libraries** before re-implementing. Parse alignments with `pysam` and sequences with Biopython rather than writing a homemade SAM/FASTQ parser.
 - **Test libraries before relying on them.** Run a new aligner on a small simulated read set with known truth positions and check the mapped coordinates before using it on real samples.
 - **Give functions and variables meaningful names.** `min_mapping_quality = 30` and `filter_low_qual_reads(reads)`, not `q=30` and `f(r)`.
-- **Make dependencies and requirements explicit** in a machine-readable manifest. Pin tools in `pixi.toml` and commit `pixi.lock` (`bwa=0.7.18`, `samtools=1.21`, `snakemake=8.*`), committed with the code.
+- **Make dependencies and requirements explicit** in a machine-readable manifest. Declare tools in `pixi.toml` with lower bounds (`bwa = ">=0.7.18"`, `samtools = ">=1.21"`, `snakemake = ">=8"`) and commit `pixi.lock`, which pins the exact builds, with the code.
 - **Do not comment/uncomment sections to control behavior.** Drive behavior with config/CLI args (`--ref contigs.fasta --min-qual 30`), not by toggling commented `#ref = 'old.fa'` lines.
 - **Provide a simple example or test data set.** Ship `tests/data/tiny.fastq` (a few hundred reads) and `tests/expected/tiny_bins/` so `make test` runs the pipeline end-to-end and diffs output.
 - **Submit code to a DOI-issuing repository.** Connect the GitHub repo to Zenodo and tag a release (`v1.0.0`) to mint a DOI for the exact pipeline version used.
@@ -50,7 +50,7 @@ One self-contained directory per project, named meaningfully. The directories be
 
 - **Put each project in its own directory, named after the project** — `arctic_metagenome_2026/`, not files scattered across `~/Desktop`.
 - **Put text documents in `doc/`** — `doc/notebook.md`, `doc/manuscript.md`, `doc/changelog.txt`.
-- **Put raw data + metadata in `data/`, generated files in `results/`.** `data/raw/*.fastq.gz` and `data/samples.tsv` stay fixed; `results/qc/`, `results/aligned/*.bam`, `results/bins/` are regenerable. Cleaned/generated files belong in `results/`, never in `data/`.
+- **Put raw data + metadata in `data/`, generated files in `results/`.** `data/raw/*.fastq.gz` and `data/samples.tsv` stay fixed; `results/<date>_<name>/qc/`, `results/<date>_<name>/aligned/*.bam`, `results/<date>_<name>/bins/` are regenerable (layout: [../SKILL.md](../SKILL.md)). Cleaned/generated files belong in `results/`, never in `data/`.
 - **Put your own source code in `src/`** — `src/parse_checkm.py`, `src/plot_bin_sizes.py`.
 - **Put external scripts or compiled programs in `bin/`** — a downloaded helper like `fastqc` or a compiled C tool, separate from your own source.
 - **Name files to reflect content or function**, sortable and machine-friendly (ordering prefixes help) — `results/2026-03-30_stationA.sorted.bam`, `src/01_trim.smk`, `src/02_assemble.smk`, not `final2.bam` or `script.py`.

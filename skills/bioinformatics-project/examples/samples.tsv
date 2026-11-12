@@ -1,5 +1,5 @@
-sample_id	site	depth_cm	replicate	collection_date	r1	r2
-stationA	fjord_east	5	1	2026-02-11	data/raw/stationA_R1.fastq.gz	data/raw/stationA_R2.fastq.gz
-stationB	fjord_east	5	2	2026-02-11	data/raw/stationB_R1.fastq.gz	data/raw/stationB_R2.fastq.gz
-stationC	fjord_west	5	1	2026-02-12	data/raw/stationC_R1.fastq.gz	data/raw/stationC_R2.fastq.gz
-stationD	fjord_west	20	1	2026-02-12	data/raw/stationD_R1.fastq.gz	data/raw/stationD_R2.fastq.gz
+sample_id	r1	r2	site	depth_cm	replicate	collection_date
+stationA	data/raw/stationA_R1.fastq.gz	data/raw/stationA_R2.fastq.gz	fjord_east	5	1	2026-02-11
+stationB	data/raw/stationB_R1.fastq.gz	data/raw/stationB_R2.fastq.gz	fjord_east	5	2	2026-02-11
+stationC	data/raw/stationC_R1.fastq.gz	data/raw/stationC_R2.fastq.gz	fjord_west	5	1	2026-02-12
+stationD	data/raw/stationD_R1.fastq.gz	data/raw/stationD_R2.fastq.gz	fjord_west	20	1	2026-02-12

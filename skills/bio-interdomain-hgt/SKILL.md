@@ -28,14 +28,15 @@ Give every search and tree step an explicit thread count (`diamond --threads`,
 `iqtree3 -T`, `mafft --thread`).
 
 After Steps 0-7 have produced their normalized TSVs, apply the evidence gates with
-the driver:
+the driver. `RUN_DIR` is the run directory that `bioinformatics-project` defines
+(`results/<date>_<name>/`):
 
 ```bash
 uv run --script ~/.agents/skills/bio-interdomain-hgt/scripts/run_hgt_evidence.py \
   forward_hits.tsv --arbiter-hits arbiter_hits.tsv --reciprocal reciprocal.tsv \
   --context context.tsv --trees trees.tsv --sampling-depth sampling_depth.tsv \
   --databases databases.json --hypotheses hypotheses.tsv --reflections reflections.tsv \
-  --query-domain ncldv --out results/bio-interdomain-hgt
+  --query-domain ncldv --out "$RUN_DIR/interdomain-hgt"
 ```
 
 The driver checksum-verifies the arbiter, lineage labels, and comparison collection
@@ -48,12 +49,16 @@ contracts (tab-separated, exact column order) are in `fixtures/`; the gates are:
 |------|-------------------------|
 | Homology | query and subject coverage >= 0.5 and e-value <= 1e-5 |
 | Reciprocal best hit | `forward_rank` and `reverse_rank` both 1 |
-| Direction | query's best arbiter domain equals the recipient domain: `recipient_to_query`; recipient locus best-matches `--query-domain`: `query_to_recipient`; otherwise `ambiguous` |
+| Direction | query's best arbiter domain equals the recipient domain: `recipient_to_query`; recipient locus best-matches `--query-domain`: `query_to_recipient`; otherwise `ambiguous`. With `--min-identity`, a forward hit whose `identity` is lower is `ambiguous` too |
 | Context | `recipient_domain_fraction` >= 0.6; eukaryotic recipients also need `method` `diamond_blastx` |
 | Phylogeny | `nesting_clade` equals `expected_clade` and `support` >= 0.9 on a 0-1 scale |
 
 A row is `confirmed` only when all gates pass and the direction is not ambiguous,
-`candidate` when homology passes but another gate fails, and `rejected` otherwise. Domain labels use
+`candidate` when homology passes but another gate fails, and `rejected` otherwise.
+`--min-identity PERCENT` (0 to 100, default off) marks deep-homology candidates: a
+forward hit with `identity` below it gets direction `ambiguous`, so it cannot be
+`confirmed`. `ambiguity_reason` in `hgt_candidates.tsv` is non-empty for every `ambiguous` row and says why (arbiter domains, identity, or both). With `--min-identity`, an `identity` that is not a finite percent from 0 to 100 stops the run. The run
+manifest records the value as `min_identity` (`null` when off). Domain labels use
 the arbiter vocabulary `eukaryota`, `bacteria`, `archaea`, `ncldv`, `phage`,
 `organelle`. `--query-domain`, `hit_domain` and `recipient_domain` must be one of them, and a
 `support` outside 0-1 (for example 95 instead of 0.95) stops the run with the error envelope.
@@ -76,9 +81,11 @@ BOTH of the following exist before any search; if one is missing, build it or ST
      (GVDB / gvclass-style), organelle RefSeq.
    - Check: list `$BIO_DB_ROOT` for an existing combined-proteome `.dmnd` + labels.
    - If absent: build it with standard tools such as `seqkit` (prefix every header by
-     domain, e.g. `EUK__`, `BAC__`, `ARC__`, `NCLDV__`, `PHAGE__`; deduplicate; keep a
-     mapping table; then `diamond makedb`). A clustered build (clusterednr / MMseqs2-reduced) is much
-     faster at comparable sensitivity; prefer it.
+     domain, e.g. `EUK__`, `BAC__`, `ARC__`, `NCLDV__`, `PHAGE__`, `ORG__`; deduplicate;
+     keep a mapping table; then `diamond makedb`). The six prefixes map to the driver's
+     six labels ([docs/database-availability.md](docs/database-availability.md)). A
+     clustered build (clusterednr / MMseqs2-reduced) is much faster at comparable
+     sensitivity; prefer it.
    - A euk-only or virus-only arbiter CANNOT polarize transfer. Confirm it spans
      every candidate donor domain.
 2. A **per-domain genome/proteome collection** for the comparison side (e.g. a
@@ -112,11 +119,8 @@ explicitly; do not silently substitute a non-comprehensive database.
   classification; reserve `--sensitive` for small or divergent focal sets.
 - A clustered arbiter (clusterednr / MMseqs2-reduced) runs much faster; on a CUDA
   GPU node, MMseqs2-GPU `easy-taxonomy --gpu` is an alternative.
-- SLURM: bin-pack by size; resume-safe `.done` sentinels; raise array throttle only
-  into idle capacity; a watcher's "queue is empty" check must tolerate transient
-  empty `squeue` (controller socket timeouts); require two consecutive empty reads
-  before resubmitting, or you will fire duplicate arrays. Recover stragglers at finer
-  granularity + longer `--time`, not by re-running everything.
+- Batch work: load `hpc-slurm` (shared rule 6 in the `omics-pipeline` skill). Shard by
+  size and recover stragglers at finer granularity, not by re-running everything.
 
 ## Input Requirements
 
@@ -126,8 +130,8 @@ explicitly; do not silently substitute a non-comprehensive database.
 
 ## Output
 
-Driver outputs under `results/bio-interdomain-hgt/`:
-- `hgt_candidates.tsv`: per hit, best arbiter domains, RBH, direction, context, phylogeny, and status
+Driver outputs under the run directory that `bioinformatics-project` defines (`results/<date>_<name>/<stage>/`):
+- `hgt_candidates.tsv`: per hit, best arbiter domains, RBH, direction, context, phylogeny, status, and the reason for an `ambiguous` direction
 - `query_protein_origin.tsv`: donor-derived vs query-core per query protein
 - `lineage_sampling_normalization.tsv`: confirmed candidates per 100 sampled genomes
 - `phylogeny_evidence.tsv`, `hypothesis_register.tsv`, `gate_reflections.tsv`
@@ -143,7 +147,7 @@ Workflow outputs, written by the agent:
 - [ ] The arbiter spans ALL candidate donor domains; every database checksum is verified before candidate scoring.
 - [ ] Each gate has a persisted reflection; candidate status comes from the gates, never from manual assignment.
 - [ ] Every candidate carries id%, query and subject coverage, e-value, bitscore, and both reciprocal best hits.
-- [ ] The deep-homology cutoff is stated and the dropped count is logged.
+- [ ] The deep-homology cutoff (`--min-identity`, or the reason there is none) is stated and the count of `ambiguous` candidates is logged.
 - [ ] The virus<->virus alternative is tested in the all-domain tree, not assumed away.
 - [ ] Contamination-prone hits (recipient genome with high assembly contamination, or donor-dominated contig) are flagged, not silently kept.
 

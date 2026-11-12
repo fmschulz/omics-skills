@@ -18,7 +18,7 @@ Validate DOIs, find DOIs from titles, and audit bibliographies against the Cross
 3. Pass `--email` only with an address the user gave for Crossref's polite pool. Never take an address from the conversation, git config or system context; without one the CLI uses the public pool. The CLI spaces requests to stay within Crossref's limits: single-DOI lookups at 5 per second (10 with `--email`), title searches at 1 per second (3 with `--email`).
 4. When a title search returns several plausible records, show the candidates instead of choosing one silently.
 5. Crossref holds citation metadata, not full text. When exact wording, pagination or publisher formatting matters, check the DOI landing page.
-6. Use `--strict` for audits that must fail on any invalid, missing or unresolved record. `--output FILE` writes the report (refuses to overwrite).
+6. Use `--strict` for audits that must fail on any invalid, missing or unresolved record. `--output FILE` writes the report and refuses to overwrite an existing file unless you pass `--force`.
 
 ```bash
 L=~/.agents/skills/crossref-lookup/scripts/lookup
@@ -33,11 +33,11 @@ $L --audit-bibliography refs.bib --strict --output crossref-audit.json
 ~/.agents/skills/crossref-lookup/scripts/measure-impact --doi 10.1038/nature12373 --format text
 ```
 
-The command reports OpenAlex citation counts and a journal impact factor from a small manual table (2024 values). Keep paper-level and journal-level metrics separate. Altmetric is sent only with `--altmetric`, and its key (`ALTMETRIC_API_KEY`, environment only) is never printed. Options, the email rule for `--mailto`, caching and the journal table are in `references/impact.md`.
+The command reports OpenAlex citation counts. It has no journal-level metric, because no free, current source of impact factors exists; do not quote one from memory. An optional OpenAlex key (`OPENALEX_API_KEY`, environment only) raises the rate limit and is never printed. The command retries HTTP 429 up to four attempts, waiting for the `Retry-After` time. Altmetric is sent only with `--altmetric`, and its key (`ALTMETRIC_API_KEY`, environment only) is never printed. `--output FILE` refuses to overwrite unless you pass `--force`. Options, the email rule for `--mailto` and caching are in `references/impact.md`.
 
 ## Input Requirements
 
-`uv` and network access (the wrapper runs a PEP 723 script that pins `requests`), and one of: a DOI, a title, a DOI list file, or a bibliography file.
+`uv` and network access (the wrapper runs a PEP 723 script that sets a lower bound on `requests`), and one of: a DOI, a title, a DOI list file, or a bibliography file.
 
 ## Output
 

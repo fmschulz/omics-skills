@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["marimo==0.23.13", "nbformat==5.10.4"]
+# dependencies = ["marimo>=0.23", "nbformat>=5.10"]
 # ///
 """Convert between marimo Python notebooks and Jupyter ipynb files."""
 

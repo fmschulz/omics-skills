@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = REPO_ROOT / "skills" / "bioinformatics-project" / "scripts" / "scaffold_project.py"
+SKILL_DIR = REPO_ROOT / "skills" / "bioinformatics-project"
+SCRIPT = SKILL_DIR / "scripts" / "scaffold_project.py"
 
 
 def tree_digest(root: Path) -> dict[str, str]:
@@ -232,6 +233,60 @@ class BioinformaticsProjectScaffoldTests(unittest.TestCase):
             self.assertEqual(result.returncode, 2)
             self.assertIn("must be supplied together", result.stderr)
             self.assertFalse(project.exists())
+
+    def test_sample_sheets_use_sample_id_r1_r2_columns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            canonical = Path(tmpdir) / "canonical"
+            numbered = Path(tmpdir) / "numbered"
+            self.run_scaffold(canonical)
+            self.run_scaffold(numbered, "--layout", "numbered")
+
+            sheets = [
+                canonical / "data" / "samples.tsv",
+                numbered / "00_data" / "01_metadata" / "samples.tsv",
+                SKILL_DIR / "examples" / "samples.tsv",
+            ]
+            for sheet in sheets:
+                header = sheet.read_text(encoding="utf-8").splitlines()[0].split("\t")
+                self.assertEqual(header[:3], ["sample_id", "r1", "r2"], sheet)
+
+    def test_gitignore_tracks_hand_written_files_and_ignores_stage_outputs(
+        self,
+    ) -> None:
+        tracked = [
+            "results/lab_notebook.md",
+            "results/2026-07-11_assembly/runall",
+            "results/2026-07-11_assembly/README.md",
+            "results/2026-07-11_assembly/Snakefile",
+            "results/2026-07-11_assembly/config.yaml",
+            "results/2026-07-11_assembly/main.nf",
+            "results/2026-07-11_assembly/reformat_one_off.awk",
+        ]
+        ignored = [
+            "results/2026-07-11_assembly/provenance.txt",
+            "results/2026-07-11_assembly/qc/reads.tsv",
+            "results/2026-07-11_assembly/assembly/contigs.fasta",
+            "results/taxonomy/domain_routing.tsv",
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = Path(tmpdir)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            shutil.copy(
+                SKILL_DIR / "examples" / "gitignore.example", repo / ".gitignore"
+            )
+            for name in [*tracked, *ignored]:
+                path = repo / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("x\n", encoding="utf-8")
+
+            def is_ignored(name: str) -> bool:
+                result = subprocess.run(
+                    ["git", "-C", str(repo), "check-ignore", "-q", name], check=False
+                )
+                return result.returncode == 0
+
+            self.assertEqual([n for n in tracked if is_ignored(n)], [])
+            self.assertEqual([n for n in ignored if not is_ignored(n)], [])
 
 
 if __name__ == "__main__":

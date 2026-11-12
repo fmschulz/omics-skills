@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["polars==1.37.1"]
+# dependencies = ["polars>=1.37.1"]
 # ///
 """Small helper for grouped polars-dovmed literature queries."""
 
 import argparse
-import csv
-import copy
 import concurrent.futures
+import copy
+import csv
 import difflib
+import fcntl
 import json
+import math
 import os
 import re
 import shutil
@@ -22,6 +24,10 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+# The hosted API is open without a key. The client keeps anonymous callers to
+# this rate on its own; a key lifts the limit. The server enforces its own.
+ANONYMOUS_REQUESTS_PER_MINUTE = 20
+ANONYMOUS_WINDOW_S = 60.0
 ASYNC_ENDPOINTS = {
     "/api/search_literature": "search_literature",
     "/api/scan_literature_advanced": "scan_literature_advanced",
@@ -225,7 +231,7 @@ def parse_args():
     parser.add_argument(
         "--corpus",
         choices=["pmc", "biorxiv", "both"],
-        help="Corpus selector for hosted API requests and local scans.",
+        help="Corpus for API requests and local scans: pmc or biorxiv, one per call.",
     )
     parser.add_argument(
         "--execution-mode",
@@ -342,6 +348,12 @@ def parse_args():
         parser.error(
             "--query is exploratory free-text search only; use --queries-file/--group with a structured JSON query, "
             "or pass --allow-flat-query to opt in explicitly"
+        )
+    if args.corpus == "both":
+        parser.error(
+            "--corpus both is not supported (the hosted API answers HTTP 502); "
+            "run --corpus pmc and --corpus biorxiv as separate calls "
+            "and merge the results"
         )
     try:
         args.year_bands = parse_year_bands(args.year_bands)
@@ -876,7 +888,109 @@ def make_request(base_url, endpoint, api_key, *, method="GET", payload=None):
     )
 
 
+def default_state_dir() -> Path:
+    """Return the directory that holds the cross-process pacer state."""
+    return Path(
+        os.environ.get(
+            "POLARS_DOVMED_STATE_DIR",
+            Path.home() / ".cache" / "omics-skills" / "polars-dovmed",
+        )
+    )
+
+
+class RateLimitStateError(RuntimeError):
+    """The shared anonymous rate-limit state cannot be locked, read or written."""
+
+
+def wait_for_anonymous_slot(
+    state_dir: Path | str | None = None,
+    *,
+    limit: int = ANONYMOUS_REQUESTS_PER_MINUTE,
+    window_s: float = ANONYMOUS_WINDOW_S,
+) -> None:
+    """Block until fewer than `limit` requests started in the last `window_s`.
+
+    The start times are wall-clock seconds in a file under an exclusive lock,
+    so concurrent CLI runs and the year-band threads share one budget.
+
+    Raises:
+        RateLimitStateError: The state cannot be locked, read or written. The
+            request is refused rather than sent unpaced.
+    """
+    state_dir = Path(state_dir) if state_dir else default_state_dir()
+    try:
+        state_dir.mkdir(parents=True, exist_ok=True)
+        with (state_dir / "anonymous-requests.lock").open(
+            "a+", encoding="utf-8"
+        ) as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            state_path = state_dir / "anonymous-requests.json"
+            now = time.time()
+            recent = [
+                t
+                for t in read_request_times(state_path)
+                if now - t < window_s and t - now <= window_s
+            ]
+            if len(recent) >= limit:
+                time.sleep(max(0.0, recent[-limit] + window_s - now))
+                now = time.time()
+                recent = [t for t in recent if now - t < window_s]
+            recent.append(now)
+            write_request_times(state_path, recent[-limit:])
+    except OSError as err:
+        raise RateLimitStateError(
+            f"cannot use the anonymous rate-limit state in {state_dir}: {err}. "
+            "Fix the directory (set POLARS_DOVMED_STATE_DIR to a writable one) "
+            "or use an API key (POLARS_DOVMED_API_KEY), which removes the limit."
+        ) from err
+
+
+def read_request_times(state_path: Path) -> list[float]:
+    """Return the recorded request start times, oldest first.
+
+    A missing file is an empty budget.
+
+    Raises:
+        RateLimitStateError: The file is not a JSON list of finite numbers.
+        OSError: The file exists but cannot be read.
+    """
+    try:
+        text = state_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+    try:
+        times = json.loads(text)
+    except ValueError:
+        times = None
+    if not isinstance(times, list) or not all(
+        isinstance(t, (int, float)) and not isinstance(t, bool) and math.isfinite(t)
+        for t in times
+    ):
+        raise RateLimitStateError(
+            f"the anonymous rate-limit state file {state_path} is corrupt. "
+            f"Delete {state_path} to start a new budget, or use "
+            "an API key (POLARS_DOVMED_API_KEY), which removes the limit."
+        )
+    return sorted(times)
+
+
+def write_request_times(state_path: Path, times: list[float]) -> None:
+    """Replace the state file atomically; the caller holds the lock."""
+    handle, temp_name = tempfile.mkstemp(
+        dir=state_path.parent, prefix=f".{state_path.name}.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as temp_file:
+            json.dump(times, temp_file)
+        Path(temp_name).replace(state_path)
+    except BaseException:
+        Path(temp_name).unlink(missing_ok=True)
+        raise
+
+
 def request_json(base_url, endpoint, api_key, *, timeout, method="GET", payload=None):
+    if not api_key:
+        wait_for_anonymous_slot()
     request = make_request(
         base_url,
         endpoint,
@@ -1381,64 +1495,30 @@ def analyze_context_against_queries(text, primary_queries):
 def analyze_paper_against_queries(paper, primary_queries):
     texts = field_texts(paper)
     combined_text = " ".join(value for value in texts.values() if value)
-    matched_group_counts = {}
-    matched_group_scores = {}
-    title_support_hits = 0
-    abstract_support_hits = 0
-    full_text_support_hits = 0
-    support_specificity_score = 0.0
-    specific_support_group_hits = 0
-
-    for concept, groups in primary_queries.items():
-        if concept == "disqualifying_terms":
-            continue
-        matched_groups = 0
-        matched_score = 0.0
-        for group in groups:
-            terms = [term for term in group if term]
-            if terms and all(pattern_matches_text(term, combined_text) for term in terms):
-                matched_groups += 1
-                matched_score += group_specificity(group)
-                if is_support_concept(concept) and group_specificity(group) >= 2.0:
-                    specific_support_group_hits += 1
-        matched_group_counts[concept] = matched_groups
-        matched_group_scores[concept] = round(matched_score, 3)
-        if is_support_concept(concept):
-            support_specificity_score += matched_score
-        if matched_groups <= 0 or not is_support_concept(concept):
-            continue
-        if any(
-            group and all(pattern_matches_text(term, texts["title"]) for term in group if term)
-            for group in groups
-        ):
-            title_support_hits += 1
-        if any(
-            group and all(pattern_matches_text(term, texts["abstract"]) for term in group if term)
-            for group in groups
-        ):
-            abstract_support_hits += 1
-        if any(
-            group and all(pattern_matches_text(term, texts["full_text"]) for term in group if term)
-            for group in groups
-        ):
-            full_text_support_hits += 1
-
-    matched_concepts = [concept for concept, count in matched_group_counts.items() if count > 0]
-    support_concepts = [concept for concept in matched_concepts if is_support_concept(concept)]
-    total_group_matches = sum(matched_group_counts.values())
-    return {
-        "matched_group_counts": matched_group_counts,
-        "matched_group_scores": matched_group_scores,
-        "matched_concepts": matched_concepts,
-        "concept_coverage": len(matched_concepts),
-        "support_concept_coverage": len(support_concepts),
-        "support_specificity_score": round(support_specificity_score, 3),
-        "specific_support_group_hits": specific_support_group_hits,
-        "title_support_hits": title_support_hits,
-        "abstract_support_hits": abstract_support_hits,
-        "full_text_support_hits": full_text_support_hits,
-        "total_group_matches": total_group_matches,
-    }
+    analysis = analyze_context_against_queries(combined_text, primary_queries)
+    support_groups = [
+        groups
+        for concept, groups in primary_queries.items()
+        if concept != "disqualifying_terms"
+        and analysis["matched_group_counts"][concept] > 0
+        and is_support_concept(concept)
+    ]
+    for field, key in (
+        ("title", "title_support_hits"),
+        ("abstract", "abstract_support_hits"),
+        ("full_text", "full_text_support_hits"),
+    ):
+        analysis[key] = sum(
+            any(
+                group
+                and all(
+                    pattern_matches_text(term, texts[field]) for term in group if term
+                )
+                for group in groups
+            )
+            for groups in support_groups
+        )
+    return analysis
 
 
 def analyze_local_contexts(paper, primary_queries):
@@ -1896,7 +1976,7 @@ def main():
         summary["warnings"].append(
             "Some papers lacked complete citation metadata such as year or DOI."
         )
-    if endpoint in ["/api/scan_literature_advanced", "/api/discover_literature"]:
+    if endpoint == "/api/scan_literature_advanced":
         summary["warnings"].append(
             "Grouped scans improve recall for multi-concept biology queries."
         )

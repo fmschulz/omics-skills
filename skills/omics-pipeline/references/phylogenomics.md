@@ -1,7 +1,7 @@
 # Phylogenomics
 
-**Last verified:** 2026-10-01
-**Tool version/release checked:** IQ-TREE v3.1.4; VeryFastTree v4.0.5; ETE Toolkit 4.4.0; MAFFT v7.526; trimAl v1.5.1; ClipKIT 2.14.0
+**Last verified:** 2026-11-11
+**Tool version/release checked:** IQ-TREE v3.1.4; VeryFastTree v4.0.5; ETE Toolkit 4.4.0; MAFFT v7.526; trimAl v1.5.1 (`trimal --version` prints v1.5.rev1); ClipKIT 2.14.0 (release only, not run)
 **Official docs/manual:** https://iqtree.github.io/doc/ ; https://github.com/citiususc/veryfasttree ; https://etetoolkit.github.io/ete/
 **Release/source:** https://github.com/iqtree/iqtree3/releases/tag/v3.1.4 ; https://github.com/citiususc/veryfasttree/releases/tag/v4.0.5 ; https://github.com/etetoolkit/ete/releases/tag/4.4.0
 
@@ -37,6 +37,8 @@ You need marker alignments, ML trees, support values, or the closest relatives o
 - Separate well-supported nearest relatives from weak placements in `closest_relatives.tsv`.
 
 ## Commands
+
+All lines below, including the ete4 snippet, ran on 2026-11-11 on 14 ribosomal-protein sequences from UniProt (`rpsC`, and `rplB` for MAFFT and trimAl). VeryFastTree's `-boot`, `-seed`, `-threads-mode` and `-disk-computing` are listed under `VeryFastTree -expert`, not under `--help`.
 
 ```bash
 # per marker; $FASTA is the unaligned marker file, $M the marker id, $OUT/$M the marker directory
@@ -82,7 +84,7 @@ for node in list(v.traverse()):
 
 The agent writes these. A restartable project driver follows the `bioinformatics-project` skill: write to `.tmp`, check, move, and reuse a stage only when its output is non-empty and its `.done` marker exists. Record seed, tree tool, threads, inputs and every command in a run manifest.
 
-Under `results/phylogenomics/`:
+Under `<run>/phylogenomics/`, where `<run>` is the dated run directory `results/<date>_<name>/` that `bioinformatics-project` defines:
 - `trees/{marker_id}/alignment.fasta`, `trimmed.fasta`, the tree (`tree.nwk` or `trimmed.fasta.treefile` with its IQ-TREE companion files) and `support.tsv`
 - `support.tsv` columns: `node_index support_type raw_support normalized_support` (`support_type` is `support`, `sh_alrt` or `ufboot`; `node_index` counts internal labels in file order)
 - `closest_relatives.tsv`: support, distance, taxonomy, reference accession, uncertainty note

@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "nbformat>=5.10,<6",
+#     "nbformat>=5.10",
 # ]
 # ///
 

@@ -47,7 +47,7 @@ One card per `--service` value. Paths are relative to the base URL. All base URL
 - `studies/` with `--param biome_lineage=root:Environmental:Terrestrial:Soil`: `--record-path items`
 - `samples/<accession>`, `analyses/<accession>`: `summary`; the record is the top-level object
 - `studies/<MGYS accession>/analyses/`: `--record-path items`
-- List responses carry the total as `count`; `record_count_available` is the length of the returned page.
+- List responses carry the total as `count`; `record_count_available` reports it. Where a response has no integer `count`, `record_count_available` is the length of the returned page.
 - Rate limit: not documented.
 - Example: `lookup --service mgnify --path biomes/ --param page_size=2 --max-items 2`
 

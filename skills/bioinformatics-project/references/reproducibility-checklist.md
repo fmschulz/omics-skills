@@ -24,7 +24,7 @@ Record the exact program, version, parameters, and input files for every result,
 - [ ] Drive each result through a script or workflow rule (`runall`, Snakemake, Nextflow), not typed by hand.
 - [ ] Log the full command, tool version, and inputs to a per-result log file.
 
-How-to: run alignment from a rule so the result is reproducible — `bwa mem -t 8 ref.fa R1.fq.gz R2.fq.gz | samtools sort -o sample.sorted.bam` — with the command, BWA version, and inputs captured in the rule and written to `results/logs/bwa_sample.log` instead of typed at a prompt.
+How-to: run alignment from a rule so the result is reproducible — `bwa mem -t 8 ref.fa R1.fq.gz R2.fq.gz | samtools sort -o sample.sorted.bam` — with the command, BWA version, and inputs captured in the rule and written to `results/<date>_<name>/logs/bwa_sample.log` instead of typed at a prompt.
 
 ## Rule 2 — Avoid manual data manipulation steps
 
@@ -61,7 +61,7 @@ Persist intermediate outputs in standard formats so you can detect bugs, inspect
 - [ ] Each pipeline stage writes a named file in a standard format under the experiment dir.
 - [ ] Pipelines are checkpointed, not collapsed into one opaque pipe.
 
-How-to: keep the assembly FASTA, the sorted BAM, its BAI index, and the per-contig depth TSV under `results/.../intermediate/` (FASTA/BAM/BAI/TSV standard formats) rather than streaming everything through a single pipe, so a downstream error can be traced to its stage and re-run from there.
+How-to: keep the assembly FASTA, the sorted BAM, its BAI index, and the per-contig depth TSV under `results/<date>_<name>/intermediate/` (FASTA/BAM/BAI/TSV standard formats) rather than streaming everything through a single pipe, so a downstream error can be traced to its stage and re-run from there.
 
 ## Rule 6 — For analyses that include randomness, note underlying random seeds
 
@@ -79,7 +79,7 @@ Save the underlying values used to draw every plot so figures can be re-rendered
 - [ ] Each figure has a sibling `<plot>_data.tsv`.
 - [ ] The plotting script reads that table, not in-memory analysis state.
 
-How-to: before plotting bin sizes, write the source table to `results/figures/bin_sizes_data.tsv` (bin, contigs, total_bp — e.g. from `seqkit stats -T`), then have `plot_bin_sizes.py` read that TSV; the plot can be restyled or audited from the stored values alone.
+How-to: before plotting bin sizes, write the source table to `results/<date>_<name>/figures/bin_sizes_data.tsv` (bin, contigs, total_bp — e.g. from `seqkit stats -T`), then have `plot_bin_sizes.py` read that TSV; the plot can be restyled or audited from the stored values alone.
 
 ## Rule 8 — Generate hierarchical analysis output, allowing layers of increasing detail to be inspected
 
@@ -97,7 +97,7 @@ Tie every claim or number in the write-up directly to the result file that produ
 - [ ] Stated numbers are computed inline from result files, not typed.
 - [ ] Manuscript / methods are in a code-embedded document.
 
-How-to: write the manuscript or methods as an R Markdown / Quarto / Jupyter document where the stated number of recovered MAGs is computed inline from `results/bin_sizes_data.tsv` (e.g. an inline `nrow(bins)` chunk) so the text value and the data file cannot drift apart.
+How-to: write the manuscript or methods as an R Markdown / Quarto / Jupyter document where the stated number of recovered MAGs is computed inline from `results/<date>_<name>/figures/bin_sizes_data.tsv` (e.g. an inline `nrow(bins)` chunk) so the text value and the data file cannot drift apart.
 
 ## Rule 10 — Provide public access to scripts, runs, and results
 

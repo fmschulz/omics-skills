@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["jsonschema==4.25.1"]
+# dependencies = ["jsonschema>=4.25.1"]
 # ///
 """Apply HGT evidence gates to versioned homology, context, and tree records."""
 
@@ -11,6 +11,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import sys
 from collections import Counter
 from pathlib import Path
@@ -62,10 +63,28 @@ def write(path: Path, fields: tuple[str, ...], rows: list[dict[str, object]]) ->
         writer.writerows(rows)
 
 
+def is_percent(value: float) -> bool:
+    """Return whether `value` is a finite number from 0 to 100."""
+    return math.isfinite(value) and 0 <= value <= 100
+
+
 def check_inputs(
     args: argparse.Namespace, forward: Rows, arbiter: Rows, trees: Rows
 ) -> None:
     """Reject domain labels outside the vocabulary and tree support outside 0..1."""
+    if args.min_identity is not None:
+        if not is_percent(args.min_identity):
+            raise ValueError(
+                "--min-identity must be a finite percent from 0 to 100, "
+                f"got {args.min_identity}"
+            )
+        for row in forward:
+            if not is_percent(float(row["identity"])):
+                raise ValueError(
+                    f"identity for candidate {row['query_protein']}/"
+                    f"{row['recipient_locus']} must be a finite percent from 0 to 100 "
+                    f"when --min-identity is set, got {row['identity']}"
+                )
     labels = [("--query-domain", args.query_domain)]
     labels += [("hit_domain", row["hit_domain"]) for row in arbiter]
     labels += [("recipient_domain", row["recipient_domain"]) for row in forward]
@@ -111,6 +130,12 @@ def main() -> int:
     parser.add_argument("--hypotheses", type=Path, required=True)
     parser.add_argument("--reflections", type=Path, required=True)
     parser.add_argument("--query-domain", required=True)
+    parser.add_argument(
+        "--min-identity",
+        type=float,
+        default=None,
+        help="percent identity below which the direction is ambiguous (default: off)",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     try:
@@ -146,12 +171,28 @@ def main() -> int:
                 raise ValueError(f"candidate lacks arbiter, context, or tree evidence: {query_id}/{locus}")
             q_domain, r_domain = best[query_id]["hit_domain"], best[locus]["hit_domain"]
             recipient_domain = hit["recipient_domain"]
+            reasons = []
             if q_domain == recipient_domain:
                 direction = "recipient_to_query"
             elif r_domain == args.query_domain:
                 direction = "query_to_recipient"
             else:
                 direction = "ambiguous"
+                reasons.append(
+                    f"query best arbiter domain {q_domain} differs from recipient "
+                    f"domain {recipient_domain}, and recipient best arbiter domain "
+                    f"{r_domain} is not --query-domain {args.query_domain}"
+                )
+            if (
+                args.min_identity is not None
+                and float(hit["identity"]) < args.min_identity
+            ):
+                direction = "ambiguous"
+                reasons.append(
+                    f"identity {hit['identity']} is below "
+                    f"--min-identity {args.min_identity:g}"
+                )
+            reason = "; ".join(reasons)
             ctx = context[locus]
             frame_aware = recipient_domain != "eukaryota" or ctx["method"] == "diamond_blastx"
             context_pass = float(ctx["recipient_domain_fraction"]) >= 0.6 and frame_aware
@@ -160,7 +201,21 @@ def main() -> int:
             homology_pass = float(hit["query_coverage"]) >= 0.5 and float(hit["subject_coverage"]) >= 0.5 and float(hit["e_value"]) <= 1e-5
             reciprocal_pass = rbh.get((query_id, locus), False)
             status = "confirmed" if all((homology_pass, reciprocal_pass, context_pass, phylogeny_pass)) and direction != "ambiguous" else "candidate" if homology_pass else "rejected"
-            candidates.append({**hit, "query_best_domain": q_domain, "recipient_best_domain": r_domain, "reciprocal_best_hit": str(reciprocal_pass).lower(), "direction": direction, "context_pass": str(context_pass).lower(), "frame_aware_context": str(frame_aware).lower(), "phylogeny_support": phy["support"], "phylogeny_pass": str(phylogeny_pass).lower(), "status": status})
+            candidates.append(
+                {
+                    **hit,
+                    "query_best_domain": q_domain,
+                    "recipient_best_domain": r_domain,
+                    "reciprocal_best_hit": str(reciprocal_pass).lower(),
+                    "direction": direction,
+                    "context_pass": str(context_pass).lower(),
+                    "frame_aware_context": str(frame_aware).lower(),
+                    "phylogeny_support": phy["support"],
+                    "phylogeny_pass": str(phylogeny_pass).lower(),
+                    "status": status,
+                    "ambiguity_reason": reason,
+                }
+            )
         confirmed = Counter(row["recipient_lineage"] for row in candidates if row["status"] == "confirmed")
         depth_map = {row["lineage"]: int(row["genomes_sampled"]) for row in depths}
         normalization = []
@@ -172,6 +227,7 @@ def main() -> int:
         manifest = {
             "schema_version": "1.0",
             "query_domain": args.query_domain,
+            "min_identity": args.min_identity,
             "databases": databases,
             "candidate_count": len(candidates),
             "confirmed_count": sum(row["status"] == "confirmed" for row in candidates),
@@ -192,6 +248,7 @@ def main() -> int:
             "phylogeny_support",
             "phylogeny_pass",
             "status",
+            "ambiguity_reason",
         )
         write(args.out / "hgt_candidates.tsv", candidate_fields, candidates)
         origin_rows = [

@@ -102,6 +102,49 @@ class CrossrefLookupTests(unittest.TestCase):
                 )
         self.assertEqual(code, 0)
 
+    def test_output_created_between_the_check_and_the_write_is_not_overwritten(
+        self,
+    ) -> None:
+        valid = crossref_lookup.LookupResult("valid", "10.1000/abc", {})
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "report.json"
+            target.write_text("new\n", encoding="utf-8")
+            with (
+                mock.patch.object(
+                    crossref_lookup.CrossrefClient, "fetch_doi", return_value=valid
+                ),
+                # The existence check ran before the file appeared.
+                mock.patch.object(Path, "exists", return_value=False),
+                contextlib.redirect_stderr(io.StringIO()) as stderr,
+            ):
+                refused = crossref_lookup.main(
+                    ["--doi", "10.1000/abc", "--output", str(target)]
+                )
+            self.assertEqual(refused, 1)
+            self.assertIn("refusing to overwrite", stderr.getvalue())
+            self.assertEqual(target.read_text(encoding="utf-8"), "new\n")
+
+    def test_output_refuses_to_overwrite_unless_forced(self) -> None:
+        valid = crossref_lookup.LookupResult("valid", "10.1000/abc", {})
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "report.json"
+            target.write_text("old\n", encoding="utf-8")
+            argv = ["--doi", "10.1000/abc", "--output", str(target)]
+            with (
+                mock.patch.object(
+                    crossref_lookup.CrossrefClient, "fetch_doi", return_value=valid
+                ),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                refused = crossref_lookup.main(argv)
+                self.assertEqual(refused, 1)
+                self.assertEqual(target.read_text(encoding="utf-8"), "old\n")
+                forced = crossref_lookup.main([*argv, "--force"])
+            self.assertEqual(forced, 0)
+            self.assertEqual(
+                json.loads(target.read_text(encoding="utf-8"))["status"], "valid"
+            )
+
     def test_wrapper_runs_its_own_script_and_no_other_skill(self) -> None:
         wrapper = (MODULE_PATH.parent / "lookup").read_text(encoding="utf-8")
         self.assertNotIn("skills/", wrapper)

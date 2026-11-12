@@ -22,7 +22,7 @@ The owner's standard for any data visual, whatever the library or medium. It ove
 5. Label series directly. Keep a legend only when direct labels would collide.
 6. Manuscript figures carry no in-plot title or subtitle; axis labels (with units), direct labels, panel letters and the caption do that work. The caption sits below the figure: in a notebook the figure cell comes first and the caption cell follows it.
 7. Apply the style for the medium:
-   - matplotlib or seaborn: `cfg = set_beautiful_style(medium="paper")` from [assets/beautiful_style.py](assets/beautiful_style.py), imported from `~/.agents/skills/beautiful-data-viz` (setup in [examples/recipes.md](examples/recipes.md)). It sets a grey series cycle with distinct line styles; `cfg.accent` is the highlight colour for the current background. Helpers: `direct_label`, `annotate_point`, `apply_range_frame`, `sparkline`, `finalize_axes`.
+   - matplotlib or seaborn: `cfg = set_beautiful_style(medium="paper")` from [assets/beautiful_style.py](assets/beautiful_style.py), imported with the skill directory on `sys.path` (setup in [examples/recipes.md](examples/recipes.md)); the module is the single source of the palette, rcParams and dpi (150 on screen, 300 on export). It sets a grey series cycle with distinct line styles; `cfg.accent` is the highlight colour for the current background. Helpers: `direct_label`, `annotate_point`, `apply_range_frame`, `sparkline`, `finalize_axes`.
    - R / ggplot2: `theme_classic()` or `theme_minimal()`, `scale_colour_grey()` for neutral series, `scale_colour_manual()` to give only the finding the accent.
    - Plotly or Dash: a registered template with a grey `colorway` and the accent added per trace; structure, template and smoke test in [references/dash.md](references/dash.md).
    - HTML / SVG: define neutral greys and one accent as CSS custom properties and redefine them for dark mode.
@@ -41,4 +41,4 @@ Figures as PNG, SVG or PDF (or an HTML/SVG visual) and the plotting code that re
 
 - The message is clear within a few seconds at the target size, and a sentence or table would not do better.
 - The greyscale copy stays readable; colour is never the only encoding.
-- `uv run --script ~/.agents/skills/beautiful-data-viz/scripts/export_fixture.py ~/.agents/skills/beautiful-data-viz/fixtures/growth_curve.csv --out build/fixture` writes non-empty PNG, SVG and PDF files with grey default series; with `--background dark`, labels inherit the dark-theme text colour.
+- From the skill directory, `uv run --script scripts/export_fixture.py fixtures/growth_curve.csv --out build/fixture` ([script](scripts/export_fixture.py), [fixture](fixtures/growth_curve.csv)) writes non-empty PNG, SVG and PDF files with grey default series; with `--background dark`, labels inherit the dark-theme text colour.

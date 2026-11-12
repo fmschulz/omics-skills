@@ -70,7 +70,8 @@ metagenome_mags_project/
 │   │   ├── reformat_one_off.awk    # single-use script, kept beside its driver
 │   │   ├── provenance.txt          # tool versions + seed, written by runall
 │   │   ├── logs/
-│   │   ├── hits.tsv                # generated output (gitignored)
+│   │   ├── search/                 # stage subdirectory: generated output (gitignored)
+│   │   │   └── hits.tsv
 │   │   └── figures/
 │   │       ├── hits_histogram.png
 │   │       └── hits_histogram_data.tsv   # raw data behind the plot

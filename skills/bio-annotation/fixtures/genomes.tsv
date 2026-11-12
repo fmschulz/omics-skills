@@ -1,3 +1,3 @@
-genome	role	domain	route
-query	query	bacteria	gtdbtk
-relative	reference	bacteria	gtdbtk
+genome	role	domain	route	protein_count
+query	query	bacteria	gtdbtk	10
+relative	reference	bacteria	gtdbtk	8

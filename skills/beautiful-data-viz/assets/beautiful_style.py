@@ -1,5 +1,10 @@
 """Greyscale-first plotting defaults for matplotlib / seaborn.
 
+This module is the single source of the palette, the rcParams and the dpi values
+for every matplotlib figure of the pack: ``SCREEN_DPI`` (150) for on-screen
+figures and ``EXPORT_DPI`` (300) for saved files. Notebook templates and docs
+import it instead of copying values.
+
 Goal:
 - Publication-quality plots with readable labels, minimal whitespace, and sensible defaults.
 - Series default to neutral greys with distinct line styles; one colorblind-safe
@@ -22,12 +27,16 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
+SCREEN_DPI = 150  # figure.dpi: figures shown in a notebook or window
+EXPORT_DPI = 300  # savefig.dpi: figures written to PNG, PDF or SVG
+
+
 @dataclass(frozen=True)
 class VizConfig:
     medium: str = "notebook"      # notebook | paper | slides
     background: str = "light"     # light | dark
     font_scale: float = 1.0
-    dpi: int = 150
+    dpi: int = SCREEN_DPI
     accent: str = "#D55E00"  # the one highlighted finding
 
 
@@ -45,8 +54,6 @@ TUFTE_COLORS = {
     # Okabe-Ito vermillion / orange: colorblind-safe accent for the finding.
     "highlight": "#D55E00",
     "highlight_dark": "#E69F00",
-    "min": "#D55E00",
-    "max": "#0072B2",
 }
 
 # Neutral series cycle: grey steps plus line styles, so series stay
@@ -70,7 +77,13 @@ def _maybe_set_retina() -> None:
         pass
 
 
-def set_beautiful_style(*, medium: str = "notebook", background: str = "light", font_scale: float = 1.0, dpi: int = 150) -> VizConfig:
+def set_beautiful_style(
+    *,
+    medium: str = "notebook",
+    background: str = "light",
+    font_scale: float = 1.0,
+    dpi: int = SCREEN_DPI,
+) -> VizConfig:
     """Set global plotting defaults.
 
     Parameters
@@ -82,7 +95,8 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
     font_scale:
         Additional scale factor applied to font sizes.
     dpi:
-        Figure DPI for notebook rendering.
+        Figure DPI for on-screen rendering (``SCREEN_DPI``). Saved files always use
+        ``EXPORT_DPI``.
     """
     _maybe_set_retina()
 
@@ -111,7 +125,7 @@ def set_beautiful_style(*, medium: str = "notebook", background: str = "light", 
     rc = {
         # Figure / save
         "figure.dpi": dpi,
-        "savefig.dpi": 300,
+        "savefig.dpi": EXPORT_DPI,
         "savefig.bbox": "tight",
         "savefig.pad_inches": 0.02,
         "figure.facecolor": face,
@@ -256,10 +270,15 @@ def sparkline(
     values: Sequence[float],
     *,
     color: Optional[str] = None,
+    accent: str = TUFTE_COLORS["highlight"],
     mark_min_max: bool = True,
     mark_endpoint: bool = True,
 ) -> Axes:
-    """Draw a compact trend with no axes or grid."""
+    """Draw a compact trend with no axes or grid.
+
+    The minimum and maximum are marked in the secondary grey; the last point
+    takes the one accent colour (pass ``cfg.accent`` for a dark background).
+    """
     color = color or str(mpl.rcParams["text.color"])
     data = list(values)
     if not data:
@@ -267,12 +286,13 @@ def sparkline(
     x = list(range(len(data)))
     ax.plot(x, data, color=color, linewidth=1)
     if mark_min_max:
+        mark_color = str(mpl.rcParams["axes.labelcolor"])
         min_i = min(range(len(data)), key=data.__getitem__)
         max_i = max(range(len(data)), key=data.__getitem__)
-        ax.plot(min_i, data[min_i], "o", color=TUFTE_COLORS["min"], markersize=2)
-        ax.plot(max_i, data[max_i], "o", color=TUFTE_COLORS["max"], markersize=2)
+        ax.plot(min_i, data[min_i], "o", color=mark_color, markersize=2)
+        ax.plot(max_i, data[max_i], "o", color=mark_color, markersize=2)
     if mark_endpoint:
-        ax.plot(x[-1], data[-1], "o", color=color, markersize=2)
+        ax.plot(x[-1], data[-1], "o", color=accent, markersize=2)
     ax.set_xlim(0, len(data) - 1)
     ax.set_xticks([])
     ax.set_yticks([])

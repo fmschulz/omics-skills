@@ -1,11 +1,13 @@
 # Workflow engines: Prefect with Dask, or Nextflow
 
-**Last verified:** 2026-10-01 (the date the source guides were checked; this condensed page was not re-verified on 2026-11-09)
-**Tool version/release checked:** Prefect 3.8.7; Dask/distributed 2026.8.0; prefect-dask 0.3.7; Nextflow v26.04.6 (versions from the source guides, not re-checked)
+**Last verified:** 2026-11-11
+**Tool version/release checked:** Prefect 3.9.2; Dask/distributed 2026.8.0; prefect-dask 0.3.7; Nextflow v26.10.5 (all four ran in containers on 2026-11-11)
 **Official docs/manual:** https://docs.prefect.io/latest/ ; https://docs.dask.org/en/stable/ ; https://www.nextflow.io/docs/latest/
-**Release/source:** https://github.com/PrefectHQ/prefect/releases/tag/3.8.7 ; https://github.com/dask/dask/releases/tag/2026.8.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.04.6
+**Release/source:** https://github.com/PrefectHQ/prefect/releases/tag/3.9.2 ; https://github.com/dask/dask/releases/tag/2026.8.0 ; https://github.com/nextflow-io/nextflow/releases/tag/v26.10.5
 
 Check a version-specific detail against the upstream documentation before you rely on it.
+
+Checked on 2026-11-11: a one-process Nextflow script passed `nextflow lint` (one warning) and ran with `-resume` on v26.10.5. A Prefect 3.9.2 flow with `DaskTaskRunner(cluster_class="dask.distributed.LocalCluster")` returned the expected results. The `SLURMCluster` form and `submit_nextflow.sh` were not run (no Slurm test). Release notes since the earlier check: Prefect 3.9.0 drops Python 3.10 and removes deprecated Runner execution paths; Nextflow 26.10.0 deprecates the process `when` section in favor of a `process.when` config setting.
 
 Read this when a pipeline must run as a repeatable workflow on a workstation, a cluster, or both. Scheduler flags and accounts come from the `hpc-slurm` skill.
 
@@ -42,5 +44,5 @@ Prefect with Dask gives Python-native code, retries, state tracking and easy loc
 
 ## Submit Nextflow through Slurm
 
-`~/.agents/skills/omics-pipeline/scripts/submit_nextflow.sh main.nf 'data/*.fastq.gz' results` submits a launcher job (2 CPUs, 8 GB, 24 h) that runs `nextflow run -profile slurm -resume` with trace, report and timeline in `results/run-metadata/`, and fails on an empty trace or empty results.
+`~/.agents/skills/omics-pipeline/scripts/submit_nextflow.sh main.nf 'data/*.fastq.gz' "$RUN_DIR/<stage>"` submits a launcher job (2 CPUs, 8 GB, 24 h) that runs `nextflow run -profile slurm -resume` with trace, report and timeline in `results/run-metadata/`, and fails on an empty trace or empty results.
 The caller passes `SLURM_ACCOUNT` (required) and any `SBATCH_PARTITION`, `SBATCH_QOS` and `SBATCH_CLUSTERS`; the wrapper uses `--chdir` to the project root (`PROJECT_ROOT`, default `$PWD`). On a multi-cluster site `--parsable` prints `jobid;cluster`: strip the suffix and pass the cluster to `squeue -M` and `sacct -M`.

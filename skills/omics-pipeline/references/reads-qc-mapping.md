@@ -1,7 +1,7 @@
 # Reads QC and mapping
 
-**Last verified:** 2026-05-30
-**Tool version/release checked:** BBTools v39.85; minimap2 v2.31; Filtlong v0.3.1; Porechop_ABI source 0.5.1 / tag v0.5.0; fastp v1.3.7 (current on 2026-10-01)
+**Last verified:** 2026-11-11
+**Tool version/release checked:** fastp v1.4.0; chopper 0.15.0; Filtlong v0.3.1; Porechop_ABI source 0.5.1 / tag v0.5.0; bwa-mem2 2.3; minimap2 v2.31; samtools 1.25; BBTools v39.85 container tag (BBDuk and BBMap also run on tag 40.05; newest GitHub release v40.01)
 **Official docs/manual:** https://bbmap.org/tools/bbduk ; https://bbmap.org/docs.html ; https://lh3.github.io/minimap2/minimap2.html ; https://github.com/rrwick/Filtlong/tree/v0.3.1#full-usage ; https://github.com/bonsai-team/Porechop_ABI ; https://github.com/OpenGene/fastp ; https://github.com/wdecoster/chopper ; https://github.com/nanoporetech/dorado
 **Release/source:** https://hub.docker.com/r/bryce911/bbtools/tags ; https://github.com/lh3/minimap2/releases/tag/v2.31 ; https://github.com/rrwick/Filtlong/releases/tag/v0.3.1 ; https://github.com/bonsai-team/Porechop_ABI/tags
 
@@ -24,7 +24,9 @@ Raw FASTQ needs adapter, quality or contaminant handling, or QC-passed reads nee
 
 ## Rules a model would not guess
 
-- Run BBTools only from the `bryce911/bbtools:39.85` container. Everything else comes from the pinned pixi environment.
+- Run BBTools only from the `bryce911/bbtools:39.85` container. Everything else comes from the pinned pixi environment. The BBDuk and BBMap lines below gave the same results with the same flags on tag 40.05 (newest tag, also `latest`); stay on 39.85 until QuickBin and QuickClade move together ([quickbin.md](quickbin.md)).
+- BBDuk finds bundled files by short name: `ref=adapters` and `ref=phix`. `ref=adapters.fa` or `ref=phix174_ill.ref.fa.gz` is read as a path in the working directory and stops with `Can't find reference file`.
+- Without `-Xmx`, `bbmap.sh` reserved a 65 GB heap on a 247 GB host. Set `-Xmx` on a shared node.
 - `filtlong` stops with `Error: no thresholds set` when no threshold is given, and the shell redirect has by then left an empty output file. Set at least one of `--min_length`, `--keep_percent` or `--target_bases` per project and record it. Filtlong is single-threaded and has no thread flag.
 - Filtlong v0.3.0 renamed `--illumina_1` and `--illumina_2` to `--short_1` and `--short_2`. Use v0.3.1 names.
 - `bwa-mem2 mem` fails at once on a reference without an index. Run `bwa-mem2 index` first.
@@ -52,14 +54,14 @@ samtools sort -@ $THREADS -o $OUT/mapped.bam $OUT/mapped.sam && samtools index $
 samtools coverage $OUT/mapped.bam > $OUT/coverage.tsv
 ```
 
-The lines above were covered by tests. The BBTools, `chopper` and Porechop_ABI lines below come from the tool guides and were not tested here.
+All lines on this page ran on 2026-11-11 on simulated reads (ART paired reads and Badread nanopore reads from phage and small bacterial genomes), except the Pychopper, Dorado and Parabricks entries, which come from the tool guides.
 
 ```bash
 bbtools() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/work -w /work bryce911/bbtools:39.85 "$@"; }
-bbtools bbduk.sh -Xmx1g threads=$THREADS in1=$R1 in2=$R2 out1=c1.fq out2=c2.fq ref=adapters.fa \
+bbtools bbduk.sh -Xmx1g threads=$THREADS in1=$R1 in2=$R2 out1=c1.fq out2=c2.fq ref=adapters \
   ktrim=r k=23 mink=11 hdist=1 qtrim=rl trimq=20 minlength=50 tpe tbo     # adapters and quality
-bbtools bbduk.sh -Xmx1g threads=$THREADS in=r.fq out=f.fq ref=phix174_ill.ref.fa.gz k=31 hdist=1   # contaminant
-bbtools bbmap.sh threads=$THREADS ref=$REF in1=c1.fq in2=c2.fq out=mapped.sam
+bbtools bbduk.sh -Xmx1g threads=$THREADS in=r.fq out=f.fq ref=phix k=31 hdist=1   # contaminant
+bbtools bbmap.sh -Xmx4g threads=$THREADS ref=$REF in1=c1.fq in2=c2.fq out=mapped.sam
 chopper --threads $THREADS --quality 10 --minlength 1000 < raw.fastq.gz | gzip > filtered.fastq.gz
 porechop_abi -i raw.fastq -o trimmed.fastq -t $THREADS
 ```
@@ -73,8 +75,8 @@ porechop_abi -i raw.fastq -o trimmed.fastq -t $THREADS
 
 ## Outputs
 
-The agent writes these. A restartable project driver follows the `bioinformatics-project` skill.
+The agent writes these. A restartable project driver follows the `bioinformatics-project` skill. `<run>` is the dated run directory `results/<date>_<name>/` that `bioinformatics-project` defines.
 
-- `results/reads-qc-mapping/<sample_id>/`: `reads_R1.fastq` and `reads_R2.fastq` (or `reads.fastq`), `fastp.json`, `fastp.html`, `mapped.sam`, and the `qc.done` and `mapping.done` markers.
-- `results/reads-qc-mapping/mapping_stats.tsv`: `sample_id`, `mapping_status` (`completed`, `reused`, `failed`, or `not_requested` when no reference), `reference`.
-- `results/reads-qc-mapping/run_manifest.json`: the commands run and the status of each step, also after a failure.
+- `<run>/reads-qc-mapping/<sample_id>/`: `reads_R1.fastq` and `reads_R2.fastq` (or `reads.fastq`), `fastp.json`, `fastp.html`, `mapped.sam`, and the `qc.done` and `mapping.done` markers.
+- `<run>/reads-qc-mapping/mapping_stats.tsv`: `sample_id`, `mapping_status` (`completed`, `reused`, `failed`, or `not_requested` when no reference), `reference`.
+- `<run>/reads-qc-mapping/run_manifest.json`: the commands run and the status of each step, also after a failure.

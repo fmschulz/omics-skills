@@ -42,8 +42,6 @@ import duckdb
 
 # Plotting
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from cycler import cycler
 
 # %% [markdown]
 # ## Configuration
@@ -76,37 +74,15 @@ print("OUT_DIR:", OUT_DIR)
 
 # %% [markdown]
 # ## Plot styling
-# - Apply a compact style with minimal whitespace.
-# - Greyscale first (see the beautiful-data-viz skill): series are grey and differ
-#   by line style; use ACCENT only for the one highlighted finding.
+# - `beautiful_style.py` is the single source of the palette, rcParams and dpi
+#   (150 on screen, 300 on export). Copy `assets/beautiful_style.py` from the
+#   beautiful-data-viz skill next to this notebook.
+# - Series are grey; use `cfg.accent` only for the one highlighted finding.
 
 # %%
-GREYS = ["#333333", "#7a7a7a", "#a8a8a8", "#555555"]
-LINE_STYLES = ["-", "--", ":", "-."]
-ACCENT = "#D55E00"  # Okabe-Ito vermillion, colorblind-safe
+from beautiful_style import set_beautiful_style
 
-
-def set_plot_style() -> None:
-    mpl.rcParams.update(
-        {
-            "figure.dpi": 120,
-            "savefig.dpi": 200,
-            "figure.figsize": (8, 4.5),
-            "axes.titlesize": 12,
-            "axes.labelsize": 11,
-            "xtick.labelsize": 10,
-            "ytick.labelsize": 10,
-            "legend.fontsize": 10,
-            "axes.grid": False,
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "axes.prop_cycle": cycler(color=GREYS) + cycler(linestyle=LINE_STYLES),
-            "figure.constrained_layout.use": True,
-        }
-    )
-
-
-set_plot_style()
+cfg = set_beautiful_style(medium="notebook")
 
 # %% [markdown]
 # ## Data
@@ -122,18 +98,15 @@ set_plot_style()
 # %% [markdown]
 # ## Load data
 # - Load raw files using paths anchored to `DATA_DIR`.
-# - Fail fast if files are missing.
+# - Fail fast: a missing file raises `FileNotFoundError`.
 # - Show a compact preview and shape.
 
 # %%
-# Example TSV (replace with your actual file)
+# Example TSV (replace with your actual file); read_csv raises if it is missing.
 raw_path = DATA_DIR / "raw" / "events.tsv"
-if raw_path.exists():
-    events = pd.read_csv(raw_path, sep="\t")
-    display(events.head())
-    print("events shape:", events.shape)
-else:
-    print("Missing example file:", raw_path)
+events = pd.read_csv(raw_path, sep="\t")
+display(events.head())
+print("events shape:", events.shape)
 
 # %% [markdown]
 # ## DuckDB bootstrap (optional)
@@ -154,8 +127,7 @@ con.execute("SELECT 1 AS ok").df()
 def null_rate(df: pd.DataFrame) -> pd.Series:
     return df.isna().mean().sort_values(ascending=False)
 
-if "events" in globals():
-    display(null_rate(events).head(10))
+display(null_rate(events).head(10))
 
 # %% [markdown]
 # ## Analysis
@@ -172,13 +144,11 @@ if "events" in globals():
 
 # %%
 # Example placeholder plot
-if "events" in globals() and len(events.columns) > 0:
-    fig, ax = plt.subplots(figsize=(7.5, 4.0))
-    events.iloc[:, 0].value_counts().head(20).plot(kind="bar", ax=ax)
-    ax.set_title("Top values (first column)")
-    ax.set_xlabel(events.columns[0])
-    ax.set_ylabel("count")
-    fig.savefig(OUT_DIR / "top_values.png", bbox_inches="tight", pad_inches=0.05)
+fig, ax = plt.subplots(figsize=(7.5, 4.0))
+events.iloc[:, 0].value_counts().head(20).plot(kind="bar", ax=ax)
+ax.set_xlabel(events.columns[0])
+ax.set_ylabel("count (rows)")
+fig.savefig(OUT_DIR / "top_values.png")
 
 # %% [markdown]
 # ## Conclusions & next steps

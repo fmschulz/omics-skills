@@ -2,9 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Interdomain HGT evidence run",
   "type": "object",
-  "required": ["schema_version", "query_domain", "databases", "candidate_count", "confirmed_count", "gates"],
+  "required": ["schema_version", "query_domain", "min_identity", "databases", "candidate_count", "confirmed_count", "gates"],
   "properties": {
     "schema_version": {"const": "1.0"},
+    "min_identity": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
     "candidate_count": {"type": "integer", "minimum": 0},
     "confirmed_count": {"type": "integer", "minimum": 0},
     "gates": {"const": ["database", "forward", "reciprocal", "context", "phylogeny", "final"]}

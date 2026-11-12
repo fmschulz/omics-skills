@@ -16,11 +16,16 @@ case "$tool" in
     *) echo "Unsupported taxonomy tool: $tool" >&2; exit 2 ;;
 esac
 
-project_root="$(realpath "${PROJECT_ROOT:-$PWD}")"
+# cd and pwd -P resolve a path on GNU and BSD systems; realpath -m is GNU only.
+project_root="$(cd "${PROJECT_ROOT:-$PWD}" && pwd -P)"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-input="$(realpath "$2")"
-output="$(realpath -m "$3")"
-mkdir -p "$output"
+input_dir="$(cd "$(dirname "$2")" && pwd -P)"
+input="$input_dir/$(basename "$2")"
+mkdir -p "$3"
+output="$(cd "$3" && pwd -P)"
+# The template writes its Slurm logs to logs/ in the project root; Slurm does
+# not create the directory, and a job whose log directory is missing fails.
+mkdir -p "$project_root/logs"
 
 exec sbatch --parsable \
     -A "$SLURM_ACCOUNT" \

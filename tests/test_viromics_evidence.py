@@ -1,5 +1,6 @@
 import hashlib
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -8,7 +9,7 @@ SKILL = ROOT / "skills" / "bio-viromics"
 SCRIPT = SKILL / "scripts" / "build_viromics_evidence.py"
 
 
-def command(out, hypotheses=None, metrics=None):
+def command(out, hypotheses=None, metrics=None, comparative=None):
     fixture = SKILL / "fixtures"
     return [
         "uv",
@@ -23,7 +24,7 @@ def command(out, hypotheses=None, metrics=None):
         "--reflections",
         str(fixture / "reflections.tsv"),
         "--comparative-dir",
-        str(fixture / "comparative"),
+        str(comparative or fixture / "comparative"),
         "--out",
         str(out),
     ]
@@ -117,3 +118,67 @@ def test_row_with_the_wrong_field_count_leaves_no_output(tmp_path):
         assert f"{name}-metrics.tsv" in envelope["error"]["message"]
         assert "data row 1" in envelope["error"]["message"]
         assert not out.exists() or not any(out.iterdir())
+
+
+# One required column per table is enough to prove each table is checked.
+REQUIRED = {
+    "marker_census.tsv": ("genome", "category", "family_id", "copy_number"),
+    "family_copy_number_comparison.tsv": (
+        "family_id",
+        "query_copy_number",
+        "relative_median",
+        "status",
+    ),
+    "conserved_neighborhoods.tsv": ("query_block_id", "relative", "members"),
+    "ncRNA_census.tsv": ("assembly", "class", "model", "count"),
+}
+
+
+def comparative_without(tmp_path, table, column):
+    """Copy the comparative fixtures and drop one column from one table."""
+    work = tmp_path / f"no-{column}"
+    shutil.copytree(SKILL / "fixtures" / "comparative", work)
+    rows = [line.split("\t") for line in (work / table).read_text().splitlines()]
+    index = rows[0].index(column)
+    kept = ["\t".join(row[:index] + row[index + 1 :]) for row in rows]
+    (work / table).write_text("\n".join(kept) + "\n")
+    return work
+
+
+def test_comparative_table_without_a_required_column_is_rejected_before_output(
+    tmp_path,
+):
+    for table, columns in REQUIRED.items():
+        for column in columns:
+            work = comparative_without(tmp_path, table, column)
+            out = tmp_path / f"out-{table}-{column}"
+            result = subprocess.run(
+                command(out, comparative=work),
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            assert result.returncode == 2, (table, column, result.stdout)
+            envelope = json.loads(result.stdout.strip().splitlines()[-1])
+            assert envelope["ok"] is False
+            assert table in envelope["error"]["message"]
+            assert column in envelope["error"]["message"]
+            assert not out.exists() or not any(out.iterdir())
+            shutil.rmtree(work)
+
+
+def test_comparative_table_with_extra_columns_passes(tmp_path):
+    """The annotation driver writes a wider marker_census.tsv than the minimum."""
+    work = tmp_path / "comparative"
+    shutil.copytree(SKILL / "fixtures" / "comparative", work)
+    (work / "marker_census.tsv").write_text(
+        "genome\tcategory\tfamily_id\tfamily_name\tcopy_number\tevidence_source\te_value\tnotes\n"
+        "query\treplication\tM1\tmarker one\t1\tnormalized_annotation\t1e-30\t\n"
+    )
+    result = subprocess.run(
+        command(tmp_path / "out", comparative=work),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr

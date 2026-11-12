@@ -5,8 +5,6 @@ arctic_metagenome_2026/                  # one self-contained, project-named dir
 ├── CITATION.cff                         # authors, version, Zenodo DOI
 ├── pixi.toml                            # pinned tool stack (conda-forge + bioconda)
 ├── pixi.lock                            # exact resolved versions  [COMMITTED]
-├── pyproject.toml                       # Python analysis deps (uv)
-├── uv.lock                              # exact Python versions    [COMMITTED]
 ├── .gitignore                           # excludes data blobs + all results/ outputs
 │
 ├── tasks/                               # working records; facts have one home

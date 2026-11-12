@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["dash==4.4.0", "plotly==6.5.0"]
+# dependencies = ["dash>=4.4", "plotly>=6.5"]
 # ///
 """Runnable Dash fixture with a WSGI start and callback-latency smoke gate."""
 
@@ -10,22 +10,40 @@ import json
 import statistics
 import time
 
-from dash import Dash, Input, Output, callback, dcc, html
 import plotly.graph_objects as go
+import plotly.io as pio
+from dash import Dash, Input, Output, callback, dcc, html
 
-# Greyscale-first template: series stay grey and differ by marker symbol.
-# Color only the trace that carries the finding: marker_color=ACCENT for markers,
-# line_color=ACCENT for lines.
+# Greyscale-first template, identical to the one in references/dash.md: series stay
+# grey and differ by marker symbol. Color only the trace that carries the finding:
+# marker_color=ACCENT for markers, line_color=ACCENT for lines.
+DASH_COLORWAY = ["#333333", "#7a7a7a", "#a8a8a8", "#555555"]
 ACCENT = "#D55E00"
+
+FONT_FAMILY = "Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
 TEMPLATE = go.layout.Template(
     layout=go.Layout(
-        colorway=["#333333", "#a8a8a8"],
+        font={"family": FONT_FAMILY, "size": 13},
+        colorway=DASH_COLORWAY,
         paper_bgcolor="white",
         plot_bgcolor="white",
-        xaxis={"showgrid": False, "zeroline": False},
-        yaxis={"showgrid": True, "gridcolor": "rgba(0,0,0,0.06)", "zeroline": False},
+        margin={"l": 48, "r": 20, "t": 56, "b": 44},
+        hovermode="x unified",
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "left",
+            "x": 0,
+            "title_text": "",
+        },
+        xaxis={"showgrid": False, "zeroline": False, "ticks": "outside", "ticklen": 4},
+        yaxis={"showgrid": False, "zeroline": False, "ticks": "outside", "ticklen": 4},
+        hoverlabel={"bgcolor": "white", "font_size": 12},
     )
 )
+pio.templates["dash_ui"] = TEMPLATE
+pio.templates.default = "dash_ui"
 SYMBOLS = {"A": "circle", "B": "square-open"}
 ROWS = [{"group": group, "x": x, "y": x * factor} for group, factor in (("A", 1), ("B", 2)) for x in range(1, 101)]
 
@@ -42,7 +60,6 @@ def filter_points(group: str):
             marker_symbol=SYMBOLS[label],
             name=label,
         )
-    figure.update_layout(template=TEMPLATE)
     return figure
 
 

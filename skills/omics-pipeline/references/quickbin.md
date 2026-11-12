@@ -2,8 +2,8 @@
 
 High-fidelity metagenomic binning using neural networks with conservative contig merging.
 
-Last verified: 2026-05-30
-Tool version/release checked: QuickBin in BBTools v39.85 via `bryce911/bbtools:39.85` (`latest` digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`)
+Last verified: 2026-11-11
+Tool version/release checked: QuickBin in BBTools v39.85 via `bryce911/bbtools:39.85` (digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`); flags and runs also checked on `bryce911/bbtools:40.05` (digest `sha256:b39c1c2a9bbbafefc1662d20607eece9ed4d4db72506760735062df3cd23f6ec`; newest GitHub release v40.01)
 Official docs/manual: https://bbmap.org/tools/quickbin
 Release/source: https://hub.docker.com/r/bryce911/bbtools/tags and https://github.com/bbushnell/BBTools
 
@@ -14,7 +14,7 @@ Release/source: https://hub.docker.com/r/bryce911/bbtools/tags and https://githu
 - GitHub: https://github.com/bbushnell/BBTools
 - Preprint: https://www.biorxiv.org/content/10.64898/2026.01.08.698506v3
 - Container tags: https://hub.docker.com/r/bryce911/bbtools/tags
-- Version checked: 39.85
+- Version pinned: 39.85 (newest tag: 40.05; see "Tags 39.85 and 40.05")
 
 ## Installation
 
@@ -24,7 +24,9 @@ docker pull bryce911/bbtools:39.85
 docker run --rm bryce911/bbtools:39.85 quickbin.sh --help
 ```
 
-As of 2026-05-30, Docker Hub reports `bryce911/bbtools:39.85` and `latest` at digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1`. Pin the tag in workflow docs and record the digest in run provenance.
+On 2026-11-11, Docker Hub reports `bryce911/bbtools:39.85` at digest `sha256:e697da46d8955a30256cc1c2a9ed8da362ad5a86ed16b6a41ab64ed03801a2a1` (unchanged since 2026-05-30). `latest` has moved on: it is `40.05` at digest `sha256:b39c1c2a9bbbafefc1662d20607eece9ed4d4db72506760735062df3cd23f6ec`. Pin the tag in workflow docs and record the digest in run provenance.
+
+Without `-Xmx`, `quickbin.sh` took a 65 GB heap on a 247 GB host. Give `-Xmx<N>g` right after the script name on a shared node.
 
 **Apptainer/Singularity:**
 ```bash
@@ -32,6 +34,14 @@ apptainer exec docker://bryce911/bbtools:39.85 quickbin.sh --help
 ```
 
 Local BBTools installs are acceptable only when the container runtime is unavailable; record the local BBTools version and install path.
+
+## Tags 39.85 and 40.05
+
+On 2026-11-11 both tags ran the BAM-input commands of this page (`reads=`, `xstrict`, `covout=`, `readthreads=`, `maxsamples=`, output with and without `%`) on a mock community of four genomes and two BAM files made with bwa-mem2. Tag 39.85 also ran `cov=` with `cutoff=0.55`. The SAM-input examples and the `loose` and `xloose` presets were not run. The pack stays on 39.85 until the QuickBin and QuickClade pages move together, for these reasons:
+
+- `threads=`, `readthreads=` and `maxsamples=` have the same text and defaults in both help outputs (`threads=auto`, `readthreads=4`, `maxsamples=8`). With `readthreads=1 maxsamples=1` and two BAM files both tags print `Merging into 1 samples (Modulo Mode)` and `concurrency=1`.
+- The results differ. On the same input with `xstrict`, 39.85 wrote 6 bins and 40.05 wrote 3. 39.85 reports `Loaded 2 files and 0 reads` for BAM input and 40.05 reports 431,597 reads. Do not mix tags within one project.
+- The 40.x images no longer contain the QuickClade reference `refseqA48_with_ribo.spectra.gz` (245 MB in the 39.85 image), and the `format=machine` output of 40.05 has 21 columns instead of 26 (no `ANI`, `WKID`, `KID`, `Completeness`, `KmerMatches`). See [../../tracking-taxonomy-updates/reference/tools.md](../../tracking-taxonomy-updates/reference/tools.md).
 
 ## Key Command-Line Flags
 
@@ -45,7 +55,9 @@ Local BBTools installs are acceptable only when the container runtime is unavail
 | `mincluster=` | Minimum cluster size | 50000 |
 | `minseed=` | Minimum contig length for seed | 2500 |
 | `cutoff=` | Neural network decision threshold | 0.52 |
-| `threads=` | Worker threads | all logical cores |
+| `threads=` | Worker threads (`threads=auto`) | all logical cores |
+| `report=<file>` | Bin size, GC, depth and taxonomy table. Sends the bin k-mer spectra to a remote QuickClade server unless you pass `clade=f` | - |
+| `clade=` | `clade=t` labels the bins with QuickClade (needs the network when `report=` is set) | `t` |
 | `readthreads=` | SAM/BAM files loaded concurrently; lower uses less memory | 4 |
 | `maxsamples=` | Above this many SAM/BAM files, QuickBin merges some into one logical sample to save memory | 8 |
 
@@ -54,10 +66,14 @@ Local BBTools installs are acceptable only when the container runtime is unavail
 | Flag | Description |
 |------|-------------|
 | `xstrict` | Very high specificity (fewer, purer bins) |
+| `ustrict`, `vstrict` | Between `xstrict` and `strict` |
 | `strict` | High specificity |
-| `normal` | Balanced (default) |
+| `normal` | Balanced (default); aims at under 1% contamination |
 | `loose` | Higher sensitivity |
+| `vloose`, `uloose` | Between `loose` and `xloose` |
 | `xloose` | Very high sensitivity (more, potentially mixed bins) |
+
+`strictness=<float>` sets the same scale finely (`normal`=1.0, `xstrict`=0.6, `strict`=0.9, `loose`=1.1, `xloose`=1.5; lower is stricter).
 
 ## Common Usage Examples
 
@@ -142,7 +158,7 @@ docker run --rm -u "$(id -u):$(id -g)" \
 
 **Generating SAM/BAM files:**
 ```bash
-# Example with BBMap
+# Example with BBMap; the QuickBin help recommends ambig=random mateqtag minid=0.9 maxindel=10
 bbtools() {
   docker run --rm -u "$(id -u):$(id -g)" \
     -v "$PWD":/work -w /work \
@@ -150,7 +166,7 @@ bbtools() {
 }
 
 bbtools bbmap.sh ref=contigs.fasta in=reads_1.fq.gz in2=reads_2.fq.gz \
-  out=sample1.sam threads=16
+  ambig=random mateqtag minid=0.9 maxindel=10 out=sample1.sam threads=16
 
 # Example with minimap2
 minimap2 -ax sr -t 16 contigs.fasta reads_1.fq.gz reads_2.fq.gz > sample1.sam
@@ -158,23 +174,15 @@ minimap2 -ax sr -t 16 contigs.fasta reads_1.fq.gz reads_2.fq.gz > sample1.sam
 
 ## Output Format
 
-**With `%` in output pattern:** One file per bin
+**With `%` in output pattern:** One file per bin, numbered from 0
 ```
+bin0.fa
 bin1.fa
 bin2.fa
-bin3.fa
 ...
 ```
 
-**Without `%`:** Single file with bin numbers in headers
-```
->bin_1_contig_001
-ATCG...
->bin_1_contig_002
-ATCG...
->bin_2_contig_001
-ATCG...
-```
+**Without `%`:** One file with all binned contigs. Both tags kept the original contig headers, with no bin number in them (`>NODE_1_length_159654_cov_18.992751`), so use `%` when you need the bin of each contig.
 
 ## Neural Network Threshold
 
@@ -209,6 +217,8 @@ Conservative approach prioritizes **high-fidelity bins** (low contamination) ove
 6. **Memory**: Efficient; scales to large assemblies (tested on 10M+ contigs)
 
 ## Comparison with Other Binners
+
+Binner choice and the independent benchmarks are in [binning.md](binning.md).
 
 **QuickBin advantages:**
 - Very high precision (low contamination)
@@ -269,6 +279,6 @@ docker run --rm -u "$(id -u):$(id -g)" \
 
 ## Citation
 
-Bushnell B. (2026)
+Bushnell B, Villada JC. (2026)
 Deployable high-fidelity metagenome binning at scale with QuickBin.
-*bioRxiv*. https://doi.org/10.64898/2026.01.08.698506
+*Communications Biology*. https://doi.org/10.1038/s42003-026-10782-z

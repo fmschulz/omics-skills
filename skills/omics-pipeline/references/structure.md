@@ -1,9 +1,9 @@
 # Structure annotation
 
-**Last verified:** 2026-05-30
-**Tool version/release checked:** Boltz v2.2.1; ColabFold v1.6.1; Foldseek 10-941cd33; TM-Vec 1.0.2 (original) and valentynbez/tmvec fork 1.1.0 at commit 6bdf11a
+**Last verified:** 2026-11-11
+**Tool version/release checked:** Boltz v2.2.1 (docs and source of the tag, not run); ColabFold v1.6.3 (source of the tag, not run); Foldseek 10-941cd33 (bioconda build, and the static GPU build at commit 39b02b9; both run); TM-Vec 1.0.2 (original) and valentynbez/tmvec fork 1.1.0 at commit 6bdf11a (2026-07-24, still the head of the fork's default branch on 2026-11-11; source of that commit, not run)
 **Official docs/manual:** https://github.com/jwohlwend/boltz ; https://github.com/sokrypton/ColabFold ; https://github.com/steineggerlab/foldseek ; https://github.com/tymor22/tm-vec ; https://github.com/valentynbez/tmvec
-**Release/source:** https://github.com/jwohlwend/boltz/releases/tag/v2.2.1 ; https://github.com/sokrypton/ColabFold/releases/tag/v1.6.1 ; https://github.com/steineggerlab/foldseek/releases/tag/10-941cd33 ; https://github.com/tymor22/tm-vec/releases/tag/1.0.2
+**Release/source:** https://github.com/jwohlwend/boltz/releases/tag/v2.2.1 ; https://github.com/sokrypton/ColabFold/releases/tag/v1.6.3 ; https://github.com/steineggerlab/foldseek/releases/tag/10-941cd33 ; https://github.com/tymor22/tm-vec/releases/tag/1.0.2
 
 Shared rules (hypotheses, thresholds as results, environment, scheduler, threads): see the shared rules in [../SKILL.md](../SKILL.md). Tool notes kept in full: [boltz.md](boltz.md) and [tm-vec.md](tm-vec.md).
 
@@ -28,7 +28,7 @@ Sequence search gives weak or no hits, or you need a fold, a complex model or a 
 - Boltz YAML: `version: 1` and a non-empty `sequences` list. Each item holds one entity (`protein`, `dna`, `rna`, `ligand`) with an `id`. A ligand has exactly one of `smiles` or `ccd`.
 - Without `--use_msa_server`, every protein needs an `msa:` value: a path to an `.a3m` file, or `empty` for single-sequence mode (lower accuracy, not recommended).
 - `--use_msa_server` sends sequences to a public server. Pass it only with the user's explicit approval, recorded first. `colabfold_batch` without local MSAs also queries a public server; the same approval applies.
-- Foldseek `--gpu 1` needs CUDA Turing or newer and a target database built with `makepaddedseqdb`. Search the padded database, not the original.
+- Foldseek `--gpu 1` needs CUDA Turing or newer and a target database built with `makepaddedseqdb`. Search the padded database, not the original. Use the static GPU build (`https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz`): on an RTX A6000, the bioconda `foldseek` 10-941cd33 accepted `--gpu 1`, then ran at 100% CPU without a result until it was killed after 60 s, while the GPU build returned the same hits in 2 s.
 - Pass an explicit `--threads` to Foldseek; its default is all cores.
 - On a RAM-bound Foldseek search, `--sort-by-structure-bits 0` cuts memory by about 75%.
 - The pinned TM-Vec fork (commit 6bdf11a) differs from the original 1.0.2 CLI. Both subcommands need `--input-fasta`; `--query` from the fork's README is rejected. `--output` is a folder, and `tmvec search` writes `results.tsv` into it. It returns 5 neighbors per query (`--k-nearest`) and skips sequences over 1024 residues. Compute nodes without internet need the model files and `--local` at `build-db`; keep the stored model paths valid.
@@ -53,11 +53,11 @@ foldseek easy-search $QUERY ${FOLDSEEK_DB}_pad $OUT/foldseek_hits.tsv $OUT/folds
 foldseek easy-multimersearch $QUERY_COMPLEX $TARGET_COMPLEX $OUT/multimer_hits.tsv $OUT/foldseek_tmp --threads $THREADS
 ```
 
-The TM-Vec search, Boltz and `easy-search` lines were covered by tests. `build-db`, the padded search, `easy-multimersearch` and the ColabFold lines below come from the tool guides and were not tested here.
+The Foldseek lines ran on 2026-11-11 on six PDB structures (`easy-search`, `makepaddedseqdb`, the GPU search) and on three hemoglobin entries (`easy-multimersearch` with a directory as target). The TM-Vec, Boltz and ColabFold lines were checked against the source of their pinned versions (options, defaults, output names) and were not run: the ProtT5 weights and the MSA databases are larger than a smoke test allows.
 
 ```bash
 # ColabFold with MMseqs2-GPU MSAs; $MMSEQS is the mmseqs binary, $CF_DB the local ColabFold database
-colabfold_search --gpu 1 --mmseqs $MMSEQS $QUERY_FAA $CF_DB $OUT/msas
+colabfold_search --gpu 1 --threads $THREADS --mmseqs $MMSEQS $QUERY_FAA $CF_DB $OUT/msas
 colabfold_batch $OUT/msas $OUT/colabfold
 ```
 
@@ -71,7 +71,7 @@ colabfold_batch $OUT/msas $OUT/colabfold
 
 ## Outputs
 
-The agent writes these. A restartable project driver follows the `bioinformatics-project` skill. Under `results/structure/`:
+The agent writes these. A restartable project driver follows the `bioinformatics-project` skill. Under `<run>/structure/`, where `<run>` is the dated run directory `results/<date>_<name>/` that `bioinformatics-project` defines:
 - `boltz/`: predictions and confidence files
 - `foldseek_hits.tsv`
 - `tmvec/results.tsv`

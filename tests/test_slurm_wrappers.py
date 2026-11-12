@@ -55,7 +55,7 @@ class SlurmWrapperTests(unittest.TestCase):
                     fake_bin = fake_sbatch(root)
                     result = subprocess.run(
                         [str(wrapper), *build_args(root)],
-                        cwd=REPO_ROOT,
+                        cwd=root,
                         env=os.environ
                         | {
                             "PATH": f"{fake_bin}:{os.environ['PATH']}",
@@ -70,7 +70,74 @@ class SlurmWrapperTests(unittest.TestCase):
                 self.assertIn(template, result.stdout)
                 # Slurm spools the batch script, so the job must name its
                 # project root instead of deriving it from the script path.
-                self.assertIn(f"--chdir={REPO_ROOT}", result.stdout.splitlines())
+                self.assertIn(f"--chdir={root.resolve()}", result.stdout.splitlines())
+
+    def test_taxonomy_wrapper_needs_no_gnu_realpath_and_makes_the_log_directory(
+        self,
+    ) -> None:
+        """macOS `realpath` has no `-m`; the template writes its logs to `logs/`."""
+        wrapper = (
+            REPO_ROOT
+            / "skills"
+            / "tracking-taxonomy-updates/scripts/submit_taxonomy.sh"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "bins").mkdir()
+            fake_bin = fake_sbatch(root)
+            realpath = fake_bin / "realpath"
+            realpath.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+            realpath.chmod(realpath.stat().st_mode | stat.S_IXUSR)
+            result = subprocess.run(
+                [str(wrapper), "gtdbtk", "bins", "new/out"],
+                cwd=root,
+                env=os.environ
+                | {
+                    "PATH": f"{fake_bin}:{os.environ['PATH']}",
+                    "SLURM_ACCOUNT": "test-account",
+                },
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((root / "logs").is_dir())
+            self.assertTrue((root / "new" / "out").is_dir())
+            exports = [
+                a for a in result.stdout.splitlines() if a.startswith("--export")
+            ]
+            self.assertIn(f"TAXONOMY_INPUT={root.resolve()}/bins", exports[0])
+            self.assertIn(f"TAXONOMY_OUTPUT={root.resolve()}/new/out", exports[0])
+
+    def test_nextflow_wrapper_needs_no_gnu_realpath(self) -> None:
+        """macOS `realpath` has no `-m`; a new result directory does not exist yet."""
+        wrapper = REPO_ROOT / "skills" / "omics-pipeline/scripts/submit_nextflow.sh"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "main.nf").write_text("nextflow.enable.dsl=2\n", encoding="utf-8")
+            fake_bin = fake_sbatch(root)
+            realpath = fake_bin / "realpath"
+            realpath.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+            realpath.chmod(realpath.stat().st_mode | stat.S_IXUSR)
+            result = subprocess.run(
+                [str(wrapper), "main.nf", "data/*.fastq.gz", "new/results"],
+                cwd=root,
+                env=os.environ
+                | {
+                    "PATH": f"{fake_bin}:{os.environ['PATH']}",
+                    "SLURM_ACCOUNT": "test-account",
+                },
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((root / "new" / "results" / "run-metadata").is_dir())
+            export = next(
+                a for a in result.stdout.splitlines() if a.startswith("--export")
+            )
+            self.assertIn(f"NXF_PIPELINE={root.resolve()}/main.nf", export)
+            self.assertIn(f"NXF_RESULTS={root.resolve()}/new/results", export)
 
     def test_a_wrapper_refuses_to_submit_without_an_account(self) -> None:
         """The account is what binds a job to the right scheduler; submitting

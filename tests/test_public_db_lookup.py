@@ -114,6 +114,32 @@ class PublicDbLookupTests(unittest.TestCase):
         )
         self.assertEqual(envelope["record_path"], "items")
 
+    def test_a_list_response_with_a_total_reports_it_as_available(self) -> None:
+        """MGnify v2 lists carry the total as `count`; the page holds fewer records."""
+        body = {
+            "count": 644,
+            "items": [{"accession": f"MGYS{i:08d}"} for i in range(25)],
+        }
+        session = Mock()
+        session.get = Mock(return_value=response(200, body))
+        code, envelope = run(
+            ["--service", "mgnify", "--path", "studies/", "--max-items", "5"], session
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(envelope["record_count_returned"], 5)
+        self.assertEqual(envelope["record_count_available"], 644)
+        self.assertTrue(envelope["truncated"])
+
+    def test_a_list_response_without_a_total_reports_the_page_length(self) -> None:
+        body = {"results": [{"id": i} for i in range(7)], "count": "not a number"}
+        session = Mock()
+        session.get = Mock(return_value=response(200, body))
+        _code, envelope = run(
+            ["--service", "uniprot", "--path", "uniprotkb/search", "--max-items", "3"],
+            session,
+        )
+        self.assertEqual(envelope["record_count_available"], 7)
+
     def test_retries_after_429_and_succeeds(self) -> None:
         session = Mock()
         session.get = Mock(side_effect=[response(429, "slow down", {"Retry-After": "0"}), response(200, [{"a": 1}])])

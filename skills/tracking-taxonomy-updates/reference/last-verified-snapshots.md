@@ -9,7 +9,7 @@ Do **not** treat them as evergreen. For “most recent” requests, always re-ch
 
 ## Bacteria + Archaea
 
-- **GTDB**: Release **R11-RS232** / Release **232** was current on the GTDB stats and downloads pages checked today. GTDB-Tk 2.7.2 documentation points to the matching `gtdbtk_r232_data.tar.gz` reference package.
+- **GTDB**: Release **R11-RS232** / Release **232** was current on the GTDB stats and downloads pages checked today. GTDB-Tk 2.7.2 documentation pointed (GTDB-Tk 2.8.0, released later, is covered in [tools.md](tools.md)) to the matching `gtdbtk_r232_data.tar.gz` reference package.
   Sources: https://gtdb.ecogenomic.org/stats/r232 ; https://data.gtdb.ecogenomic.org/releases/latest/ ; https://ecogenomics.github.io/GTDBTk/announcements.html
 
 - **NCBI Taxonomy taxdump**: the NCBI FTP listing showed `taxdump.tar.gz` / `taxdmp.zip` modified on **2026-05-30** and `new_taxdump/` modified on **2026-05-30**.

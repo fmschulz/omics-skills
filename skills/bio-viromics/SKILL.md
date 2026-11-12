@@ -21,21 +21,22 @@ Pass an explicit thread count to each tool (`-t`) and match the CPUs you request
 5. Search the literature for that group and write `analysis_playbook.md`: typical reference sets, markers, comparative analyses, genome features, plots, and outlier signals used by people who study the group.
 6. Choose taxonomy, clustering, phylogenetic, and comparative methods from the playbook:
    - Bacteriophages and other prokaryotic viruses: vConTACT3 gene-sharing networks for genus-to-order assignment. vConTACT3 replaces vConTACT2. The upstream source tag is 3.2.4; bioconda ships 3.1.6. Record the version you ran.
-   - Nucleocytoviricota, Mirusviricota, and Preplasmiviricota: GVClass 2.0.3 with resource bundle v2.0.0, plus marker-gene phylogenies of core genes by following the [phylogenomics page](../omics-pipeline/references/phylogenomics.md).
+   - Nucleocytoviricota, Mirusviricota, and Preplasmiviricota: GVClass 2.1.0 with resource bundle v2.1.0, plus marker-gene phylogenies of core genes by following the [phylogenomics page](../omics-pipeline/references/phylogenomics.md).
    - RNA viruses, ssDNA viruses, and other groups that vConTACT3 does not cover well: group-specific markers, phylogenomics, and protein-family methods from the playbook. Do not force a phage-oriented workflow on them.
 7. For each viral genome or high-quality viral contig, call genes and annotate proteins when needed (the [gene-calling page](../omics-pipeline/references/gene-calling.md), `/bio-annotation`), then inspect the annotation set according to the playbook rather than a fixed feature list.
-8. Compare each query to the literature-supported reference set on the comparative axes. Write `marker_census.tsv`, `family_copy_number_comparison.tsv`, `conserved_neighborhoods.tsv`, and `ncRNA_census.tsv` to one comparison directory. Report what matches expectations, what is missing, expanded, or query-specific, and which patterns are likely artifacts.
-9. Assemble the evidence bundle. The driver checksum-verifies the geNomad, CheckV, GVClass, and vConTACT3 database resources, checks the hypothesis register and reflections, copies the four comparative tables, and computes `genome_size_frontier.tsv`:
+8. Compare each query to the literature-supported reference set on the comparative axes. Write `marker_census.tsv`, `family_copy_number_comparison.tsv`, `conserved_neighborhoods.tsv`, and `ncRNA_census.tsv` to one comparison directory, with the required columns that rule 3 of the `omics-pipeline` skill defines. Report what matches expectations, what is missing, expanded, or query-specific, and which patterns are likely artifacts.
+9. Assemble the evidence bundle. The driver checksum-verifies the geNomad, CheckV, GVClass, and vConTACT3 database resources, checks the hypothesis register and reflections, copies the four comparative tables after checking their required columns, and computes `genome_size_frontier.tsv`. `RUN_DIR` is the run directory that `bioinformatics-project` defines (`results/<date>_<name>/`):
 
    ```bash
    uv run --script ~/.agents/skills/bio-viromics/scripts/build_viromics_evidence.py \
-     viral_metrics.tsv --resources resources.json --hypotheses hypotheses.tsv \
+     relative_genome_metrics.tsv --resources resources.json --hypotheses hypotheses.tsv \
      --reflections reflections.tsv --comparative-dir comparison/ \
-     --out results/bio-viromics/evidence
+     --out "$RUN_DIR/viromics/evidence"
    ```
 
    Input contracts (tab-separated, exact column order; fixtures under `fixtures/`):
-   - `viral_metrics.tsv`: `genome role group genome_size gene_count literature_min literature_max literature_doi`; `role` is `query` or `reference`, and each query needs at least two references of the same `group`.
+   - `relative_genome_metrics.tsv`: `genome role group genome_size gene_count literature_min literature_max literature_doi`; `role` is `query` or `reference`, and each query needs at least two references of the same `group`.
+   - Comparative tables (`--comparative-dir`): each needs the columns of rule 3; the driver stops with the error envelope, before it writes anything, when a column is missing.
    - `hypotheses.tsv`: `hypothesis_id hypothesis type status evidence revision_stage`; at least five distinct IDs and at least one row of `type` `technical` or `null`.
    - `reflections.tsv`: `stage observed qc_status hypotheses_gained hypotheses_lost alternatives next_check literature_id`; the first stage is `initial`, a `final` stage is present, at least four stages in total, and `qc_status` is `passed`, `failed`, or `conditional`.
    - `resources.json`: schema `1.0` with exactly `genomad`, `checkv`, `gvclass`, `vcontact3` and their `_db` entries, each with `version` and `sha256`. Database entries also carry `path` and `kind` (`file`, or `directory` with the deterministic tree SHA-256 the driver computes).
@@ -50,13 +51,13 @@ Pass an explicit thread count to each tool (`-t`) and match the CPUs you request
 
 ## Output
 
-Driver outputs under `results/bio-viromics/evidence/`:
+Driver outputs in `evidence/` under the run directory that `bioinformatics-project` defines (`results/<date>_<name>/<stage>/`, stage `viromics`):
 - `marker_census.tsv`, `family_copy_number_comparison.tsv`, `conserved_neighborhoods.tsv`, `ncRNA_census.tsv`
 - `hypothesis_register.tsv`, `intermediate_reflections.tsv`
 - `genome_size_frontier.tsv`
 - `run_manifest.json`, validated against [schemas/evidence-bundle.schema.json](schemas/evidence-bundle.schema.json)
 
-Workflow outputs under `results/bio-viromics/`, written by the agent:
+Workflow outputs in the same stage directory, written by the agent:
 - (agent-authored) `viral_contigs.fasta`, `checkv_results/`, `viral_taxonomy.tsv`
 - (agent-authored) `domain_routing_review.tsv`, `analysis_playbook.md`
 - (agent-authored) `comparison_baseline.tsv`, `closest_relatives.tsv`, `group_comparison_results/`

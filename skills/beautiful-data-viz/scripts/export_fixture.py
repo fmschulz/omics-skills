@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["matplotlib==3.11.0"]
+# dependencies = ["matplotlib>=3.11"]
 # ///
 """Export the bundled growth-curve fixture to PNG, SVG, and PDF."""
 
@@ -13,6 +13,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+Y_LABEL = "Growth (g/L)"  # unit of the fixture columns *_g_l
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL))
 from assets.beautiful_style import direct_label, finalize_axes, set_beautiful_style  # noqa: E402
@@ -36,11 +37,12 @@ def main() -> int:
         y = [float(row[column]) for row in rows]
         ax.plot(x, y)
         direct_label(ax, x, y, column)
-    finalize_axes(ax, xlabel=columns[0], ylabel="growth")
+    finalize_axes(ax, xlabel=columns[0], ylabel=Y_LABEL)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     for suffix in ("png", "svg", "pdf"):
         fig.savefig(args.out.with_suffix(f".{suffix}"), facecolor=fig.get_facecolor())
     metadata = {
+        "ylabel": ax.get_ylabel(),
         "text_color": plt.rcParams["text.color"],
         "annotation_colors": [text.get_color() for text in ax.texts],
         "line_colors": [line.get_color() for line in ax.lines],

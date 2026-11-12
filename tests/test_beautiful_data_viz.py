@@ -134,3 +134,80 @@ def test_font_size_per_medium_is_the_same_with_and_without_seaborn() -> None:
     assert sizes["paper"] < sizes["notebook"] < sizes["slides"]
     # seaborn's white theme sets axes.axisbelow, so this shows it ran for every medium.
     assert set(with_seaborn["themed"].values()) == {True}
+
+
+DPI_AND_SPARKLINE = """
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+cfg = style.set_beautiful_style(medium="notebook")
+fig, ax = plt.subplots()
+style.sparkline(ax, [3, 1, 4, 1, 5, 9, 2, 6], mark_min_max=True, mark_endpoint=True)
+# marker lines in drawing order: the trend line, min, max, last point
+colors = [line.get_color() for line in ax.lines]
+print(json.dumps({
+    "screen_dpi": mpl.rcParams["figure.dpi"],
+    "export_dpi": mpl.rcParams["savefig.dpi"],
+    "config_dpi": cfg.dpi,
+    "accent": cfg.accent,
+    "line_colors": colors,
+}))
+"""
+
+
+def test_style_module_sets_150_dpi_on_screen_and_300_on_export() -> None:
+    result = run_python(DPI_AND_SPARKLINE, "matplotlib")
+    assert result.returncode == 0, result.stdout + result.stderr
+    outcome = json.loads(result.stdout)
+    assert outcome["screen_dpi"] == 150
+    assert outcome["export_dpi"] == 300
+    assert outcome["config_dpi"] == 150
+
+
+def test_sparkline_marks_min_max_dark_grey_and_the_last_point_accent() -> None:
+    result = run_python(DPI_AND_SPARKLINE, "matplotlib")
+    assert result.returncode == 0, result.stdout + result.stderr
+    outcome = json.loads(result.stdout)
+    _trend, minimum, maximum, last = outcome["line_colors"]
+    for color in (minimum, maximum):
+        red, green, blue = (int(color[i : i + 2], 16) for i in (1, 3, 5))
+        assert red == green == blue, f"min/max marker {color} is not grey"
+        assert red <= 0x77, f"min/max marker {color} is not dark"
+    assert minimum == maximum
+    assert last == outcome["accent"]
+
+
+def test_export_fixture_labels_the_y_axis_with_a_unit(tmp_path: Path) -> None:
+    target = tmp_path / "growth"
+    result = subprocess.run(
+        [
+            "uv",
+            "run",
+            "--script",
+            str(EXPORT),
+            str(SKILL / "fixtures" / "growth_curve.csv"),
+            "--out",
+            str(target),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    ylabel = json.loads(target.with_suffix(".json").read_text())["ylabel"]
+    assert "(" in ylabel, ylabel
+    assert ylabel.endswith(")"), ylabel
+
+
+def test_skill_files_use_no_home_directory_skill_paths() -> None:
+    offenders = [
+        str(path.relative_to(SKILL))
+        for path in SKILL.rglob("*")
+        if path.is_file()
+        and path.suffix in {".md", ".py"}
+        and ".agents" in path.read_text()
+    ]
+    assert offenders == []
+
+
+def test_unused_eval_file_is_gone() -> None:
+    assert not (SKILL / "eval.yaml").exists()

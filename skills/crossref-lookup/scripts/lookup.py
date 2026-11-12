@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["requests==2.34.2"]
+# dependencies = ["requests>=2.34.2"]
 # ///
 """Query Crossref and audit DOI records with explicit failure classes."""
 
@@ -179,6 +179,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--rows", type=int, default=5)
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--force", action="store_true", help="overwrite an existing --output file"
+    )
     return parser.parse_args(argv)
 
 
@@ -230,10 +233,18 @@ def main(argv: list[str] | None = None) -> int:
 
     rendered = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     if args.output:
-        if args.output.exists():
-            print(f"ERROR: refusing to overwrite {args.output}", file=sys.stderr)
+        try:
+            # Exclusive creation: a file that appeared during the run is kept.
+            with args.output.open(
+                "w" if args.force else "x", encoding="utf-8"
+            ) as handle:
+                handle.write(rendered)
+        except FileExistsError:
+            print(
+                f"ERROR: refusing to overwrite {args.output}; pass --force",
+                file=sys.stderr,
+            )
             return 1
-        args.output.write_text(rendered, encoding="utf-8")
     else:
         print(rendered, end="")
     return exit_code(results, args.strict, missing_dois)

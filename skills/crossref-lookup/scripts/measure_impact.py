@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import fcntl
 import hashlib
 import json
@@ -17,11 +16,12 @@ from pathlib import Path
 from typing import Any
 
 
-SKILL_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_JOURNAL_METRICS = SKILL_ROOT / "references" / "journal_metrics_2024.tsv"
 DOI_PATTERN = re.compile(r"^10\.\d{4,}/\S+$", re.IGNORECASE)
 DEFAULT_CACHE_TTL = 86_400.0
 DEFAULT_MIN_INTERVAL = 0.1
+MAX_ATTEMPTS = 4
+MAX_RETRY_WAIT_S = 60.0
+OPENALEX_KEY_ENV = "OPENALEX_API_KEY"
 
 
 def normalize_doi(raw_doi: str) -> str:
@@ -42,13 +42,6 @@ def normalize_openalex_id(raw_id: str) -> str:
     return candidate
 
 
-def normalize_name(value: str) -> str:
-    lowered = value.casefold()
-    lowered = lowered.replace("&", " and ")
-    lowered = re.sub(r"[^a-z0-9]+", " ", lowered)
-    return " ".join(lowered.split())
-
-
 def fetch_json(url: str, headers: dict[str, str] | None = None) -> dict[str, Any]:
     request = urllib.request.Request(
         url,
@@ -60,6 +53,43 @@ def fetch_json(url: str, headers: dict[str, str] | None = None) -> dict[str, Any
     )
     with urllib.request.urlopen(request, timeout=20) as response:
         return json.load(response)
+
+
+def retry_wait_s(error: urllib.error.HTTPError, attempt: int) -> float:
+    """Return seconds to wait after a 429: Retry-After if usable, else backoff."""
+    try:
+        wait = float(error.headers.get("Retry-After", ""))
+    except (AttributeError, TypeError, ValueError):
+        wait = 2.0**attempt
+    return min(max(wait, 0.0), MAX_RETRY_WAIT_S)
+
+
+def try_fetch_json(
+    url: str, headers: dict[str, str] | None
+) -> tuple[dict[str, Any] | None, urllib.error.HTTPError | None]:
+    """Return ``(payload, None)``, or ``(None, error)`` for an HTTP error."""
+    try:
+        return fetch_json(url, headers), None
+    except urllib.error.HTTPError as error:
+        return None, error
+
+
+def fetch_openalex_json(url: str) -> dict[str, Any]:
+    """Fetch one OpenAlex URL, retrying HTTP 429 a bounded number of times.
+
+    The optional key (``OPENALEX_API_KEY``, environment only) goes in an
+    ``Authorization`` header, so it never appears in a URL, cache key or error.
+    """
+    key = os.environ.get(OPENALEX_KEY_ENV)
+    headers = {"Authorization": f"Bearer {key}"} if key else None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        payload, error = try_fetch_json(url, headers)
+        if error is None:
+            return payload or {}
+        if error.code != 429 or attempt == MAX_ATTEMPTS:
+            raise error
+        time.sleep(retry_wait_s(error, attempt))
+    raise AssertionError("unreachable")  # pragma: no cover
 
 
 def default_cache_dir() -> Path:
@@ -90,7 +120,7 @@ def fetch_openalex_cached(
             last = None
         if last is not None and min_interval > 0:
             time.sleep(max(0, min_interval - (time.time() - last)))
-        payload = fetch_json(url)
+        payload = fetch_openalex_json(url)
         state_path.write_text(f"{time.time():.6f}\n")
         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
     cache.parent.mkdir(parents=True, exist_ok=True)
@@ -151,46 +181,6 @@ def parse_openalex_work(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def load_journal_metrics(path: Path) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    with path.open(encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        for row in reader:
-            aliases = [
-                item.strip()
-                for item in (row.get("aliases") or "").split("|")
-                if item.strip()
-            ]
-            row["aliases"] = aliases
-            row["value"] = float(row["value"])
-            rows.append(row)
-    return rows
-
-
-def lookup_journal_metric(
-    journal_metrics: list[dict[str, Any]], journal_name: str | None
-) -> dict[str, Any]:
-    if not journal_name:
-        return {"matched": False, "reason": "no_journal_name"}
-    query = normalize_name(journal_name)
-    for row in journal_metrics:
-        candidates = [row["journal_name"], *row["aliases"]]
-        if any(normalize_name(candidate) == query for candidate in candidates):
-            return {
-                "matched": True,
-                "journal_name": row["journal_name"],
-                "category": row["category"],
-                "metric_name": row["metric_name"],
-                "metric_year": int(row["metric_year"]),
-                "value": row["value"],
-                "source_url": row["source_url"],
-                "source_kind": row["source_kind"],
-                "verified_date": row["verified_date"],
-                "notes": row["notes"],
-            }
-    return {"matched": False, "reason": "not_in_reference_table", "query": journal_name}
-
-
 def summarize_altmetric_payload(
     payload: dict[str, Any] | None, reason: str | None = None
 ) -> dict[str, Any]:
@@ -236,29 +226,21 @@ def fetch_altmetric_summary(
 
 def build_report_from_payloads(
     openalex_payload: dict[str, Any],
-    journal_metrics: list[dict[str, Any]],
     *,
     altmetric_payload: dict[str, Any] | None = None,
     altmetric_reason: str | None = None,
 ) -> dict[str, Any]:
-    openalex_summary = parse_openalex_work(openalex_payload)
-    journal_metric = lookup_journal_metric(
-        journal_metrics, openalex_summary.get("journal_name")
-    )
-    altmetric_summary = summarize_altmetric_payload(
-        altmetric_payload, reason=altmetric_reason
-    )
     return {
-        "openalex": openalex_summary,
-        "altmetric": altmetric_summary,
-        "journal_metric": journal_metric,
+        "openalex": parse_openalex_work(openalex_payload),
+        "altmetric": summarize_altmetric_payload(
+            altmetric_payload, reason=altmetric_reason
+        ),
     }
 
 
 def build_live_report(args: argparse.Namespace) -> dict[str, Any]:
     doi = normalize_doi(args.doi) if args.doi else None
     openalex_id = normalize_openalex_id(args.openalex_id) if args.openalex_id else None
-    journal_metrics = load_journal_metrics(Path(args.journal_metrics))
     cache_dir = Path(getattr(args, "cache_dir", None) or default_cache_dir())
     cache_ttl = getattr(args, "cache_ttl", DEFAULT_CACHE_TTL)
     min_interval = getattr(args, "min_interval", DEFAULT_MIN_INTERVAL)
@@ -283,13 +265,9 @@ def build_live_report(args: argparse.Namespace) -> dict[str, Any]:
         )
     else:
         altmetric_summary = summarize_altmetric_payload(None, reason="not_requested")
-    journal_metric = lookup_journal_metric(
-        journal_metrics, openalex_summary.get("journal_name")
-    )
     return {
         "openalex": openalex_summary,
         "altmetric": altmetric_summary,
-        "journal_metric": journal_metric,
         "request_policy": {
             "cache_dir": str(cache_dir),
             "cache_ttl_seconds": cache_ttl,
@@ -300,7 +278,6 @@ def build_live_report(args: argparse.Namespace) -> dict[str, Any]:
 
 def format_text(report: dict[str, Any]) -> str:
     openalex = report["openalex"]
-    journal_metric = report["journal_metric"]
     altmetric = report["altmetric"]
     lines = [
         f"Title: {openalex.get('title') or 'n/a'}",
@@ -310,14 +287,6 @@ def format_text(report: dict[str, Any]) -> str:
         f"Cited by count: {openalex.get('cited_by_count')}",
         f"Journal: {openalex.get('journal_name') or 'n/a'}",
     ]
-    if journal_metric.get("matched"):
-        lines.append(
-            f"Journal impact factor ({journal_metric['metric_year']}): {journal_metric['value']} [{journal_metric['source_kind']}]"
-        )
-    else:
-        lines.append(
-            f"Journal impact factor: unavailable ({journal_metric.get('reason')})"
-        )
     if altmetric.get("status") == "available":
         lines.append(f"Altmetric score: {altmetric.get('score')}")
     else:
@@ -328,9 +297,10 @@ def format_text(report: dict[str, Any]) -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Assess publication impact with OpenAlex citations and a curated journal metrics table. "
+            "Report OpenAlex citation counts for a work. An optional OpenAlex API key "
+            "comes only from the OPENALEX_API_KEY environment variable. "
             "Pass --altmetric to add Altmetric attention data; its key comes only from "
-            "the ALTMETRIC_API_KEY environment variable and is never printed."
+            "the ALTMETRIC_API_KEY environment variable. Neither key is ever printed."
         )
     )
     group = parser.add_mutually_exclusive_group(required=True)
@@ -361,32 +331,55 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_MIN_INTERVAL,
         help="Minimum seconds between OpenAlex requests across processes",
     )
-    parser.add_argument(
-        "--journal-metrics",
-        default=str(DEFAULT_JOURNAL_METRICS),
-        help="Path to the curated journal metrics TSV",
-    )
     parser.add_argument("--format", choices=("json", "text"), default="json")
     parser.add_argument("--output", help="Write output to a file instead of stdout")
+    parser.add_argument(
+        "--force", action="store_true", help="Overwrite an existing --output file"
+    )
     return parser
+
+
+def redact(text: str, *secrets: str | None) -> str:
+    """Replace every non-empty secret in ``text``."""
+    for secret in secrets:
+        if secret:
+            text = text.replace(secret, "[redacted]")
+    return text
+
+
+def refuse_overwrite(output: Path) -> int:
+    """Report that `output` exists and return the failure exit code."""
+    print(f"Error: refusing to overwrite {output}; pass --force", file=sys.stderr)
+    return 1
 
 
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    output = Path(args.output) if args.output else None
+    if output and output.exists() and not args.force:
+        return refuse_overwrite(output)
     try:
         report = build_live_report(args)
-    except Exception as exc:  # pragma: no cover - exercised through CLI failure paths
-        print(f"Error: {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001  # top-level boundary: report and exit
+        message = redact(
+            str(exc),
+            os.environ.get(OPENALEX_KEY_ENV),
+            os.environ.get("ALTMETRIC_API_KEY"),
+        )
+        print(f"Error: {message}", file=sys.stderr)
         return 1
 
     rendered = (
         json.dumps(report, indent=2) if args.format == "json" else format_text(report)
     )
-    if args.output:
-        Path(args.output).write_text(
-            rendered + ("\n" if not rendered.endswith("\n") else ""), encoding="utf-8"
-        )
+    if output:
+        try:
+            # Exclusive creation: a file that appeared during the run is kept.
+            with output.open("w" if args.force else "x", encoding="utf-8") as handle:
+                handle.write(rendered.rstrip("\n") + "\n")
+        except FileExistsError:
+            return refuse_overwrite(output)
     else:
         print(rendered)
     return 0

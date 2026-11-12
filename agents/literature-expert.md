@@ -22,7 +22,7 @@ Start with `polars-dovmed`. When the session has the `polars-dovmed` MCP connect
 | Skill | Use for |
 | --- | --- |
 | `polars-dovmed` | Full-text search of PMC Open Access and bioRxiv |
-| `crossref-lookup` | DOI validation, citation metadata, citation counts and journal impact |
+| `crossref-lookup` | DOI validation, citation metadata and citation counts |
 | `bio-logic` | Evidence quality and bias |
 
 ## Communication

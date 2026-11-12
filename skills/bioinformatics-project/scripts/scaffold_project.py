@@ -10,6 +10,7 @@ from datetime import date
 from pathlib import Path
 
 
+SAMPLE_SHEET_HEADER = "sample_id\tr1\tr2\n"
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 GITIGNORE_TEMPLATE = SKILL_ROOT / "examples" / "gitignore.example"
 
@@ -98,7 +99,7 @@ def canonical_scaffold_files(project_name: str, objective: str) -> dict[Path, tu
             "For each input, record its source, version, retrieval command, checksum, and license.\n",
             False,
         ),
-        Path("data/samples.tsv"): ("sample_id\tinput_path\n", False),
+        Path("data/samples.tsv"): (SAMPLE_SHEET_HEADER, False),
         Path("results/lab_notebook.md"): (
             "# Lab notebook\n\n"
             "Add dated entries with the goal, command or driver, QC result, interpretation, and next check.\n",
@@ -201,7 +202,7 @@ def numbered_scaffold_files(project_name: str, objective: str) -> dict[Path, tup
             False,
         ),
         Path("00_data/00_raw/.gitkeep"): ("", False),
-        Path("00_data/01_metadata/samples.tsv"): ("sample_id\tinput_path\n", False),
+        Path("00_data/01_metadata/samples.tsv"): (SAMPLE_SHEET_HEADER, False),
         Path("01_shared_preprocessing/README.md"): (
             "# Shared preprocessing\n\nRecord shared manifests, QC, mappings, and catalogs here.\n",
             False,

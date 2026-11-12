@@ -1,12 +1,12 @@
 {
   "crispr": [
     [
-      "\\bcrispr\\b"
+      "crispr"
     ]
   ],
   "archaea": [
     [
-      "\\barchaea\\b"
+      "archaea"
     ]
   ]
 }

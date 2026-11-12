@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["jsonschema==4.25.1"]
+# dependencies = ["jsonschema>=4.25.1"]
 # ///
 """Validate pinned viromics resources and assemble comparative discovery evidence."""
 
@@ -21,7 +21,19 @@ METRIC_FIELDS = ("genome", "role", "group", "genome_size", "gene_count", "litera
 HYPOTHESIS_FIELDS = ("hypothesis_id", "hypothesis", "type", "status", "evidence", "revision_stage")
 REFLECTION_FIELDS = ("stage", "observed", "qc_status", "hypotheses_gained", "hypotheses_lost", "alternatives", "next_check", "literature_id")
 REQUIRED_RESOURCES = {"genomad", "checkv", "gvclass", "vcontact3", "genomad_db", "checkv_db", "gvclass_db", "vcontact3_db"}
-COMPARATIVE = ("marker_census.tsv", "family_copy_number_comparison.tsv", "conserved_neighborhoods.tsv", "ncRNA_census.tsv")
+# Minimum columns of each comparative table; rule 3 of the omics-pipeline skill
+# defines them. Extra columns are allowed.
+COMPARATIVE = {
+    "marker_census.tsv": ("genome", "category", "family_id", "copy_number"),
+    "family_copy_number_comparison.tsv": (
+        "family_id",
+        "query_copy_number",
+        "relative_median",
+        "status",
+    ),
+    "conserved_neighborhoods.tsv": ("query_block_id", "relative", "members"),
+    "ncRNA_census.tsv": ("assembly", "class", "model", "count"),
+}
 SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "evidence-bundle.schema.json"
 
 
@@ -61,6 +73,21 @@ def read(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
     if not rows:
         raise ValueError(f"{path}: no rows")
     return rows
+
+
+def check_comparative(directory: Path) -> None:
+    """Require each comparative table to exist and carry its minimum columns."""
+    for name, required in COMPARATIVE.items():
+        path = directory / name
+        if not path.is_file() or path.stat().st_size == 0:
+            raise ValueError(
+                f"required comparative artifact is missing or empty: {path}"
+            )
+        with path.open(newline="", encoding="utf-8") as handle:
+            header = next(csv.reader(handle, delimiter="\t"), [])
+        missing = [column for column in required if column not in header]
+        if missing:
+            raise ValueError(f"{path}: missing required columns {', '.join(missing)}")
 
 
 def load_resources(path: Path) -> dict[str, object]:
@@ -114,10 +141,7 @@ def main() -> int:
             raise ValueError("reflections must start at initial, include final, and cover at least four stages")
         if any(row["qc_status"] not in {"passed", "failed", "conditional"} for row in reflections):
             raise ValueError("reflection qc_status must be passed, failed, or conditional")
-        for name in COMPARATIVE:
-            path = args.comparative_dir / name
-            if not path.is_file() or path.stat().st_size == 0:
-                raise ValueError(f"required comparative artifact is missing or empty: {path}")
+        check_comparative(args.comparative_dir)
         by_group: dict[str, list[int]] = {}
         for row in metrics:
             if row["role"] == "reference":

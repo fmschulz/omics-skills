@@ -37,19 +37,23 @@ pio.templates["dash_ui"] = go.layout.Template(
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, title_text=""),
         xaxis=dict(showgrid=False, zeroline=False, ticks="outside", ticklen=4),
-        yaxis=dict(showgrid=True, gridcolor="rgba(0,0,0,0.06)", zeroline=False, ticks="outside", ticklen=4),
+        yaxis=dict(showgrid=False, zeroline=False, ticks="outside", ticklen=4),
         hoverlabel=dict(bgcolor="white", font_size=12),
     )
 )
 pio.templates.default = "dash_ui"
 ```
 
+Gridlines are off, as in [checklist.md](checklist.md). When readers must read exact values, add faint horizontal lines on that figure only: `figure.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.06)")`. [../examples/dash_app.py](../examples/dash_app.py) registers this template unchanged.
+
 Label traces directly (`mode="lines+text"` or an annotation at the last point) and hide the legend where that fits. Use Plotly scales for magnitude (`px.colors.sequential.Viridis`) and signed values (`RdBu` with `zmid=0`).
 
 ## Smoke test
 
+From the skill directory:
+
 ```bash
-uv run --script ~/.agents/skills/beautiful-data-viz/examples/dash_app.py --smoke --latency-budget-ms 300
+uv run --script examples/dash_app.py --smoke --latency-budget-ms 300
 ```
 
 It must print `passed: true`: HTTP 200 and a measured pure-callback p95 inside the budget (exit 2 otherwise). Also check: filters have defaults and visible state, tooltips carry units, empty states are handled, no horizontal scroll on a phone width, requirements are pinned, and the README gives purpose, run command and data sources.

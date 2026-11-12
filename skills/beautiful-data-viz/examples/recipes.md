@@ -8,7 +8,7 @@ import sys
 
 import matplotlib.pyplot as plt
 
-SKILL_DIR = Path.home() / ".agents" / "skills" / "beautiful-data-viz"
+SKILL_DIR = Path("path/to/beautiful-data-viz")  # the skill directory of your install
 sys.path.insert(0, str(SKILL_DIR))
 from assets.beautiful_style import direct_label, finalize_axes, set_beautiful_style
 

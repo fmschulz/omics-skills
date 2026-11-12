@@ -1,7 +1,7 @@
 # vConTACT3 Usage Guide
 
-Last verified: 2026-10-01
-Tool version/release checked: vConTACT3 3.2.4 source tag (`vcontact3 run --help` and `prepare_databases --help` run from that tag); bioconda latest 3.1.6
+Last verified: 2026-11-11
+Tool version/release checked: vConTACT3 3.2.4 source tag (still the newest tag on 2026-11-11; `vcontact3 run --help` and `prepare_databases --help` run from that tag on 2026-10-01); bioconda latest 3.1.6 (both `--help` outputs read in the bioconda container on 2026-11-11)
 Official docs/manual: https://vcontact3.readthedocs.io/en/latest/
 Release/source: https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4 ; https://bitbucket.org/MAVERICLab/vcontact3
 
@@ -47,7 +47,7 @@ pixi add --pypi vclust
 | `-d, --db-path` | Database file or directory. Required, also with `--no-db` |
 | `--db-domain` | `archaea`, `bacteria`, `prokaryotes` (default), or `eukaryotes` |
 | `--db-version` | Database version to use |
-| `--no-db` | Cluster user genomes de novo; VOG-based taxonomy still runs |
+| `--no-db` | Cluster user genomes de novo; VOG-based taxonomy still runs. Not in the `run --help` of bioconda 3.1.6 |
 | `-e, --exports` | Any of `cytoscape graphml cosmograph d3js ani newick profiles completeness centroids` |
 | `-t, --threads` | CPUs. Default: every CPU on the host (`multiprocessing.cpu_count()`), not the Slurm allocation; set it to the allocated CPU count |
 | `--reduce-memory` | Use float16 arrays |

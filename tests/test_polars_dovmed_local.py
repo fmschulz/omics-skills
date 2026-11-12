@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import json
 import subprocess
 import sys
@@ -386,6 +388,209 @@ class PolarsDovmedLocalTests(unittest.TestCase):
 
         self.assertEqual(metadata["lookups"], 1)
         lookup.assert_called_once()
+
+    def test_analyze_paper_keeps_its_scores_when_it_reuses_the_context_analysis(
+        self,
+    ) -> None:
+        paper = {
+            "title": "Mirusvirus host range",
+            "abstract_text": "Mirusvirus infection of protists.",
+            "full_text": "The host range of mirusvirus was tested in detail.",
+        }
+        queries = {
+            "anchor_entity": [["mirusvirus"]],
+            "host_relation": [["host range"], ["infection"]],
+            "disqualifying_terms": [["plant"]],
+        }
+        analysis = query_literature.analyze_paper_against_queries(paper, queries)
+        self.assertEqual(
+            analysis,
+            {
+                "matched_group_counts": {"anchor_entity": 1, "host_relation": 2},
+                "matched_group_scores": {"anchor_entity": 1.8, "host_relation": 4.2},
+                "matched_concepts": ["anchor_entity", "host_relation"],
+                "concept_coverage": 2,
+                "support_concept_coverage": 1,
+                "support_specificity_score": 4.2,
+                "specific_support_group_hits": 1,
+                "title_support_hits": 1,
+                "abstract_support_hits": 1,
+                "full_text_support_hits": 1,
+                "total_group_matches": 3,
+            },
+        )
+
+    def anonymous_clock(self, tmp: Path):
+        """Patch time so a sleep advances the clock; return the list of sleeps."""
+        now = [1_000.0]
+        sleeps: list[float] = []
+
+        def fake_sleep(seconds: float) -> None:
+            sleeps.append(seconds)
+            now[0] += seconds
+
+        stack = contextlib.ExitStack()
+        stack.enter_context(patch.object(query_literature.time, "time", lambda: now[0]))
+        stack.enter_context(patch.object(query_literature.time, "sleep", fake_sleep))
+        self.addCleanup(stack.close)
+        return sleeps
+
+    def test_anonymous_requests_are_limited_to_20_per_minute_across_calls(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            state_dir = Path(tmp_name)
+            sleeps = self.anonymous_clock(state_dir)
+            for _ in range(20):
+                query_literature.wait_for_anonymous_slot(state_dir)
+            self.assertEqual(sleeps, [])
+            query_literature.wait_for_anonymous_slot(state_dir)
+            self.assertEqual(len(sleeps), 1)
+            self.assertAlmostEqual(sleeps[0], 60.0, delta=0.5)
+            # The window slides: 20 more calls fit once the minute has passed.
+            for _ in range(19):
+                query_literature.wait_for_anonymous_slot(state_dir)
+            self.assertEqual(len(sleeps), 1)
+
+    def test_a_corrupt_pacer_state_file_is_reported_not_reset(self) -> None:
+        for content in ("not json", '{"a": 1}', '[1, "x"]', "[NaN]"):
+            with (
+                self.subTest(content=content),
+                tempfile.TemporaryDirectory() as tmp_name,
+            ):
+                state_dir = Path(tmp_name)
+                sleeps = self.anonymous_clock(state_dir)
+                state_path = state_dir / "anonymous-requests.json"
+                state_path.write_text(content, encoding="utf-8")
+                with self.assertRaises(query_literature.RateLimitStateError) as ctx:
+                    query_literature.wait_for_anonymous_slot(state_dir)
+                message = str(ctx.exception)
+                self.assertIn(str(state_path), message)
+                self.assertIn("Delete", message)
+                self.assertEqual(sleeps, [])
+                self.assertEqual(state_path.read_text(encoding="utf-8"), content)
+
+    def test_an_unlockable_pacer_state_refuses_the_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            state_dir = Path(tmp_name)
+            sleeps = self.anonymous_clock(state_dir)
+            with (
+                patch.object(
+                    query_literature.fcntl, "flock", side_effect=OSError("no locks")
+                ),
+                self.assertRaises(query_literature.RateLimitStateError) as ctx,
+            ):
+                query_literature.wait_for_anonymous_slot(state_dir)
+            self.assertIn(str(state_dir), str(ctx.exception))
+            self.assertIn("API key", str(ctx.exception))
+            self.assertEqual(sleeps, [])
+
+    def test_an_unwritable_pacer_state_refuses_the_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            state_dir = Path(tmp_name)
+            sleeps = self.anonymous_clock(state_dir)
+            with (
+                patch.object(
+                    query_literature.os, "replace", side_effect=OSError("read-only")
+                ),
+                self.assertRaises(query_literature.RateLimitStateError) as ctx,
+            ):
+                query_literature.wait_for_anonymous_slot(state_dir)
+            self.assertIn(str(state_dir), str(ctx.exception))
+            self.assertIn("API key", str(ctx.exception))
+            self.assertEqual(sleeps, [])
+            self.assertEqual(
+                sorted(p.name for p in state_dir.iterdir()), ["anonymous-requests.lock"]
+            )
+
+    def test_an_unusable_pacer_state_directory_refuses_the_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            blocker = Path(tmp_name) / "file"
+            blocker.write_text("x", encoding="utf-8")
+            sleeps = self.anonymous_clock(blocker)
+            with self.assertRaises(query_literature.RateLimitStateError) as ctx:
+                query_literature.wait_for_anonymous_slot(blocker / "state")
+            self.assertIn(str(blocker / "state"), str(ctx.exception))
+            self.assertEqual(sleeps, [])
+
+    def test_the_pacer_state_is_written_atomically(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            state_dir = Path(tmp_name)
+            self.anonymous_clock(state_dir)
+            with patch.object(
+                query_literature.os, "replace", wraps=query_literature.os.replace
+            ) as replace:
+                query_literature.wait_for_anonymous_slot(state_dir)
+            replace.assert_called_once()
+            source, target = (Path(arg) for arg in replace.call_args.args)
+            self.assertEqual(source.parent, state_dir)
+            self.assertEqual(target, state_dir / "anonymous-requests.json")
+            self.assertEqual(json.loads(target.read_text(encoding="utf-8")), [1_000.0])
+            self.assertEqual(
+                sorted(p.name for p in state_dir.iterdir()),
+                ["anonymous-requests.json", "anonymous-requests.lock"],
+            )
+
+    def test_pacer_timestamps_far_in_the_future_are_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_name:
+            state_dir = Path(tmp_name)
+            sleeps = self.anonymous_clock(state_dir)
+            (state_dir / "anonymous-requests.json").write_text(
+                json.dumps([1_000.0 + 61.0] * 25), encoding="utf-8"
+            )
+            query_literature.wait_for_anonymous_slot(state_dir)
+            self.assertEqual(sleeps, [])
+
+    def test_only_anonymous_requests_are_paced(self) -> None:
+        with (
+            patch.object(query_literature, "wait_for_anonymous_slot") as pace,
+            patch.object(
+                query_literature.urllib.request,
+                "urlopen",
+                side_effect=lambda *args, **kwargs: io.BytesIO(b"{}"),
+            ),
+        ):
+            query_literature.request_json(
+                "https://api.example.org", "/api/usage", "secret", timeout=5
+            )
+            pace.assert_not_called()
+            query_literature.request_json(
+                "https://api.example.org", "/api/usage", None, timeout=5
+            )
+            pace.assert_called_once()
+
+    def test_corpus_both_is_rejected_with_a_clear_message(self) -> None:
+        stderr = io.StringIO()
+        with (
+            patch.object(
+                sys,
+                "argv",
+                ["query_literature.py", "--queries-file", "q.json", "--corpus", "both"],
+            ),
+            contextlib.redirect_stderr(stderr),
+            self.assertRaises(SystemExit) as raised,
+        ):
+            query_literature.parse_args()
+        self.assertEqual(raised.exception.code, 2)
+        self.assertIn("separate calls", stderr.getvalue())
+
+    def test_no_code_path_names_a_missing_endpoint(self) -> None:
+        source = MODULE_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("discover_literature", source)
+
+    def test_the_smoke_query_uses_bare_words_as_the_skill_requires(self) -> None:
+        fixture = MODULE_PATH.parents[1] / "fixtures" / "smoke_query.json"
+        concepts = json.loads(fixture.read_text(encoding="utf-8"))
+        terms = [t for groups in concepts.values() for group in groups for t in group]
+        self.assertTrue(terms)
+        for term in terms:
+            self.assertRegex(term, r"^[A-Za-z0-9][A-Za-z0-9 -]*$")
+
+    def test_the_recipes_do_not_pass_the_legacy_sync_flag(self) -> None:
+        skill_dir = MODULE_PATH.parents[1]
+        for name in ("SKILL.md", "references/commands.md"):
+            text = (skill_dir / name).read_text(encoding="utf-8")
+            self.assertNotIn("--sync", text, name)
 
 
 if __name__ == "__main__":

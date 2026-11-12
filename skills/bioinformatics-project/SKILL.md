@@ -20,7 +20,7 @@ Turn the project into a small written contract before creating directories or ru
 1. Name the project with a durable, specific directory name.
 2. Write the objective, analysis tracks, expected deliverables, input data types, compute environment, and known reference databases in `README.md`.
 3. Create `tasks/METHODS.md` immediately and record every setup command, software version, database path, option, seed, and SLURM job ID as work proceeds. Create `SUMMARY.md` for current status and high-level counts, and `tasks/todo.md` for active work (records follow `session-records`).
-4. Initialize dependency management before analysis: `pixi.toml` for bioinformatics stacks, `uv` only for Python-only projects.
+4. Initialize dependency management before analysis: `pixi.toml` owns the project environment, Python libraries included; `uv run --script` runs self-contained helper scripts with inline (PEP 723) dependencies, such as `scripts/scaffold_project.py`.
 5. Check existing shared database locations before downloading references. For a new reference, use a named database directory and document source URL, version, date, checksum, and command.
 6. Put raw inputs and metadata in read-only data directories; never write cleaned, mapped, filtered, or derived outputs back into raw data.
 7. Before exploratory analysis, create a hypothesis register with at least five biological, technical, null, sampling, and database explanations. Keep ruled-out hypotheses visible with the evidence that changed their status.
@@ -38,19 +38,20 @@ project_name/              # one self-contained, meaningfully named dir
 │   └── README.md          # provenance: source URL, version, download date, md5
 ├── results/               # all computed experiments (regenerable)
 │   ├── lab_notebook.md    # dated, verbose decision log at the root of results/
-│   └── 2024-03-12_binning/ # one dated experiment dir (YYYY-MM-DD[_topic])
-│       ├── runall         # the driver script: reproduces this experiment alone
-│       └── README.md      # what/why for this experiment
+│   └── 2024-03-12_binning/ # one dated run dir (YYYY-MM-DD[_topic])
+│       ├── runall         # the driver script: reproduces this run alone
+│       ├── README.md      # what/why for this run
+│       └── qc/ assembly/ bins/  # one subdirectory per pipeline stage (generated)
 ├── src/                   # your own analysis code (importable, tested)
 ├── bin/                   # third-party / compiled tools, project wrappers
 ├── doc/                   # one subdir per manuscript + notes + changelog
 ├── tasks/                 # METHODS.md (committed); todo, hypotheses (local)
-├── pixi.toml / pixi.lock  # pinned bioinformatics tool stack (committed)
+├── pixi.toml / pixi.lock  # bioinformatics tool stack and lock file (committed)
 ├── README.md  LICENSE  CITATION.cff
 └── .gitignore             # excludes data blobs and all results/ outputs
 ```
 
-Date every experiment dir `YYYY-MM-DD` (optionally `_topic`) so they sort in time order; never use names like `final/` or `binning_v2_really_final/`. Full annotated tree, script categories, and the lab-notebook practice: [references/project-layout.md](references/project-layout.md). Worked example: [examples/project-tree.txt](examples/project-tree.txt).
+This skill owns the results layout `results/<date>_<name>/<stage>/`: a run directory is dated (`YYYY-MM-DD`, optionally `_topic`, so runs sort in time order), and the pipeline stages (`qc/`, `assembly/`, `bins/`, ...) are subdirectories of it. Hand-written files (driver, README, workflow and config files) sit directly in the run directory; everything inside a stage subdirectory is generated. The one fixed shared path is `results/taxonomy/domain_routing.tsv`, written by the taxonomy stage. Never use names like `final/` or `binning_v2_really_final/`. Other skills and checklists point here instead of restating the layout. Full annotated tree, script categories, and the lab-notebook practice: [references/project-layout.md](references/project-layout.md). Worked example: [examples/project-tree.txt](examples/project-tree.txt).
 
 For a repository with shared data plus several analyses or manuscripts, use the numbered root layout in [references/numbered-layout.md](references/numbered-layout.md). The same file explains how to migrate an already-messy project: build a path map first, never move large output directories in one step.
 
@@ -82,7 +83,7 @@ Manifest example: [examples/environment.pixi.toml](examples/environment.pixi.tom
 ### Version control
 
 - Track only hand-edited files: code, configs, `runall`, notebook, sample sheets, and `tasks/METHODS.md` as analysis provenance; the other `tasks/` notes stay local. Never commit generated outputs or binaries (`*.bam`, `*.bai`, `*.fastq.gz`, `results/**` tables); regenerate them via `runall`.
-- Use a `.gitignore` that ignores everything under `results/` (including `provenance.txt`, which `runall` regenerates) and allow-lists the hand-edited files that live there: the driver, its README, the lab notebook. Tested pattern: [examples/gitignore.example](examples/gitignore.example).
+- Use a `.gitignore` that ignores the generated stage subdirectories of each run directory and `provenance.txt` (which `runall` regenerates), and tracks the hand-written files directly in the run directory (driver, README, `Snakefile`, `config.yaml`, `main.nf`, one-off scripts) and the lab notebook. Tested pattern: [examples/gitignore.example](examples/gitignore.example).
 - Give each experiment its own dated `results/` directory and lab-notebook entry. Tag the commit behind each published figure or release; archive the release for a DOI (Zenodo) (Sandve 2013, Wilson 2017).
 
 ### Sharing and collaboration
@@ -105,7 +106,7 @@ uv run --script ~/.agents/skills/bioinformatics-project/scripts/scaffold_project
 | Publication metadata | `--license MIT --author "Name or organization" --copyright-year YYYY`; all three explicit values are required |
 | Verify | `--check` (every scaffold file exists; edits to scaffolded files are allowed) |
 
-Other examples: [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md), [examples/samples.tsv](examples/samples.tsv).
+The sample sheet `data/samples.tsv` (numbered layout: `00_data/01_metadata/samples.tsv`) starts with the required columns `sample_id`, `r1`, `r2` (leave `r2` empty for single-end or long reads); further columns are free metadata. Examples: [examples/samples.tsv](examples/samples.tsv), [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md).
 
 ## Input Requirements
 
@@ -117,7 +118,7 @@ Other examples: [examples/lab-notebook-entry.md](examples/lab-notebook-entry.md)
 
 - A documented project layout with immutable raw inputs and regenerable outputs.
 - `tasks/todo.md`, `tasks/METHODS.md`, and an exploratory hypothesis register.
-- A pinned `pixi.toml` and `pixi.lock`, or a uv lock for a Python-only project.
+- A `pixi.toml` with lower bounds and a committed `pixi.lock` that pins the exact builds.
 - One restartable driver and README per analysis stage, with provenance, logs, and QC checks.
 - README, license, citation metadata, and deposition-ready provenance where sharing is in scope.
 

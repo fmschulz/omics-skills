@@ -20,14 +20,14 @@ One bounded GET against a public life-science REST API. The bundled script picks
 
 ## Input Requirements
 
-- `uv` and network access; the PEP 723 script installs its pinned HTTP dependency.
+- `uv` and network access; the PEP 723 script installs its HTTP dependency.
 - A service name and an endpoint path from the service card.
 
 ## Output
 
 One JSON object on stdout. Exit code 0 on success, 2 for `invalid_input`, 1 for the other errors.
 
-- Success: `ok`, `source`, `url` (api_key and email values removed), `status_code`, `warnings`, `raw_output_path`, plus `records` with `record_path`, `record_count_returned`, `record_count_available` and `truncated` for list results, `summary` and `top_keys` for other JSON, or `text_head` for text (first 800 characters, with `text_head_truncated` set when the text is longer).
+- Success: `ok`, `source`, `url` (api_key and email values removed), `status_code`, `warnings`, `raw_output_path`, plus `records` with `record_path`, `record_count_returned`, `record_count_available` (the service total when the response reports one, such as esearch `count` or a top-level `count`; else the length of the returned list) and `truncated` for list results, `summary` and `top_keys` for other JSON, or `text_head` for text (first 800 characters, with `text_head_truncated` set when the text is longer).
 - Failure: `ok: false`, `source`, and `error` with `code` (`invalid_input`, `network_error`, `http_error`, `invalid_response`, `service_error` for an HTTP 200 reply with an error body) and `message`.
 - Compaction: strings are cut at 240 characters; lists and dicts at `--max-items`; containers deeper than `--max-depth` (default 3) collapse.
 

@@ -22,15 +22,15 @@ A notebook is not "done" until it has been executed end to end on a fresh kernel
    - Do not accept a marimo "fix" prompt blindly. If one is accepted during interactive editing, inspect the diff immediately and remove unintended PEP 723/header/cell churn.
 
 4. **Set up the kernel and dependencies.**
-   - **Marimo.** Pin dependencies in the PEP 723 script header at the top of the `.py` file:
+   - **Marimo.** Declare dependencies with lower bounds in the PEP 723 script header at the top of the `.py` file (no upper bounds, no exact pins; the sandbox resolves the newest release):
      ```python
      # /// script
      # requires-python = ">=3.12"
      # dependencies = [
-     #     "marimo",
-     #     "polars",
-     #     "duckdb",
-     #     "matplotlib",
+     #     "marimo>=0.23",
+     #     "polars>=1.0",
+     #     "duckdb>=1.1",
+     #     "matplotlib>=3.9",
      #     # ... add every import used in the notebook
      # ]
      # ///
@@ -66,12 +66,12 @@ A notebook is not "done" until it has been executed end to end on a fresh kernel
 8. **Deliver pre-executed notebooks.** The delivered artifact has every cell executed against the registered kernel, every figure embedded (PNG or SVG cell outputs in the `.ipynb`, or the marimo HTML export), re-run instructions in the header or README, and seeds set where results are random. It must reproduce end to end from a clean clone: a new environment built from the PEP 723 header (marimo) or `pixi install` plus `jupyter nbconvert --to notebook --execute` (Jupyter). No delivered notebook keeps the literal `<PIXI_PROJECT_KERNEL>` placeholder.
 
 9. **Convert between marimo and Jupyter** when the user asks for it:
-   - Use `scripts/convert_notebook.py` for a pinned conversion path. The fixtures under `fixtures/` exercise both directions. Replace `<PROJECT_NAME>` and `<PIXI_PROJECT_KERNEL>` in copied Jupyter templates with the actual Pixi kernel before execution.
-   - `.ipynb` → marimo `.py`: `uvx marimo convert <notebook.ipynb> -o <notebook.py>`, then `uvx marimo check --strict <notebook.py>`, then clean up Jupyter artifacts (`display()` calls, `%magic`s, indented final expressions, ipywidget usage). See `references/widgets.md` and `references/latex.md` for ipywidget→marimo and MathJax→KaTeX mappings.
-   - marimo `.py` → `.ipynb`: `uvx marimo export ipynb <notebook.py> -o <notebook.ipynb> --include-outputs --sandbox -f`.
+   - Use `scripts/convert_notebook.py`, which brings its own marimo through its PEP 723 header. The fixtures under `fixtures/` exercise both directions. Replace `<PROJECT_NAME>` and `<PIXI_PROJECT_KERNEL>` in copied Jupyter templates with the actual Pixi kernel before execution.
+   - `.ipynb` → marimo `.py`: `uv run --script "$NOTEBOOKS_SKILL/scripts/convert_notebook.py" <notebook.ipynb> --to marimo --out <notebook.py>`, then `uvx marimo check --strict <notebook.py>`, then clean up Jupyter artifacts (`display()` calls, `%magic`s, indented final expressions, ipywidget usage). See [references/widgets.md](references/widgets.md) and [references/latex.md](references/latex.md) for ipywidget→marimo and MathJax→KaTeX mappings.
+   - marimo `.py` → `.ipynb`: `uv run --script "$NOTEBOOKS_SKILL/scripts/convert_notebook.py" <notebook.py> --to jupyter --out <notebook.ipynb>`. The converter writes no cell outputs; to embed them, use the `uvx marimo export ipynb ... --include-outputs --sandbox -f` command of step 6.
    - After conversion, re-run step 6 (check/execute), step 7 (inspect plots), and step 8 (deliver pre-executed).
 
-10. **References.** Marimo: `references/notebook_structure.md`, `UI.md`, `STATE.md`, `EXPORTS.md`. For testing, SQL cells, top-level imports and deployment, see the marimo documentation at https://docs.marimo.io/. Conversion: `references/widgets.md`, `references/latex.md`. Pixi and Jupyter: `references/pixi_jupyter.md`. DuckDB loading: `references/data_loading_duckdb.md`. Templates (start a new notebook from one): `templates/marimo_notebook_template.py`, `templates/jupyter_kiss_template.py`. Jupyter structure linter: `uv run --script "$NOTEBOOKS_SKILL/scripts/lint_notebook_structure.py" <notebook.ipynb>`.
+10. **References.** Marimo: [references/notebook_structure.md](references/notebook_structure.md), [references/UI.md](references/UI.md), [references/STATE.md](references/STATE.md), [references/EXPORTS.md](references/EXPORTS.md). For testing, SQL cells, top-level imports and deployment, see the marimo documentation at https://docs.marimo.io/. Conversion: [references/widgets.md](references/widgets.md), [references/latex.md](references/latex.md). Pixi and Jupyter: [references/pixi_jupyter.md](references/pixi_jupyter.md). DuckDB loading: [references/data_loading_duckdb.md](references/data_loading_duckdb.md). Templates (start a new notebook from one): [templates/marimo_notebook_template.py](templates/marimo_notebook_template.py), [templates/jupyter_kiss_template.py](templates/jupyter_kiss_template.py). Both import `beautiful_style`: copy `assets/beautiful_style.py` from the beautiful-data-viz skill next to the notebook. Jupyter structure linter: `uv run --script "$NOTEBOOKS_SKILL/scripts/lint_notebook_structure.py" <notebook.ipynb>`.
 
 ## Input Requirements
 
@@ -84,7 +84,7 @@ A notebook (`.py` for marimo, `.ipynb` for Jupyter) with narrative cells, code a
 ## Quality Gates
 
 - `uvx marimo check --strict <notebook.py>` passes before and after export, and no malformed markdown cells, quoted-string fragments inside `mo.md(...)`, or `return`-only placeholder cells remain.
-- Every import is declared in the PEP 723 header or `pixi.toml`; template dependencies use bounded versions.
+- Every import is declared in the PEP 723 header or `pixi.toml`; template dependencies use lower bounds only (`>=`), with no upper bounds and no exact pins.
 - Data paths are project-relative and verified to exist.
 - Both conversion directions pass the fixture gate.
 
@@ -100,7 +100,7 @@ A notebook (`.py` for marimo, `.ipynb` for Jupyter) with narrative cells, code a
 **Solution:** Code is mutating shared state across cells (e.g. `plt.gcf()` reuse). Build a fresh figure per cell (in marimo `_fig, _ax = plt.subplots(...)`, because a global `fig` defined in two cells is an error) and make the figure the final expression.
 
 **Issue:** Converted notebook fails `marimo check`.
-**Solution:** Remove leftover `display(...)` calls, drop `%magic` lines that have no marimo equivalent, and rewrite ipywidget usage using `mo.ui.*` per `references/widgets.md`.
+**Solution:** Remove leftover `display(...)` calls, drop `%magic` lines that have no marimo equivalent, and rewrite ipywidget usage using `mo.ui.*` per [references/widgets.md](references/widgets.md).
 
 **Issue:** Every matplotlib figure appears twice in the executed Jupyter notebook.
 **Solution:** The inline backend's `flush_figures` post-execute hook auto-displays every open figure (`display_data`), and the cell's `fig` return value produces a second copy (`execute_result`). Unregister the hook in the preamble cell:

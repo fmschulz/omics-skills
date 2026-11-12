@@ -1,10 +1,10 @@
 # .gitignore for a bioinformatics project — copy to the project root as `.gitignore`.
 #
 # Principle (Noble 2009, Wilson 2017): version-control ONLY hand-edited files.
-# Everything under results/ is regenerable by `runall`, so it is ignored — then the
-# few hand-edited files that live there (the driver, its README, the lab notebook)
-# are allow-listed back. Order matters: a file cannot be re-included while a parent
-# directory is still excluded, so directories are re-included before their files.
+# Generated outputs live in stage subdirectories of each results/ experiment dir and
+# are regenerable by `runall`, so they are ignored. Hand-written files directly in an
+# experiment dir (driver, README, Snakefile, config.yaml, main.nf, one-off scripts)
+# and the lab notebook stay tracked.
 #
 # NOTE: git only treats `#` as a comment at the START of a line. Never put a comment
 # on the same line as a pattern — it becomes part of the pattern and silently breaks.
@@ -26,24 +26,17 @@ data/raw/
 __pycache__/
 *.pyc
 
-# --- results/: ignore generated outputs, keep hand-edited files ------------------
-# Ignore everything directly under results/ ...
-results/*
-# ... but keep the dated decision log (it is hand-edited) ...
-!results/lab_notebook.md
-# ... and descend into experiment dirs so their files can be allow-listed below.
-!results/*/
-
-# Ignore everything inside each experiment dir ...
-results/*/*
-# ... except the hand-edited driver, summarize step, workflow, and README.
-!results/*/runall
-!results/*/summarize
-!results/*/summarize.py
-!results/*/*.smk
-!results/*/README.md
-# provenance.txt is written by runall (regenerable) -> stays ignored.
-# Per-stage output dirs (qc/, assembly/, bins/, ...) stay ignored automatically.
+# --- results/: ignore generated outputs, keep hand-written files ---------------
+# Layout: results/<date>_<name>/<stage>/. The files directly inside an experiment
+# dir are hand-written (driver, README, workflow and config files, one-off scripts)
+# and stay tracked. Everything inside a stage subdirectory is generated.
+#
+# Ignore every stage subdirectory of every experiment dir ...
+results/*/*/
+# ... the provenance file that runall regenerates ...
+results/*/provenance.txt
+# ... and the shared taxonomy output (fixed path, written by the taxonomy stage).
+results/taxonomy/*
 
 # --- Working notes stay local; tasks/METHODS.md is analysis provenance ---------
 tasks/*

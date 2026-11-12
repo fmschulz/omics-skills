@@ -32,17 +32,5 @@
     "cited_by_policies_count": 3,
     "cited_by_patents_count": 1,
     "readers_count": 77
-  },
-  "journal_metric": {
-    "matched": true,
-    "journal_name": "Nature Communications",
-    "category": "broad",
-    "metric_name": "journal_impact_factor_2y",
-    "metric_year": 2024,
-    "value": 15.7,
-    "source_url": "https://www.nature.com/nature-portfolio/about/journal-metrics",
-    "source_kind": "official",
-    "verified_date": "2026-03-19",
-    "notes": "The Nature Portfolio 2024 journal metrics table."
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["requests==2.34.2"]
+# dependencies = ["requests>=2.34.2"]
 # ///
 """GET one endpoint of a public life-science database and print a compact JSON envelope."""
 
@@ -231,13 +231,17 @@ def available_count(payload: Any, record_path: str | None, records: list[Any]) -
     """Return the number of matches the service reports, else the list length.
 
     An esearch response holds one page of ids in `idlist`; the hit total is in
-    `esearchresult.count`.
+    `esearchresult.count`. Other list responses may carry an integer total as a
+    top-level `count` (MGnify v2 does).
     """
     if record_path == "esearchresult.idlist":
         try:
             return int(get_path(payload, "esearchresult.count"))
         except (TypeError, ValueError):
             pass
+    total = payload.get("count") if isinstance(payload, dict) else None
+    if isinstance(total, int) and not isinstance(total, bool) and total >= len(records):
+        return total
     return len(records)
 
 

@@ -2,12 +2,12 @@
 
 Pinning and capturing exact software environments so a rerun uses the identical stack (Sandve 2013, Rule 3; Wilson 2017, "make dependencies explicit"). Read this when setting up or recording a project's software environment.
 
-**House rule:** bioinformatics tool stacks use **pixi** (conda-forge + bioconda); Python-only deps use **uv**; never use the system Python or run `conda`/`pip` against a base environment.
+**House rule:** **pixi** owns the project environment (conda-forge + bioconda tools and the Python libraries the project's own code needs). **uv** runs self-contained helper scripts with inline (PEP 723) dependencies via `uv run --script`. Never use the system Python or run `conda`/`pip` against a base environment.
 
 ## Contents
 
 - pixi for bioinformatics tool stacks
-- uv for Python dependencies
+- Python libraries and helper scripts (pixi and uv)
 - Sharing with conda-based collaborators (pixi export)
 - Containers (Docker / Apptainer / Singularity)
 - Recording exact versions into results
@@ -28,18 +28,17 @@ pixi shell                                  # drop into the env
 - `pixi.lock` is the reproducibility artifact — it pins exact builds. Always commit it.
 - Recreate the exact env elsewhere: `pixi install` against the committed `pixi.lock`.
 
-## uv for Python dependencies
+## Python libraries and helper scripts (pixi and uv)
 
-For the project's own Python code and its libraries (pysam, Biopython, pandas), use uv — not system Python, not conda pip.
+Add the libraries the project's own code imports (pysam, Biopython, pandas) to `pixi.toml`, from conda-forge or bioconda when they exist there (`pixi add pysam biopython pandas`) and from PyPI otherwise (`pixi add --pypi NAME`). One lock file (`pixi.lock`) then covers tools and libraries.
+
+Run a self-contained helper script, such as the project scaffold or a one-off converter, with `uv run --script`. The script carries its own lower-bounded dependencies in a PEP 723 header, so it needs no project environment:
 
 ```bash
-uv init                                     # create pyproject.toml
-uv add pysam biopython pandas               # add deps, writes uv.lock
-uv run python src/parse_checkm.py ...       # run in the locked env
-uv sync                                      # recreate env from uv.lock
+uv run --script scripts/make_report.py --help
 ```
 
-Commit `pyproject.toml` and `uv.lock`. Keep the heavy bioinformatics binaries (aligners, samtools) in pixi and the Python analysis libraries in uv; they coexist cleanly.
+Do not keep a second environment (`pyproject.toml` plus `uv.lock`) beside `pixi.toml` for the same code.
 
 ## Sharing with conda-based collaborators (pixi export)
 
@@ -57,23 +56,36 @@ Regenerate exported files after every change to `pixi.toml` or `pixi.lock`, and 
 For long-lived, shared, or published analyses, capture the whole environment as an image built `FROM` a locked env so the exact tool that produced a result is preserved (Sandve 2013).
 
 ```dockerfile
-# Dockerfile — build the analysis env from the committed pixi lock
-FROM ghcr.io/prefix-dev/pixi:latest
+# Dockerfile: build the analysis env from the committed pixi lock.
+# Replace <PIXI_VERSION> with a 0.x.y tag of ghcr.io/prefix-dev/pixi (see `pixi --version`),
+# so the base image does not move under a rerun.
+FROM ghcr.io/prefix-dev/pixi:<PIXI_VERSION>
 WORKDIR /project
 COPY pixi.toml pixi.lock ./
 RUN pixi install --locked        # exact versions from pixi.lock
 COPY . .
-ENTRYPOINT ["pixi", "run"]
+# Mount points for the host's inputs and outputs (see docker run below).
+RUN mkdir -p data results
+ENTRYPOINT ["pixi", "run", "--locked"]
 ```
+
+The environment is installed into `/project/.pixi` inside the image. Mount only `data/` and `results/` from the host, never the whole project over `/project`: that would hide the installed environment. Add `data/` and `results/` to `.dockerignore` so they stay out of the image.
 
 ```bash
 docker build -t mags-pipeline:1.0 .
-docker run --rm -v "$PWD:/project" mags-pipeline:1.0 ./results/2026-03-30_qc_trim_assemble_bin/runall
+docker run --rm \
+  -v "$PWD/data:/project/data:ro" -v "$PWD/results:/project/results" \
+  mags-pipeline:1.0 ./results/2026-03-30_qc_trim_assemble_bin/runall
 
-# HPC without Docker: build/run with Apptainer (formerly Singularity)
-apptainer build mags-pipeline_1.0.sif docker://mags-pipeline:1.0
-apptainer exec --bind "$PWD" mags-pipeline_1.0.sif ./runall
+# HPC without Docker: build/run with Apptainer (formerly Singularity).
+# `apptainer exec` ignores the image ENTRYPOINT, so call `pixi run` explicitly.
+apptainer build mags-pipeline_1.0.sif docker://REGISTRY/mags-pipeline:1.0
+apptainer exec --pwd /project \
+  --bind "$PWD/data:/project/data:ro" --bind "$PWD/results:/project/results" \
+  mags-pipeline_1.0.sif pixi run --locked ./results/2026-03-30_qc_trim_assemble_bin/runall
 ```
+
+Push the image to a registry first and use that registry path in the `docker://` source. Pixi's container guide: https://pixi.prefix.dev/latest/deployment/container/. Image tags: https://github.com/prefix-dev/pixi-docker.
 
 Tag the image version to match the Git release that produced the figures.
 

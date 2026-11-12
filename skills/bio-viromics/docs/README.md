@@ -1,9 +1,9 @@
 # Viromics Tool Choice
 
-Last verified: 2026-10-01
-Tool version/release checked: geNomad v1.12.0 / DB v1.9; CheckV v1.1.1 / DB v1.5; vConTACT3 3.2.4 (bioconda 3.1.6); GVClass v2.0.3 / resources v2.0.0
+Last verified: 2026-11-11
+Tool version/release checked: geNomad v1.13.0 / DB v1.9 (`--help` of the 1.13.0 container; database listing on portal.nersc.gov); CheckV v1.1.1 / DB v1.5 (`end_to_end --help`; `CURRENT_RELEASE.txt`); vConTACT3 3.2.4 (newest tag; bioconda 3.1.6, `--help` of the container); GVClass v2.1.0 / resources v2.1.0 (docs of the tag, not run)
 Official docs/manual: https://portal.nersc.gov/genomad/; https://bitbucket.org/berkeleylab/checkv; https://vcontact3.readthedocs.io/; https://NeLLi-team.github.io/gvclass/
-Release/source: https://github.com/apcamargo/genomad/releases/tag/v1.12.0; https://pypi.org/project/checkv/; https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4; https://github.com/NeLLi-team/gvclass/releases/tag/v2.0.3
+Release/source: https://github.com/apcamargo/genomad/releases/tag/v1.13.0; https://pypi.org/project/checkv/; https://bitbucket.org/MAVERICLab/vcontact3/commits/tag/3.2.4; https://github.com/NeLLi-team/gvclass/releases/tag/v2.1.0
 
 This page records what each tool does in this pack, the order they run in, and the points a model is likely to get wrong. For flags, run `--help`. Models know geNomad and CheckV well, so they have no guide here. vConTACT3 and GVClass have guides because models know them poorly.
 
@@ -25,16 +25,16 @@ This page records what each tool does in this pack, the order they run in, and t
 
 ## Versions and databases
 
-- Pair geNomad v1.12.0 with database v1.9 and CheckV v1.1.1 with database v1.5.
+- Pair geNomad v1.13.0 with database v1.9 (still the newest database on 2026-11-11) and CheckV v1.1.1 with database v1.5. geNomad 1.13.0 adds one thing over 1.12.0: the `GENOMAD_DB` environment variable replaces the `DATABASE` argument of `annotate`, `find-proviruses`, `marker-classification` and `end-to-end` when you leave it out.
 - `genomad download-database .` writes `genomad_db/`. Record the database version from that directory in the run manifest.
 - `checkv download_database ./` fetches the release named in `https://portal.nersc.gov/CheckV/CURRENT_RELEASE.txt` (`checkv-db-v1.5` at verification time). Point to it with `-d` (no long form) or `export CHECKVDB=/path/to/checkv-db-v1.5`. `checkv update_database <db> <new_db> genomes.fna` adds your own complete viral genomes to a copy.
 - A PyPI install of CheckV needs DIAMOND v2.2.0 (upstream flags v2.1.9 as a core-dump risk) and HMMER v3.3 installed separately.
-- vConTACT3 3.2.4 is the upstream source tag; bioconda ships 3.1.6. It needs Python 3.10 or 3.11. GVClass runs from its own pixi checkout or the Apptainer wrapper.
+- vConTACT3 3.2.4 is the upstream source tag; bioconda ships 3.1.6. It needs Python 3.10 or 3.11. GVClass runs from its own pixi checkout or, with `--apptainer`, from the single `gvclass` launcher (v2.1.0 retired `gvclass-a`); it needs resource bundle v2.1.0.
 
 ```bash
 pixi add genomad checkv
 pixi add "python>=3.10,<3.12" vcontact3
-wget https://raw.githubusercontent.com/NeLLi-team/gvclass/main/gvclass-a && chmod +x gvclass-a
+wget https://raw.githubusercontent.com/NeLLi-team/gvclass/main/gvclass && chmod +x gvclass
 ```
 
 ## geNomad

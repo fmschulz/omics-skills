@@ -1,7 +1,7 @@
 # Infernal `cmsearch` for rRNA and ncRNA detection
 
-Last verified: 2026-05-30
-Tool version/release checked: Infernal v1.1.5
+Last verified: 2026-11-11
+Tool version/release checked: Infernal v1.1.5 (still the newest release on eddylab.org on 2026-11-11)
 Official docs/manual: http://eddylab.org/infernal/Userguide.pdf ; http://eddylab.org/infernal/
 Release/source: http://eddylab.org/infernal/ ; https://github.com/EddyRivasLab/infernal
 
@@ -24,6 +24,8 @@ cmpress Rfam.cm
 ```
 
 ## Rfam models for ribosomal RNA
+
+One model is enough for a test: `curl -L https://rfam.org/family/RF00177/cm -o RF00177.cm` returns a single covariance model that `cmsearch` reads without `cmpress`. Both the default and the relaxed search below ran with it on a *Mycoplasmoides genitalium* assembly on 2026-11-11 and found the one bacterial SSU rRNA gene.
 
 Select the model set by the inferred domain of life. Run `cmsearch` once per model or pass a pre-pressed CM library with the relevant accessions selected via `cmsearch --tblout` filtering.
 

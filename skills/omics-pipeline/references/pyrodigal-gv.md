@@ -1,11 +1,13 @@
 # pyrodigal-gv
 
-Last verified: 2026-05-30
-Tool version/release checked: pyrodigal-gv v0.3.2; bundled prodigal-gv model set `PRODIGAL_GV_VERSION` v2.11.0
+Last verified: 2026-11-11
+Tool version/release checked: pyrodigal-gv v0.3.2 (bioconda container, newest release on 2026-11-11); bundled prodigal-gv model set `PRODIGAL_GV_VERSION` v2.11.0
 Official docs/manual: https://github.com/althonos/pyrodigal-gv#readme
 Release/source: https://github.com/althonos/pyrodigal-gv/releases/tag/v0.3.2 ; https://github.com/althonos/pyrodigal-gv
 
 Pyrodigal extension for viral gene calling, including giant viruses and viruses with alternative genetic codes. Use the `pyrodigal-gv` CLI or `pyrodigal_gv.ViralGeneFinder` in new workflows. The standalone `prodigal-gv` 2.11.0 C binary (https://github.com/apcamargo/prodigal-gv) carries the same models and remains in use, for example in ViroSync, which pins a patched build; use it with `-p meta` when results must match such a pipeline.
+
+The standard run, the all-formats run with `-s`, and the Python API example below ran on phage lambda (NC_001416.1) on 2026-11-11: the CLI called 62 genes and the API with `viral_only=True` called 63.
 
 ## Official Documentation
 - GitHub: https://github.com/althonos/pyrodigal-gv
