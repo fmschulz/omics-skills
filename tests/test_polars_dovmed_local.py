@@ -420,144 +420,31 @@ class PolarsDovmedLocalTests(unittest.TestCase):
             },
         )
 
-    def anonymous_clock(self, tmp: Path):
-        """Patch time so a sleep advances the clock; return the list of sleeps."""
-        now = [1_000.0]
-        sleeps: list[float] = []
-
-        def fake_sleep(seconds: float) -> None:
-            sleeps.append(seconds)
-            now[0] += seconds
-
-        stack = contextlib.ExitStack()
-        stack.enter_context(patch.object(query_literature.time, "time", lambda: now[0]))
-        stack.enter_context(patch.object(query_literature.time, "sleep", fake_sleep))
-        self.addCleanup(stack.close)
-        return sleeps
-
-    def test_anonymous_requests_are_limited_to_20_per_minute_across_calls(
-        self,
-    ) -> None:
-        with tempfile.TemporaryDirectory() as tmp_name:
-            state_dir = Path(tmp_name)
-            sleeps = self.anonymous_clock(state_dir)
-            for _ in range(20):
-                query_literature.wait_for_anonymous_slot(state_dir)
-            self.assertEqual(sleeps, [])
-            query_literature.wait_for_anonymous_slot(state_dir)
-            self.assertEqual(len(sleeps), 1)
-            self.assertAlmostEqual(sleeps[0], 60.0, delta=0.5)
-            # The window slides: 20 more calls fit once the minute has passed.
-            for _ in range(19):
-                query_literature.wait_for_anonymous_slot(state_dir)
-            self.assertEqual(len(sleeps), 1)
-
-    def test_a_corrupt_pacer_state_file_is_reported_not_reset(self) -> None:
-        for content in ("not json", '{"a": 1}', '[1, "x"]', "[NaN]"):
-            with (
-                self.subTest(content=content),
-                tempfile.TemporaryDirectory() as tmp_name,
-            ):
-                state_dir = Path(tmp_name)
-                sleeps = self.anonymous_clock(state_dir)
-                state_path = state_dir / "anonymous-requests.json"
-                state_path.write_text(content, encoding="utf-8")
-                with self.assertRaises(query_literature.RateLimitStateError) as ctx:
-                    query_literature.wait_for_anonymous_slot(state_dir)
-                message = str(ctx.exception)
-                self.assertIn(str(state_path), message)
-                self.assertIn("Delete", message)
-                self.assertEqual(sleeps, [])
-                self.assertEqual(state_path.read_text(encoding="utf-8"), content)
-
-    def test_an_unlockable_pacer_state_refuses_the_request(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_name:
-            state_dir = Path(tmp_name)
-            sleeps = self.anonymous_clock(state_dir)
-            with (
-                patch.object(
-                    query_literature.fcntl, "flock", side_effect=OSError("no locks")
-                ),
-                self.assertRaises(query_literature.RateLimitStateError) as ctx,
-            ):
-                query_literature.wait_for_anonymous_slot(state_dir)
-            self.assertIn(str(state_dir), str(ctx.exception))
-            self.assertIn("API key", str(ctx.exception))
-            self.assertEqual(sleeps, [])
-
-    def test_an_unwritable_pacer_state_refuses_the_request(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_name:
-            state_dir = Path(tmp_name)
-            sleeps = self.anonymous_clock(state_dir)
-            with (
-                patch.object(
-                    query_literature.os, "replace", side_effect=OSError("read-only")
-                ),
-                self.assertRaises(query_literature.RateLimitStateError) as ctx,
-            ):
-                query_literature.wait_for_anonymous_slot(state_dir)
-            self.assertIn(str(state_dir), str(ctx.exception))
-            self.assertIn("API key", str(ctx.exception))
-            self.assertEqual(sleeps, [])
-            self.assertEqual(
-                sorted(p.name for p in state_dir.iterdir()), ["anonymous-requests.lock"]
-            )
-
-    def test_an_unusable_pacer_state_directory_refuses_the_request(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_name:
-            blocker = Path(tmp_name) / "file"
-            blocker.write_text("x", encoding="utf-8")
-            sleeps = self.anonymous_clock(blocker)
-            with self.assertRaises(query_literature.RateLimitStateError) as ctx:
-                query_literature.wait_for_anonymous_slot(blocker / "state")
-            self.assertIn(str(blocker / "state"), str(ctx.exception))
-            self.assertEqual(sleeps, [])
-
-    def test_the_pacer_state_is_written_atomically(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_name:
-            state_dir = Path(tmp_name)
-            self.anonymous_clock(state_dir)
-            with patch.object(
-                query_literature.os, "replace", wraps=query_literature.os.replace
-            ) as replace:
-                query_literature.wait_for_anonymous_slot(state_dir)
-            replace.assert_called_once()
-            source, target = (Path(arg) for arg in replace.call_args.args)
-            self.assertEqual(source.parent, state_dir)
-            self.assertEqual(target, state_dir / "anonymous-requests.json")
-            self.assertEqual(json.loads(target.read_text(encoding="utf-8")), [1_000.0])
-            self.assertEqual(
-                sorted(p.name for p in state_dir.iterdir()),
-                ["anonymous-requests.json", "anonymous-requests.lock"],
-            )
-
-    def test_pacer_timestamps_far_in_the_future_are_ignored(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_name:
-            state_dir = Path(tmp_name)
-            sleeps = self.anonymous_clock(state_dir)
-            (state_dir / "anonymous-requests.json").write_text(
-                json.dumps([1_000.0 + 61.0] * 25), encoding="utf-8"
-            )
-            query_literature.wait_for_anonymous_slot(state_dir)
-            self.assertEqual(sleeps, [])
-
-    def test_only_anonymous_requests_are_paced(self) -> None:
+    def test_requests_over_twenty_need_no_pacing_state(self) -> None:
+        """Anonymous and keyed calls proceed without sleeps or cache writes."""
         with (
-            patch.object(query_literature, "wait_for_anonymous_slot") as pace,
+            patch.object(
+                query_literature.Path,
+                "mkdir",
+                side_effect=AssertionError("cache write"),
+            ),
+            patch.object(query_literature.time, "sleep") as sleep,
             patch.object(
                 query_literature.urllib.request,
                 "urlopen",
-                side_effect=lambda *args, **kwargs: io.BytesIO(b"{}"),
-            ),
+                side_effect=[io.BytesIO(b"{}") for _ in range(50)],
+            ) as urlopen,
         ):
-            query_literature.request_json(
-                "https://api.example.org", "/api/usage", "secret", timeout=5
-            )
-            pace.assert_not_called()
-            query_literature.request_json(
-                "https://api.example.org", "/api/usage", None, timeout=5
-            )
-            pace.assert_called_once()
+            for api_key in (None, "secret"):
+                for _ in range(25):
+                    self.assertEqual(
+                        query_literature.request_json(
+                            "https://api.example.org", "/api/usage", api_key, timeout=5
+                        ),
+                        {},
+                    )
+        self.assertEqual(urlopen.call_count, 50)
+        sleep.assert_not_called()
 
     def test_request_json_retries_503_then_returns_payload(self) -> None:
         error = query_literature.urllib.error.HTTPError(
@@ -661,24 +548,44 @@ class PolarsDovmedLocalTests(unittest.TestCase):
         urlopen.assert_called_once()
         sleep.assert_not_called()
 
-    def test_request_json_paces_every_anonymous_attempt(self) -> None:
+    def test_anonymous_job_retries_and_polls_need_no_pacing_state(self) -> None:
+        """Keep capacity backoff and job polling without a quota cache."""
         error = query_literature.urllib.error.HTTPError(
-            "https://api.example.org/api/usage", 503, "busy", {}, None
+            "https://api.example.org/api/jobs", 503, "busy", {}, None
         )
         with (
-            patch.object(query_literature, "wait_for_anonymous_slot") as pace,
+            patch.object(
+                query_literature.Path,
+                "mkdir",
+                side_effect=AssertionError("cache write"),
+            ),
             patch.object(
                 query_literature.urllib.request,
                 "urlopen",
-                side_effect=[error, io.BytesIO(b"{}")],
+                side_effect=[
+                    error,
+                    io.BytesIO(b'{"job_id": "example"}'),
+                    io.BytesIO(b'{"status": "running", "poll_after_sec": 3}'),
+                    io.BytesIO(b'{"status": "succeeded", "result": {"papers": []}}'),
+                ],
             ) as urlopen,
-            patch.object(query_literature.time, "sleep"),
+            patch.object(query_literature.time, "sleep") as sleep,
         ):
-            query_literature.request_json(
-                "https://api.example.org", "/api/usage", None, timeout=5
+            payload = query_literature.run_async_job(
+                "https://api.example.org",
+                "/api/search_literature",
+                None,
+                {"query": "mirusvirus"},
+                poll_timeout=75,
+                poll_interval=1,
             )
-        self.assertEqual(urlopen.call_count, 2)
-        self.assertEqual(pace.call_count, 2)
+        self.assertEqual(payload, {"papers": []})
+        self.assertEqual(urlopen.call_count, 4)
+        self.assertEqual(sleep.call_args_list, [call(2), call(3)])
+        self.assertEqual(
+            urlopen.call_args.args[0].full_url,
+            "https://api.example.org/api/jobs/example/result",
+        )
 
     def test_corpus_both_is_rejected_with_a_clear_message(self) -> None:
         stderr = io.StringIO()

@@ -12,11 +12,11 @@ Search the PubMed Central Open Access (`pmc`) and bioRxiv (`biorxiv`) corpora th
 
 ## Access
 
-- Hosted API: the key is optional. Without `POLARS_DOVMED_API_KEY` the helper runs anonymously, and `/api/usage` reports the anonymous rate limit (`rate_limit: 120` on 2026-11-10). With a key, set it in the environment or in `~/.config/polars-dovmed/.env`; the helper then sends it as `X-API-Key`, and an invalid key fails with HTTP 403.
-- Client-side rate limit: without a key the helper sends at most 20 requests per minute, counting job polls. All runs on the machine share one budget through a lock file (`~/.cache/omics-skills/polars-dovmed/`, or `POLARS_DOVMED_STATE_DIR`), and a run waits when the budget is spent. If the helper cannot lock, read or write that state, or the state file is corrupt, it refuses the anonymous request with an error that names the directory (delete a corrupt file to start a new budget). With a key the helper applies no limit of its own. The limit lives in this helper only: the connector and raw HTTP calls do not obey it, and the server keeps its own limit (`/api/usage`). Never pass the key in argv, and never write it to run directories, memory records, summaries or answers. Keys come from the service admin.
+- Hosted API: the key is optional. Without `POLARS_DOVMED_API_KEY` the helper runs anonymously. With a key, set it in the environment or in `~/.config/polars-dovmed/.env`; the helper then sends it as `X-API-Key`, and an invalid key fails with HTTP 403. Never pass the key in argv or write it to run directories, memory records, summaries or answers. Keys come from the service admin.
+- The helper and hosted API impose no request-rate quota, with or without a key. The helper needs no shared pacing state. Server capacity limits, result caps, polling intervals and HTTP 503 backoff still apply. Crossref enrichment retains its own pacing.
 - Local corpora: see `references/commands.md`.
 - Crossref contact address: pass `--crossref-email` only when the user gave an address for that purpose. Never take one from conversation, git config or system context. The helper reads no environment variable for it.
-- Without a key or local corpora the helper uses the hosted API anonymously. If the API is unreachable or the anonymous rate limit is spent, say so and use another literature skill.
+- Without a key or local corpora the helper uses the hosted API anonymously. If the API is unreachable, say so and use another literature skill.
 
 ## Instructions
 

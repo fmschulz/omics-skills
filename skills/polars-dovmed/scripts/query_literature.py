@@ -10,7 +10,6 @@ import concurrent.futures
 import copy
 import csv
 import difflib
-import fcntl
 import json
 import math
 import os
@@ -25,10 +24,6 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-# The hosted API is open without a key. The client keeps anonymous callers to
-# this rate on its own; a key lifts the limit. The server enforces its own.
-ANONYMOUS_REQUESTS_PER_MINUTE = 20
-ANONYMOUS_WINDOW_S = 60.0
 HTTP_503_RETRY_DELAYS = (2, 4, 8, 16, 30)
 ASYNC_ENDPOINTS = {
     "/api/search_literature": "search_literature",
@@ -890,106 +885,6 @@ def make_request(base_url, endpoint, api_key, *, method="GET", payload=None):
     )
 
 
-def default_state_dir() -> Path:
-    """Return the directory that holds the cross-process pacer state."""
-    return Path(
-        os.environ.get(
-            "POLARS_DOVMED_STATE_DIR",
-            Path.home() / ".cache" / "omics-skills" / "polars-dovmed",
-        )
-    )
-
-
-class RateLimitStateError(RuntimeError):
-    """The shared anonymous rate-limit state cannot be locked, read or written."""
-
-
-def wait_for_anonymous_slot(
-    state_dir: Path | str | None = None,
-    *,
-    limit: int = ANONYMOUS_REQUESTS_PER_MINUTE,
-    window_s: float = ANONYMOUS_WINDOW_S,
-) -> None:
-    """Block until fewer than `limit` requests started in the last `window_s`.
-
-    The start times are wall-clock seconds in a file under an exclusive lock,
-    so concurrent CLI runs and the year-band threads share one budget.
-
-    Raises:
-        RateLimitStateError: The state cannot be locked, read or written. The
-            request is refused rather than sent unpaced.
-    """
-    state_dir = Path(state_dir) if state_dir else default_state_dir()
-    try:
-        state_dir.mkdir(parents=True, exist_ok=True)
-        with (state_dir / "anonymous-requests.lock").open(
-            "a+", encoding="utf-8"
-        ) as lock:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-            state_path = state_dir / "anonymous-requests.json"
-            now = time.time()
-            recent = [
-                t
-                for t in read_request_times(state_path)
-                if now - t < window_s and t - now <= window_s
-            ]
-            if len(recent) >= limit:
-                time.sleep(max(0.0, recent[-limit] + window_s - now))
-                now = time.time()
-                recent = [t for t in recent if now - t < window_s]
-            recent.append(now)
-            write_request_times(state_path, recent[-limit:])
-    except OSError as err:
-        raise RateLimitStateError(
-            f"cannot use the anonymous rate-limit state in {state_dir}: {err}. "
-            "Fix the directory (set POLARS_DOVMED_STATE_DIR to a writable one) "
-            "or use an API key (POLARS_DOVMED_API_KEY), which removes the limit."
-        ) from err
-
-
-def read_request_times(state_path: Path) -> list[float]:
-    """Return the recorded request start times, oldest first.
-
-    A missing file is an empty budget.
-
-    Raises:
-        RateLimitStateError: The file is not a JSON list of finite numbers.
-        OSError: The file exists but cannot be read.
-    """
-    try:
-        text = state_path.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return []
-    try:
-        times = json.loads(text)
-    except ValueError:
-        times = None
-    if not isinstance(times, list) or not all(
-        isinstance(t, (int, float)) and not isinstance(t, bool) and math.isfinite(t)
-        for t in times
-    ):
-        raise RateLimitStateError(
-            f"the anonymous rate-limit state file {state_path} is corrupt. "
-            f"Delete {state_path} to start a new budget, or use "
-            "an API key (POLARS_DOVMED_API_KEY), which removes the limit."
-        )
-    return sorted(times)
-
-
-def write_request_times(state_path: Path, times: list[float]) -> None:
-    """Replace the state file atomically; the caller holds the lock."""
-    handle, temp_name = tempfile.mkstemp(
-        dir=state_path.parent, prefix=f".{state_path.name}.", suffix=".tmp"
-    )
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8") as temp_file:
-            json.dump(times, temp_file)
-        Path(temp_name).replace(state_path)
-    except BaseException:
-        Path(temp_name).unlink(missing_ok=True)
-        raise
-
-
 def request_json(base_url, endpoint, api_key, *, timeout, method="GET", payload=None):
     request = make_request(
         base_url,
@@ -1000,8 +895,6 @@ def request_json(base_url, endpoint, api_key, *, timeout, method="GET", payload=
     )
     attempt = 0
     while True:
-        if not api_key:
-            wait_for_anonymous_slot()
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 return json.loads(response.read().decode("utf-8"))

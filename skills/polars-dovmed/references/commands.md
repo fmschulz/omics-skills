@@ -4,6 +4,8 @@
 
 ## Hosted API
 
+Requests have no per-minute quota, and the helper needs no pacing cache or lock files. Keep result caps and two year-band workers to respect server capacity. Job polling intervals, HTTP 503 backoff and Crossref pacing still apply.
+
 ```bash
 SKILL_DIR=~/.agents/skills/polars-dovmed
 RUN=tasks/polars-dovmed-runs/mirusviricota-hosts-$(date +%Y%m%d)
@@ -68,7 +70,6 @@ Run either check before declaring an outage.
 | Symptom | Fix |
 | --- | --- |
 | `--corpus both` is rejected (the API answers HTTP 502) | Run `--corpus biorxiv` and `--corpus pmc` separately and merge the results. |
-| A run pauses without output | Without a key the helper waits for a free slot of its 20 requests per minute. Set `POLARS_DOVMED_API_KEY` to lift the client limit. |
 | HTTP 503 reports busy search capacity or a full async queue | The helper retries five times, waiting 2, 4, 8, 16 and 30 seconds. A numeric `Retry-After` sets the wait instead, capped at 60 seconds. Keep `--year-band-workers 2` and report the error if retries run out. |
 | OpenPMC year-band search returns `Database not found` | Report that the deployment does not expose the indexed OpenPMC bands. Do not fall back to an unbanded scan. |
 | OpenPMC year-band search times out | Report the timeout and keep the bioRxiv result. Narrow to the requested bands or refine the anchors; do not retry with longer waits or an unbanded scan. |
